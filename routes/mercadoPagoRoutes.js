@@ -1,4 +1,4 @@
-const MercadoPagoController = require('../controllers/mercadoPagoController.js');
+const mercadoPagoController = require('../controllers/mercadoPagoController.js');
 const passport = require('passport');
 
 module.exports = (app) => {
@@ -6,5 +6,5 @@ module.exports = (app) => {
     /*
     * POST ROUTES
     */
-   app.post('/api/payments/createPay', passport.authenticate('jwt', {session: false}), MercadoPagoController.createPaymentCreditCart);
+   app.post('/api/payments/createPay', passport.authenticate('jwt', {session: false}), mercadoPagoController.createPaymentCreditCart);
 }
