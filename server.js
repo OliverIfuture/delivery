@@ -50,6 +50,7 @@ const products = require('./routes/productsRoutes');
 const address = require('./routes/addressRoutes');
 const orders = require('./routes/ordersRoutes');
 const mercadoPagoRoutes = require('./routes/mercadoPagoRoutes');
+const PORT = process.env.PORT || 4000
 
 
 
@@ -64,7 +65,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport')(passport);
 app.disable('x-power-by');
-app.set('port', port);
+app.set('PORT', PORT);
     
 
 
@@ -80,7 +81,6 @@ address(app, upload);
 orders(app);
 mercadoPagoRoutes(app);
 
-const PORT = process.env.PORT || 4000
 
 
 server.listen(PORT, function () {
