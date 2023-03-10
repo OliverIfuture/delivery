@@ -79,7 +79,7 @@ categories(app);
 products(app, upload);
 address(app, upload);
 orders(app);
-mercadoPagoRoutes(app);
+//mercadoPagoRoutes(app);
 
 
 
