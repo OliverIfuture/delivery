@@ -81,11 +81,11 @@ address(app, upload);
 orders(app);
 mercadoPagoRoutes(app);
 
+const PORT = process.env.PORT || 4000
 
 
-
-server.listen(3000, '192.168.0.5' || 'localhost', function () {
-    console.log('Aplicacion de NodeJs ' + process.pid + ' iniciada...');
+server.listen(PORT, function () {
+    console.log('Aplicacion de NodeJs ' + process.pid + ' iniciada... : puerto asignado ' + PORT);
 });    
 
 
