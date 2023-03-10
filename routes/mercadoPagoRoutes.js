@@ -1,4 +1,4 @@
-const MercadoPagoController = require('../controllers/mercadoPagoController');
+const MercadoPagoController = require('../controllers/mercadoPagoController.js');
 const passport = require('passport');
 
 module.exports = (app) => {
