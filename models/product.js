@@ -43,7 +43,8 @@ SELECT
 	P.image1,
 	P.image2,
 	P.image3,
-	P.id_category
+	P.id_category,
+	P.stock
 FROM
 	products as P
 INNER JOIN 
