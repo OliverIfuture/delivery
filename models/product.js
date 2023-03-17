@@ -13,10 +13,11 @@ Product.create = (product) => {
             image3,
             id_category,
             created_at,
-            updated_at
+            updated_at,
+            stock
             
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, 'true') RETURNING id
     `;
     return db.oneOrNone(sql, [
         product.name,
