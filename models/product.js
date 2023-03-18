@@ -113,5 +113,19 @@ Product.update = (product) => {
     ]);
 
 }
+Product.updateStock = (product) => {
+    const sql = `
+    UPDATE
+        products
+    SET
+        stock = $2
+    WHERE
+        id = $1
+    `;
 
+    return db.none(sql, [
+        product.id,
+        product.stock
+    ]);
+}
 module.exports = Product;
