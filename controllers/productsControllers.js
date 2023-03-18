@@ -123,7 +123,7 @@ module.exports = {
             console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
             
 
-            await Product.updateProduct(product);
+            await Product.updateStock(product);
 
             return res.status(201).json({
                 succes: true,
