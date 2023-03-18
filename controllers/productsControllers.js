@@ -116,32 +116,6 @@ module.exports = {
 
 ,
 
-        async updateProduct(req, res, next) {
-        try {
-            
-            const product = JSON.parse(req.body.product);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
-            
 
-            await Product.updateStock(product);
-
-            return res.status(201).json({
-                succes: true,
-                message: 'Los datos del usuario se actualizaron correctamente',
-            });
-
-        }
-
-        catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
-
-                succes: false,
-                message: 'Hubo un error con la actualizacion de datos del ususario',
-                error: error
-
-            });
-        }
-    },
 
 }
