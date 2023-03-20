@@ -119,7 +119,7 @@ module.exports = {
         try {
             
             const product = req.body;
-            console.log(`Datos enviados del usuario: ${product}`);
+            console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
             
 
             await Product.updateStock(product);
