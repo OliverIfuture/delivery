@@ -118,7 +118,7 @@ module.exports = {
         async updateProduct(req, res, next) {
         try {
             
-            const product = JSON.parse(req.body.product);
+            const product = req.body.product;
             console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
             
 
