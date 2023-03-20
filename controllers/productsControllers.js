@@ -119,7 +119,7 @@ module.exports = {
         try {
             
                         const product = req.body.product;
-            console.log(`Datos enviados del usuario: ${product}`);
+            console.log(`Datos enviados del usuario: ${product.JSONt}`);
             
 
             await Product.updateStock(product);
