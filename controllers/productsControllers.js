@@ -118,8 +118,8 @@ module.exports = {
         async updateProduct(req, res, next) {
         try {
             
-                        const product = req.body.product;
-            console.log(`Datos enviados del usuario: ${product.JSON}`);
+            const product = req.body;
+            console.log(`Datos enviados del usuario: ${product}`);
             
 
             await Product.updateStock(product);
