@@ -25,9 +25,7 @@ User.findById = (id, callback) => {
         image,
         phone,
         password,
-        session_token,
-        notification_token
-
+        session_token
     FROM
         users
     WHERE
@@ -114,7 +112,6 @@ User.findByEmail = (email) => {
         U.phone,
         U.password,
         U.session_token,
-        U.notification_token,
         json_agg(
             json_build_object(
                 'id', R.id,
