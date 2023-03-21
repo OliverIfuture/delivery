@@ -25,7 +25,8 @@ User.findById = (id, callback) => {
         image,
         phone,
         password,
-        session_token
+        session_token,
+        notification_token
     FROM
         users
     WHERE
