@@ -271,8 +271,9 @@ User.selectToken = (id) => {
         id = $1
     `;
 
-    return db.none(sql, [
-        id,
+    return db.oneOrNone(sql, [
+        id
+        
     ]);
 }
 
