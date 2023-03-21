@@ -283,7 +283,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.selectToken(id);
-            console.log(`Usuario: ${data}`);
+            console.log(`${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
