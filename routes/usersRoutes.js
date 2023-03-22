@@ -5,6 +5,7 @@ module.exports = (app, upload) => {
     app.get('/api/users/findById/:id',passport.authenticate('jwt', {session: false}) ,UsersController.findById);
     app.get('/api/users/findDeliveryMen',passport.authenticate('jwt', {session: false}) ,UsersController.findDeliveryMan);
     app.get('/api/users/selectToken/:id',passport.authenticate('jwt', {session: false}) ,UsersController.selectToken);
+    app.get('/api/users/getAdminsNotificationTokens', passport.authenticate('jwt', {session: false}), UsersController.getAdminsNotificationTokens);
 
     app.post('/api/users/create', upload.array('image', 1), UsersController.registerWithImage);
 
