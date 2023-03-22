@@ -48,6 +48,28 @@ module.exports = {
             });
         }
     },
+    
+        async getAdminsNotificationTokens(req, res, next) {
+        try {
+            const data = await User.getAdminsNotificationTokens();    
+            let tokens = [];
+
+
+            data.forEach(d => {
+                tokens.push(d.notification_token);
+            });
+
+            console.log('Tokens de admin:', tokens);
+            return res.status(201).json(tokens);
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener los repartidores'
+            });
+        }
+    },
 
     async getAll(req, res, next) {
         try {
