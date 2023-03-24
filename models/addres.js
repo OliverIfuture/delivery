@@ -32,7 +32,7 @@ Address.delete = (id, id_user) => {
     WHERE id = $1 and id_user = $2
     `;
 
-    return db.oneOrNone(sql, [
+    return db.none(sql, [
         id,
         id_user
     ]);
