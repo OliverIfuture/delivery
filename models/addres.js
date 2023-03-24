@@ -22,7 +22,7 @@ Address.findByUser = (id_user) => {
     return db.manyOrNone(sql, id_user);
 }
 
-Address.delete = (id, id_user) => {
+Address.delete = (addres) => {
     const sql = `
 
     DELETE 
@@ -33,8 +33,9 @@ Address.delete = (id, id_user) => {
     `;
 
     return db.none(sql, [
-        id,
-        id_user
+        addres.id,
+        addres.id_user
+        
     ]);
 }
 
