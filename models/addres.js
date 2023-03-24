@@ -22,6 +22,22 @@ Address.findByUser = (id_user) => {
     return db.manyOrNone(sql, id_user);
 }
 
+Address.delete = (id, id_user) => {
+    const sql = `
+
+    DELETE 
+    
+    FROM address 
+
+    WHERE id = $1 and id_user = $2
+    `;
+
+    return db.oneOrNone(sql, [
+        id,
+        id_user
+    ]);
+}
+
 Address.create = (address) => {
     const sql = `
 
