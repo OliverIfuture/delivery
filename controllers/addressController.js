@@ -24,6 +24,31 @@ module.exports = {
             });
         }
     },
+        
+     async delete(req, res, next) {
+        try {
+
+            const address = req.body;
+            const data = await Address.delete(address);
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'La direccion se elimino correctamente',
+                data: data.id
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error eliminando la direccion',
+                error: error
+            });
+        }
+    },
     async create(req, res, next) {
         try {
 
