@@ -14,5 +14,8 @@ module.exports = (app) => {
     *POST ROUTES
    */
     app.post('/api/address/create', passport.authenticate('jwt', { session: false }), addressControllers.create);
+        
+        
+    app.delete('/api/address/delete/:id/:id_user', passport.authenticate('jwt', { session: false }), addressControllers.delete);
 
 }
