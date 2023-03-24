@@ -35,7 +35,6 @@ module.exports = {
 
                 success: true,
                 message: 'La direccion se elimino correctamente',
-                data: data.id
             });
             
             
