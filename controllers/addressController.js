@@ -28,7 +28,7 @@ module.exports = {
      async delete(req, res, next) {
         try {
 
-            const address = req.body;
+            const address = req.body.Address;
             const data = await Address.delete(address);
             console.log(`Address: ${JSON.stringify(data)}`);
 
