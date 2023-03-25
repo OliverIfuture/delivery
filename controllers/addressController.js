@@ -26,11 +26,11 @@ module.exports = {
     },
         
              async delete(req, res, next) {
-        try {
+            try {
 
-            const address = req.params.id;
+            const address = req.params;
 
-            const data = await Address.delete(id);
+            const data = await Address.delete(address.id, address.id_user);
             console.log(`Address: ${JSON.stringify(data)}`);
 
 
