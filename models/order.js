@@ -72,7 +72,7 @@ Order.findByStatus = (status) => {
         status = $1
     GROUP BY
         O.id, U.id, A.id, U2.id
-	 Order by asc
+	 Order by timestamp asc
     `;
 
     return db.manyOrNone(sql, status);
