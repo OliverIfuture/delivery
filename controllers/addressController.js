@@ -30,6 +30,8 @@ module.exports = {
 
             const address = req.body;
             const data = await Address.delete(address);
+                                        console.log(`Address: ${JSON.stringify(data)}`);
+
 
                 return res.status(201).json({
 
