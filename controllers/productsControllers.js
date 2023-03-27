@@ -126,7 +126,8 @@ module.exports = {
 
             return res.status(201).json({
                 succes: true,
-                message: 'Los datos del usuario se actualizaron correctamente',
+                message: 'Stock Actualizado',
+
             });
 
         }
@@ -136,7 +137,7 @@ module.exports = {
             return res.status(501).json({
 
                 succes: false,
-                message: 'Hubo un error con la actualizacion de datos del ususario',
+                message: 'Hubo un error con la actualizacion de stock',
                 error: error
 
             });
