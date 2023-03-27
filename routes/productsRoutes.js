@@ -6,7 +6,7 @@ module.exports = (app, upload) => {
       app.get('/api/products/findByCategory/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategory);
       app.get('/api/products/findByCategoryAndProductName/:id_category/:product_name', passport.authenticate('jwt', {session: false}), productsControllers.findByCategoryAndProductName);
       app.put('/api/products/updateStock', productsControllers.updateProduct);
-      app.delete('/api/products/delete/:id', passport.authenticate('jwt', { session: false }), productsControllers.delete);
+      app.delete('/api/products/deleteProduct/:id', passport.authenticate('jwt', { session: false }), productsControllers.delete);
 
 
 }
