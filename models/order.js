@@ -294,4 +294,21 @@ Order.updateLatLng = (order) => {
     ]);
 }
 
+Order.cancelOrder = (order) => {
+    const sql = `
+    UPDATE
+        orders
+    SET
+        id_client = $2,
+        status = $3
+		WHERE
+        id = $1
+    `;
+    return db.none(sql, [
+        order.id,
+        order.id_client,
+        order.status
+    ]);
+}
+
 module.exports = Order;
