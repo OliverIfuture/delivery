@@ -165,7 +165,7 @@ module.exports = {
         try {
 
             let order = req.body;
-            order.status = 'DESPACHADO';
+            order.status = 'CANCELADO';
              await Order.cancelOrder(order);
 
                 return res.status(201).json({
