@@ -72,7 +72,7 @@ Order.findByStatus = (status) => {
         status = $1
     GROUP BY
         O.id, U.id, A.id, U2.id
-    ORDER BY O.id, U.id, A.id, U2.id asc
+    ORDER BY O.id asc
 
     `;
 
