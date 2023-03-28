@@ -160,6 +160,29 @@ module.exports = {
             });
         }
     },
+        
+    async cancelOrder(req, res, next) {
+        try {
+
+            let order = req.body;
+            order.status = 'DESPACHADO';
+             await Order.cancelOrder(order);
+
+                return res.status(201).json({
+                success: true,
+                message: 'La orden se cancelo correctamente',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error al cencelar la orden',
+                error: error
+            });
+        }
+    }, 
 
     async create(req, res, next) {
         try {
