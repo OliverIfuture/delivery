@@ -299,6 +299,33 @@ module.exports = {
 
     },
     
+            async forgotPass(req, res, next) {
+        try {
+
+            const user = req.params;
+
+            const data = await User.forgotPass(email, password);
+            console.log(`Product to delete: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'producto eliminado correctamente',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error eliminando el producto',
+                error: error
+            });
+        }
+    },
+    
     async selectToken(req, res, next) {
         try {
 
