@@ -260,6 +260,25 @@ User.updateNotificationToken = (id, token) => {
     ]);
 }
 
+User.forgotPass = (email, password) => {
+    const myPasswordHashed = crypto.createHash('md5').update(password).digest('hex');
+    password = myPasswordHashed;
+    const sql = `
+    UPDATE
+        users
+    SET
+        password = $2
+    WHERE
+        email = $1
+    `;
+
+    return db.none(sql, [
+        email,
+        password
+
+    ]);
+}
+
 User.selectToken = (id) => {
     const sql = `
     SELECT 
