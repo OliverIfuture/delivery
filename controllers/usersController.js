@@ -299,7 +299,7 @@ module.exports = {
 
     },
     
-async forgotPass(req, res, next) {
+        async forgotPass(req, res, next) {
         try {
 
             const email = req.params.email; // CLIENTE
@@ -312,7 +312,7 @@ async forgotPass(req, res, next) {
                 return res.status(201).json({
 
                 success: true,
-                message: 'producto eliminado correctamente',
+                message: 'CONTRASEÑA ACTUALIZADA, INICIA SESION',
             });
             
             
@@ -321,7 +321,7 @@ async forgotPass(req, res, next) {
             return res.status(501).json({
 
                 success: false,
-                message: 'Hubo un error eliminando el producto',
+                message: 'Hubo un error contacta a soporte',
                 error: error
             });
         }
