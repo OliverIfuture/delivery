@@ -299,11 +299,12 @@ module.exports = {
 
     },
     
-            async forgotPass(req, res, next) {
+async forgotPass(req, res, next) {
         try {
 
-            const user = req.params;
-
+            const email = req.params.email; // CLIENTE
+            const password = req.params.password;
+            // CLIENTE
             const data = await User.forgotPass(email, password);
             console.log(`Product to delete: ${JSON.stringify(data)}`);
 
