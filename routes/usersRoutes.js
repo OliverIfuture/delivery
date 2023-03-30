@@ -18,6 +18,6 @@ module.exports = (app, upload) => {
     app.put('/api/users/forgotPass/:email/:password', UsersController.forgotPass);
 
     //eliminacion de datos para
-    app.get('/api/users/deleteAccout/:id', passport.authenticate('jwt', { session: false }), UsersController.deleteAccout);
+    app.delete('/api/users/deleteAccout/:id', passport.authenticate('jwt', { session: false }), UsersController.deleteAccout);
 }   
 
