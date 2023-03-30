@@ -330,7 +330,7 @@ module.exports = {
 async deleteAccout(req, res, next) {
         try {
 
-            const User = req.params;
+            const user = req.params;
 
             const data = await User.delete(user.id);
             console.log(`Address: ${JSON.stringify(data)}`);
