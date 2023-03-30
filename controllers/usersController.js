@@ -332,7 +332,7 @@ async deleteAccout(req, res, next) {
 
             const user = req.params;
 
-            const data = await User.delete(user.id);
+            const data = await User.deleteAccout(user.id);
             console.log(`Address: ${JSON.stringify(data)}`);
 
 
