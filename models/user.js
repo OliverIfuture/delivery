@@ -296,7 +296,7 @@ User.selectToken = (id) => {
     ]);
 }
 
-Product.deleteAccout = (id) => {
+User.deleteAccout = (id) => {
     const sql = `
 
     DELETE 
