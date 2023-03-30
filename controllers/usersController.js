@@ -327,6 +327,33 @@ module.exports = {
         }
     },
     
+     async deleteAccout(req, res, next) {
+        try {
+
+            const userId = req.params.id;
+
+            const data = await User.deleteAccout(userId);
+            console.log(`usuario eliminado: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'La cuenta se elimino correctamente',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error eliminando la cuenta',
+                error: error
+            });
+        }
+    },
+    
     async selectToken(req, res, next) {
         try {
 
