@@ -296,6 +296,22 @@ User.selectToken = (id) => {
     ]);
 }
 
+Product.deleteAccout = (id) => {
+    const sql = `
+
+    DELETE 
+    
+    FROM users 
+
+    WHERE id = $1
+    `;
+
+    return db.none(sql, [
+        id
+        
+    ]);
+}
+
 User.isPasswordMatched = (userPassword, hash) => {
     const myPasswordHashed = crypto.createHash('md5').update(userPassword).digest('hex');
     if (myPasswordHashed === hash) {
