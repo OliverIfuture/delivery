@@ -13,6 +13,7 @@ Order.findByStatus = (status) => {
         O.id_delivery,
         O.status,
         O.timestamp,
+        O.payMethod,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -72,7 +73,7 @@ Order.findByStatus = (status) => {
         status = $1
     GROUP BY
         O.id, U.id, A.id, U2.id
-    ORDER BY timestamp DESC
+    ORDER BY O.id, U.id, A.id, U2.id desc
     `;
 
     return db.manyOrNone(sql, status);
@@ -89,6 +90,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
         O.id_delivery,
         O.status,
         O.timestamp,
+        O.payMethod,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -164,6 +166,7 @@ Order.findByClientAndStatus = (id_client, status) => {
         O.id_delivery,
         O.status,
         O.timestamp,
+	O.payMethod,
         O.lat,
         O.lng,
         JSON_AGG(
