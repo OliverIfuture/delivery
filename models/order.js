@@ -247,10 +247,11 @@ Order.create = (order) => {
             timestamp,
             created_at,
             updated_at,
-            paymethod
+            paymethod,
+            hour_program
 
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -260,7 +261,8 @@ Order.create = (order) => {
         Date.now(),
         new Date(),
         new Date(),
-        order.paymethod
+        order.paymethod,
+        order.hour_program
 
     ]);
 }
