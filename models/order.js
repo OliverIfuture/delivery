@@ -14,6 +14,7 @@ Order.findByStatus = (status) => {
         O.status,
         O.timestamp,
         O.payMethod,
+	O.hour_program,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -91,6 +92,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
         O.status,
         O.timestamp,
         O.payMethod,
+	O.hour_program,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -167,6 +169,7 @@ Order.findByClientAndStatus = (id_client, status) => {
         O.status,
         O.timestamp,
 	O.payMethod,
+	O.hour_program,
         O.lat,
         O.lng,
         JSON_AGG(
