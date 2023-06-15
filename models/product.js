@@ -44,7 +44,11 @@ SELECT
 	P.image2,
 	P.image3,
 	P.id_category,
-	P.stock
+	P.stock,
+	P.id_compay,
+	P.state,
+	P.price_special,
+	P.price_buy
 FROM
 	products as P
 INNER JOIN 
@@ -68,7 +72,12 @@ Product.findByCategoryAndProductName = (id_category, product_name) => {
         P.image1,
         P.image2,
         P.image3,
-        P.id_category
+        P.id_category,
+	P.stock,
+	P.id_compay,
+	P.state,
+	P.price_special,
+	P.price_buy
     FROM
         products AS P
     INNER JOIN
