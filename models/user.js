@@ -27,9 +27,9 @@ User.findById = (id, callback) => {
         password,
         session_token,
         notification_token,
-        U.autenticated,
-        U.is_trainer,
-        U.document
+        autenticated,
+        is_trainer,
+        document
     FROM
         users
     WHERE
