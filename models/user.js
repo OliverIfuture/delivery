@@ -26,7 +26,10 @@ User.findById = (id, callback) => {
         phone,
         password,
         session_token,
-        notification_token
+        notification_token,
+        U.autenticated,
+        U.is_trainer,
+        U.document
     FROM
         users
     WHERE
@@ -48,6 +51,9 @@ User.findByUserId = (id) => {
         U.password,
         U.session_token,
         U.notification_token,
+        U.autenticated,
+        U.is_trainer,
+        U.document,
         json_agg(
             json_build_object(
                 'id', R.id,
@@ -85,7 +91,10 @@ User.findDeliveryMen = () => {
         U.phone,
         U.password,
         U.session_token,
-        U.notification_token
+        U.notification_token,
+        U.autenticated,
+        U.is_trainer,
+        U.document,
     FROM
         users AS U
     INNER JOIN
@@ -116,7 +125,7 @@ User.findByEmail = (email) => {
         U.notification_token,
         U.autenticated,
         U.is_trainer,
-        U.document
+        U.document,
         json_agg(
             json_build_object(
                 'id', R.id,
