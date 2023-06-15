@@ -114,6 +114,9 @@ User.findByEmail = (email) => {
         U.password,
         U.session_token,
         U.notification_token,
+        U.autenticated,
+        U.is_trainer,
+        U.document
         json_agg(
             json_build_object(
                 'id', R.id,
