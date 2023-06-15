@@ -47,8 +47,8 @@ User.findByUserId = (id) => {
         U.phone,
         U.password,
         U.session_token,
-        U.notification_token
-        U.json_agg(
+        U.notification_token,
+        json_agg(
             json_build_object(
                 'id', R.id,
                 'name', R.name,
@@ -86,7 +86,6 @@ User.findDeliveryMen = () => {
         U.password,
         U.session_token,
         U.notification_token
-        
     FROM
         users AS U
     INNER JOIN
@@ -114,7 +113,7 @@ User.findByEmail = (email) => {
         U.phone,
         U.password,
         U.session_token,
-        U.notification_token
+        U.notification_token,
         json_agg(
             json_build_object(
                 'id', R.id,
