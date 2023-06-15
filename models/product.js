@@ -45,7 +45,7 @@ SELECT
 	P.image3,
 	P.id_category,
 	P.stock,
-	P.id_compay,
+	P.id_company,
 	P.state,
 	P.price_special,
 	P.price_buy
@@ -74,7 +74,7 @@ Product.findByCategoryAndProductName = (id_category, product_name) => {
         P.image3,
         P.id_category,
 	P.stock,
-	P.id_compay,
+	P.id_company,
 	P.state,
 	P.price_special,
 	P.price_buy
