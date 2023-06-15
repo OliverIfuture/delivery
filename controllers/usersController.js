@@ -221,6 +221,9 @@ module.exports = {
                     phone: myUser.phone,
                     image: myUser.image,
                     session_token: `JWT ${token}`, // REVISA QUE ESTE LLEGANDO ESTE CAMPO
+                    autenticated: myUser.autenticated,
+                    is_trainer: myUser.is_trainer,
+                    document: myUser.document,
                     roles: myUser.roles
                 }
 
