@@ -240,6 +240,25 @@ User.update = (user) => {
     ]);
 }
 
+User.updateTrainer = (user) => {
+    const sql = `
+    UPDATE
+        users
+    SET
+        document = $2,
+        gym = $3
+
+    WHERE
+        id = $1
+    `;
+
+    return db.none(sql, [
+        user.document,
+        user.gym
+    ]);
+}
+
+
 User.updateToken = (id, token) => {
     const sql = `
     UPDATE
