@@ -253,7 +253,7 @@ User.updateTrainer = (user) => {
     `;
 
     return db.none(sql, [
-        user.id
+        user.id,
         user.document,
         user.gym
     ]);
