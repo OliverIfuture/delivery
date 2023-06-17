@@ -33,7 +33,7 @@ module.exports = {
 
             const id = req.params.id;
 
-            const data = await User.findByUserById(id);
+            const data = await User.findByUserId(id);
             console.log(`Usuario: ${data}`);
             return res.status(201).json(data);
 
