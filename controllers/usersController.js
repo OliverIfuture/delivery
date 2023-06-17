@@ -205,7 +205,7 @@ module.exports = {
                 const url = await storage(files[0], pathImage);
                 
                 if (url != undefined && url != null) {
-                    user.image = url;
+                    user.document = url;
 
                 }
             }
