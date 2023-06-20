@@ -14,6 +14,18 @@ User.getAll = () => {
     return db.manyOrNone(sql);
 }
 
+User.getAllTrainer = (state) => {
+    const sql = `
+    SELECT 
+        *
+    FROM
+        users
+        WHERE state = $1
+    `;
+
+    return db.manyOrNone(sql);
+}
+
 User.findById = (id, callback) => {
 
     const sql = `
