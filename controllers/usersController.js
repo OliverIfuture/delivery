@@ -48,6 +48,28 @@ module.exports = {
             });
         }
     },
+
+        async findByState(req, res, next) {
+        try {
+
+            const state = req.params.state;
+
+            const data = await User.findByState(state);
+            console.log(`Datos enviados del usuario entrenador: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener el usuario por ID'
+            });
+        }
+    },
+    
     
         async getAdminsNotificationTokens(req, res, next) {
         try {
