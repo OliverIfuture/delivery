@@ -22,7 +22,7 @@ User.findByState = (state) => {
         users
         WHERE state = $1
 
-    return db.oneOrNone(sql, [
+    return db.manyOrNone(sql, [
         state
         
     ]);
