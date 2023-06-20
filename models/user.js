@@ -20,7 +20,7 @@ User.findByState = (state) => {
         *
     FROM
         users
-        WHERE state = $1
+        WHERE state = 'RECHAZADO'
     `;
 
     return db.manyOrNone(sql);
