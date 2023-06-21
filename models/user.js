@@ -110,7 +110,7 @@ User.findDeliveryMen = () => {
         U.autenticated,
         U.is_trainer,
         U.document,
-        U.gym,
+        U.gym
     FROM
         users AS U
     INNER JOIN
