@@ -298,7 +298,7 @@ User.updateTrainer = (user) => {
     SET
         document = $2,
         gym = $3,
-        state = $3
+        state = $4
 
     WHERE
         id = $1
