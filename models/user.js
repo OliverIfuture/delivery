@@ -157,7 +157,7 @@ User.findByEmail = (email) => {
         U.gym,        
         U.state,
         U.credential,
-        U.keystore
+        U.keystore,
         U.balance,
         json_agg(
             json_build_object(
