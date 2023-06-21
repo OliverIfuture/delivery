@@ -320,6 +320,23 @@ User.updateTrainer = (user) => {
     ]);
 }
 
+User.updateAccountQr = (user) => {
+    const sql = `
+    UPDATE
+        users
+    SET
+        credential = $2
+
+    WHERE
+        id = $1
+    `;
+
+    return db.none(sql, [
+        user.id,
+        user.credential
+    ]);
+}
+
 
 User.updateToken = (id, token) => {
     const sql = `
