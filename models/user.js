@@ -46,6 +46,7 @@ User.findById = (id, callback) => {
         gym,
         state,
         credential,
+        keystore,
         balance
     FROM
         users
@@ -74,6 +75,7 @@ User.findByUserId = (id) => {
         U.gym,
         U.state,
         U.credential,
+        U.keystore,
         U.balance,
         json_agg(
             json_build_object(
@@ -119,6 +121,7 @@ User.findDeliveryMen = () => {
         U.gym,
         U.state,
         U.credential,
+        U.keystore,
         U.balance
     FROM
         users AS U
@@ -154,6 +157,7 @@ User.findByEmail = (email) => {
         U.gym,        
         U.state,
         U.credential,
+        U.keystore
         U.balance,
         json_agg(
             json_build_object(
