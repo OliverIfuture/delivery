@@ -169,6 +169,23 @@ User.findByEmail = (email) => {
     return db.oneOrNone(sql, email);
 }
 
+User.updateState = (user) => {
+    const sql = `
+    UPDATE
+        users
+    SET
+        is_trainer = $2,
+        state = $3
+    WHERE
+        id = $1
+    `;
+    return db.none(sql, [
+        user.id,
+        user.is_trainer,
+        user.state
+    ]);
+}
+
 User.getAdminsNotificationTokens = () => {
     const sql = `
     SELECT
