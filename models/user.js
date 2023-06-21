@@ -297,7 +297,8 @@ User.updateTrainer = (user) => {
         users
     SET
         document = $2,
-        gym = $3
+        gym = $3,
+        state = $3
 
     WHERE
         id = $1
@@ -306,7 +307,8 @@ User.updateTrainer = (user) => {
     return db.none(sql, [
         user.id,
         user.document,
-        user.gym
+        user.gym,
+        user.state
     ]);
 }
 
