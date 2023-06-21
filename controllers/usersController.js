@@ -422,6 +422,7 @@ async deleteAccout(req, res, next) {
 
             let user = req.body;
             user.state = 'AUTORIZADO';
+            user.is_trainer = 'true'
              await User.updateState(user);
 
                 return res.status(201).json({
