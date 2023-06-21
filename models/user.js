@@ -72,7 +72,7 @@ User.findByUserId = (id) => {
         U.document,
         U.gym,
         U.state,
-        U.credential
+        U.credential,
         json_agg(
             json_build_object(
                 'id', R.id,
@@ -116,7 +116,7 @@ User.findDeliveryMen = () => {
         U.document,
         U.gym,
         U.state,
-        U.credential        
+        U.credential       
     FROM
         users AS U
     INNER JOIN
@@ -150,7 +150,7 @@ User.findByEmail = (email) => {
         U.document,
         U.gym,        
         U.state,
-        U.credential        
+        U.credential,        
         json_agg(
             json_build_object(
                 'id', R.id,
