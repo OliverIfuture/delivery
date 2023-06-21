@@ -20,12 +20,10 @@ User.findByState = (state) => {
         *
     FROM
         users
-        WHERE state = $1
+        WHERE state = 'RECHAZADO'
+    `;
 
-    return db.manyOrNone(sql, [
-        state
-        
-    ]);
+    return db.manyOrNone(sql);
 }
 
 User.findById = (id, callback) => {
@@ -44,8 +42,7 @@ User.findById = (id, callback) => {
         autenticated,
         is_trainer,
         document,
-        gym,
-        state
+        gym
     FROM
         users
     WHERE
@@ -71,7 +68,6 @@ User.findByUserId = (id) => {
         U.is_trainer,
         U.document,
         U.gym,
-        U.state,    
         json_agg(
             json_build_object(
                 'id', R.id,
@@ -114,7 +110,6 @@ User.findDeliveryMen = () => {
         U.is_trainer,
         U.document,
         U.gym,
-        U.state,                
     FROM
         users AS U
     INNER JOIN
@@ -146,8 +141,7 @@ User.findByEmail = (email) => {
         U.autenticated,
         U.is_trainer,
         U.document,
-        U.gym,     
-        U.state,            
+        U.gym,        
         json_agg(
             json_build_object(
                 'id', R.id,
