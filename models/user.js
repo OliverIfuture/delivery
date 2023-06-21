@@ -45,7 +45,8 @@ User.findById = (id, callback) => {
         document,
         gym,
         state,
-        credential
+        credential,
+        balance
     FROM
         users
     WHERE
@@ -73,6 +74,7 @@ User.findByUserId = (id) => {
         U.gym,
         U.state,
         U.credential,
+        U.balance,
         json_agg(
             json_build_object(
                 'id', R.id,
@@ -116,7 +118,8 @@ User.findDeliveryMen = () => {
         U.document,
         U.gym,
         U.state,
-        U.credential       
+        U.credential,
+        U.balance
     FROM
         users AS U
     INNER JOIN
@@ -150,7 +153,8 @@ User.findByEmail = (email) => {
         U.document,
         U.gym,        
         U.state,
-        U.credential,        
+        U.credential,
+        U.balance,
         json_agg(
             json_build_object(
                 'id', R.id,
