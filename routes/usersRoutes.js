@@ -16,7 +16,8 @@ module.exports = (app, upload) => {
     //actualizar datos
     app.put('/api/users/update', upload.array('image', 1),passport.authenticate('jwt', {session: false}) , UsersController.update);
     app.put('/api/users/updateTrainer', upload.array('document', 1),passport.authenticate('jwt', {session: false}) , UsersController.updateTrainer);
-    app.put('/api/users/updateNotificationToken', UsersController.updateNotificationToken);
+    app.put('/api/users/updateState', UsersController.updateState);
+    app.put('/api/users/updateNotificationToken', UsersController.updateNotificationToken);    
     app.put('/api/users/forgotPass/:email/:password', UsersController.forgotPass);
 
     //eliminacion de datos para
