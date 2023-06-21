@@ -427,7 +427,7 @@ async deleteAccout(req, res, next) {
 
                 return res.status(201).json({
                 success: true,
-                message: 'La Usuario se actualizo correctamente',
+                message: 'La solicitud se actualizo correctamente',
             });
             
         } catch (error) {
@@ -435,7 +435,31 @@ async deleteAccout(req, res, next) {
             return res.status(501).json({
 
                 success: false,
-                message: 'Hubo un error al actualizar la Usuario',
+                message: 'Hubo un error al actualizar la solicitud',
+                error: error
+            });
+        }
+    },
+
+    async updateStateFail(req, res, next) {
+        try {
+
+            let user = req.body;
+            user.state = 'RECHAZADO';
+            user.is_trainer = 'false'
+             await User.updateState(user);
+
+                return res.status(201).json({
+                success: true,
+                message: 'La solicitud se actualizo correctamente',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error al actualizar la solicitud',
                 error: error
             });
         }
