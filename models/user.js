@@ -333,7 +333,8 @@ User.updateAccountQr = (user) => {
     UPDATE
         users
     SET
-        credential = $2
+        credential = $2,
+        keystore = $3
 
     WHERE
         id = $1
@@ -341,7 +342,8 @@ User.updateAccountQr = (user) => {
 
     return db.none(sql, [
         user.id,
-        user.credential
+        user.credential,
+        user.keystore
     ]);
 }
 
