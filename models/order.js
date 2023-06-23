@@ -194,6 +194,7 @@ Order.findByClientAndStatus = (id_client, status) => {
             'name', U.name,
             'lastname', U.lastname,
             'phone', U.phone,
+	    'is_trainer', U.is_trainer,
             'image', U.image
         ) AS client,
 		JSON_BUILD_OBJECT(
