@@ -402,7 +402,8 @@ User.forgotPass = (email, password) => {
 User.selectToken = (id) => {
     const sql = `
     SELECT 
-    notification_token 
+    notification_token,
+    is_trainer
     FROM
         users
 
