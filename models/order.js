@@ -33,6 +33,8 @@ Order.findByStatus = (status) => {
             'name', U.name,
             'lastname', U.lastname,
             'phone', U.phone,
+	     'price_special', U.price_special,
+     	    'is_trainer', U.is_trainer,
             'image', U.image
         ) AS client,
 		JSON_BUILD_OBJECT(
@@ -113,6 +115,8 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
             'name', U.name,
             'lastname', U.lastname,
             'phone', U.phone,
+	    'price_special', U.price_special,
+     	    'is_trainer', U.is_trainer,
             'image', U.image
         ) AS client,
 		JSON_BUILD_OBJECT(
