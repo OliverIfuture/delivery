@@ -102,8 +102,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
                 'name', P.name,
                 'description', P.description,
                 'price', P.price,
-		'price_special', 
-  		 P.price_special,
+		'price_special',P.price_special,
                 'image1', P.image1,
                 'image2', P.image2,
                 'image3', P.image3,
@@ -115,7 +114,6 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
             'name', U.name,
             'lastname', U.lastname,
             'phone', U.phone,
-	    'price_special', U.price_special,
      	    'is_trainer', U.is_trainer,
             'image', U.image
         ) AS client,
