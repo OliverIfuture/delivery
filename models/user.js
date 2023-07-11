@@ -139,7 +139,7 @@ User.findDeliveryMen = () => {
     return db.manyOrNone(sql);
 }
 
-User.findByEmail2 = (id) => {
+User.findByQR = (id) => {
     const sql = `
     SELECT
         U.id,
