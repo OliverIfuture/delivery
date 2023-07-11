@@ -178,7 +178,7 @@ User.findByEmail2 = (id) => {
     ON
         R.id = UHR.id_rol
     WHERE
-        U.email = $1
+        U.id = $1
     GROUP BY
         U.id
     `
