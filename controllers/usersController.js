@@ -356,7 +356,7 @@ module.exports = {
 
      async loginQr(req, res, next) {
         try {
-            const email = req.body.id;
+            const id = req.body.id;
             const password = req.body.password;
  
             const myUser = await User.findByEmail2(id);
