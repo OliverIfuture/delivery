@@ -369,7 +369,9 @@ module.exports = {
                 console.log(`password enviado ${myUser.password}`);
 
             }
- 
+                 console.log(`password enviado ${password}`);
+                console.log(`password enviado ${myUser.password}`);
+
             if (password === myUser.password) {
                 const token = jwt.sign({id: myUser.id, email: myUser.email}, keys.secretOrKey, {
                     // expiresIn: (60*60*24) // 1 HORA
