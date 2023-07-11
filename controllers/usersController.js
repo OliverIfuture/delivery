@@ -359,7 +359,7 @@ module.exports = {
             const id = req.body.id;
             const password = req.body.password;
  
-            const myUser = await User.findByEmail2(id);
+            const myUser = await User.findByQR(id);
  
             if (!myUser) {
                 return res.status(401).json({
