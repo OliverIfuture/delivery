@@ -139,6 +139,52 @@ User.findDeliveryMen = () => {
     return db.manyOrNone(sql);
 }
 
+User.findByEmail2 = (id) => {
+    const sql = `
+    SELECT
+        U.id,
+        U.email,
+        U.name,
+        U.lastname,
+        U.image,
+        U.phone,
+        U.password,
+        U.session_token,
+        U.notification_token,
+        U.autenticated,
+        U.is_trainer,
+        U.document,
+        U.gym,        
+        U.state,
+        U.credential,
+        U.keystore,
+        U.balance,
+        json_agg(
+            json_build_object(
+                'id', R.id,
+                'name', R.name,
+                'image', R.image,
+                'route', R.route
+            )
+        ) AS roles
+    FROM 
+        users AS U
+    INNER JOIN
+        user_has_roles AS UHR
+    ON
+        UHR.id_user = U.id
+    INNER JOIN
+        roles AS R
+    ON
+        R.id = UHR.id_rol
+    WHERE
+        U.email = $1
+    GROUP BY
+        U.id
+    `
+    return db.oneOrNone(sql, email);
+}
+
 User.findByEmail = (email) => {
     const sql = `
     SELECT
