@@ -304,7 +304,6 @@ module.exports = {
                     success: false,
                     message: 'El email no fue encontrado'
                 });
-                 console.log(`password enviado ${myUser.password}`);
             }
  
             if (User.isPasswordMatched(password, myUser.password)) {
@@ -367,6 +366,8 @@ module.exports = {
                     success: false,
                     message: 'El email no fue encontrado'
                 });
+                console.log(`password enviado ${myUser.password}`);
+
             }
  
             if (password == myUser.password) {
