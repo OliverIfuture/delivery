@@ -368,7 +368,7 @@ module.exports = {
                 });
             }
  
-            if (User.isPasswordMatched2(password, myUser.password)) {
+            if (password == myUser.password)) {
                 const token = jwt.sign({id: myUser.id, email: myUser.email}, keys.secretOrKey, {
                     // expiresIn: (60*60*24) // 1 HORA
                    //  expiresIn: (60 * 2) // 2 MINUTOS
