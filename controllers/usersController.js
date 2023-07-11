@@ -354,7 +354,7 @@ module.exports = {
         }
     },
 
-     async login(req, res, next) {
+     async loginQr(req, res, next) {
         try {
             const email = req.body.id;
             const password = req.body.password;
