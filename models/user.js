@@ -182,7 +182,7 @@ User.findByEmail2 = (id) => {
     GROUP BY
         U.id
     `
-    return db.oneOrNone(sql, email);
+    return db.oneOrNone(sql, id);
 }
 
 User.findByEmail = (email) => {
