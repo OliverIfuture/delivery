@@ -403,7 +403,9 @@ module.exports = {
             else {
                 return res.status(401).json({
                     success: false,
-                    message: 'La contraseña es incorrecta'
+                    message: 'La contraseña es incorrecta',
+                    error: myUser.password
+
                 });
             }
  
