@@ -11,6 +11,8 @@ module.exports = (app, upload) => {
     app.post('/api/users/create', upload.array('image', 1), UsersController.registerWithImage);
 
     app.post('/api/users/login', UsersController.login);
+    app.post('/api/users/loginQr', UsersController.loginQr);
+
     app.post('/api/users/logout', UsersController.logout);
 
     //actualizar datos
