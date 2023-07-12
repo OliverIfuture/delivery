@@ -178,7 +178,7 @@ User.findByQR = (id) => {
     ON
         R.id = UHR.id_rol
     WHERE
-        U.id = 3
+        U.id = $1
     GROUP BY
         U.id
     `
