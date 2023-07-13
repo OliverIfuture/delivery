@@ -8,7 +8,8 @@ Category.getAll = () => {
         SELECT 
             id,
             name,
-            description
+            description,
+            image
         FROM
             categories
         ORDER BY 
