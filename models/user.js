@@ -426,6 +426,23 @@ User.updateNotificationToken = (id, token) => {
     ]);
 }
 
+User.updatePoints = (id, puntos) => {
+    const sql = `
+    UPDATE
+        users
+    SET
+        balance = $2
+    WHERE
+        id = $1
+    `;
+
+    return db.none(sql, [
+        id,
+        puntos
+
+    ]);
+}
+
 User.forgotPass = (email, password) => {
     const myPasswordHashed = crypto.createHash('md5').update(password).digest('hex');
     password = myPasswordHashed;
