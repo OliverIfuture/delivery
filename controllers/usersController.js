@@ -467,6 +467,34 @@ module.exports = {
         }
 
     },
+
+    async updatePoints(req, res, next) {
+        try {
+
+            const id = req.params.id; // CLIENTE
+            const puntos = req.params.puntos;
+            // CLIENTE
+            const data = await User.updatePoints(id, puntos);
+            console.log(`Nuevo balance: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'Puntos Actualizados',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error contacta a soporte',
+                error: error
+            });
+        }
+    },
     
         async forgotPass(req, res, next) {
         try {
