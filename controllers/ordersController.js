@@ -254,6 +254,7 @@ async createSale(req, res, next) {
             ////recorrer todos los productos de la orden
             for (const product of sales.products) {
                 console.log(`aqui entran los productos ${JSON.stringify(sales)}`);
+                await OrderHasProducts.createSale(product.name, product.price, product.image1, product.price_buy, data.reference);
 
 
             }
