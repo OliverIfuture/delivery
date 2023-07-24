@@ -331,7 +331,7 @@ Order.cancelOrder = (order) => {
 }
 
 
-Sales.createSale = (sales) => {
+Order.createSale = (sales) => {
     const sql = `
     INSERT INTO
     
