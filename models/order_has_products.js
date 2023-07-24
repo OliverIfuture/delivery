@@ -32,7 +32,7 @@ OrderHasProducts.createSale = (name, price, image1, price_buy, reference) => {
     const sql = `
 
     INSERT INTO 
-    sales(
+    order_sales(
             product_name,
             product_price,
             image_product,
