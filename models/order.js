@@ -362,7 +362,7 @@ sales(
     sales.cash,
     sales.credit_card,
     sales.points,
-    sales.date,
+    new Date(),
     sales.total,
     sales.employed,
     sales.is_trainer,
