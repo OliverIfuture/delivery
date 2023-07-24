@@ -337,9 +337,6 @@ Order.createSale = (sales) => {
     
 sales(
     name_store,
-    product_name,
-    product_price,
-    product_coast,
     cash,
     credit_card,
     points,
@@ -347,7 +344,6 @@ sales(
     total,
     employed,
     is_trainer,
-    image_product,
     image_client,
     reference
 
@@ -357,9 +353,6 @@ sales(
 
     return db.oneOrNone(sql, [
     sales.name_store,
-    sales.product_name,
-    sales.product_price,
-    sales.product_coast,
     sales.cash,
     sales.credit_card,
     sales.points,
@@ -367,7 +360,6 @@ sales(
     sales.total,
     sales.employed,
     sales.is_trainer,
-    sales.image_product,
     sales.image_client,
     sales.reference
 
