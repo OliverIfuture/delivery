@@ -348,10 +348,11 @@ sales(
     employed,
     is_trainer,
     image_product,
-    image_client
+    image_client,
+    reference
 
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -367,7 +368,8 @@ sales(
     sales.employed,
     sales.is_trainer,
     sales.image_product,
-    sales.image_client
+    sales.image_client,
+    sales.reference
 
     ]);
 }
