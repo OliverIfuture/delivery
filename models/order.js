@@ -330,4 +330,46 @@ Order.cancelOrder = (order) => {
     ]);
 }
 
+
+Sales.createSale = (sales) => {
+    const sql = `
+    INSERT INTO
+    
+sales(
+    name_store,
+    product_name,
+    product_price,
+    product_coast,
+    cash,
+    credit_card,
+    points,
+    date,
+    total,
+    employed,
+    is_trainer,
+    image_product,
+    image_client
+
+        )
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+    sales.name_store,
+    sales.product_name,
+    sales.product_price,
+    sales.product_coast,
+    sales.cash,
+    sales.credit_card,
+    sales.points,
+    Date.now(),
+    sales.total,
+    sales.employed,
+    sales.is_trainer,
+    sales.image_product,
+    sales.image_client
+
+    ]);
+}
+
 module.exports = Order;
