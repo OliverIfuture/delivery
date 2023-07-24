@@ -28,4 +28,28 @@ OrderHasProducts.create = (id_order, id_product, quantity) => {
     ]);
 }
 
+OrderHasProducts.createSale = (product_name, product_price, image_product,product_coast,reference) => {
+    const sql = `
+
+    INSERT INTO 
+    sales(
+            product_name,
+            product_price,
+            image_product,
+            product_coast,
+            reference
+        )
+
+    VALUES($1, $2, $3, $4, $5)
+    `;
+
+    return db.none(sql, [
+        product_name,
+        product_price,
+        image_product,
+        product_coast,
+        reference
+    ]);
+}
+
 module.exports = OrderHasProducts;
