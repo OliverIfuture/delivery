@@ -366,7 +366,7 @@ sales(
     ]);
 }
 
-Order.selectOrder = (status) => {
+Order.selectOrder = () => {
     const sql = `
   SELECT 
         S.id,
