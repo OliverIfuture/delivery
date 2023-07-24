@@ -243,10 +243,9 @@ module.exports = {
                 error: error
             });
         }
-    }
-},
+    },
 
-async createSale(req, res, next) {
+        async createSale(req, res, next) {
         try {
 
             let sales = req.body;
@@ -275,3 +274,7 @@ async createSale(req, res, next) {
             });
         }
     }
+        
+}
+
+
