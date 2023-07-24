@@ -28,7 +28,7 @@ OrderHasProducts.create = (id_order, id_product, quantity) => {
     ]);
 }
 
-OrderHasProducts.createSale = (product_name, product_price, image_product,product_coast,reference) => {
+OrderHasProducts.createSale = (name, price, image1, price_buy, reference) => {
     const sql = `
 
     INSERT INTO 
@@ -44,10 +44,10 @@ OrderHasProducts.createSale = (product_name, product_price, image_product,produc
     `;
 
     return db.none(sql, [
-        product_name,
-        product_price,
-        image_product,
-        product_coast,
+        name, 
+        price, 
+        image1, 
+        price_buy, 
         reference
     ]);
 }
