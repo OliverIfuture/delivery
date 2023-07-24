@@ -362,7 +362,7 @@ sales(
     sales.cash,
     sales.credit_card,
     sales.points,
-    Date.now(),
+    sales.date,
     sales.total,
     sales.employed,
     sales.is_trainer,
