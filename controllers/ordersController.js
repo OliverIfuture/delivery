@@ -274,4 +274,4 @@ async createSale(req, res, next) {
                 error: error
             });
         }
-    },
+    }
