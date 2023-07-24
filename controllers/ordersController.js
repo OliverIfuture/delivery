@@ -249,10 +249,11 @@ async createSale(req, res, next) {
         try {
 
             let sales = req.body;
+            const data = await Order.createSale(sales);
+
             ////recorrer todos los productos de la orden
             for (const product of sales.products) {
                 console.log(`aqui entran los productos ${JSON.stringify(sales)}`);
-                const data = await Order.createSale(sales);
 
 
             }
