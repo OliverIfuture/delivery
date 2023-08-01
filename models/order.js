@@ -366,7 +366,7 @@ sales(
     ]);
 }
 
-Order.selectOrder = (dato) => {
+Order.selectOrder = (date) => {
     const sql = `
   SELECT 
         S.id,
@@ -401,7 +401,7 @@ Order.selectOrder = (dato) => {
         S.id
 	ORDER BY S.id ASC
     `;
-    return db.manyOrNone(sql,dato);
+    return db.manyOrNone(sql,date);
 }
 
 module.exports = Order;
