@@ -279,7 +279,9 @@ async createSale(req, res, next) {
 
  async selectOrder(req, res, next) {
         try {
-            const data = await Order.selectOrder();
+            const date = req.params.date;
+
+            const data = await Order.selectOrder(date);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
             
