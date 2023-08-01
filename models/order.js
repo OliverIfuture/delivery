@@ -366,7 +366,7 @@ sales(
     ]);
 }
 
-Order.selectOrder = () => {
+Order.selectOrder = (dato) => {
     const sql = `
   SELECT 
         S.id,
@@ -396,12 +396,12 @@ Order.selectOrder = () => {
     INNER JOIN
         order_sales AS P
     ON
-        P.reference = S.reference
+        P.reference = S.reference where S.date = $1
        GROUP BY
         S.id
 	ORDER BY S.id ASC
     `;
-    return db.manyOrNone(sql);
+    return db.manyOrNone(sql,dato);
 }
 
 module.exports = Order;
