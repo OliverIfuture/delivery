@@ -392,7 +392,7 @@ Order.selectOrder = (date) => {
 		'product_coast', P.product_coast,
                 'reference', P.reference
             )
-        ) AS products
+        ) AS productsOrder
 
     FROM 
         sales AS S
