@@ -345,7 +345,8 @@ sales(
     employed,
     is_trainer,
     image_client,
-    reference
+    reference,
+    hour
 
         )
     VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
@@ -361,7 +362,8 @@ sales(
     sales.employed,
     sales.is_trainer,
     sales.image_client,
-    sales.reference
+    sales.reference,
+    sales.hour
 
     ]);
 }
@@ -379,7 +381,8 @@ Order.selectOrder = (date) => {
         S.employed,
         S.is_trainer,
         S.image_client,
-        S.reference,		
+        S.reference,	
+	S.hour,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
