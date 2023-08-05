@@ -28,7 +28,7 @@ OrderHasProducts.create = (id_order, id_product, quantity) => {
     ]);
 }
 
-OrderHasProducts.createSale = (name, price, image1, price_buy, reference) => {
+OrderHasProducts.createSale = (name, price, image1, price_buy, reference, quantity) => {
     const sql = `
 
     INSERT INTO 
@@ -37,7 +37,8 @@ OrderHasProducts.createSale = (name, price, image1, price_buy, reference) => {
             product_price,
             image_product,
             product_coast,
-            reference
+            reference,
+            quantity
         )
 
     VALUES($1, $2, $3, $4, $5)
@@ -48,7 +49,8 @@ OrderHasProducts.createSale = (name, price, image1, price_buy, reference) => {
         price, 
         image1, 
         price_buy, 
-        reference
+        reference,
+        quantity
     ]);
 }
 
