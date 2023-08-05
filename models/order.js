@@ -364,8 +364,7 @@ sales(
     sales.is_trainer,
     sales.image_client,
     sales.reference,
-    sales.hour,
-    sales.quantity
+    sales.hour
 
     ]);
 }
@@ -385,7 +384,6 @@ Order.selectOrder = (date) => {
         S.image_client,
         S.reference,	
 	S.hour,
- 	S.quantity,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -393,7 +391,8 @@ Order.selectOrder = (date) => {
                 'product_price', P.product_price,
                 'image_product', P.image_product,
 		'product_coast', P.product_coast,
-                'reference', P.reference
+                'reference', P.reference,
+		'quantity', P.quantity
             )
         ) AS productsOrder
 
