@@ -346,10 +346,11 @@ sales(
     is_trainer,
     image_client,
     reference,
-    hour
+    hour,
+    quantity
 
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11,$12) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -363,7 +364,8 @@ sales(
     sales.is_trainer,
     sales.image_client,
     sales.reference,
-    sales.hour
+    sales.hour,
+    sales.quantity
 
     ]);
 }
@@ -383,6 +385,7 @@ Order.selectOrder = (date) => {
         S.image_client,
         S.reference,	
 	S.hour,
+ 	S.quantity,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
