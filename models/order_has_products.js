@@ -41,7 +41,7 @@ OrderHasProducts.createSale = (name, price, image1, price_buy, reference, quanti
             quantity
         )
 
-    VALUES($1, $2, $3, $4, $5)
+    VALUES($1, $2, $3, $4, $5, $6)
     `;
 
     return db.none(sql, [
