@@ -59,7 +59,7 @@ module.exports = {
         else if (files.length > 0 && files.length <= 3 ){
             try {
 
-                const data = await Product.create(product);//ALMACENANDO VARIOS PRODUCTOS
+                const data = await Product.createTab(product);//ALMACENANDO VARIOS PRODUCTOS
                 product.id = data.id;
 
                 const start = async () => {
