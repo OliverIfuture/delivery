@@ -33,6 +33,47 @@ Product.create = (product) => {
     ]);
 }
 
+Product.createTab = (product) => {
+    const sql = `
+    INSERT INTO 
+        products(
+            name,
+            description,
+            price,
+            image1,
+            image2,
+            image3,
+            id_category,
+            created_at,
+            updated_at,
+            stock,
+	    id_company, 
+     	    price_special,
+	    price_buy,
+     	    state
+	    
+            
+        )
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, 'true',$10 ,$11 ,$12 ,$13) RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        product.name,
+        product.description,
+        product.price,
+        product.image1,
+        product.image2,
+        product.image3,
+        product.id_category,
+        new Date(),
+        new Date(),
+        product.id_company,
+	product.price_special,
+	product.price_buy,
+	product.state
+        
+    ]);
+}
+
 Product.findByCategory = (id_category) => {
     const sql = `
 SELECT 
