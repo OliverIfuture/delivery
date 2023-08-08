@@ -1,6 +1,18 @@
 const db = require('../config/config');
 const Product = {};
 
+
+Product.getAll = () =>{
+	const sql = `
+		 select * from products
+		 order by id_category
+ 
+ 
+ `;
+return db.manyOrNone(sql);
+
+}
+
 Product.create = (product) => {
     const sql = `
     INSERT INTO 
