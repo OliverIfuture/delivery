@@ -4,6 +4,24 @@ const asyncForEach = require('../utils/async_foreach');
 
 module.exports = {
 
+      async getAll(req, res, next) {
+        try {
+            const data = await Product.getAll();
+            console.log(`Productos obtenidos: ${data}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
+
     async findByCategory(req, res, next) {
 
         try {
