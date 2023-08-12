@@ -260,6 +260,32 @@ module.exports = {
             });
         }
     }
+      
+    async deleteSale(req, res, next) {
+        try {
 
+            const sales = req.params;
+
+            const data = await Product.deleteSale(sales.id);
+            console.log(`Product to delete: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'venta eliminada correctamente',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error eliminando la venta',
+                error: error
+            });
+        }
+    }
 
 }
