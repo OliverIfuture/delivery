@@ -191,6 +191,23 @@ Product.delete = (id) => {
         
     ]);
 }
+
+Product.deleteSale = (id) => {
+    const sql = `
+
+    DELETE 
+    
+    FROM sales 
+
+    WHERE id = $1
+    `;
+
+    return db.none(sql, [
+        id
+        
+    ]);
+}
+
 Product.updateStock = (product) => {
     const sql = `
     UPDATE
