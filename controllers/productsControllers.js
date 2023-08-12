@@ -259,7 +259,7 @@ module.exports = {
                 error: error
             });
         }
-    }
+    },
       
     async deleteSale(req, res, next) {
         try {
