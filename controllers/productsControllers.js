@@ -264,9 +264,9 @@ module.exports = {
     async deleteSale(req, res, next) {
         try {
 
-            const sales = req.params;
+            const product = req.params;
 
-            const data = await Product.deleteSale(sales.id);
+            const data = await Product.deleteSale(product.id);
             console.log(`Product to delete: ${JSON.stringify(data)}`);
 
 
