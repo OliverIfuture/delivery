@@ -449,4 +449,29 @@ caja(
     ]);
 }
 
+
+Order.insertDateIncome = (sales) => {
+    const sql = `
+    INSERT INTO
+    
+cash_income(
+    date,
+    amount,
+    description,
+    id_close_shift,
+    id_company,
+    user_id
+        )
+    VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+    new Date(),
+    sales.amount,
+    sales.description,
+    sales.id_close_shift,
+    sales.id_company,
+    sales.user_id,	    
+    ]);
+}
 module.exports = Order;
