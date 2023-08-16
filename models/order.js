@@ -492,7 +492,7 @@ Order.selectOpenShift = (date) => {
         C.total_cash,	
 	     C.total_card,
 		 C.id_company,
-		 SUM(P.amount) as amount,
+		 SUM(P.amount) as amount_income,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
