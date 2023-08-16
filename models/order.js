@@ -478,7 +478,7 @@ Order.insertDateExpenses = (sales) => {
     const sql = `
     INSERT INTO
     
-cash_income(
+cash_expenses(
     date,
     amount,
     description,
