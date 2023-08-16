@@ -474,4 +474,14 @@ cash_income(
     sales.user_id,	    
     ]);
 }
+
+
+Order.selectOrder = (date) => {
+    const sql = `
+select * from caja
+where state = 'ABIERTA'
+    `;
+    return db.manyOrNone(sql,date);
+}
+
 module.exports = Order;
