@@ -439,13 +439,13 @@ caja(
     sales.income,
     sales.expenses,
     sales.change,
-    sales.idUser,
+    sales.id_user,
     sales.total,
     sales.state,
-    sales.idCloseShift,
-    sales.totalCard,
-    sales.totalCash,
-    sales.idCompany	    
+    sales.id_close_shift,
+    sales.total_card,
+    sales.total_cash,
+    sales.id_company	    
     ]);
 }
 
