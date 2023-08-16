@@ -407,4 +407,46 @@ Order.selectOrder = (date) => {
     return db.manyOrNone(sql,date);
 }
 
+
+
+
+
+
+Order.closeShift = (sales) => {
+    const sql = `
+    INSERT INTO
+    
+caja(
+    date_start,
+    date_end,
+    income,
+    expenses,
+    change,
+    id_user,
+    total,
+    state,
+    id_close_shift,
+    total_card,
+    total_cash,
+    id_company
+        )
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11,$12) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+    sales.dateStart,
+    sales.dateEnd,
+    sales.income,
+    sales.expenses,
+    sales.change,
+    sales.idUser,
+    sales.total,
+    sales.state,
+    sales.idCloseShift,
+    sales.totalCard,
+    sales.totalCash,
+    sales.idCompany	    
+    ]);
+}
+
 module.exports = Order;
