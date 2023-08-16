@@ -307,6 +307,10 @@ async createSale(req, res, next) {
         try {
 
             let sales = req.body;
+             console.log(`Status: ${JSON.stringify(sales)}`);
+
+
+                
             const data = await Order.closeShift(sales);
              console.log(`Status: ${JSON.stringify(data)}`);
 
