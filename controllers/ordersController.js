@@ -347,7 +347,7 @@ async createSale(req, res, next) {
                 return res.status(201).json({
 
                 success: true,
-                message: 'La orden se creo correctamente',
+                message: 'Ingresos capturado correctamente',
                 data: data.id
             });
             
@@ -356,7 +356,7 @@ async createSale(req, res, next) {
             return res.status(501).json({
 
                 success: false,
-                message: 'Hubo un error creado la orden',
+                message: 'Hubo un error capturando el ingreso',
                 error: error
             });
         }
