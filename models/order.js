@@ -478,8 +478,40 @@ cash_income(
 
 Order.selectOpenShift = (date) => {
     const sql = `
-select * from caja
-where state = 'ABIERTA'
+  SELECT 
+        C.id,
+        C.date_start,
+        C.date_end,
+        C.income,
+        C.expenses,
+        C.change,
+        C.id_user,
+        C.total,
+        C.state,
+        C.id_close_shift,
+        C.total_cash,	
+	     C.total_card,
+		 C.id_company,
+		 SUM(P.amount) as amount,
+        JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', P.id,
+                'amount', P.amount,
+                'description', P.description,
+                'id_close_shift', P.id_close_shift,
+		'user_id', P.user_id,
+                'date', P.date            
+			)
+        ) AS CashDetails
+
+    FROM 
+        caja AS C
+    INNER JOIN
+        cash_income AS P
+    ON
+        P.id_close_shift = C.id_close_shift where C.state = 'ABIERTA'
+       GROUP BY
+        C.id
     `;
     return db.manyOrNone(sql,date);
 }
