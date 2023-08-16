@@ -360,7 +360,30 @@ async createSale(req, res, next) {
                 error: error
             });
         }
-    },      
+    },   
+
+
+ async selectOpenShift(req, res, next) {
+        try {
+            const date = req.params.date;
+
+            const data = await Order.selectOpenShift(date);
+            console.log(`Status: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+            
+        } catch (error) {
+            
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las ventas',
+                error: error,
+                success: false
+            
+
+            });
+        }
+    },
+        
 }
 
 
