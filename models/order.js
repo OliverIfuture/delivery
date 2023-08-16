@@ -434,8 +434,8 @@ caja(
     `;
 
     return db.oneOrNone(sql, [
-    sales.dateStart,
-    sales.dateEnd,
+    Date.now(),
+    Date.now(),
     sales.income,
     sales.expenses,
     sales.change,
