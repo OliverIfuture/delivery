@@ -22,6 +22,7 @@ module.exports = (app) => {
     app.post('/api/orders/createSale', passport.authenticate('jwt', { session: false }), ordersController.createSale);
 
     app.post('/api/orders/closeShift', passport.authenticate('jwt', { session: false }), ordersController.closeShift);
+    app.post('/api/orders/insertDateIncome', passport.authenticate('jwt', { session: false }), ordersController.insertDateIncome);
 
        /* 
     *put ROUTES actualizar
