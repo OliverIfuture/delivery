@@ -476,7 +476,7 @@ cash_income(
 }
 
 
-Order.selectOrder = (date) => {
+Order.selectOpenShift = (date) => {
     const sql = `
 select * from caja
 where state = 'ABIERTA'
