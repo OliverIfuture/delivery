@@ -331,7 +331,36 @@ async createSale(req, res, next) {
             });
         }
     },             
+      
         
+        async insertDateIncome(req, res, next) {
+        try {
+
+            const sales = req.body;
+             console.log(`Status: ${JSON.stringify(sales)}`);
+
+
+                
+            const data = await Order.insertDateIncome(sales);
+             console.log(`Status: ${JSON.stringify(data)}`);
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'La orden se creo correctamente',
+                data: data.id
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error creado la orden',
+                error: error
+            });
+        }
+    },      
 }
 
 
