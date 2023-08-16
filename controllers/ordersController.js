@@ -306,7 +306,7 @@ async createSale(req, res, next) {
     async closeShift(req, res, next) {
         try {
 
-            let sales = req.body;
+            const sales = req.body;
              console.log(`Status: ${JSON.stringify(sales)}`);
 
 
