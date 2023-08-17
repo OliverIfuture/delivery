@@ -501,7 +501,7 @@ cash_expenses(
 
 Order.selectOpenShift = (date) => {
     const sql = `
-  SELECT 
+SELECT 
         C.id,
         C.date_start,
         C.date_end,
@@ -516,25 +516,38 @@ Order.selectOpenShift = (date) => {
 	     C.total_card,
 		 C.id_company,
 		 SUM(P.amount) as amount_income,
+		 SUM(Q.amount) as amount_expenses,
+
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
                 'amount', P.amount,
                 'description', P.description,
                 'id_close_shift', P.id_close_shift,
-		'user_id', P.user_id,
+		         'user_id', P.user_id,
                 'date', P.date            
 			)
-        ) AS CashDetails
-
+         )AS incomes,
+            JSON_BUILD_OBJECT(
+                'id', Q.id,
+                'amount', Q.amount,
+                'description', Q.description,
+                'id_close_shift', Q.id_close_shift,
+		'user_id', Q.user_id,
+                'date', Q.date            
+			)AS expenses
     FROM 
         caja AS C
     INNER JOIN
         cash_income AS P
     ON
-        P.id_close_shift = C.id_close_shift where C.state = 'ABIERTA'
+        P.id_close_shift = C.id_close_shift
+    left JOIN
+        cash_expenses AS Q
+    ON
+        Q.id_close_shift = C.id_close_shift where C.state = 'ABIERTA'		
        GROUP BY
-        C.id
+        C.id, Q.id
     `;
     return db.manyOrNone(sql,date);
 }
