@@ -597,4 +597,23 @@ SELECT
     `;
     return db.manyOrNone(sql,date);
 }
+
+
+Order.selectTotals = (shift_ref, callback) => {
+
+    const sql = `
+select 
+		    SUM(cash) as cash_totals ,
+		    SUM(credit_card) as credit_card_totals,
+		    SUM(points) as points_totals,
+		    SUM(total) as totals
+
+
+
+from sales as totals where shift_ref = $1`;
+    
+    return db.oneOrNone(sql, id).then(user => { callback(null, user); })
+
+}
+
 module.exports = Order;
