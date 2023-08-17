@@ -382,6 +382,7 @@ Order.selectOrder = (date) => {
         S.image_client,
         S.reference,	
 	S.hour,
+        S.shift_ref,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
