@@ -533,21 +533,31 @@ SELECT
                 'amount', Q.amount,
                 'description', Q.description,
                 'id_close_shift', Q.id_close_shift,
-		'user_id', Q.user_id,
+		        'user_id', Q.user_id,
                 'date', Q.date            
 			)AS expenses
     FROM 
         caja AS C
+		
+		
     INNER JOIN
+	        cash_expenses AS Q
+    ON
+       C.id_close_shift = Q.id_close_shift
+
+
+
+    inner JOIN
         cash_income AS P
     ON
-        P.id_close_shift = C.id_close_shift
-    left JOIN
-        cash_expenses AS Q
-    ON
-        Q.id_close_shift = C.id_close_shift where C.state = 'ABIERTA'		
+        C.id_close_shift = P.id_close_shift 
+		
+		
+	   where C.state = 'ABIERTA'		
        GROUP BY
         C.id, Q.id
+		FETCH FIRST 1 ROW ONLY
+
     `;
     return db.manyOrNone(sql,date);
 }
