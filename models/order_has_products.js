@@ -38,10 +38,11 @@ OrderHasProducts.createSale = (name, price, image1, price_buy, reference, quanti
             image_product,
             product_coast,
             reference,
-            quantity
+            quantity,
+            shift_ref
         )
 
-    VALUES($1, $2, $3, $4, $5, $6)
+    VALUES($1, $2, $3, $4, $5, $6,$7)
     `;
 
     return db.none(sql, [
@@ -50,7 +51,8 @@ OrderHasProducts.createSale = (name, price, image1, price_buy, reference, quanti
         image1, 
         price_buy, 
         reference,
-        quantity
+        quantity,
+        shift_ref
     ]);
 }
 
