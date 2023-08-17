@@ -519,7 +519,6 @@ SELECT
 	     C.total_card,
 		 C.id_company,
 		 SUM(P.amount) as amount_income,
-		 SUM(Q.amount) as amount_expenses,
 
         JSON_AGG(
             JSON_BUILD_OBJECT(
@@ -530,24 +529,9 @@ SELECT
 		         'user_id', P.user_id,
                 'date', P.date            
 			)
-         )AS cashIncome,
-            JSON_BUILD_OBJECT(
-                'id', Q.id,
-                'amount', Q.amount,
-                'description', Q.description,
-                'id_close_shift', Q.id_close_shift,
-		        'user_id', Q.user_id,
-                'date', Q.date            
-			)AS cashExpenses
+         )AS cashIncome
     FROM 
         caja AS C
-		
-		
-    INNER JOIN
-	        cash_expenses AS Q
-    ON
-       C.id_close_shift = Q.id_close_shift
-
 
 
     inner JOIN
@@ -558,12 +542,59 @@ SELECT
 		
 	   where C.state = 'ABIERTA'		
        GROUP BY
-        C.id, Q.id
-		FETCH FIRST ROW ONLY
+        C.id
+
 
 
     `;
     return db.manyOrNone(sql,date);
 }
+Order.selectOpenShiftExpenses = (date) => {
+    const sql = `
+SELECT 
+			C.id,
+			C.date_start,
+			C.date_end,
+			C.income,
+			C.expenses,
+			C.change,
+			C.id_user,
+			C.total,
+			C.state,
+			C.id_close_shift,
+			C.total_cash,	
+	        C.total_card,
+		    C.id_company,
+		    SUM(Q.amount) as amount_expenses,
 
+        JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', Q.id,
+                'amount', Q.amount,
+                'description', Q.description,
+                'id_close_shift', Q.id_close_shift,
+		        'user_id', Q.user_id,
+                'date', Q.date            
+			)
+         )AS cashExpenses
+
+    FROM 
+        caja AS C
+		
+		
+    INNER JOIN
+	        cash_expenses AS Q
+    ON
+       C.id_close_shift = Q.id_close_shift
+
+		
+	   where C.state = 'ABIERTA'		
+       GROUP BY
+        C.id
+
+
+
+    `;
+    return db.manyOrNone(sql,date);
+}
 module.exports = Order;
