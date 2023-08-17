@@ -13,6 +13,7 @@ module.exports = (app) => {
     app.get('/api/orders/selectOrder/:date', ordersController.selectOrder);
     app.get('/api/orders/selectOpenShift', ordersController.selectOpenShift);
     app.get('/api/orders/selectOpenShiftExpenses', ordersController.selectOpenShiftExpenses);
+    app.get('/api/orders/selectTotals/:shift_ref', ordersController.selectTotals );
 
 
     /* 
