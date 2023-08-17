@@ -527,7 +527,7 @@ SELECT
 		         'user_id', P.user_id,
                 'date', P.date            
 			)
-         )AS incomes,
+         )AS cashIncome,
             JSON_BUILD_OBJECT(
                 'id', Q.id,
                 'amount', Q.amount,
@@ -535,7 +535,7 @@ SELECT
                 'id_close_shift', Q.id_close_shift,
 		        'user_id', Q.user_id,
                 'date', Q.date            
-			)AS expenses
+			)AS cashExpenses
     FROM 
         caja AS C
 		
