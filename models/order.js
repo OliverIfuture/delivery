@@ -556,7 +556,8 @@ SELECT
 	   where C.state = 'ABIERTA'		
        GROUP BY
         C.id, Q.id
-		FETCH FIRST 1 ROW ONLY
+		FETCH FIRST ROW ONLY
+
 
     `;
     return db.manyOrNone(sql,date);
