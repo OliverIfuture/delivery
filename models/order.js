@@ -363,7 +363,7 @@ sales(
     sales.is_trainer,
     sales.image_client,
     sales.reference,
-    sales.hour
+    sales.hour,
     sales.shift_ref
 
     ]);
