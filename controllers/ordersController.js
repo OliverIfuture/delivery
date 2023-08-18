@@ -433,13 +433,13 @@ async createSale(req, res, next) {
     },    
 
 
-    async selectTotals (req, res, next) {
+async selectTotals(req, res, next) {
         try {
 
-            const shift_ref   = req.params.shift_ref ;
+            const shift_ref = req.params.shift_ref;
 
-            const data = await Order.selectTotals (shift_ref);
-            console.log(`Datos enviados de los totales: ${JSON.stringify(data)}`);
+            const data = await Order.selectTotals(shift_ref);
+            console.log(`Datos enviados del usuario entrenador: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
