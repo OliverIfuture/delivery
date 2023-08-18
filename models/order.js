@@ -616,4 +616,19 @@ from sales as totals where shift_ref = $1
     ]);
 }
 
+Order.closeShiftClose = (id_Close_Shift) => {
+    const sql = `
+    UPDATE
+        caja
+    SET
+        state = 'CERRADA'
+    WHERE
+        id_Close_Shift = $1
+    `;
+
+    return db.none(sql, [
+        id_Close_Shift
+    ]);
+}
+
 module.exports = Order;
