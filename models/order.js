@@ -605,7 +605,7 @@ select
 		    SUM(cash) as cash_totals ,
 		    SUM(credit_card) as credit_card_totals,
 		    SUM(points) as points_totals,
-	            SUM(points) as points_totals ,
+	            SUM(total) as total_totals ,
 		    SUM(total) + SUM(cash)  + SUM(credit_card) +  SUM(points) +  SUM(points)     as totals
 
 
