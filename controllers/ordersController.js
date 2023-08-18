@@ -461,8 +461,10 @@ async selectTotals(req, res, next) {
 
             const data = await Order.closeShiftClose(id_Close_Shift);
             console.log(`${JSON.stringify(data)}`);
-            return res.status(201).json(data);
-
+            return res.status(201).json({
+                success: true,
+                message: 'El cierre se realizo correctamente',
+            });
 
         }
         catch (error) {
@@ -470,7 +472,7 @@ async selectTotals(req, res, next) {
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
-                message: 'error al obtener el usuario por ID'
+                message: 'error al realizar el cierre'
             });
         }
     },     
