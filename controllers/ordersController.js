@@ -454,6 +454,27 @@ async selectTotals(req, res, next) {
         }
     },
 
+   async closeShiftClose(req, res, next) {
+        try {
+
+            const id_Close_Shift = req.params.id_Close_Shift;
+
+            const data = await Order.closeShiftClose(id_Close_Shift);
+            console.log(`${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener el usuario por ID'
+            });
+        }
+    },     
+
         
 }
 
