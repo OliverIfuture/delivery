@@ -599,8 +599,7 @@ SELECT
 }
 
 
-Order.selectTotals = (shift_ref, callback) => {
-
+Order.selectTotals = (shift_ref) => {
     const sql = `
 select 
 		    SUM(cash) as cash_totals ,
@@ -610,10 +609,11 @@ select
 
 
 
-from sales as totals where shift_ref = $1`;
-    
-    return db.oneOrNone(sql, id).then(user => { callback(null, user); })
-
+from sales as totals where shift_ref = $1
+    `;
+    return db.manyOrNone(sql,[
+        shift_ref
+    ]);
 }
 
 module.exports = Order;
