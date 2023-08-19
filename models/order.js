@@ -629,7 +629,7 @@ Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_
 	change = $5,
  	total = $6,
   	total_card = $7,
-   	total_cash = $8,
+   	total_cash = $8
     WHERE
         id_Close_Shift = $1
     `;
