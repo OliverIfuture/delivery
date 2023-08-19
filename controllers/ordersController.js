@@ -458,8 +458,14 @@ async selectTotals(req, res, next) {
         try {
 
             const id_Close_Shift = req.params.id_Close_Shift;
+            const income = req.params.income;
+            const expenses = req.params.expenses;
+            const change = req.params.change;
+            const total = req.params.total;
+            const total_card = req.params.total_card;
+            const total_cash = req.params.total_cash;
 
-            const data = await Order.closeShiftClose(id_Close_Shift);
+            const data = await Order.closeShiftClose(id_Close_Shift, income, expenses, change, total, total_card, total_cash);
             console.log(`${JSON.stringify(data)}`);
             return res.status(201).json({
                 success: true,
