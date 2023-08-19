@@ -616,7 +616,7 @@ from sales as totals where shift_ref = $1
     ]);
 }
 
-Order.closeShiftClose = (id_Close_Shift) => {
+Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_card, total_cash ) => {
     const sql = `
     UPDATE
         caja
