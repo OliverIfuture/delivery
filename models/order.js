@@ -620,14 +620,29 @@ Order.closeShiftClose = (id_Close_Shift) => {
     const sql = `
     UPDATE
         caja
+    	
     SET
-        state = 'CERRADA'
+        state = 'CERRADA',
+	date_end = $2,
+	income = $3,
+        expenses = $4,
+	change = $5,
+ 	total = $6,
+  	total_card = $7,
+   	total_cash = $8,
     WHERE
         id_Close_Shift = $1
     `;
 
     return db.none(sql, [
-        id_Close_Shift
+        id_Close_Shift,
+	new Date(),
+	income,
+	expenses,
+	change,
+	total,
+	total_card,
+	total_cash    
     ]);
 }
 
