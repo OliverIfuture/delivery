@@ -454,6 +454,28 @@ async selectTotals(req, res, next) {
         }
     },
 
+
+async selectExpenses(req, res, next) {
+        try {
+
+            const shift_ref = req.params.shift_ref;
+
+            const data = await Order.selectExpenses(shift_ref);
+            console.log(`Datos enviados de los gastos: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener los gastos'
+            });
+        }
+    },
+        
    async closeShiftClose(req, res, next) {
         try {
 
