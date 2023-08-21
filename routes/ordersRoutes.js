@@ -14,7 +14,7 @@ module.exports = (app) => {
     app.get('/api/orders/selectOpenShift', ordersController.selectOpenShift);
     app.get('/api/orders/selectOpenShiftExpenses', ordersController.selectOpenShiftExpenses);
     app.get('/api/orders/selectTotals/:shift_ref', ordersController.selectTotals );
-
+    app.get('/api/orders/selectExpenses/:shift_ref', ordersController.selectExpenses );        
 
     /* 
     *POST ROUTES
