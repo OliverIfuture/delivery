@@ -620,7 +620,7 @@ Order.selectExpenses = (shift_ref) => {
     const sql = `
     
 		select * from cash_expenses
-		where id_close_shift = $1 
+		where id_close_shift = $1 and description != 'ENTRADA DE TURNO'
   
     `;
     return db.manyOrNone(sql,[
