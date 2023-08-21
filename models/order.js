@@ -628,6 +628,18 @@ Order.selectExpenses = (shift_ref) => {
     ]);
 }
 
+Order.selectIncomes = (shift_ref) => {
+    const sql = `
+    
+		select * from cash_income
+		where id_close_shift = $1 and description != 'ENTRADA DE TURNO'
+  
+    `;
+    return db.manyOrNone(sql,[
+        shift_ref
+    ]);
+}
+
 Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_card, total_cash ) => {
     const sql = `
     UPDATE
