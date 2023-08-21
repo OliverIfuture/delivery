@@ -540,7 +540,7 @@ async selectIncomes(req, res, next) {
                 return res.status(201).json({
 
                 success: true,
-                message: 'La cuenta se elimino correctamente',
+                message: 'El gasto se elimino correctamente',
             });
             
             
@@ -549,12 +549,38 @@ async selectIncomes(req, res, next) {
             return res.status(501).json({
 
                 success: false,
-                message: 'Hubo un error eliminando la cuenta',
+                message: 'Hubo un error eliminando el gasto',
                 error: error
             });
         }
     },       
-        
+
+async deleteIncomes(req, res, next) {
+        try {
+
+            const id = req.params.id;
+
+            const data = await Order.deleteIncomes(id);
+            console.log(`a eliminar ingreso: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'El ingreso se elimino correctamente',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error eliminando el ingreso',
+                error: error
+            });
+        }
+    }, 
 }
 
 
