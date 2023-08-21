@@ -658,4 +658,20 @@ Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_
     ]);
 }
 
+Order.deleteExpenses = (id) => {
+    const sql = `
+
+    DELETE 
+    
+    FROM cash_expenses 
+
+    WHERE id = $1
+    `;
+
+    return db.none(sql, [
+        id
+        
+    ]);
+}
+
 module.exports = Order;
