@@ -616,6 +616,18 @@ from sales as totals where shift_ref = $1
     ]);
 }
 
+Order.selectExpenses = (shift_ref) => {
+    const sql = `
+    
+		select * from cash_expenses
+		where id_close_shift = $1 
+  
+    `;
+    return db.manyOrNone(sql,[
+        shift_ref
+    ]);
+}
+
 Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_card, total_cash ) => {
     const sql = `
     UPDATE
