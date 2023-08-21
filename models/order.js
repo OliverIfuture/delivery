@@ -685,5 +685,19 @@ Order.deleteExpenses = (id) => {
         
     ]);
 }
+Order.deleteIncomes = (id) => {
+    const sql = `
 
+    DELETE 
+    
+    FROM cash_income
+
+    WHERE id = $1
+    `;
+
+    return db.none(sql, [
+        id
+        
+    ]);
+}
 module.exports = Order;
