@@ -700,4 +700,29 @@ Order.deleteIncomes = (id) => {
         
     ]);
 }
+
+Order.selectShiftClose = () => {
+    const sql = `
+select caja.id as id,
+	   caja.date_start as inicio,
+	   caja.date_end as final,
+	   caja.income as ingresos,
+	   caja.expenses as gastos,
+	   caja.change as cambio,
+	   users.name as usuario,
+	   caja.total as totalVentas,
+	   caja.state as estado,
+	   caja.id_close_shift as idCierre,
+	   caja.total_card as totalTarjeta,
+	   caja.total_cash as totalEfectivo,
+	   company.name as sucursal
+	   
+		from caja
+		inner join users on caja.id_user = users.id
+		inner join company on caja.id_company = company.id
+		
+    `;
+
+    return db.manyOrNone(sql);
+}
 module.exports = Order;
