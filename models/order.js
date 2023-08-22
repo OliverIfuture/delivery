@@ -721,6 +721,8 @@ select caja.id,
 		inner join users on caja.id_user = users.id
 		inner join company on caja.id_company = company.id
 		where caja.state = 'CERRADA'
+  		order by caja.id desc
+
 		
     `;
 
