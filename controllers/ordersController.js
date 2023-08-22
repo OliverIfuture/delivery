@@ -317,7 +317,7 @@ async createSale(req, res, next) {
                 return res.status(201).json({
 
                 success: true,
-                message: 'La orden se creo correctamente',
+                message: 'Cierre se realizo correctamente',
                 data: data.id
             });
             
