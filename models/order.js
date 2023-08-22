@@ -720,6 +720,7 @@ select caja.id as id,
 		from caja
 		inner join users on caja.id_user = users.id
 		inner join company on caja.id_company = company.id
+		where caja.state = 'CERRADA'
 		
     `;
 
