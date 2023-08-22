@@ -585,7 +585,7 @@ async deleteIncomes(req, res, next) {
 async selectShiftClose(req, res, next) {
         try {
             const data = await Order.selectShiftClose();
-            console.log(`cierres: ${data}`);
+            console.log(`Cierres: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
