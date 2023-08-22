@@ -703,19 +703,19 @@ Order.deleteIncomes = (id) => {
 
 Order.selectShiftClose = () => {
     const sql = `
-select caja.id as id,
-	   caja.date_start as inicio,
-	   caja.date_end as final,
-	   caja.income as ingresos,
-	   caja.expenses as gastos,
-	   caja.change as cambio,
-	   users.name as usuario,
-	   caja.total as totalVentas,
-	   caja.state as estado,
-	   caja.id_close_shift as idCierre,
-	   caja.total_card as totalTarjeta,
-	   caja.total_cash as totalEfectivo,
-	   company.name as sucursal
+select caja.id,
+	   caja.date_start,
+	   caja.date_end,
+	   caja.income,
+	   caja.expenses,
+	   caja.change,
+	   users.name,
+	   caja.total,
+	   caja.state,
+	   caja.id_close_shift,
+	   caja.total_card,
+	   caja.total_cash,
+	   company.name
 	   
 		from caja
 		inner join users on caja.id_user = users.id
