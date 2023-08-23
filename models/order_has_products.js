@@ -34,7 +34,7 @@ OrderHasProducts.createSale = (name, price_special, image1, price_buy, reference
     INSERT INTO 
     order_sales(
             product_name,
-            price_special,
+            product_price,
             image_product,
             product_coast,
             reference,
