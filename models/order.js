@@ -407,7 +407,7 @@ Order.selectOrder = (date, shift_ref ) => {
         S.id
 	ORDER BY S.id ASC
     `;
-    return db.manyOrNone(sql [date, shift_ref]);
+    return db.manyOrNone(sql, date, shift_ref);
 }
 
 
