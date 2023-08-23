@@ -715,13 +715,15 @@ select caja.id,
 	   caja.id_close_shift,
 	   caja.total_card,
 	   caja.total_cash,
-	   company.name
-	   
+	   company.name,
+	   sum(order_sales.product_price * order_sales.quantity)- sum(order_sales.product_coast * order_sales.quantity) as ganancia
+
 		from caja
 		inner join users on caja.id_user = users.id
 		inner join company on caja.id_company = company.id
+		inner join order_sales on order_sales.shift_ref = caja.id_close_shift
 		where caja.state = 'CERRADA'
-  		order by caja.id desc
+		group by caja.id ,users.name,company.name
 
 		
     `;
