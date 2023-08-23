@@ -369,9 +369,9 @@ sales(
     ]);
 }
 
-Order.selectOrder = (date) => {
+Order.selectOrder = (date, shift_ref ) => {
     const sql = `
-  SELECT 
+ SELECT 
         S.id,
         S.name_store,
         S.cash,
@@ -402,12 +402,12 @@ Order.selectOrder = (date) => {
     INNER JOIN
         order_sales AS P
     ON
-        P.reference = S.reference where S.date = $1
+        P.reference = S.reference where S.date = '2023-08-22' and  S.shift_ref = $2
        GROUP BY
         S.id
 	ORDER BY S.id ASC
     `;
-    return db.manyOrNone(sql,date);
+    return db.manyOrNone(sql,date, shift_ref);
 }
 
 
