@@ -10,7 +10,7 @@ module.exports = (app) => {
     app.get('/api/orders/findByDeliveryAndStatus/:id_delivery/:status', passport.authenticate('jwt', { session: false }), ordersController.findByDeliveryAndStatus);
     app.get('/api/orders/findByClientAndStatus/:id_client/:status', passport.authenticate('jwt', {session: false}), ordersController.findByClientAndStatus);
 
-    app.get('/api/orders/selectOrder/:date', ordersController.selectOrder);
+    app.get('/api/orders/selectOrder/:date/:shift_ref', ordersController.selectOrder);
     app.get('/api/orders/selectOpenShift', ordersController.selectOpenShift);
     app.get('/api/orders/selectOpenShiftExpenses', ordersController.selectOpenShiftExpenses);
     app.get('/api/orders/selectTotals/:shift_ref', ordersController.selectTotals );
