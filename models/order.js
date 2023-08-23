@@ -402,7 +402,7 @@ Order.selectOrder = (date, shift_ref ) => {
     INNER JOIN
         order_sales AS P
     ON
-        P.reference = S.reference where S.date = $1' and  S.shift_ref = $2
+        P.reference = S.reference where S.date = $1 and S.shift_ref = $2
        GROUP BY
         S.id
 	ORDER BY S.id ASC
