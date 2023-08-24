@@ -546,7 +546,7 @@ User.findClient = (name) => {
     FROM
       users
     WHERE
-        name ILIKE $2
+        name ILIKE $1
     `;
 
     return db.manyOrNone(sql, `%${name}%`);
