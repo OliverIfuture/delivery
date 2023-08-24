@@ -549,7 +549,7 @@ User.findClient = (name) => {
         name ILIKE $2
     `;
 
-    return db.manyOrNone(sql, [`%${name}%`]);
+    return db.manyOrNone(sql, `%${name}%`);
 }
 
 module.exports = User;
