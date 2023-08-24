@@ -640,4 +640,21 @@ async deleteAccout(req, res, next) {
             });
         }
     },
+
+
+    async findClient(req, res, next) {
+        try {
+            const name = req.params.name; // CLIENTE
+            const data = await User.findClient(name);
+            return res.status(201).json(data);
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: `Error al listar los clientes por filtro`,
+                success: false,
+                error: error
+            });
+        }
+    },
 };
