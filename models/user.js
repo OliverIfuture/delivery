@@ -69,6 +69,7 @@ User.getShops = (employed) => {
 	   sales.image_client,
 	   sales.date,
 	   sales.hour,
+    	   sales.reference,
 	   order_sales.product_name,
 	   order_sales.product_price,
 	   order_sales.image_product,
