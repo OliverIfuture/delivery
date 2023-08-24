@@ -57,6 +57,32 @@ User.findById = (id, callback) => {
 
 }
 
+User.getShops = (employed) => {
+
+    const sql = `
+select sales.id,
+	   sales.name_store,
+	   sales.credit_card,
+	   sales.cash,
+	   sales.points,
+	   sales.employed,
+	   sales.image_client,
+	   sales.date,
+	   sales.hour,
+	   order_sales.product_name,
+	   order_sales.product_price,
+	   order_sales.image_product,
+	   order_sales.quantity
+	   
+	   from sales
+	   inner join order_sales on sales.reference = order_sales.reference
+	   where sales.employed = $1
+        `;
+    
+    return db.oneOrNone(sql, employed)
+
+}
+
 User.findByUserId = (id) => {
     const sql = `
     SELECT
