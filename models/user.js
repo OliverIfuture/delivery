@@ -60,7 +60,7 @@ User.findById = (id, callback) => {
 User.getShops = (employed) => {
 
     const sql = `
-select sales.id,
+           select sales.id,
 	   sales.name_store,
 	   sales.credit_card,
 	   sales.cash,
