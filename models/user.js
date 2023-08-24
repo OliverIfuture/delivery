@@ -80,7 +80,7 @@ User.getShops = (employed) => {
 	   where sales.employed = $1
         `;
     
-    return db.manyOrNone(sql, `%${employed}%`)
+    return db.manyOrNone(sql, employed)
 
 }
 
