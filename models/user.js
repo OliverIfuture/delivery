@@ -542,27 +542,11 @@ User.isPasswordMatched = (userPassword, hash) => {
 User.findClient = (name) => {
     const sql = `
     SELECT
-        P.id,
-        P.name,
-        P.description,
-        P.price,
-        P.image1,
-        P.image2,
-        P.image3,
-        P.id_category,
-	P.stock,
-	P.id_company,
-	P.state,
-	P.price_special,
-	P.price_buy
+       *
     FROM
-        products AS P
-    INNER JOIN
-        categories AS C
-    ON
-        P.id_category = C.id
+      users
     WHERE
-        p.name ILIKE $2
+        name ILIKE $2
     `;
 
     return db.manyOrNone(sql, [`%${name}%`]);
