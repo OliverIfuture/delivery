@@ -8,6 +8,8 @@ module.exports = (app, upload) => {
     app.get('/api/users/selectToken/:id',passport.authenticate('jwt', {session: false}) ,UsersController.selectToken);
     app.get('/api/users/getAdminsNotificationTokens', passport.authenticate('jwt', {session: false}), UsersController.getAdminsNotificationTokens);
     app.get('/api/users/getShops/:employed',passport.authenticate('jwt', {session: false}) ,UsersController.getShops);
+    app.get('/api/users/findClient/:name',passport.authenticate('jwt', {session: false}) ,UsersController.findClient);
+    
 
     app.post('/api/users/create', upload.array('image', 1), UsersController.registerWithImage);
 
