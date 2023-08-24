@@ -49,6 +49,27 @@ module.exports = {
         }
     },
 
+     async getShops(req, res, next) {
+        try {
+
+            const employed = req.params.employed;
+
+            const data = await User.getShops(employed);
+            console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener el usuario por ID'
+            });
+        }
+    },
+
         async findByState(req, res, next) {
         try {
 
