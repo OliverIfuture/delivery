@@ -303,7 +303,7 @@ async createSale(req, res, next) {
         try {
             const shift_ref = req.params.shift_ref;
 
-            const data = await Order.selectOrder(shift_ref);
+            const data = await Order.ShiftOrders(shift_ref);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
             
