@@ -766,6 +766,7 @@ select caja.id,
 		inner join order_sales on order_sales.shift_ref = caja.id_close_shift
 		where caja.state = 'CERRADA'
 		group by caja.id ,users.name,company.name
+  		order by caja.id desc
 
 		
     `;
