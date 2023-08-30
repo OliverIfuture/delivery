@@ -168,7 +168,6 @@ Product.update = (product) => {
         product.state,
         product.price_special,
         product.price_buy
-	new Date()
     ]);
 
 }
