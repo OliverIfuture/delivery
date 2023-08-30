@@ -3,6 +3,8 @@ const passport = require('passport');
 module.exports = (app, upload) => {
     app.get('/api/users/getAll', UsersController.getAll);
     app.get('/api/users/findByState/:state', UsersController.findByState);
+    app.get('/api/users/findByMail/:email',passport.authenticate('jwt', {session: false}) ,UsersController.findByMail);
+
     app.get('/api/users/findById/:id',passport.authenticate('jwt', {session: false}) ,UsersController.findById);
     app.get('/api/users/findDeliveryMen',passport.authenticate('jwt', {session: false}) ,UsersController.findDeliveryMan);
     app.get('/api/users/selectToken/:id',passport.authenticate('jwt', {session: false}) ,UsersController.selectToken);
