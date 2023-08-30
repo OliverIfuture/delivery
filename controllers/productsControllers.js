@@ -27,6 +27,8 @@ module.exports = {
 
             let product = req.body;
              await Product.update(product);
+            console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
+
 
                 return res.status(201).json({
                 success: true,
