@@ -413,7 +413,46 @@ Order.selectOrder = (date, shift_ref ) => {
     			]);
 }
 
+Order.selectOrderAll = (date ) => {
+    const sql = `
+ SELECT 
+        S.id,
+        S.name_store,
+        S.cash,
+        S.credit_card,
+        S.points,
+        S.date,
+        S.total,
+        S.employed,
+        S.is_trainer,
+        S.image_client,
+        S.reference,	
+	S.hour,
+        S.shift_ref,
+        JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', P.id,
+                'product_name', P.product_name,
+                'product_price', P.product_price,
+                'image_product', P.image_product,
+		'product_coast', P.product_coast,
+                'reference', P.reference,
+		'quantity', P.quantity
+            )
+        ) AS productsOrder
 
+    FROM 
+        sales AS S
+    INNER JOIN
+        order_sales AS P
+    ON
+        P.reference = S.reference where S.date = $1
+       GROUP BY
+        S.id
+	ORDER BY S.id desc
+    `;
+    return db.manyOrNone(sql, date);
+}
 
 
 Order.ShiftOrders = (shift_ref ) => {
