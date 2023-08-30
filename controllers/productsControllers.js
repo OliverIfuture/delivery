@@ -22,6 +22,28 @@ module.exports = {
         }
     },
 
+      async upateProduct(req, res, next) {
+        try {
+
+            let product = req.body;
+             await Product.update(product);
+
+                return res.status(201).json({
+                success: true,
+                message: 'El producto se actualizo correctamente',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error al actualizar el producto',
+                error: error
+            });
+        }
+    },   
+
     async findByCategory(req, res, next) {
 
         try {
