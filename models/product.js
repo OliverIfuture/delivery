@@ -152,12 +152,10 @@ Product.update = (product) => {
     SET
             name =$2,
             description = $3,
-            price = $4,
-            image1 = $5,
-            image2 = $6,
-            image3 = $7,    
-            id_category = $8,     
-            created_at = $9
+            price = $4, 
+	    state = $5,
+            price_special = $6,
+	    price_buy = $7
     where
 
         id = $1
@@ -167,11 +165,10 @@ Product.update = (product) => {
         product.name,
         product.description,
         product.price,
-        product.image1,
-        product.image2,
-        product.image3,
-        product.id_category,
-        new Date()
+        product.state,
+        product.price_special,
+        product.price_buy
+	new Date()
     ]);
 
 }
