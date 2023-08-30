@@ -298,7 +298,26 @@ async createSale(req, res, next) {
             });
         }
     },
+ async selectOrderAll(req, res, next) {
+        try {
+            const date = req.params.date;
 
+            const data = await Order.selectOrderAll(date);
+            console.log(`Status: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+            
+        } catch (error) {
+            
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las ventas',
+                error: error,
+                success: false
+            
+
+            });
+        }
+    },
  async ShiftOrders(req, res, next) {
         try {
             const shift_ref = req.params.shift_ref;
