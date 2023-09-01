@@ -195,6 +195,38 @@ Product.findByCategoryAndProductName = (id_category, product_name) => {
     return db.manyOrNone(sql, [id_category, `%${product_name}%`]);
 }
 
+
+Product.findByCategoryAndProductNameStocks = (id_category, product_name, id_company) => {
+    const sql = `
+    SELECT
+        P.id,
+        P.name,
+        P.description,
+        P.price,
+        P.image1,
+        P.image2,
+        P.image3,
+        P.id_category,
+	P.stock,
+	P.id_company,
+	S.stock as state,
+	P.price_special,
+	P.price_buy
+    FROM
+        products AS P
+    INNER JOIN
+        categories AS C
+    ON
+        P.id_category = C.id
+	inner join stock as S
+    on P.id = S.id_product	
+    WHERE
+        C.id = $1 AND p.name ILIKE $2 and S.id_company = $3
+    `;
+
+    return db.manyOrNone(sql, [id_category, `%${product_name}%` , id_company]);
+}
+
 Product.update = (product) => {
     const sql = `
     
