@@ -13,6 +13,25 @@ return db.manyOrNone(sql);
 
 }
 
+Product.getAllStocks = (id_company) =>{
+	const sql = `
+select products.id,
+	   categories.name,
+	   products.name,
+	   stock.stock
+from products
+
+inner join categories on categories.id = products.id_category
+inner join stock on stock.id_product = products.id
+where stock.id_company = $1
+order by id_category
+ 
+ 
+ `;
+return db.manyOrNone(sql, id_company);
+
+}
+
 Product.create = (product) => {
     const sql = `
     INSERT INTO 
