@@ -45,6 +45,25 @@ Product.create = (product) => {
     ]);
 }
 
+Product.setStock = (stock) => {
+    const sql = `
+    INSERT INTO 
+        stock(
+            id_company,
+            stock,
+            id_product
+        )
+    VALUES($1, $2, $3) RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        stock.id_company,
+        stock.stock,
+        stock.id_product
+        
+    ]);
+}
+
+
 Product.createTab = (product) => {
     const sql = `
     INSERT INTO 
