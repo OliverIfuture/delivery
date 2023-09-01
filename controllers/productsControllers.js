@@ -26,7 +26,7 @@ async setStock(req, res, next) {
             });
         }
         
-}
+},
 
       async getAll(req, res, next) {
         try {
