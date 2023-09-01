@@ -134,6 +134,38 @@ WHERE
     return db.manyOrNone(sql, id_category);
 }
 
+Product.findByCategoryStocks = (id_category, id_company) => {
+    const sql = `
+SELECT 
+	P.id,
+	P.name,
+	P.description,
+	P.price,
+	P.image1,
+	P.image2,
+	P.image3,
+	P.id_category,
+	P.stock,
+	P.id_company,
+	S.stock as state,
+	P.price_special,
+	P.price_buy
+FROM
+	products as P
+INNER JOIN 
+	categories as C
+ON
+	p.id_category = C.id
+inner join stock as S
+on P.id = S.id_product
+	
+WHERE
+	C.id = $1 and S.id_company = $2
+    
+    `;
+    return db.manyOrNone(sql, [id_category, id_company]);
+}
+
 Product.findByCategoryAndProductName = (id_category, product_name) => {
     const sql = `
     SELECT
