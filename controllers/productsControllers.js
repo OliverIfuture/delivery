@@ -46,6 +46,25 @@ async setStock(req, res, next) {
         }
     },
 
+async getAllStocks (req, res, next) {
+
+        try {
+            const id_company = req.params.id_company;//envia el vliente
+            const data = await Product.getAllStocks (id_company);
+
+            return res.status(201).json(data);
+
+            
+        } catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al listar los productos por categoria ${error}`,
+                success: false,
+                error: error
+                 });
+        }
+    },
+
       async upateProduct(req, res, next) {
         try {
 
