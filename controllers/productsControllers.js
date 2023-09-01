@@ -4,6 +4,30 @@ const asyncForEach = require('../utils/async_foreach');
 
 module.exports = {
 
+async setStock(req, res, next) {
+        try {
+
+            const stock = req.body;
+            console.log(`stock enviada: ${stock}`);
+
+            const data = await Product.setStock(stock);
+
+            return res.status(201).json({
+                message: ' el stock se actualizo  correctamente',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al actualizar stock',
+                success: false,
+                error: error
+            });
+        }
+        
+}
+
       async getAll(req, res, next) {
         try {
             const data = await Product.getAll();
