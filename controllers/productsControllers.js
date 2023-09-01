@@ -89,6 +89,28 @@ async setStock(req, res, next) {
         }
     },
 
+
+    async findByCategoryStocks (req, res, next) {
+
+        try {
+            const id_category = req.params.id_category;//envia el vliente
+            const id_company = req.params.id_company;//envia el vliente
+    
+            const data = await Product.findByCategoryStocks(id_category, id_company);
+
+            return res.status(201).json(data);
+
+            
+        } catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al listar los productos por categoria ${error}`,
+                success: false,
+                error: error
+                 });
+        }
+    },
+        
         async findByCategoryAndProductName(req, res, next) {
         try {
             const id_category = req.params.id_category; // CLIENTE
