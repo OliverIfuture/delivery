@@ -321,4 +321,15 @@ Product.updateStock = (product) => {
         product.stock
     ]);
 }
+
+Product.findMyProduct = (name) => {
+    const sql = `
+    select * from 
+    products 
+    where name = $1
+
+    `;
+    return db.manyOrNone(sql, name);
+}
+
 module.exports = Product;
