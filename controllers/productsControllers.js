@@ -396,7 +396,7 @@ async findByCategoryAndProductNameStocks (req, res, next) {
                 error: error
             });
         }
-    }
+    },
 
 
 async findMyProduct(req, res, next) {
