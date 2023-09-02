@@ -6,6 +6,7 @@ module.exports = (app, upload) => {
       app.post('/api/products/createTab',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.createTab);
       app.get('/api/products/getAll',passport.authenticate('jwt', {session: false}) , productsControllers.getAll);     
       app.get('/api/products/getAllStocks/:id_company',passport.authenticate('jwt', {session: false}) , productsControllers.getAllStocks);
+      app.get('/api/products/findMyProduct/:name',passport.authenticate('jwt', {session: false}) , productsControllers.findMyProduct);
 
       app.post('/api/products/setStock', passport.authenticate('jwt', { session: false }), productsControllers.setStock);
 
