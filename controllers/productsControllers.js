@@ -398,4 +398,26 @@ async findByCategoryAndProductNameStocks (req, res, next) {
         }
     }
 
+
+async findMyProduct(req, res, next) {
+        try {
+
+            const name = req.params.name;
+
+            const data = await Product.findMyProduct(name);
+            console.log(`Datos enviados del product: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener el producto por nombre'
+            });
+        }
+    },      
+
 }
