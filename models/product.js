@@ -82,7 +82,7 @@ Product.setStock = (stock) => {
     ]);
 }
 
-Product.updateStock = (id_product, stock, id_company) => {
+Product.updateStockers = (id_product, stock, id_company) => {
     const sql = `
     UPDATE
         stock
