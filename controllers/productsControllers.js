@@ -28,7 +28,7 @@ async setStock(req, res, next) {
         
 },
 
-async updateStock (req, res, next) {
+async updateStockers (req, res, next) {
         try {
 
             const id_product = req.params.id_product;             
