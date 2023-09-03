@@ -799,7 +799,8 @@ select caja.id,
 	   caja.total_card,
 	   caja.total_cash,
 	   company.name,
-	   sum(order_sales.product_price * order_sales.quantity)- sum(order_sales.product_coast * order_sales.quantity) as ganancia
+	   sum(order_sales.product_price * order_sales.quantity)- sum(order_sales.product_coast * order_sales.quantity) as ganancia,
+           caja.final_cash
 
 		from caja
 		inner join users on caja.id_user = users.id
