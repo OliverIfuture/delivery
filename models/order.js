@@ -734,7 +734,8 @@ Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_
 	change = $5,
  	total = $6,
   	total_card = $7,
-   	total_cash = $8
+   	total_cash = $8,
+        final_cash = $9
     WHERE
         id_Close_Shift = $1
     `;
@@ -747,7 +748,8 @@ Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_
 	change,
 	total,
 	total_card,
-	total_cash    
+	total_cash,
+	final_cash
     ]);
 }
 
