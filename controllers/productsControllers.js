@@ -35,7 +35,7 @@ async updateStock (req, res, next) {
             const stock = req.params.stock; 
             const id_company = req.params.id_company; 
 
-            const data = await Product.updateStock(id_product, stock, id_company);
+            const data = await Product.updateStockers(id_product, stock, id_company);
             console.log(`Nuevo stock: ${JSON.stringify(data)}`);
 
 
