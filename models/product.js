@@ -82,6 +82,18 @@ Product.setStock = (stock) => {
     ]);
 }
 
+Product.updateStock = (id_product, stock, id_company) => {
+    const sql = `
+    UPDATE
+        stock
+    SET
+        stock = $2
+	WHERE
+        id_product = $1 and id_company = $3
+    `;
+    return db.none(sql, [id_product, stock, id_company]);
+}
+
 
 Product.createTab = (product) => {
     const sql = `
