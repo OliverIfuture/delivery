@@ -721,7 +721,7 @@ Order.selectIncomes = (shift_ref) => {
     ]);
 }
 
-Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_card, total_cash ) => {
+Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_card, total_cash, final_cash ) => {
     const sql = `
     UPDATE
         caja
