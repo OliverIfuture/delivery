@@ -18,7 +18,7 @@ module.exports = (app, upload) => {
 
       app.put('/api/products/updateStock', productsControllers.updateProduct);
       app.put('/api/products/update', productsControllers.upateProduct);
-      app.put('/api/products/updateStockers/:id_product/:stock/:id_company', productsControllers.updateStock);
+      app.put('/api/products/updateStockers/:id_product/:stock/:id_company', productsControllers.updateStockers);
 
       app.delete('/api/products/deleteProduct/:id', passport.authenticate('jwt', { session: false }), productsControllers.delete);
       app.delete('/api/products/deleteSale/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteSale);
