@@ -16,7 +16,7 @@ return db.manyOrNone(sql);
 Product.getAllStocks = (id_company) =>{
 	const sql = `
 select products.id,
-	   categories.name,
+	   categories.name as nameCat,
 	   products.name,
 	   stock.stock
 from products
