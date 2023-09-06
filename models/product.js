@@ -180,7 +180,8 @@ SELECT
 	P.id_company,
 	S.stock as state,
 	P.price_special,
-	P.price_buy
+	P.price_buy,
+ 	P.price_wholesale
 FROM
 	products as P
 INNER JOIN 
@@ -242,7 +243,8 @@ Product.findByCategoryAndProductNameStocks = (id_category, product_name, id_comp
 	P.id_company,
 	S.stock as state,
 	P.price_special,
-	P.price_buy
+	P.price_buy,
+ 	P.price_wholesale
     FROM
         products AS P
     INNER JOIN
