@@ -454,7 +454,7 @@ async findMyProduct(req, res, next) {
        async getAllCompany(req, res, next) {
         try {
             const data = await Product.getAllCompany();
-            console.log(`company obtenidos: ${data}`);
+            console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
