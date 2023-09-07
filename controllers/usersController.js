@@ -434,7 +434,13 @@ module.exports = {
                     autenticated: myUser.autenticated,
                     is_trainer: myUser.is_trainer,
                     document: myUser.document,
-                    roles: myUser.roles
+                    roles: myUser.roles,
+                    gym: myUser.gym,
+                    state: myUser.state,
+                    credential: myUser.credential,
+                    keystore: myUser.keystore,
+                    balance: myUser.balance,
+                    mi_store: myUser.mi_store
                 }
 
                 await User.updateToken(myUser.id, `JWT ${token}`);
