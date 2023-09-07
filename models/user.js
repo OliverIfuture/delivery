@@ -214,6 +214,7 @@ User.findByQR = (id) => {
         U.credential,
         U.keystore,
         U.balance,
+	U.mi_store,
         json_agg(
             json_build_object(
                 'id', R.id,
