@@ -362,4 +362,15 @@ Product.findMyProduct = (name) => {
     return db.manyOrNone(sql, name);
 }
 
+Product.getAllCompany = () =>{
+	const sql = `
+		 select * from company
+		 order by id
+ 
+ 
+ `;
+return db.manyOrNone(sql);
+
+}
+
 module.exports = Product;
