@@ -47,7 +47,8 @@ User.findById = (id, callback) => {
         state,
         credential,
         keystore,
-        balance
+        balance,
+	mi_store
     FROM
         users
     WHERE
@@ -76,7 +77,8 @@ User.findByMail = (email, callback) => {
         state,
         credential,
         keystore,
-        balance
+        balance,
+	mi_store
     FROM
         users
     WHERE
@@ -132,6 +134,7 @@ User.findByUserId = (id) => {
         U.credential,
         U.keystore,
         U.balance,
+	U.mi_store,
         json_agg(
             json_build_object(
                 'id', R.id,
@@ -177,7 +180,8 @@ User.findDeliveryMen = () => {
         U.state,
         U.credential,
         U.keystore,
-        U.balance
+        U.balance,
+	U.mi_store
     FROM
         users AS U
     INNER JOIN
@@ -261,6 +265,7 @@ User.findByEmail = (email) => {
         U.credential,
         U.keystore,
         U.balance,
+	U.mi_store
         json_agg(
             json_build_object(
                 'id', R.id,
