@@ -432,9 +432,9 @@ async createSale(req, res, next) {
 
  async selectOpenShift(req, res, next) {
         try {
-            const date = req.params.date;
+            const id_company = req.params.id_company;
 
-            const data = await Order.selectOpenShift(date);
+            const data = await Order.selectOpenShift(id_company);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
             
@@ -452,9 +452,9 @@ async createSale(req, res, next) {
     },
      async selectOpenShiftExpenses(req, res, next) {
         try {
-            const date = req.params.date;
+            const id_company = req.params.id_company;
 
-            const data = await Order.selectOpenShiftExpenses(date);
+            const data = await Order.selectOpenShiftExpenses(id_company);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
             
