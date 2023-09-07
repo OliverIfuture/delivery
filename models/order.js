@@ -583,7 +583,7 @@ cash_expenses(
     ]);
 }
 
-Order.selectOpenShift = (date) => {
+Order.selectOpenShift = (id_company) => {
     const sql = `
 SELECT 
         C.id,
@@ -621,16 +621,16 @@ SELECT
         C.id_close_shift = P.id_close_shift 
 		
 		
-	   where C.state = 'ABIERTA'		
+	   where C.state = 'ABIERTA' and C.id_company = $1	
        GROUP BY
         C.id
 
 
 
     `;
-    return db.manyOrNone(sql,date);
+    return db.manyOrNone(sql,id_company);
 }
-Order.selectOpenShiftExpenses = (date) => {
+Order.selectOpenShiftExpenses = (id_company) => {
     const sql = `
 SELECT 
 			C.id,
@@ -669,14 +669,14 @@ SELECT
        C.id_close_shift = Q.id_close_shift
 
 		
-	   where C.state = 'ABIERTA'		
+	   where C.state = 'ABIERTA' and C.id_company = $1		
        GROUP BY
         C.id
 
 
 
     `;
-    return db.manyOrNone(sql,date);
+    return db.manyOrNone(sql,id_company);
 }
 
 
