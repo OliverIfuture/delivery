@@ -14,8 +14,8 @@ module.exports = (app) => {
     app.get('/api/orders/selectOrderAll/:date', ordersController.selectOrderAll);
 
     app.get('/api/orders/selectOrder/:date/:shift_ref', ordersController.selectOrder);
-    app.get('/api/orders/selectOpenShift', ordersController.selectOpenShift);
-    app.get('/api/orders/selectOpenShiftExpenses', ordersController.selectOpenShiftExpenses);
+    app.get('/api/orders/selectOpenShift/:id_company', ordersController.selectOpenShift);
+    app.get('/api/orders/selectOpenShiftExpenses/:id_company', ordersController.selectOpenShiftExpenses);
     app.get('/api/orders/selectTotals/:shift_ref', ordersController.selectTotals );
     app.get('/api/orders/selectExpenses/:shift_ref', ordersController.selectExpenses );        
     app.get('/api/orders/selectIncomes/:shift_ref', ordersController.selectIncomes );        
