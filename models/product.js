@@ -271,7 +271,7 @@ Product.update = (product) => {
             price = $4,
 	    image1 = $5,
      	    image2 = $6,
-	    image3 = $7
+	    image3 = $7,
             id_category = $8,
             updated_at = $9,
             stock = $10,
