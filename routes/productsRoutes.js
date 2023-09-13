@@ -19,7 +19,7 @@ module.exports = (app, upload) => {
 
       app.put('/api/products/updateStock', productsControllers.updateProduct);
       app.put('/api/products/update', productsControllers.upateProduct);
-      app.put('/api/products/updateAdmin ', productsControllers.updateAdmin);
+      app.put('/api/products/updateAdmin', productsControllers.updateAdmin);
 
       app.put('/api/products/updateStockers/:id_product/:stock/:id_company', productsControllers.updateStockers);
 
