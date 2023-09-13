@@ -112,7 +112,8 @@ Product.createTab = (product) => {
 	    id_company, 
      	    price_special,
 	    price_buy,
-     	    state
+     	    state,
+	    price_wholesale
 	    
             
         )
@@ -131,7 +132,8 @@ Product.createTab = (product) => {
         product.id_company,
 	product.price_special,
 	product.price_buy,
-	product.state
+	product.state,
+	product.price_wholesale    
         
     ]);
 }
@@ -278,7 +280,8 @@ Product.update = (product) => {
 	    id_company = $11, 
      	    price_special = $12,
 	    price_buy = $13,
-     	    state = $14
+     	    state = $14,
+	    price_wholesale
 
     where
 
@@ -298,7 +301,8 @@ Product.update = (product) => {
 	product.id_company,
         product.price_special,
         product.price_buy,
-	product.state
+	product.state,
+	product.price_wholesale    
 
     ]);
 
