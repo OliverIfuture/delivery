@@ -269,13 +269,16 @@ Product.update = (product) => {
             name = $2,
             description = $3,
             price = $4,
-            id_category = $5,
-            updated_at = $6,
-            stock = $7,
-	    id_company = $8, 
-     	    price_special = $9,
-	    price_buy = $10,
-     	    state = $11
+	    image1 = $5,
+     	    image2 = $6,
+	    image3 = $7
+            id_category = $8,
+            updated_at = $9,
+            stock = $10,
+	    id_company = $11, 
+     	    price_special = $12,
+	    price_buy = $13,
+     	    state = $14
 
     where
 
@@ -286,6 +289,9 @@ Product.update = (product) => {
         product.name,
         product.description,
         product.price,
+        product.image1,
+        product.image2,
+        product.image3,
         product.id_category,
         new Date(),
 	product.stock,
