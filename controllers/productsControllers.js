@@ -373,6 +373,35 @@ async findByCategoryAndProductNameStocks (req, res, next) {
             });
         }
     },
+
+async updateAdmin (req, res, next) {
+        try {
+            
+            const product = req.body;
+            console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
+            
+
+            await Product.updateAdmin (product);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'Stock Actualizado',
+
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error con la actualizacion de stock',
+                error: error
+
+            });
+        }
+    },     
        
     async delete(req, res, next) {
         try {
