@@ -281,7 +281,7 @@ Product.update = (product) => {
      	    price_special = $12,
 	    price_buy = $13,
      	    state = $14,
-	    price_wholesale
+	    price_wholesale = $15
 
     where
 
