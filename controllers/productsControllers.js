@@ -374,14 +374,14 @@ async findByCategoryAndProductNameStocks (req, res, next) {
         }
     },
 
-async updateAdmin (req, res, next) {
+async updateAdmin(req, res, next) {
         try {
             
             const product = req.body;
             console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
             
 
-            await Product.updateAdmin (product);
+            await Product.updateAdmin(product);
 
             return res.status(201).json({
                 succes: true,
