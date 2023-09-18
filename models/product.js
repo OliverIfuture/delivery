@@ -413,4 +413,14 @@ return db.manyOrNone(sql);
 
 }
 
+Product.getGift = () =>{
+	const sql = `
+        select * from 
+	gift 
+        where active = 'true'
+ `;
+return db.manyOrNone(sql);
+
+}
+
 module.exports = Product;
