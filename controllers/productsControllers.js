@@ -519,7 +519,7 @@ async getGift(req, res, next) {
 
 async getGifts(req, res, next) {
         try {
-            const data = await Product.getGift();
+            const data = await Product.getGifts();
             console.log(`Datos del Gift: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
