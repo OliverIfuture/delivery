@@ -433,4 +433,16 @@ return db.manyOrNone(sql);
 
 }
 
+
+Product.turnOff = () => {
+    const sql = `
+    UPDATE
+        gift
+    SET
+        active = 'false'
+    `;
+
+    return db.none(sql);
+}
+
 module.exports = Product;
