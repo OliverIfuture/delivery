@@ -458,5 +458,26 @@ Product.turnOn = (id) => {
     return db.none(sql, id);
 }
 
+Product.createGift = (gift) => {
+    const sql = `
+    INSERT INTO 
+        gift(
+            code,
+            active,
+            amount
+            
+        )
+    VALUES($1, $2, $3) RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        gift.code,
+        gift.active,
+        gift.amount
+
+    ]);
+}
+
+
+
 
 module.exports = Product;
