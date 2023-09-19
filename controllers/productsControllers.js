@@ -586,6 +586,33 @@ async turnOff(req, res, next) {
 
             });
         }
-    },          
+    }, 
+
+
+   async createGift(req, res, next) {
+        try {
+
+        let gift = JSON.parse(req.body.gift);
+        console.log(`Producto: ${JSON.stringify(gift)}`);
+        await Product.createGift(gift);
+           
+                 return res.status(201).json({
+                 success: true,
+                 message: 'Cupon creado correctamente'
+
+                    });
+            }
+                
+             catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al registrar el producto ${error}`,
+                success: false,
+                error:error
+                
+                });
+            }
+
+    },      
 
 }
