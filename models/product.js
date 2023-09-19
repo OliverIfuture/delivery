@@ -427,7 +427,7 @@ return db.manyOrNone(sql);
 Product.getGifts = () =>{
 	const sql = `
         select * from 
-	gift 
+	gift order by active = 'true' desc
  `;
 return db.manyOrNone(sql);
 
