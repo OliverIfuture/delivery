@@ -445,4 +445,18 @@ Product.turnOff = () => {
     return db.none(sql);
 }
 
+
+Product.turnOn = (id) => {
+    const sql = `
+    UPDATE
+        gift
+    SET
+        active = 'true'
+	where gift_id = $1
+    `;
+
+    return db.none(sql, id);
+}
+
+
 module.exports = Product;
