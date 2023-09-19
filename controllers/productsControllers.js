@@ -561,4 +561,31 @@ async turnOff(req, res, next) {
         }
     },      
 
+
+  async turnOn(req, res, next) {
+        try {
+
+            const id = req.params.id;
+            await Product.turnOn(id);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'Cupon Activado',
+
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error al apagar cupones',
+                error: error
+
+            });
+        }
+    },          
+
 }
