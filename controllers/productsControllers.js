@@ -533,6 +533,32 @@ async getGifts(req, res, next) {
                 message: 'error al obtener'
             });
         }
-    },         
+    },  
+
+        
+async turnOff(req, res, next) {
+        try {
+            
+            await Product.turnOff();
+
+            return res.status(201).json({
+                succes: true,
+                message: 'Cupones apagados',
+
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error al apagar cupones',
+                error: error
+
+            });
+        }
+    },      
 
 }
