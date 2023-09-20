@@ -467,7 +467,7 @@ Product.createGift = (gift) => {
             amount
             
         )
-    VALUES($1, $2, $3) RETURNING id
+    VALUES($1, $2, $3)
     `;
     return db.oneOrNone(sql, [
         gift.code,
