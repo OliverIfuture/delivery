@@ -409,7 +409,7 @@ Product.getAllCompany = () =>{
  
  
  `;
-return db.oneOrNone(sql);
+return db.manyOrNone(sql);
 
 }
 
