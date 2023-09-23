@@ -134,7 +134,7 @@ async getAdminsNotificationTokens(req, res, next) {
     },
 
 
- async getUsersMultiNotificationTokens (req, res, next) {
+ async getUsersMultiNotificationTokens(req, res, next) {
         try {
             const data = await User.getUsersMultiNotificationTokens();    
             let tokens = [];
