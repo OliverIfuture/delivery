@@ -111,7 +111,7 @@ module.exports = {
     },
     
     
-        async getAdminsNotificationTokens(req, res, next) {
+async getAdminsNotificationTokens(req, res, next) {
         try {
             const data = await User.getAdminsNotificationTokens();    
             let tokens = [];
@@ -129,6 +129,29 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Error al obtener los repartidores'
+            });
+        }
+    },
+
+
+ async getUsersMultiNotificationTokens (req, res, next) {
+        try {
+            const data = await User.getUsersMultiNotificationTokens();    
+            let tokens = [];
+
+
+            data.forEach(d => {
+                tokens.push(d.notification_token);
+            });
+
+            console.log('Tokens de usuarios:', tokens);
+            return res.status(201).json(tokens);
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener los tokens de ususarios'
             });
         }
     },
