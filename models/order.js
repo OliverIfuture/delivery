@@ -258,7 +258,7 @@ Order.create = (order) => {
             updated_at,
             paymethod,
             hour_program,
-	    O.discounts,
+	    discounts,
 
 
         )
