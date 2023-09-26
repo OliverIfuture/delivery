@@ -15,6 +15,7 @@ Order.findByStatus = (status) => {
         O.timestamp,
         O.payMethod,
 	O.hour_program,
+  	O.discounts,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -95,6 +96,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
         O.timestamp,
         O.payMethod,
 	O.hour_program,
+ 	O.discounts,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -176,6 +178,7 @@ Order.findByClientAndStatus = (id_client, status) => {
 	O.hour_program,
         O.lat,
         O.lng,
+	O.discounts,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -254,10 +257,12 @@ Order.create = (order) => {
             created_at,
             updated_at,
             paymethod,
-            hour_program
+            hour_program,
+	    O.discounts,
+
 
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -268,7 +273,9 @@ Order.create = (order) => {
         new Date(),
         new Date(),
         order.paymethod,
-        order.hour_program
+        order.hour_program,
+        order.discounts
+
 
     ]);
 }
