@@ -157,7 +157,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
     WHERE
         O.id_delivery = $1 AND status = $2 
     GROUP BY
-        O.id, U.id, A.id, U2.id
+        O.id, U.id, A.id, U2.id desc
     `;
 
     return db.manyOrNone(sql, [id_delivery, status]);
