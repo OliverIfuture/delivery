@@ -239,7 +239,7 @@ Order.findByClientAndStatus = (id_client, status) => {
     WHERE
         O.id_client = $1 AND status = $2 
     GROUP BY
-        O.id, U.id, A.id, U2.id
+        O.id, U.id, A.id, U2.id desc
     `;
 
     return db.manyOrNone(sql, [id_client, status]);
