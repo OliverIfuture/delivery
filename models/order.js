@@ -77,7 +77,7 @@ Order.findByStatus = (status) => {
         status = $1
     GROUP BY
         O.id, U.id, A.id, U2.id
-    ORDER BY O.id, U.id, A.id, U2.id desc
+    ORDER BY O.id, U.id, A.id, U2.id asc
     `;
 
     return db.manyOrNone(sql, status);
