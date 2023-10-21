@@ -6,18 +6,16 @@ const Order = {};
 Order.findByStatus = (status) => {
 
     const sql = `
-    SELECT 
+   SELECT 
         O.id,
         O.id_client,
         O.id_address,
         O.id_delivery,
         O.status,
         O.timestamp,
-	O.payMethod,
+        O.payMethod,
 	O.hour_program,
-        O.lat,
-        O.lng,
-	O.discounts,
+  	O.discounts,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -36,7 +34,7 @@ Order.findByStatus = (status) => {
             'name', U.name,
             'lastname', U.lastname,
             'phone', U.phone,
-	    'is_trainer', U.is_trainer,
+     	    'is_trainer', U.is_trainer,
             'image', U.image
         ) AS client,
 		JSON_BUILD_OBJECT(
@@ -76,10 +74,10 @@ Order.findByStatus = (status) => {
     ON
         P.id = OHP.id_product
     WHERE
-        O.id_client = $1 AND (status != 'ENTREGADO') AND (status != 'CANCELADO') 
+        status = $1
     GROUP BY
-        O.id, U.id, A.id, U2.id 
-	ORDER BY O.id desc	
+        O.id, U.id, A.id, U2.id
+    ORDER BY O.id, U.id, A.id, U2.id desc	
     `;
 
     return db.manyOrNone(sql, status);
@@ -240,9 +238,10 @@ Order.findByClient = (id_client) => {
     ON
         P.id = OHP.id_product
     WHERE
-        O.id_client = $1 AND status != 'ENTREGADO' || status != 'CANCELADO'
+        O.id_client = 287 AND (status != 'ENTREGADO') AND (status != 'CANCELADO') 
     GROUP BY
         O.id, U.id, A.id, U2.id 
+	ORDER BY O.id desc	
     `;
 
     return db.manyOrNone(sql, [id_client]);
