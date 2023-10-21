@@ -13,9 +13,11 @@ Order.findByStatus = (status) => {
         O.id_delivery,
         O.status,
         O.timestamp,
-        O.payMethod,
+	O.payMethod,
 	O.hour_program,
-  	O.discounts,
+        O.lat,
+        O.lng,
+	O.discounts,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
@@ -34,7 +36,7 @@ Order.findByStatus = (status) => {
             'name', U.name,
             'lastname', U.lastname,
             'phone', U.phone,
-     	    'is_trainer', U.is_trainer,
+	    'is_trainer', U.is_trainer,
             'image', U.image
         ) AS client,
 		JSON_BUILD_OBJECT(
@@ -74,10 +76,10 @@ Order.findByStatus = (status) => {
     ON
         P.id = OHP.id_product
     WHERE
-        status = $1
+        O.id_client = $1 AND (status != 'ENTREGADO') AND (status != 'CANCELADO') 
     GROUP BY
-        O.id, U.id, A.id, U2.id
-    ORDER BY O.id, U.id, A.id, U2.id asc
+        O.id, U.id, A.id, U2.id 
+	ORDER BY O.id desc	
     `;
 
     return db.manyOrNone(sql, status);
