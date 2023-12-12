@@ -238,7 +238,7 @@ Order.findByClient = (id_client) => {
     ON
         P.id = OHP.id_product
     WHERE
-        O.id_client = 287 AND (status != 'ENTREGADO') AND (status != 'CANCELADO') 
+        O.id_client = $1 AND (status != 'ENTREGADO') AND (status != 'CANCELADO') 
     GROUP BY
         O.id, U.id, A.id, U2.id 
 	ORDER BY O.id desc	
