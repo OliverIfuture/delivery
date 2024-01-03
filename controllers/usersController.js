@@ -714,6 +714,7 @@ async deleteAccout(req, res, next) {
 
     async findByCode(req, res, next) {
         try {
+            console.log(`aqui vamossss`);
             const codes = req.params.code;
             console.log(`codigo: ${code}`);
 
