@@ -89,7 +89,7 @@ User.findByMail = (email, callback) => {
 }
 
 
-User.findByCode = (code, callback) => {
+User.findByCode = (code) => {
 
     const sql = `
     SELECT 
