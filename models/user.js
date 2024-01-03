@@ -87,6 +87,23 @@ User.findByMail = (email, callback) => {
     return db.oneOrNone(sql, email)
 
 }
+
+
+User.findByCode = (code, callback) => {
+
+    const sql = `
+    SELECT 
+
+    *
+        
+    FROM
+        codes
+    WHERE
+        code = $1`;
+    
+    return db.oneOrNone(sql, code)
+
+}
 User.getShops = (employed) => {
 
     const sql = `
