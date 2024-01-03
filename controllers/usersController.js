@@ -716,6 +716,9 @@ async deleteAccout(req, res, next) {
         try {
             const codes = req.params.code;
             const code = await User.findByCode(codes);
+
+            console.log(`codigo: ${code}`);
+
  
             if (!code) {
                 return res.status(401).json({
