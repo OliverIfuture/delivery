@@ -3,6 +3,7 @@ const productsControllers = require('../controllers/productsControllers');
 
 module.exports = (app, upload) => {
       app.post('/api/products/create',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.create);
+      app.post('/api/products/createPLate',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.createPLate);
       app.post('/api/products/createTab',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.createTab);
       app.post('/api/products/createGift',passport.authenticate('jwt', {session: false}) , productsControllers.createGift);
 
