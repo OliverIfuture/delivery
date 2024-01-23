@@ -95,9 +95,9 @@ Product.createPLate = (plate) => {
 	   plate.image2,
 	   plate.image3,
 	   plate.id_category,
-	   plate.priceSpecial,
-	   plate.priceBuy,
-	   plate.priceWholesale,
+	   plate.price_special,
+	   plate.price_buy,
+	   plate.price_wholesale,
 	   plate.carbs,
 	   plate.protein,
 	   plate.calorias
