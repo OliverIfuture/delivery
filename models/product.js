@@ -64,6 +64,49 @@ Product.create = (product) => {
     ]);
 }
 
+Product.createPLate = (plate) => {
+    const sql = `
+    INSERT INTO 
+        plates(
+	   name,
+	   description,
+	   price,
+	   image1,
+	   image2,
+	   image3,
+	   idCategory,
+	   stock,
+	   priceSpecial,
+	   priceBuy,
+	   state,
+	   priceWholesale,
+	   carbs,
+	   protein,
+	   calorias
+            
+        )
+    VALUES($1, $2, $3, $4, $5, $6, $7, 'true', $9, $10,'true',$12, $13, $14, $15) RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+	   plate.name,
+	   plate.description,
+	   plate.price,
+	   plate.image1,
+	   plate.image2,
+	   plate.image3,
+	   plate.idCategory,
+	   plate.stock,
+	   plate.priceSpecial,
+	   plate.priceBuy,
+	   plate.state,
+	   plate.priceWholesale,
+	   plate.carbs,
+	   plate.protein,
+	   plate.calorias
+        
+    ]);
+}
+
 Product.setStock = (stock) => {
     const sql = `
     INSERT INTO 
