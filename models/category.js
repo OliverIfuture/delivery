@@ -21,6 +21,20 @@ Category.getAll = () => {
     return db.manyOrNone(sql);
 }
 
+Category.getAllPlates = () => {
+    const sql =
+        `
+        SELECT 
+            id,
+            name
+        FROM
+            categoriesPlates
+        ORDER BY 
+            id            
+        `;
+    return db.manyOrNone(sql);
+}
+
 Category.create =  (category) => {
     const sql =
         `
