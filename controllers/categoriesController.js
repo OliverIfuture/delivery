@@ -22,6 +22,25 @@ module.exports = {
     },
 
 
+        async getAllPlates(req, res, next) {
+        try {
+            const data = await Category.getAllPlates();
+            console.log(`Categorias: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+            
+        } catch (error) {
+            
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las categorias',
+                error: error,
+                success: false
+            
+
+            });
+        }
+    },
+
     async create(req, res, next) {
         try {
 
