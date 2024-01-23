@@ -76,10 +76,10 @@ Product.createPLate = (plate) => {
 	   image3,
 	   id_category,
 	   stock,
-	   priceSpecial,
-	   priceBuy,
+	   price_special,
+	   price_buy,
 	   state,
-	   priceWholesale,
+	   price_wholesale,
 	   carbs,
 	   protein,
 	   calorias
