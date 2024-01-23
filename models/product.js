@@ -208,6 +208,38 @@ WHERE
     return db.manyOrNone(sql, id_category);
 }
 
+
+Product.getByCtaegoryPlate = (id_category) => {
+    const sql = `
+SELECT 
+	P.id,
+	P.name,
+	P.description,
+	P.price,
+	P.image1,
+	P.image2,
+	P.image3,
+	P.stock,
+	P.price_special,
+	P.pricebuy,
+	P.state,
+	P.price_wholesale,
+        P.carbs,
+	P.protein,
+ 	P.calorias
+FROM
+	plates as P
+INNER JOIN 
+	categoriesplates as C
+ON
+	p.id_category = C.id
+WHERE
+	C.id = $1
+    
+    `;
+    return db.manyOrNone(sql, id_category);
+}
+
 Product.findByCategoryStocks = (id_category, id_company) => {
     const sql = `
 SELECT 
@@ -261,6 +293,37 @@ Product.findByCategoryAndProductName = (id_category, product_name) => {
         products AS P
     INNER JOIN
         categories AS C
+    ON
+        P.id_category = C.id
+    WHERE
+        C.id = $1 AND p.name ILIKE $2
+    `;
+
+    return db.manyOrNone(sql, [id_category, `%${product_name}%`]);
+}
+
+Product.findByCategoryAndProductName = (id_category, product_name) => {
+    const sql = `
+    SELECT
+        P.id,
+	P.name,
+	P.description,
+	P.price,
+	P.image1,
+	P.image2,
+	P.image3,
+	P.stock,
+	P.price_special,
+	P.pricebuy,
+	P.state,
+	P.price_wholesale,
+        P.carbs,
+	P.protein,
+ 	P.calorias
+    FROM
+        plates AS P
+    INNER JOIN
+        categoriesplates AS C
     ON
         P.id_category = C.id
     WHERE
