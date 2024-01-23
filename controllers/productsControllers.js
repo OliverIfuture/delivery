@@ -139,6 +139,25 @@ async getAllStocks (req, res, next) {
         }
     },
 
+ async getByCtaegoryPlate(req, res, next) {
+
+        try {
+            const id_category = req.params.id_category;//envia el vliente
+            const data = await Product.getByCtaegoryPlate(id_category);
+
+            return res.status(201).json(data);
+
+            
+        } catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al listar los productos por categoria ${error}`,
+                success: false,
+                error: error
+                 });
+        }
+    },
+
 
     async findByCategoryStocks (req, res, next) {
 
@@ -178,6 +197,23 @@ async getAllStocks (req, res, next) {
         }
     },
 
+
+ async getByCtaegoryAndProductNamePlate(req, res, next) {
+        try {
+            const id_category = req.params.id_category; // CLIENTE
+            const product_name = req.params.product_name; // CLIENTE
+            const data = await Product.getByCtaegoryAndProductNamePlate(id_category, product_name);
+            return res.status(201).json(data);
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: `Error al listar los productos por categoria`,
+                success: false,
+                error: error
+            });
+        }
+    },
 
 async findByCategoryAndProductNameStocks (req, res, next) {
         try {
