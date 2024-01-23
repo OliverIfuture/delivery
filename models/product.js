@@ -74,7 +74,7 @@ Product.createPLate = (plate) => {
 	   image1,
 	   image2,
 	   image3,
-	   idCategory,
+	   id_category,
 	   stock,
 	   priceSpecial,
 	   priceBuy,
