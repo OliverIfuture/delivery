@@ -94,7 +94,7 @@ Product.createPLate = (plate) => {
 	   plate.image1,
 	   plate.image2,
 	   plate.image3,
-	   plate.idCategory,
+	   plate.id_category,
 	   plate.stock,
 	   plate.priceSpecial,
 	   plate.priceBuy,
