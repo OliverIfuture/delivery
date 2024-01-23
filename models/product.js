@@ -309,42 +309,18 @@ Product.updatePlate = (plate) => {
     UPDATE
         plates
     SET
-            name = $2,
-            description = $3,
-            price = $4,
-	    image1 = $5,
-     	    image2 = $6,
-	    image3 = $7,
-            id_category = $8,
-            stock = 'true',
-	    priceSpecial = $10,
-	    priceBuy = $11,
-	    state = 'true',
-	    priceWholesale = $13,
-	    carbs = $14,
-	    protein = $15,
-	    calorias = $16
+	    image1 = $2,
+     	    image2 = $3,
+	    image3 = $4
 
     where
 
         id = $1
         `;
     return db.none(sql, [
-	   plate.name,
-	   plate.description,
-	   plate.price,
 	   plate.image1,
 	   plate.image2,
-	   plate.image3,
-	   plate.id_category,
-	   plate.stock,
-	   plate.priceSpecial,
-	   plate.priceBuy,
-	   plate.state,
-	   plate.priceWholesale,
-	   plate.carbs,
-	   plate.protein,
-	   plate.calorias
+	   plate.image3
 
     ]);
 
