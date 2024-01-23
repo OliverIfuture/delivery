@@ -318,6 +318,8 @@ async findByCategoryAndProductNameStocks (req, res, next) {
                             
                             }
                         }
+                 console.log(`plato numero 2: ${JSON.stringify(plate)}`);
+
 
                         await Product.updatePlate(plate);
                         inserts = inserts + 1;
