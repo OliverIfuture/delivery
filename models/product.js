@@ -318,6 +318,7 @@ Product.updatePlate = (plate) => {
         id = $1
         `;
     return db.none(sql, [
+           plate.id,	
 	   plate.image1,
 	   plate.image2,
 	   plate.image3
