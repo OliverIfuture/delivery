@@ -221,7 +221,7 @@ SELECT
 	P.image3,
 	P.stock,
 	P.price_special,
-	P.pricebuy,
+	P.price_buy,
 	P.state,
 	P.price_wholesale,
         P.carbs,
@@ -302,7 +302,7 @@ Product.findByCategoryAndProductName = (id_category, product_name) => {
     return db.manyOrNone(sql, [id_category, `%${product_name}%`]);
 }
 
-Product.findByCategoryAndProductName = (id_category, product_name) => {
+Product.getByCtaegoryAndProductNamePlate = (id_category, product_name) => {
     const sql = `
     SELECT
         P.id,
@@ -314,7 +314,7 @@ Product.findByCategoryAndProductName = (id_category, product_name) => {
 	P.image3,
 	P.stock,
 	P.price_special,
-	P.pricebuy,
+	P.price_buy,
 	P.state,
 	P.price_wholesale,
         P.carbs,
