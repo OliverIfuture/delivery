@@ -17,9 +17,11 @@ module.exports = (app, upload) => {
       app.post('/api/products/setStock', passport.authenticate('jwt', { session: false }), productsControllers.setStock);
 
       app.get('/api/products/findByCategory/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategory);
+      app.get('/api/products/getByCtaegoryPlate/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.getByCtaegoryPlate);
       app.get('/api/products/findByCategoryStocks/:id_category/:id_company',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategoryStocks);
 
       app.get('/api/products/findByCategoryAndProductName/:id_category/:product_name', passport.authenticate('jwt', {session: false}), productsControllers.findByCategoryAndProductName);
+       app.get('/api/products/getByCtaegoryAndProductNamePlate/:id_category/:product_name', passport.authenticate('jwt', {session: false}), productsControllers.getByCtaegoryAndProductNamePlate);
       app.get('/api/products/findByCategoryAndProductNameStocks/:id_category/:product_name/:id_company', passport.authenticate('jwt', {session: false}), productsControllers.findByCategoryAndProductNameStocks);
 
       app.put('/api/products/updateStock', productsControllers.updateProduct);
