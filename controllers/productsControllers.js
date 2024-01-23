@@ -319,7 +319,7 @@ async findByCategoryAndProductNameStocks (req, res, next) {
                             }
                         }
 
-                        await Product.update(plate);
+                        await Product.updatePlate(plate);
                         inserts = inserts + 1;
                         if (inserts == files.length) {
                             return res.status(201).json({
