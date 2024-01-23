@@ -85,7 +85,7 @@ Product.createPLate = (plate) => {
 	   calorias
             
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, 'true', $9, $10,'true',$12, $13, $14, $15) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, 'true', $8, $9,'true',$10, $11, $12, $13) RETURNING id
     `;
     return db.oneOrNone(sql, [
 	   plate.name,
@@ -95,10 +95,8 @@ Product.createPLate = (plate) => {
 	   plate.image2,
 	   plate.image3,
 	   plate.id_category,
-	   plate.stock,
 	   plate.priceSpecial,
 	   plate.priceBuy,
-	   plate.state,
 	   plate.priceWholesale,
 	   plate.carbs,
 	   plate.protein,
