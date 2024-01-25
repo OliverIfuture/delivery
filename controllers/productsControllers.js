@@ -33,8 +33,6 @@ async setFavorites(req, res, next) {
 
             const id_plate = req.params.id_plate;             
             const id_user = req.params.id_user; 
-            console.log(`stock enviada: ${stock}`);
-
             const data = await Product.setFavorites(id_plate, id_user);
 
             return res.status(201).json({
