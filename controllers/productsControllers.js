@@ -34,6 +34,7 @@ async setStock(req, res, next) {
         try {
             const id_user = req.params.id_user;
             const data = await Product.getFavorites(id_user);
+             console.log(`stock enviada: ${data}`);
 
             return res.status(201).json(data);
 
