@@ -136,6 +136,22 @@ Product.updateStockers = (id_product, stock, id_company) => {
 }
 
 
+Product.setFavorites = (id_plate, id_user) => {
+    const sql = `
+    INSERT INTO
+        favorites(
+	    id_plate,  
+            id_user
+        )
+    VALUES($1, $2)    
+    `;
+    return db.none(sql, [
+        id_plate,
+        id_user
+    ]);
+}
+
+
 Product.createTab = (product) => {
     const sql = `
     INSERT INTO 
