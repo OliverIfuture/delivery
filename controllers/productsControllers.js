@@ -28,6 +28,40 @@ async setStock(req, res, next) {
         
 },
 
+ async findFavorites(req, res, next) {
+        try {
+            const codes = req.params.id_plate;
+            const codes = req.params.id_user;     
+            const code = await Product.findFavorites(id_plate, id_user);
+ 
+            if (!id_plate && !id_user ) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'El codigo no fue encontrado'
+                });
+            }
+
+            else{
+                return res.status(201).json({
+                success: true,
+                message: 'codigo aplicado',
+            });
+            }
+
+ 
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al momento de hacer login',
+                error: error
+            });
+        }
+    },
+
+        
+
 async setFavorites(req, res, next) {
         try {
 
