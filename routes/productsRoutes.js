@@ -16,7 +16,7 @@ module.exports = (app, upload) => {
 
       app.post('/api/products/setStock', passport.authenticate('jwt', { session: false }), productsControllers.setStock);
       app.post('/api/products/setFavorites/:id_plate/:id_user', passport.authenticate('jwt', { session: false }), productsControllers.setFavorites);
-      app.post('/api/users/findFavorites/:id_plate/:id_user',productsControllers.findFavorites);
+      app.post('/api/products/findFavorites/:id_plate/:id_user',productsControllers.findFavorites);
 
       app.get('/api/products/findByCategory/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategory);
       app.get('/api/products/getByCtaegoryPlate/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.getByCtaegoryPlate);
