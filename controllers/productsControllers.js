@@ -28,6 +28,32 @@ async setStock(req, res, next) {
         
 },
 
+async setFavorites(req, res, next) {
+        try {
+
+            const id_plate = req.params.id_plate;             
+            const id_user = req.params.id_user; 
+            console.log(`stock enviada: ${stock}`);
+
+            const data = await Product.setFavorites(id_plate, id_user);
+
+            return res.status(201).json({
+                message: 'agregado a favoritos',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al agregar',
+                success: false,
+                error: error
+            });
+        }
+        
+},
+        
+
 async updateStockers (req, res, next) {
         try {
 
