@@ -13,6 +13,23 @@ return db.manyOrNone(sql);
 
 }
 
+
+Product.findByCode = (id_plate, id_user) => {
+
+    const sql = `
+    SELECT 
+
+    *
+        
+    FROM
+        favorites
+    WHERE
+        id_plate = $1 and id_user = $2`  ;
+    
+    return db.oneOrNone(sql, id_plate, id_user )
+
+}
+
 Product.getAllStocks = (id_company) =>{
 	const sql = `
 select products.id,
