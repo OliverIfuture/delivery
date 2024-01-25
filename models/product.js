@@ -14,7 +14,7 @@ return db.manyOrNone(sql);
 }
 
 
-Product.findByCode = (id_plate, id_user) => {
+Product.findFavorites = (id_plate, id_user) => {
 
     const sql = `
     SELECT 
