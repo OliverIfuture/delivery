@@ -36,7 +36,7 @@ module.exports = (app, upload) => {
 
       app.delete('/api/products/deleteProduct/:id', passport.authenticate('jwt', { session: false }), productsControllers.delete);
       app.delete('/api/products/deleteSale/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteSale);
-      app.delete('/api/products/deleteFavorites/:id_plate/:id_user' productsControllers.deleteFavorites);
+      app.delete('/api/products/deleteFavorites/:id_plate/:id_user', productsControllers.deleteFavorites);
 
 
 }
