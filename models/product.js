@@ -37,6 +37,7 @@ Product.getFavorites = (id_user) =>{
 		select 
 		plates.id,
 		plates.name,
+  		plates.description,
 		plates.price,
 		plates.image1,
 		plates.image2,
