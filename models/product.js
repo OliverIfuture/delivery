@@ -24,7 +24,7 @@ Product.findFavorites = (id_plate, id_user) => {
     FROM
         favorites
     WHERE
-        id_plate = $1 and id_user = $2`  ;
+        id_plate = 11 and id_user = 3`  ;
     
     return db.oneOrNone(sql, id_plate, id_user )
 
