@@ -30,11 +30,11 @@ async setStock(req, res, next) {
 
  async findFavorites(req, res, next) {
         try {
-            const codes = req.params.id_plate;
-            const codes = req.params.id_user;     
+            const id_plate = req.params.id_plate;
+            const id_user = req.params.id_user;     
             const code = await Product.findFavorites(id_plate, id_user);
  
-            if (!id_plate && !id_user ) {
+            if (!code) {
                 return res.status(401).json({
                     success: false,
                     message: 'El codigo no fue encontrado'
