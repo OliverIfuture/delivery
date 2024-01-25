@@ -32,6 +32,32 @@ Product.findFavorites = (id_plate, id_user) => {
     ]);
 }
 
+Product.getFavorites = (id_user) =>{
+	const sql = `
+		select 
+		plates.id,
+		plates.name,
+		plates.price,
+		plates.image1,
+		plates.image2,
+		plates.image3,
+		plates.id_category,
+		plates.stock,
+		plates.price_special,
+		plates.price_buy,
+		plates.state,
+		plates.price_wholesale,
+		plates.carbs,
+		plates.protein,
+		plates.calorias
+		from plates
+		inner join favorites as F on plates.id = F.id_plate
+		where id_user = $1
+ `;
+return db.manyOrNone(sql, id_user);
+
+}
+
 Product.getAllStocks = (id_company) =>{
 	const sql = `
 select products.id,
