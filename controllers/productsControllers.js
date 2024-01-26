@@ -82,7 +82,24 @@ async setStock(req, res, next) {
         }
     },
 
-        
+async findReview(req, res, next) {
+        try {
+            const id = req.params.id;
+            const data = await Product.findReview(id);
+            console.log(`Reviews obtenidos: ${data}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },      
 
 async setFavorites(req, res, next) {
         try {
