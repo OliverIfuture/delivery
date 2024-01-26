@@ -224,6 +224,21 @@ Product.setFavorites = (id_plate, id_user) => {
     ]);
 }
 
+Product.setSave = (id_plate, id_user) => {
+    const sql = `
+    INSERT INTO
+        saves(
+	    id_plate,  
+            id_user
+        )
+    VALUES($1, $2)    
+    `;
+    return db.none(sql, [
+        id_plate,
+        id_user
+    ]);
+}
+
 Product.deleteFavorites = (id_plate, id_user) => {
     const sql = `
 
