@@ -26,11 +26,7 @@ Product.findReview = (id) =>{
 	const sql = `
 	 select 
 		plates.id,
-		U.id,
-		U.name,
-		R.id,
-		R.id_plate,
-		R.id_user,
+		U.name as username,
 		R.review,
 		R.calification
 		from plates
