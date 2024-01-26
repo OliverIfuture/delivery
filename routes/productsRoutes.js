@@ -9,7 +9,7 @@ module.exports = (app, upload) => {
 
       app.get('/api/products/getAll',passport.authenticate('jwt', {session: false}) , productsControllers.getAll);     
       app.get('/api/products/findLast5', productsControllers.findLast5);    
-      app.get('/api/products/findReview/:id ', productsControllers.findReview);    
+      app.get('/api/products/findReview/:id', productsControllers.findReview);    
       app.get('/api/products/getAllStocks/:id_company',passport.authenticate('jwt', {session: false}) , productsControllers.getAllStocks);
       app.get('/api/products/findMyProduct/:name',passport.authenticate('jwt', {session: false}) , productsControllers.findMyProduct);
       app.get('/api/products/getAllCompany',passport.authenticate('jwt', {session: false}) , productsControllers.getAllCompany);     
