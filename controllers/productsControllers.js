@@ -48,7 +48,25 @@ async setStock(req, res, next) {
                  });
         }
     },       
+    async getSaves(req, res, next) {
 
+        try {
+            const id_user = req.params.id_user;
+            const data = await Product.getSaves(id_user);
+             console.log(`stock enviada: ${data}`);
+
+            return res.status(201).json(data);
+
+            
+        } catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al listar los productos por favoritos ${error}`,
+                success: false,
+                error: error
+                 });
+        }
+    },  
  async findFavorites(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
@@ -82,38 +100,7 @@ async setStock(req, res, next) {
         }
     },
 
- async getSaves(req, res, next) {
-        try {
-            const id_plate = req.params.id_plate;
-            const id_user = req.params.id_user;     
-            const code = await Product.getSaves(id_plate, id_user);
-             console.log(`stock enviada: ${code}`);
 
-            if (!code) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'El codigo no fue encontrado'
-                });
-            }
-
-            else{
-                return res.status(201).json({
-                success: true,
-                message: 'codigo aplicado',
-            });
-            }
-
- 
-        } 
-        catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
-                success: false,
-                message: 'Error al momento de hacer login',
-                error: error
-            });
-        }
-    },
  async findSaves(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
