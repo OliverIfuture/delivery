@@ -59,6 +59,24 @@ Product.findFavorites = (id_plate, id_user) => {
     ]);
 }
 
+Product.findSaves = (id_plate, id_user) => {
+
+    const sql = `
+    SELECT 
+
+    *
+        
+    FROM
+        saves
+    WHERE
+        id_plate = $1 and id_user = $2`  ;
+
+    return db.oneOrNone(sql, [
+        id_plate,
+        id_user
+    ]);
+}
+
 Product.getFavorites = (id_user) =>{
 	const sql = `
 		select 
