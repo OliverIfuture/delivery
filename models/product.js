@@ -77,6 +77,34 @@ Product.findSaves = (id_plate, id_user) => {
     ]);
 }
 
+
+Product.getSaves = (id_user) =>{
+	const sql = `
+		select 
+		plates.id,
+		plates.name,
+  		plates.description,
+		plates.price,
+		plates.image1,
+		plates.image2,
+		plates.image3,
+		plates.id_category,
+		plates.stock,
+		plates.price_special,
+		plates.price_buy,
+		plates.state,
+		plates.price_wholesale,
+		plates.carbs,
+		plates.protein,
+		plates.calorias
+		from plates
+		inner join saves as S on plates.id = S.id_plate
+		where id_user = $1
+ `;
+return db.manyOrNone(sql, id_user);
+
+}
+
 Product.getFavorites = (id_user) =>{
 	const sql = `
 		select 
