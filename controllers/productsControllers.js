@@ -67,6 +67,28 @@ async setStock(req, res, next) {
                  });
         }
     },  
+
+    async getReviewPlateRate(req, res, next) {
+
+        try {
+            const id_user = req.params.id_plate;
+            const data = await Product.getReviewPlateRate(id_plate);
+             console.log(`stock enviada: ${data}`);
+
+            return res.status(201).json(data);
+
+            
+        } catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al listar los review de este platillo ${error}`,
+                success: false,
+                error: error
+                 });
+        }
+    }, 
+
+        
  async findFavorites(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
