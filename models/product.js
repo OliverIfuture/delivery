@@ -253,6 +253,20 @@ Product.deleteFavorites = (id_plate, id_user) => {
     ]);
 }
 
+Product.deleteteSave = (id_plate, id_user) => {
+    const sql = `
+
+    DELETE  
+    FROM saves 
+
+    WHERE id_plate = $1 and id_user = $2
+    `;
+    return db.none(sql, [
+        id_plate,
+        id_user
+    ]);
+}
+
 
 Product.createTab = (product) => {
     const sql = `
