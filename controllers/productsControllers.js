@@ -169,6 +169,29 @@ async deleteFavorites (req, res, next) {
         
 },        
 
+async deleteteSave (req, res, next) {
+        try {
+
+            const id_plate = req.params.id_plate;             
+            const id_user = req.params.id_user; 
+            const data = await Product.deleteteSave (id_plate, id_user);
+
+            return res.status(201).json({
+                message: 'eliminado de guardados',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar',
+                success: false,
+                error: error
+            });
+        }
+        
+},        
+
 async updateStockers (req, res, next) {
         try {
 
