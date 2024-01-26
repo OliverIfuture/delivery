@@ -22,6 +22,29 @@ return db.manyOrNone(sql);
 
 }
 
+Product.findReview = (id) =>{
+	const sql = `
+	 select 
+		plates.id,
+		U.id,
+		U.name,
+		R.id,
+		R.id_plate,
+		R.id_user,
+		R.review,
+		R.calification
+		from plates
+		
+		inner join reviews as R on plates.id = R.id_plate
+		inner join users as U on U.id  = R.id_user  
+		
+		where plates.id = $1
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
+
 Product.findFavorites = (id_plate, id_user) => {
 
     const sql = `
