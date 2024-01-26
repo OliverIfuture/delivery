@@ -20,7 +20,9 @@ module.exports = (app, upload) => {
       app.post('/api/products/setFavorites/:id_plate/:id_user', productsControllers.setFavorites);
       app.post('/api/products/setSave/:id_plate/:id_user', productsControllers.setSave);
       app.post('/api/products/findFavorites/:id_plate/:id_user',productsControllers.findFavorites);
-      
+      app.post('/api/products/findSaves/:id_plate/:id_user',productsControllers.findSaves);
+
+
       app.get('/api/products/getFavorites/:id_user',productsControllers.getFavorites);
       app.get('/api/products/findByCategory/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategory);
       app.get('/api/products/getByCtaegoryPlate/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.getByCtaegoryPlate);
