@@ -12,7 +12,15 @@ Product.getAll = () =>{
 return db.manyOrNone(sql);
 
 }
+Product.findLast5 = () =>{
+	const sql = `
+	 SELECT * FROM plates
+	ORDER BY id desc
+	LIMIT 5
+ `;
+return db.manyOrNone(sql);
 
+}
 
 Product.findFavorites = (id_plate, id_user) => {
 
