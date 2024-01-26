@@ -77,7 +77,16 @@ Product.findSaves = (id_plate, id_user) => {
     ]);
 }
 
+Product.getReviewPlateRate = (id_plate) =>{
+	const sql = `
+		SELECT 
+		  SUM(calification) 
+		FROM 
+		  reviews where id_plate = $1
+ `;
+return db.manyOrNone(sql, id_plate);
 
+}
 Product.getSaves = (id_user) =>{
 	const sql = `
 		select 
