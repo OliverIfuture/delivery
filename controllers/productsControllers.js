@@ -71,7 +71,7 @@ async setStock(req, res, next) {
     async getReviewPlateRate(req, res, next) {
 
         try {
-            const id_user = req.params.id_plate;
+            const id_plate = req.params.id_plate;
             const data = await Product.getReviewPlateRate(id_plate);
              console.log(`stock enviada: ${data}`);
 
