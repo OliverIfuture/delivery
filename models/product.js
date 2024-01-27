@@ -80,10 +80,10 @@ Product.findSaves = (id_plate, id_user) => {
 Product.getReviewPlateRate = (id_plate) =>{
 	const sql = `
 		SELECT 
-			  SUM(calification),
-			  count(calification)
-			FROM 
-			  reviews where id_plate = $1
+  SUM(calification) as rate,
+  count(calification) as calification
+FROM 
+  reviews where id_plate  = $1
  `;
 return db.manyOrNone(sql, id_plate);
 
