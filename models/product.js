@@ -186,7 +186,7 @@ Product.createReview = (comments) => {
     return db.oneOrNone(sql, [
         comments.id_plate,
         comments.id_user,
-        comments.review        
+        comments.review,
 	comments.calification
 
 	    
