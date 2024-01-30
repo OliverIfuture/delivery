@@ -25,6 +25,7 @@ module.exports = (app, upload) => {
 
       app.get('/api/products/getFavorites/:id_user',productsControllers.getFavorites);
       app.get('/api/products/getSaves/:id_user',productsControllers.getSaves);
+      app.get('/api/products/getReviewPlateFavoriteIcon/:id_plate',productsControllers.getReviewPlateFavoriteIcon);
       app.get('/api/products/getReviewPlateRate/:id_plate',productsControllers.getReviewPlateRate);
       app.get('/api/products/findByCategory/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategory);
       app.get('/api/products/getByCtaegoryPlate/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.getByCtaegoryPlate);
