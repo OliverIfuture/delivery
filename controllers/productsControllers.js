@@ -981,7 +981,7 @@ async turnOff(req, res, next) {
  async createReview (req, res, next) {
         try {
 
-            const comments = req.body;
+            const comments = req.body.comments;
              console.log(`Status: ${JSON.stringify(comments)}`);
 
 
