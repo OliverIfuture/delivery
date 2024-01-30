@@ -77,6 +77,17 @@ Product.findSaves = (id_plate, id_user) => {
     ]);
 }
 
+Product.getReviewPlateFavoriteIcon = (id_plate) =>{
+	const sql = `
+		SELECT 
+  count(favorites) as rate
+FROM 
+  favorites where id_plate = $1
+ `;
+return db.manyOrNone(sql, id_plate);
+
+}
+
 Product.getReviewPlateRate = (id_plate) =>{
 	const sql = `
 		SELECT 
