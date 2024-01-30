@@ -51,7 +51,7 @@ Product.findLikes = (id_plate) =>{
                 'username', U.name,
                 'id_user', C.id_user
             )
-        ) 
+        ) as likes
 		from reviews
 		
 	
