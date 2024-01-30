@@ -109,6 +109,28 @@ async setStock(req, res, next) {
         }
     }, 
 
+
+     async findLikes(req, res, next) {
+        try {
+            const id_plate = req.params.id_plate;
+
+            const data = await Product.findLikes(id_plate);
+            console.log(`Status: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+            
+        } catch (error) {
+            
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener los favoritos',
+                error: error,
+                success: false
+            
+
+            });
+        }
+    },       
+
         
  async findFavorites(req, res, next) {
         try {
