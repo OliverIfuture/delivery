@@ -24,18 +24,27 @@ return db.manyOrNone(sql);
 
 Product.findReview = (id) =>{
 	const sql = `
-	 select 
+ select 
 		plates.id,
 		U.name as username,
 		R.review,
-		R.calification
+		R.calification,
+				JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', C.id,
+                'username', U.name,
+                'id_user', C.id_user
+            )
+        ) as likes
 		from plates
 		
 		inner join reviews as R on plates.id = R.id_plate
+	    inner join commentsLikes as C on R.id = C.id_plate
 		inner join users as U on U.id  = R.id_user  
 		
 		where plates.id = $1
-  		order by id desc
+		
+		group by plates.id, U.name, R.review, R.calification
  `;
 return db.manyOrNone(sql, id);
 
