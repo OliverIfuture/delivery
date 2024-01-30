@@ -172,6 +172,28 @@ return db.manyOrNone(sql, id_company);
 
 }
 
+
+Product.createReview = (comments) => {
+    const sql = `
+    INSERT INTO reviews(
+	id_plate, 
+        id_user, 
+	review, 
+ 	calification
+ 			)
+    VALUES($1, $2, $3, $4  ) RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        comments.id_plate,
+        comments.id_user,
+        comments.review        
+	comments.calification
+
+	    
+        
+    ]);
+}
+
 Product.create = (product) => {
     const sql = `
     INSERT INTO 
