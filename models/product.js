@@ -35,6 +35,7 @@ Product.findReview = (id) =>{
 		inner join users as U on U.id  = R.id_user  
 		
 		where plates.id = $1
+  		order by id desc
  `;
 return db.manyOrNone(sql, id);
 
