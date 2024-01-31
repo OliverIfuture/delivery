@@ -203,7 +203,7 @@ async findReview(req, res, next) {
         try {
             const id = req.params.id;
             const data = await Product.findReview(id);
-            console.log(`Reviews obtenidos: ${data}`);
+            console.log(`Reviews obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
