@@ -6,7 +6,7 @@ module.exports = (app, upload) => {
       app.post('/api/products/createPLate',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.createPLate);
       app.post('/api/products/createTab',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.createTab);
       app.post('/api/products/createGift',passport.authenticate('jwt', {session: false}) , productsControllers.createGift);
-      app.post('/api/products/createReview/:id_plate/:id_user',passport.authenticate('jwt', {session: false}) , productsControllers.createReview);
+      app.post('/api/products/createReview',passport.authenticate('jwt', {session: false}) , productsControllers.createReview);
       app.post('/api/products/createLike/:id_plate/:id_user' , productsControllers.createLike);
 
       app.get('/api/products/getAll',passport.authenticate('jwt', {session: false}) , productsControllers.getAll);     
