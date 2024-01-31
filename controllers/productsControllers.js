@@ -1000,6 +1000,36 @@ async turnOff(req, res, next) {
             });
         }
     }, 
+
+
+  async createLike (req, res, next) {
+        try {
+
+            const commentsLikes = req.body;
+             console.log(`Status: ${JSON.stringify(commentsLikes)}`);
+
+
+                
+            const data = await Product.createLike(commentsLikes);
+             console.log(`Status: ${JSON.stringify(commentsLikes)}`);
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'Like posteado',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error liKe',
+                error: error
+            });
+        }
+    },   
+        
  async createReview (req, res, next) {
         try {
 
