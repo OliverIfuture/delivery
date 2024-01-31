@@ -1032,13 +1032,11 @@ async turnOff(req, res, next) {
         try {
 
             const comments = req.body;
-            const id_plate = req.params.id_plate; 
-            const id_user = req.params.id_user;  
              console.log(`Status: ${JSON.stringify(comments)}`);
 
 
                 
-            const data = await Product.createReview(comments, id_plate, id_user);
+            const data = await Product.createReview(comments);
              console.log(`Status: ${JSON.stringify(comments)}`);
 
                 return res.status(201).json({
