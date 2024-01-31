@@ -236,7 +236,7 @@ Product.createLike = (commentsLikes) => {
 	)
     VALUES($1, $2  ) RETURNING id
     `;
-    return db.oneOrNone(sql, [
+    return db.manyOrNone(sql, [
         commentslikes.id_plate,
         commentslikes.id_user
     ]);
