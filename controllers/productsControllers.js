@@ -1011,7 +1011,7 @@ async turnOff(req, res, next) {
 
                 
             const data = await Product.createLike(commentsLikes);
-             console.log(`Status: ${JSON.stringify(data)}`);
+             console.log(`Status: ${JSON.stringify(commentsLikes)}`);
 
                 return res.status(201).json({
 
