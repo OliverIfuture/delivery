@@ -215,7 +215,7 @@ Product.createReview = (comments) => {
 	review, 
  	calification
  			)
-    VALUES($1, $2, $3, $4  ) RETURNING id
+    VALUES($1, $2, $3, $4  ) RETURNING id as idnuevo
     `;
     return db.oneOrNone(sql, [
         comments.id_plate,
