@@ -209,13 +209,19 @@ return db.manyOrNone(sql, id_company);
 
 Product.createReview = (comments) => {
     const sql = `
+with rows as (
     INSERT INTO reviews(
+		id_plate, 
+		id_user,
+		review, 
+		calification)
+    VALUES($1,$2,$3,$4 )
+	RETURNING id, id_user)
+INSERT INTO commentslikes(
 	id_plate, 
-        id_user, 
-	review, 
- 	calification
- 			)
-    VALUES($1, $2, $3, $4  ) RETURNING id as idnuevo
+	id_user)
+SELECT id, id_user
+FROM rows
     `;
     return db.oneOrNone(sql, [
         comments.id_plate,
