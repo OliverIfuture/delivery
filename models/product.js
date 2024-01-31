@@ -228,19 +228,18 @@ Product.createReview = (comments) => {
     ]);
 }
 
-Product.createLike = (commentsLikes) => {
+Product.createLike = (id_plate, id_user) => {
     const sql = `
     INSERT INTO commentslikes(
 	id_plate, 
         id_user
 	)
     VALUES($1, $2  ) RETURNING id
+    
     `;
-    return db.manyOrNone(sql, [
-        commentslikes.id_plate,
-        commentslikes.id_user
-    ]);
+    return db.manyOrNone(sql, [id_plate, id_user]);
 }
+
 
 Product.create = (product) => {
     const sql = `
