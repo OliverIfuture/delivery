@@ -33,9 +33,8 @@ select
             JSON_BUILD_OBJECT(
                 'id', C.id,
                 'username', U.name,
-                'id_user', C.id_user,
-				'counter',C.counter
-            )
+                'id_user', C.id_user
+		)
         ) as likes
 		from reviews  as R
 		
