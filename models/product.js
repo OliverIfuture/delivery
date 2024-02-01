@@ -226,7 +226,7 @@ INSERT INTO commentslikes(
 	id_user,
  	useremail
  )
-SELECT id, id_user, calification
+SELECT id, id_user, review
 FROM rows
     `;
     return db.oneOrNone(sql, [
