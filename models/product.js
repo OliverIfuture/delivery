@@ -223,8 +223,10 @@ with rows as (
 	RETURNING id, id_user)
 INSERT INTO commentslikes(
 	id_plate, 
-	id_user)
-SELECT id, id_user
+	id_user,
+ 	useremail
+ )
+SELECT id, id_user, calification
 FROM rows
     `;
     return db.oneOrNone(sql, [
