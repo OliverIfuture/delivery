@@ -33,10 +33,10 @@ select
 		JSON_BUILD_OBJECT(
                 'id', C.id,
 				'username',C.username,
-                'userEmail', C.userEmail,
+                'useremail', C.useremail,
 				'id_user',C.id_user
 		)
-		) FILTER (WHERE C.id_user != 0), '[]') as likes 
+		) FILTER (WHERE C.useremail != '0'), '[]') as likes 
 		from reviews  as R
 		
 		inner join plates as P on P.id = R.id_plate
