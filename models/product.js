@@ -32,8 +32,9 @@ select
         COALESCE(json_agg(
 		JSON_BUILD_OBJECT(
                 'id', C.id,
-				'username',U.name,
-                'id_user', C.id_user
+				'username',C.username,
+                'userEmail', C.userEmail,
+				'id_user',C.id_user
 		)
 		) FILTER (WHERE C.id_user != 0), '[]') as likes 
 		from reviews  as R
@@ -45,6 +46,7 @@ select
 		where P.id = $1
 		group by R.id, U.name, R.review, R.calification
 		order by id desc
+
 
 
  `;
