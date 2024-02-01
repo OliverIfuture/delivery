@@ -29,13 +29,13 @@ select
 		U.name as username,
 		R.review,
 		R.calification,
-				JSON_AGG(
-            JSON_BUILD_OBJECT(
+        COALESCE(json_agg(
+		JSON_BUILD_OBJECT(
                 'id', C.id,
 				'username',U.name,
-                'id_user', U.email
+                'id_user', C.id_user
 		)
-        ) as likes 
+		) FILTER (WHERE C.id_user != 0), '[]') as likes 
 		from reviews  as R
 		
 		inner join plates as P on P.id = R.id_plate
@@ -45,6 +45,7 @@ select
 		where P.id = $1
 		group by R.id, U.name, R.review, R.calification
 		order by id desc
+
 
  `;
 return db.manyOrNone(sql, id);
