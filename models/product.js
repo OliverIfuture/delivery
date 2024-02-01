@@ -45,6 +45,8 @@ select
 		where P.id = $1
 		
 		group by R.id, U.name, R.review, R.calification
+  		order by id desc
+
  `;
 return db.manyOrNone(sql, id);
 
