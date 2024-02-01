@@ -226,14 +226,15 @@ INSERT INTO commentslikes(
 	id_user,
  	useremail
  )
-SELECT id, id_user, review
+SELECT id, id_user, $5
 FROM rows
     `;
     return db.oneOrNone(sql, [
         comments.id_plate,
         comments.id_user,
         comments.review,
-	comments.calification
+	comments.calification,
+	'0'    
 
 	    
         
