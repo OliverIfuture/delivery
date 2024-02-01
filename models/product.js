@@ -223,6 +223,8 @@ with rows as (
 	RETURNING id, id_user)
 INSERT INTO commentslikes(
 	id_plate, 
+ 	username = 'x',
+  	userEmail = 'x',
 	id_user)
 SELECT id, id_user
 FROM rows
