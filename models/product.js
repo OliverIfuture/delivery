@@ -32,10 +32,10 @@ select
 				JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', C.id,
-                'username', U.name,
-                'id_user', C.id_user
+				'username',U.name,
+                'id_user', U.email
 		)
-        ) as likes
+        ) as likes 
 		from reviews  as R
 		
 		inner join plates as P on P.id = R.id_plate
@@ -43,9 +43,8 @@ select
 		inner join users as U on U.id  = R.id_user  
 		
 		where P.id = $1
-		
 		group by R.id, U.name, R.review, R.calification
-  		order by id desc
+		order by id desc
 
  `;
 return db.manyOrNone(sql, id);
