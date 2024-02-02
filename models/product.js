@@ -100,13 +100,13 @@ Product.findFavorites = (id_plate, id_user) => {
 Product.getAnswers = (id) => {
 
     const sql = `
-		select    A.id,
-				  A.username,
-				  A.answer
-				  from answers as A
-		inner join reviews as R on R.id = A.id_review  
-		where R.id = $1
-		order by A.id asc
+select    A.id,
+		  A.username,
+		  A.answer
+		  from answers as A
+inner join reviews as R on R.id = A.id_review  
+where R.id = 74
+order by A.id asc
 	`;
 
     return db.oneOrNone(sql, id);
