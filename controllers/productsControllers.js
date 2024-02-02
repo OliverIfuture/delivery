@@ -1020,7 +1020,35 @@ async turnOff(req, res, next) {
         }
     }, 
 
+  async createAnswer (req, res, next) {
+        try {
 
+            const id_review = req.params.id_review; 
+            const username = req.params.username;  
+            const answer = req.params.answer;  
+
+            const data = await Product.createAnswer(id_review, username ,answer);
+            console.log(`Status: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'Respuesta  posteada',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error liKe',
+                error: error
+            });
+        }
+    },
+
+        
   async createLike (req, res, next) {
         try {
 
