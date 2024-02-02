@@ -271,7 +271,7 @@ Product.createLike = (id_plate, username ,useremail, id_user) => {
 }
 
 
-Product.createAnswer = (id_review, username ,useremail, answer) => {
+Product.createAnswer = (id_review, username , answer) => {
     const sql = `
     INSERT INTO answers(
 	id_review, 
