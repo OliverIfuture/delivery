@@ -105,7 +105,7 @@ select    A.id,
 		  A.answer
 		  from answers as A
 inner join reviews as R on R.id = A.id_review  
-where R.id = 74
+where R.id = $1
 order by A.id asc
 	`;
 
