@@ -130,7 +130,26 @@ async setStock(req, res, next) {
             });
         }
     },       
+     async getAnswers(req, res, next) {
+        try {
+            const id = req.params.id;
 
+            const data = await Product.getAnswers(id);
+            console.log(`Status: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+            
+        } catch (error) {
+            
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las respuestas',
+                error: error,
+                success: false
+            
+
+            });
+        }
+    },
         
  async findFavorites(req, res, next) {
         try {
