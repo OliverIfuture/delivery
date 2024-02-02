@@ -109,7 +109,7 @@ where R.id = 74
 order by A.id asc
 	`;
 
-    return db.oneOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 }
 
 Product.findSaves = (id_plate, id_user) => {
