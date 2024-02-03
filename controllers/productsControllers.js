@@ -1026,8 +1026,9 @@ async turnOff(req, res, next) {
             const id_review = req.params.id_review; 
             const username = req.params.username;  
             const answer = req.params.answer;  
+            const responseto = req.params.responseto;
 
-            const data = await Product.createAnswer(id_review, username ,answer);
+            const data = await Product.createAnswer(id_review, username ,answer, responseto);
             console.log(`Status: ${JSON.stringify(data)}`);
 
 
