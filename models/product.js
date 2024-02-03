@@ -272,17 +272,19 @@ Product.createLike = (id_plate, username ,useremail, id_user) => {
 }
 
 
-Product.createAnswer = (id_review, username , answer) => {
+Product.createAnswer = (id_review, username , answer, responseto) => {
     const sql = `
     INSERT INTO answers(
 	id_review, 
  	username,
-  	answer
+  	answer,
+   	responseto
+   
 	)
-    VALUES($1, $2, $3  ) RETURNING id
+    VALUES($1, $2, $3, $4  ) RETURNING id
     
     `;
-    return db.manyOrNone(sql, [id_review, username, answer]);
+    return db.manyOrNone(sql, [id_review, username, answer, responseto]);
 }
 
 Product.create = (product) => {
