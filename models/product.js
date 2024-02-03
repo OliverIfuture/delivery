@@ -100,9 +100,10 @@ Product.findFavorites = (id_plate, id_user) => {
 Product.getAnswers = (id) => {
 
     const sql = `
-select    A.id,
+	select    A.id,
 		  A.username,
-		  A.answer
+		  A.answer,
+    		  A.responseto
 		  from answers as A
 inner join reviews as R on R.id = A.id_review  
 where R.id = $1
