@@ -100,13 +100,23 @@ Product.findFavorites = (id_plate, id_user) => {
 Product.getAnswers = (id) => {
 
     const sql = `
-	select    A.id,
+select    A.id,
 		  A.username,
 		  A.answer,
-    		  A.responseto
+          A.responseto,
+       COALESCE(json_agg(
+		JSON_BUILD_OBJECT(
+                'id', C.id,
+				'username',C.username,
+                'useremail', C.useremail,
+				'id_user',C.id_user
+		)
+		) FILTER (WHERE C.useremail != '0'), '[]') 		  
 		  from answers as A
 inner join reviews as R on R.id = A.id_review  
+inner join answersLikes as C on A.id = C.id_answer
 where R.id = $1
+group by A.id
 order by A.id asc
 	`;
 
