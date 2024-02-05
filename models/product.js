@@ -304,9 +304,10 @@ Product.createAnswer = (id_review, username , answer, responseto, id_user) => {
 				id_review, 
 				username,
 				answer,
-				responseto
+				responseto,
+    				userId_answer
 			)
-		    VALUES($1,$2,$3,$4 )
+		    VALUES($1,$2,$3,$4, $5 )
 			RETURNING id, username )
 		INSERT INTO answerslikes(
 			id_answer, 
