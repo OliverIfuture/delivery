@@ -111,7 +111,7 @@ select    A.id,
                 'useremail', C.useremail,
 				'id_user',C.id_user
 		)
-		) FILTER (WHERE C.useremail != '0'), '[]') as LikesAnswer		  
+		) FILTER (WHERE C.useremail != '0'), '[]') as likesanswer		  
 		  from answers as A
 inner join reviews as R on R.id = A.id_review  
 inner join answersLikes as C on A.id = C.id_answer
