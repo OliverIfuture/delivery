@@ -459,6 +459,16 @@ Product.setSave = (id_plate, id_user) => {
         id_user
     ]);
 }
+Product.deleteAnswerLike = (id) => {
+    const sql = `
+
+    DELETE  
+    FROM answerslikes 
+
+    WHERE id = $1
+    `;
+    return db.none(sql,id);
+}
 Product.deleteLikeComment = (id) => {
     const sql = `
 
