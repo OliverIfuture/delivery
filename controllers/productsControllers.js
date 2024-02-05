@@ -1083,7 +1083,7 @@ async turnOff(req, res, next) {
   async createLikeAnswer (req, res, next) {
         try {
 
-            const id_plate = req.params.id_answer; 
+            const id_answer = req.params.id_answer; 
             const username = req.params.username;  
             const useremail = req.params.useremail;  
             const id_user = req.params.id_user;  
