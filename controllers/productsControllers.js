@@ -1054,12 +1054,12 @@ async turnOff(req, res, next) {
   async createLike (req, res, next) {
         try {
 
-            const id_plate = req.params.id_answer; 
+            const id_plate = req.params.id_plate; 
             const username = req.params.username;  
             const useremail = req.params.useremail;  
             const id_user = req.params.id_user;  
 
-            const data = await Product.createLike(id_answer, username ,useremail, id_user);
+            const data = await Product.createLike(id_plate, username ,useremail, id_user);
         console.log(`Status: ${JSON.stringify(data)}`);
 
 
@@ -1083,12 +1083,12 @@ async turnOff(req, res, next) {
   async createLikeAnswer (req, res, next) {
         try {
 
-            const id_plate = req.params.id_plate; 
+            const id_plate = req.params.id_answer; 
             const username = req.params.username;  
             const useremail = req.params.useremail;  
             const id_user = req.params.id_user;  
 
-            const data = await Product.createLikeAnswer(id_plate, username ,useremail, id_user);
+            const data = await Product.createLikeAnswer(id_answer, username ,useremail, id_user);
         console.log(`Status: ${JSON.stringify(data)}`);
 
 
