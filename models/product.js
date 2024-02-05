@@ -104,8 +104,8 @@ Product.getAnswers = (id) => {
 select    A.id,
 		  A.username,
 		  A.answer,
-          A.responseto,
-	  A.userId_answer,
+                  A.responseto,
+	          A.userid_answer,
        COALESCE(json_agg(
 		JSON_BUILD_OBJECT(
                 'id', C.id,
@@ -120,6 +120,8 @@ inner join answersLikes as C on A.id = C.id_answer
 where R.id = $1
 group by A.id
 order by A.id asc
+
+
 	`;
 
     return db.manyOrNone(sql, id);
