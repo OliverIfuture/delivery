@@ -29,6 +29,7 @@ select
 		U.name as username,
 		R.review,
 		R.calification,
+  		R.id_user,
         COALESCE(json_agg(
 		JSON_BUILD_OBJECT(
                 'id', C.id,
