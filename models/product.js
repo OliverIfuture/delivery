@@ -105,6 +105,7 @@ select    A.id,
 		  A.username,
 		  A.answer,
           A.responseto,
+	  A.userId_answer,
        COALESCE(json_agg(
 		JSON_BUILD_OBJECT(
                 'id', C.id,
