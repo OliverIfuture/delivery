@@ -8,6 +8,7 @@ module.exports = (app, upload) => {
       app.post('/api/products/createGift',passport.authenticate('jwt', {session: false}) , productsControllers.createGift);
       app.post('/api/products/createReview',passport.authenticate('jwt', {session: false}) , productsControllers.createReview);
       app.post('/api/products/createLike/:id_plate/:username/:useremail/:id_user' , productsControllers.createLike);
+      app.post('/api/products/createLikeAnswer/:id_plate/:username/:useremail/:id_user' , productsControllers.createLikeAnswer);
       app.post('/api/products/createAnswer/:id_review/:username/:answer/:responseto/:id_user' , productsControllers.createAnswer);
 
       app.get('/api/products/getAll',passport.authenticate('jwt', {session: false}) , productsControllers.getAll);     
