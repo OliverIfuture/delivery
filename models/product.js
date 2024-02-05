@@ -305,7 +305,7 @@ Product.createAnswer = (id_review, username , answer, responseto, id_user) => {
 				username,
 				answer,
 				responseto,
-    				userId_answer
+    				"userId_answer"
 			)
 		    VALUES($1,$2,$3,$4, $5 )
 			RETURNING id, username )
