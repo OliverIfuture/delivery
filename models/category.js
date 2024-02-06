@@ -5,18 +5,15 @@ const Category = {};
 Category.getAll = () => {
     const sql =
         `
-        SELECT 
+ SELECT 
             id,
             name,
             description,
             image
         FROM
-            categories
+            categories where name != 'SERVINGS'
         ORDER BY 
-            name        
-        
-        
-        
+            name 
         `;
     return db.manyOrNone(sql);
 }
