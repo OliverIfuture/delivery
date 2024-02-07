@@ -774,10 +774,10 @@ SELECT
 Order.selectTotals = (shift_ref) => {
     const sql = `
 select 
-		    SUM(cash) as cash_totals ,
-		    SUM(credit_card) as credit_card_totals,
-		    SUM(points) as points_totals,
-		    SUM(total)  as totals_sales
+		    SUM(cash :: bigint) as cash_totals  ,
+		    SUM(credit_card :: bigint) as credit_card_totals,
+		    SUM(points :: bigint) as points_totals,
+		    SUM(total :: bigint)  as totals_sales
 
 
 
