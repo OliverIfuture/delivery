@@ -27,6 +27,7 @@ Product.findReview = (id) =>{
 select 
 		R.id,
 		U.name as username,
+		U.image,
 		R.review,
 		R.calification,
   		R.id_user,
@@ -45,7 +46,7 @@ select
 		inner join users as U on U.id  = R.id_user  
 		
 		where P.id = $1
-		group by R.id, U.name, R.review, R.calification
+		group by R.id, U.name, R.review, R.calification, U.image
 		order by id desc
 
 
