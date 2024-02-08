@@ -1072,7 +1072,7 @@ async turnOff(req, res, next) {
             const answer = req.params.answer;  
             const responseto = req.params.responseto;
             const id_user = req.params.id_user;
-            const image = req.params.image;
+            const image = 'fghjkjhgfghjklkjhg';
 
             const data = await Product.createAnswer(id_review, username ,answer, responseto, id_user, image);
             console.log(`Status: ${JSON.stringify(data)}`);
