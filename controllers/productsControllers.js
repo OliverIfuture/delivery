@@ -420,8 +420,28 @@ async updateStockers (req, res, next) {
         }
     },
 
+        
+async favoritesplates(req, res, next) {
+        try {
 
-      async findLast5(req, res, next) {
+            const id = req.params.id;    
+            const data = await Product.favoritesplates(id);
+            console.log(`Favoritos obtenidos: ${data}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
+
+ async findLast5(req, res, next) {
         try {
             const data = await Product.findLast5();
             console.log(`Productos obtenidos: ${data}`);
