@@ -105,8 +105,9 @@ Product.getAnswers = (id) => {
 select    A.id,
 		  A.username,
 		  A.answer,
-                  A.responseto,
-	          A.userid_answer,
+          A.responseto,
+	      A.userid_answer,
+		  U.image,
        COALESCE(json_agg(
 		JSON_BUILD_OBJECT(
                 'id', C.id,
@@ -116,11 +117,12 @@ select    A.id,
 		)
 		) FILTER (WHERE C.useremail != '0'), '[]') as likesanswer		  
 		  from answers as A
+		  inner join users as U on U.id = A.userid_answer
 inner join reviews as R on R.id = A.id_review  
 inner join answersLikes as C on A.id = C.id_answer
 where R.id = $1
-group by A.id
-order by A.id asc
+group by A.id, U.image
+order by A.id   asc
 
 
 	`;
