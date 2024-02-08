@@ -12,6 +12,19 @@ Product.getAll = () =>{
 return db.manyOrNone(sql);
 
 }
+
+Product.favoritesplates = (id) =>{
+	const sql = `
+		select 
+			U.name,
+			U.image
+		from favorites as F
+		inner join users as U on U.id = F.id_user
+		where id_plate = $1
+ `;
+return db.manyOrNone(sql, id);
+
+}
 Product.findLast5 = () =>{
 	const sql = `
 	 SELECT * FROM plates
