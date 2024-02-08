@@ -302,7 +302,7 @@ Product.createLikeAnswer = (id_answer, username ,useremail, id_user) => {
 
 
 
-Product.createAnswer = (id_review, username , answer, responseto, id_user, image) => {
+Product.createAnswer = (id_review, username , answer, responseto, id_user, miUser) => {
     const sql = `
 		with rows as (
 		    INSERT INTO answers(
@@ -311,7 +311,7 @@ Product.createAnswer = (id_review, username , answer, responseto, id_user, image
 				answer,
 				responseto,
     				userid_answer,
-				image
+			 	user_id
 	
 			)
 		    VALUES($1,$2,$3,$4, $5, $6 )
@@ -326,7 +326,7 @@ Product.createAnswer = (id_review, username , answer, responseto, id_user, image
 		FROM rows
 
     `;
-    return db.manyOrNone(sql, [id_review, username, answer, responseto,id_user, image ]);
+    return db.manyOrNone(sql, [id_review, username, answer, responseto,id_user, miUser ]);
 }
 
 Product.create = (product) => {
