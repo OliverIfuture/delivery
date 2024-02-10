@@ -29,6 +29,8 @@ module.exports = (app, upload) => {
       app.post('/api/products/setSave/:id_plate/:id_user', productsControllers.setSave);
       app.post('/api/products/findFavorites/:id_plate/:id_user',productsControllers.findFavorites);
       app.post('/api/products/findFavoritesProfile/:id_profile/:id_user',productsControllers.findFavoritesProfile);
+      app.post('/api/products/findFollowersProfile/:id_profile/:id_user',productsControllers.findFollowersProfile);
+      
       
       app.post('/api/products/findSaves/:id_plate/:id_user',productsControllers.findSaves);
 
