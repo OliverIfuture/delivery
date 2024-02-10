@@ -152,7 +152,7 @@ async setStock(req, res, next) {
     },
 async findFavoritesProfile(req, res, next) {
         try {
-            const id_plate = req.params.id_profile;
+            const id_profile = req.params.id_profile;
             const id_user = req.params.id_user;     
             const code = await Product.findFavoritesProfile(id_profile, id_user);
              console.log(`stock enviada: ${code}`);
