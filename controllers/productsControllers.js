@@ -633,7 +633,7 @@ async lookFavoritesList(req, res, next) {
         try {
 
             const id_profile = req.params.id_profile;    
-            const data = await Product.lookFavoritesList);
+            const data = await Product.lookFavoritesList(id_profile);
             console.log(`Favoritos obtenidos: ${data}`);
             return res.status(201).json(data);
 
