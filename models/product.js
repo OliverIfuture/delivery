@@ -461,6 +461,22 @@ Product.setFavorites = (id_plate, id_user) => {
     ]);
 }
 
+Product.setFavoritesProfile = (id_profile, id_user) => {
+    const sql = `
+    INSERT INTO
+        favorites(
+	    id_profile,  
+            id_user
+        )
+    VALUES($1, $2)    
+    `;
+    return db.none(sql, [
+        id_profile,
+        id_user
+    ]);
+}
+
+
 Product.setSave = (id_plate, id_user) => {
     const sql = `
     INSERT INTO
