@@ -43,6 +43,7 @@ module.exports = (app, upload) => {
       app.get('/api/products/getReviewPlateRate/:id_plate',productsControllers.getReviewPlateRate);
       app.get('/api/products/getProfileFavoriteIconSum/:id_profile',productsControllers.getProfileFavoriteIconSum);
       app.get('/api/products/getProfilePlatesIconSumProfile/:id_profile',productsControllers.getProfilePlatesIconSumProfile);
+      app.get('/api/products/GgetProfileFollowersIconSumProfile/:id_profile',productsControllers.GgetProfileFollowersIconSumProfile);
       app.get('/api/products/findByCategory/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategory);
       app.get('/api/products/getByCtaegoryPlate/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.getByCtaegoryPlate);
       app.get('/api/products/findByCategoryStocks/:id_category/:id_company',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategoryStocks);
