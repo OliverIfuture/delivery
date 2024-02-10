@@ -451,7 +451,30 @@ async deleteFavorites (req, res, next) {
             });
         }
         
-},        
+},
+
+async deleteFollowersProfile (req, res, next) {
+        try {
+
+            const id_profile = req.params.id_profile;             
+            const id_user = req.params.id_user; 
+            const data = await Product.deleteFollowersProfile (id_profile, id_user);
+
+            return res.status(201).json({
+                message: 'eliminado de favoritos',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar',
+                success: false,
+                error: error
+            });
+        }
+        
+},         
 async deleteFavoritesProfile (req, res, next) {
         try {
 
