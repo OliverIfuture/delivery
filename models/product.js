@@ -225,7 +225,16 @@ FROM
 return db.manyOrNone(sql, id_profile);
 
 }
+Product.GgetProfileFollowersIconSumProfile = (id_profile) =>{
+	const sql = `
+		SELECT 
+  count(followers) as rate
+FROM 
+  favorites where id_user= $1
+ `;
+return db.manyOrNone(sql, id_profile);
 
+}
 Product.getReviewPlateRate = (id_plate) =>{
 	const sql = `
 		SELECT 
