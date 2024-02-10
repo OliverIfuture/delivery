@@ -26,6 +26,19 @@ Product.favoritesplates = (id) =>{
 return db.manyOrNone(sql, id);
 
 }
+Product.lookFavoritesList = (id_profile) =>{
+	const sql = `
+		select 
+			U.name,
+			U.image,
+   			U.id
+		from followers as F
+		inner join users as U on U.id = F.id_user
+		where id_profile = $1
+ `;
+return db.manyOrNone(sql, id_profile);
+
+}
 Product.findLast5 = () =>{
 	const sql = `
 	 SELECT * FROM plates
