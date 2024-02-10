@@ -112,7 +112,23 @@ Product.findFavorites = (id_plate, id_user) => {
         id_user
     ]);
 }
+Product.findFavoritesProfile = (id_profile, id_user) => {
 
+    const sql = `
+    SELECT 
+
+    *
+        
+    FROM
+        favorites_profile
+    WHERE
+        id_profile = $1 and id_user = $2`  ;
+
+    return db.oneOrNone(sql, [
+        id_plate,
+        id_user
+    ]);
+}
 Product.getAnswers = (id) => {
 
     const sql = `
