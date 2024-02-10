@@ -362,6 +362,29 @@ async setFavorites(req, res, next) {
         
 },
 
+async setFollowersProfile(req, res, next) {
+        try {
+
+            const id_profile = req.params.id_profile;             
+            const id_user = req.params.id_user; 
+            const data = await Product.setFollowersProfile(id_profile, id_user);
+
+            return res.status(201).json({
+                message: 'Me gusta',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al agregar',
+                success: false,
+                error: error
+            });
+        }
+        
+},
+        
 async setFavoritesProfile(req, res, next) {
         try {
 
