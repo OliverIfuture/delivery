@@ -26,6 +26,8 @@ module.exports = (app, upload) => {
       app.post('/api/products/setStock', passport.authenticate('jwt', { session: false }), productsControllers.setStock);
       app.post('/api/products/setFavorites/:id_plate/:id_user', productsControllers.setFavorites);
       app.post('/api/products/setFavoritesProfile/:id_profile/:id_user', productsControllers.setFavoritesProfile);
+      app.post('/api/products/setFollowersProfile/:id_profile/:id_user', productsControllers.setFollowersProfile);
+      
       app.post('/api/products/setSave/:id_plate/:id_user', productsControllers.setSave);
       app.post('/api/products/findFavorites/:id_plate/:id_user',productsControllers.findFavorites);
       app.post('/api/products/findFavoritesProfile/:id_profile/:id_user',productsControllers.findFavoritesProfile);
