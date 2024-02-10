@@ -150,7 +150,38 @@ async setStock(req, res, next) {
             });
         }
     },
-        
+async findFavoritesProfile(req, res, next) {
+        try {
+            const id_plate = req.params.id_profile;
+            const id_user = req.params.id_user;     
+            const code = await Product.findFavoritesProfile(id_profile, id_user);
+             console.log(`stock enviada: ${code}`);
+
+            if (!code) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'El codigo no fue encontrado'
+                });
+            }
+
+            else{
+                return res.status(201).json({
+                success: true,
+                message: 'codigo aplicado',
+            });
+            }
+
+ 
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al momento de hacer login',
+                error: error
+            });
+        }
+    },     
  async findFavorites(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
