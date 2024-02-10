@@ -177,7 +177,16 @@ Product.findSaves = (id_plate, id_user) => {
         id_user
     ]);
 }
+Product.getProfileFavoriteIconSum = (id_profile) =>{
+	const sql = `
+		SELECT 
+  count(favorites_profile) as rate
+FROM 
+  favorites_profile where id_profile = $1
+ `;
+return db.manyOrNone(sql, id_profile);
 
+}
 Product.getReviewPlateFavoriteIcon = (id_plate) =>{
 	const sql = `
 		SELECT 
