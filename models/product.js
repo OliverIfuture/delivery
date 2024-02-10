@@ -112,6 +112,23 @@ Product.findFavorites = (id_plate, id_user) => {
         id_user
     ]);
 }
+Product.findFollowersProfile = (id_profile, id_user) => {
+
+    const sql = `
+    SELECT 
+
+    *
+        
+    FROM
+        followers
+    WHERE
+        id_profile = $1 and id_user = $2`  ;
+
+    return db.oneOrNone(sql, [
+        id_profile,
+        id_user
+    ]);
+}
 Product.findFavoritesProfile = (id_profile, id_user) => {
 
     const sql = `
