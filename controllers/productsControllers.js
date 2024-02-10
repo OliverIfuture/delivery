@@ -296,7 +296,7 @@ async setFavoritesProfile(req, res, next) {
 
             const id_profile = req.params.id_profile;             
             const id_user = req.params.id_user; 
-            const data = await Product.setFavorites(id_profile, id_user);
+            const data = await Product.setFavoritesProfile(id_profile, id_user);
 
             return res.status(201).json({
                 message: 'Me gusta',
