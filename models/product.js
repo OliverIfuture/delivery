@@ -125,7 +125,7 @@ Product.findFavoritesProfile = (id_profile, id_user) => {
         id_profile = $1 and id_user = $2`  ;
 
     return db.oneOrNone(sql, [
-        id_plate,
+        id_profile,
         id_user
     ]);
 }
