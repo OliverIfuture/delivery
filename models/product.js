@@ -17,7 +17,8 @@ Product.favoritesplates = (id) =>{
 	const sql = `
 		select 
 			U.name,
-			U.image
+			U.image,
+   			U.id
 		from favorites as F
 		inner join users as U on U.id = F.id_user
 		where id_plate = $1
