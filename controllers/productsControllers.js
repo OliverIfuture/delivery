@@ -68,6 +68,26 @@ async setStock(req, res, next) {
         }
     },  
 
+       async getProfilePlatesIconSumProfile(req, res, next) {
+
+        try {
+            const id_profile = req.params.id_profile;
+            const data = await Product.getProfilePlatesIconSumProfile(id_profile);
+             console.log(`stock enviada: ${data}`);
+
+            return res.status(201).json(data);
+
+            
+        } catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al listar los corazones de este platillo ${error}`,
+                success: false,
+                error: error
+                 });
+        }
+    },
+        
        async getProfileFavoriteIconSum(req, res, next) {
 
         try {
