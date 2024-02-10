@@ -465,7 +465,7 @@ Product.setFavorites = (id_plate, id_user) => {
 Product.setFavoritesProfile = (id_profile, id_user) => {
     const sql = `
     INSERT INTO
-        favorites(
+        favorites_profile(
 	    id_profile,  
             id_user
         )
