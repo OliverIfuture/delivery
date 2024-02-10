@@ -605,6 +605,19 @@ Product.deleteFavoritesProfile = (id_profile, id_user) => {
         id_user
     ]);
 }
+Product.deleteFollowersProfile = (id_profile, id_user) => {
+    const sql = `
+
+    DELETE  
+    FROM followers 
+
+    WHERE id_profile = $1 and id_user = $2
+    `;
+    return db.none(sql, [
+        id_profile,
+        id_user
+    ]);
+}
 Product.deleteteSave = (id_plate, id_user) => {
     const sql = `
 
