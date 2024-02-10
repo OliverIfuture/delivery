@@ -230,7 +230,7 @@ Product.GgetProfileFollowersIconSumProfile = (id_profile) =>{
 		SELECT 
   count(followers) as rate
 FROM 
-  favorites where id_user= $1
+  followers where id_user= $1
  `;
 return db.manyOrNone(sql, id_profile);
 
