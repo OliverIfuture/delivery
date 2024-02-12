@@ -363,6 +363,20 @@ FROM rows
     ]);
 }
 
+Product.likePublish = (id_publish, username ,useremail, id_user) => {
+    const sql = `
+    INSERT INTO commentslikes(
+	id_publish, 
+ 	username,
+  	useremail,
+        id_user
+	)
+    VALUES($1, $2, $3, $4  ) RETURNING id
+    
+    `;
+    return db.manyOrNone(sql, [id_publish, username, useremail, id_user]);
+}
+
 Product.createLike = (id_plate, username ,useremail, id_user) => {
     const sql = `
     INSERT INTO commentslikes(
