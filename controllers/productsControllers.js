@@ -11,7 +11,7 @@ module.exports = {
             const id_user = req.params.id_user;
             const description = req.params.description;
             const files = req.files;
-            const url;
+            const url = await storage(files[0], pathImage);
 
             if (files.length > 0) {
                 const pathImage = `image_${Date.now()}`;
