@@ -74,6 +74,7 @@ from post as P
 inner join users as U on U.id = P.id_user 
 
 where id_user = $1
+order by P.id desc
  `;
 return db.manyOrNone(sql, id_user);
 }
