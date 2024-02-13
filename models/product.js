@@ -20,7 +20,7 @@ Product.createPost = (id_user, description, url) => {
         post(
             id_user,
             description,
-            url
+            image_post
         )
     VALUES($1, $2, $3) RETURNING id
     `;
