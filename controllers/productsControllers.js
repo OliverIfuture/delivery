@@ -11,18 +11,20 @@ module.exports = {
             const id_user = req.params.id_user;
             const description = req.params.description;
             const files = req.files;
-            const url = await storage(files[0], pathImage);
+            let image;
 
             if (files.length > 0) {
                 const pathImage = `image_${Date.now()}`;
-                 url = await storage(files[0], pathImage);
+                const url = await storage(files[0], pathImage);
                 
                 if (url != undefined && url != null) {
+                    image = url;
 
                 }
             }
 
-            const data = await Product.createPost(id_user, description, url);
+
+            const data = await Product.createPost(id_user, description, image);
             return res.status(201).json({
                 succes: true,
                 message: 'El registro se ralizo correctamente',
