@@ -5,6 +5,26 @@ const asyncForEach = require('../utils/async_foreach');
 module.exports = {
 
 
+ async getPost(req, res, next) {
+        try {            
+         
+         
+           const id_user = req.params.id_user;    
+            const data = await Product.getPost(id_user);
+            console.log(`post  obtenidos: ${data}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
  async createPost(req, res, next) {
         try {
             
