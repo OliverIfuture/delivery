@@ -4,6 +4,45 @@ const asyncForEach = require('../utils/async_foreach');
 
 module.exports = {
 
+
+ async createPost(req, res, next) {
+        try {
+            
+            const id_user = req.params.id_user;
+            const description = req.params.description;
+            const files = req.files;
+
+            if (files.length > 0) {
+                const pathImage = `image_${Date.now()}`;
+                const url = await storage(files[0], pathImage);
+                
+                if (url != undefined && url != null) {
+                    url = url;
+
+                }
+            }
+
+            const data = await Product.createPost(id_user, description, url);
+            return res.status(201).json({
+                succes: true,
+                message: 'El registro se ralizo correctamente',
+                data: data.id
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: true,
+                message: 'error al publicar',
+                error: error
+
+            });
+        }
+    },        
+
 async setStock(req, res, next) {
         try {
 
