@@ -62,8 +62,18 @@ return db.manyOrNone(sql, id_profile);
 
 Product.getPost = (id_user) =>{
 	const sql = `
-	 select * from post
-         where id_user = $1
+select 
+p.id,
+P.id_user,
+P.description,
+P.image_post,
+U.name,
+U.image as photo
+
+from post as P
+inner join users as U on U.id = P.id_user 
+
+where id_user = $1
  `;
 return db.manyOrNone(sql, id_user);
 }
