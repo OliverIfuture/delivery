@@ -15,6 +15,7 @@ module.exports = (app, upload) => {
 
       app.get('/api/products/getAll',passport.authenticate('jwt', {session: false}) , productsControllers.getAll);     
       app.get('/api/products/findLast5', productsControllers.findLast5);    
+       app.get('/api/products/getPost/:id_user', productsControllers.getPost);    
       app.get('/api/products/findReview/:id', productsControllers.findReview);    
       app.get('/api/products/favoritesplates/:id', productsControllers.favoritesplates);    
       app.get('/api/products/lookFavoritesList/:id_profile', productsControllers.lookFavoritesList);    
