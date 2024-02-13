@@ -17,7 +17,7 @@ Product.createPost = (id_user, description, url) => {
 
     const sql = `
     INSERT INTO
-        users(
+        post(
             id_user,
             description,
             url
