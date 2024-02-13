@@ -59,6 +59,15 @@ Product.lookFavoritesList = (id_profile) =>{
 return db.manyOrNone(sql, id_profile);
 
 }
+
+Product.getPost = (id_user) =>{
+	const sql = `
+	 select * from post
+         where id_user = $1
+ `;
+return db.manyOrNone(sql, id_user);
+}
+
 Product.findLast5 = () =>{
 	const sql = `
 	 SELECT * FROM plates
