@@ -13,6 +13,26 @@ return db.manyOrNone(sql);
 
 }
 
+Product.createPost = (id_user, description, url) => {
+
+    const sql = `
+    INSERT INTO
+        users(
+            id_user,
+            description,
+            url
+        )
+    VALUES($1, $2, $3) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+        id_user,
+        description,
+	url    
+    ]);
+}
+
+
 Product.favoritesplates = (id) =>{
 	const sql = `
 		select 
