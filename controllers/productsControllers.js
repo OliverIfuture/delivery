@@ -14,7 +14,7 @@ module.exports = {
 
             if (files.length > 0) {
                 const pathImage = `image_${Date.now()}`;
-                let url = await storage(files[0], pathImage);
+                const url = await storage(files[0], pathImage);
                 
                 if (url != undefined && url != null) {
                     url = url;
