@@ -4,7 +4,29 @@ const asyncForEach = require('../utils/async_foreach');
 
 module.exports = {
 
+ 
+ async deletePost (req, res, next) {
+        try {
 
+            const id = req.params.id;
+            const id_user = req.params.id_user;
+            const data = await Product.deletePost(id, id_user);
+
+            return res.status(201).json({
+                message: 'El post se elimino correctamente',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar el post',
+                success: false,
+                error: error
+            });
+        }
+        
+},
  async getPost(req, res, next) {
         try {            
          
