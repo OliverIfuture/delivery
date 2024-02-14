@@ -42,7 +42,16 @@ Product.createPost = (id_user, description, url) => {
 	url    
     ]);
 }
+Product.getUserProfile = (id) =>{
+	const sql = `
+		select 
+id,
+name, 
+image from users  where id = $1
+ `;
+return db.manyOrNone(sql, id);
 
+}
 
 Product.favoritesplates = (id) =>{
 	const sql = `
