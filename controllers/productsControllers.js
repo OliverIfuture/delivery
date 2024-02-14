@@ -4,6 +4,25 @@ const asyncForEach = require('../utils/async_foreach');
 
 module.exports = {
 
+ async getUserProfile(req, res, next) {
+        try {
+
+            const id = req.params.id;    
+            const data = await Product.getUserProfile(id);
+            console.log(`Favoritos obtenidos: ${data}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
  
  async deletePost (req, res, next) {
         try {
