@@ -43,6 +43,8 @@ module.exports = (app, upload) => {
 
 
       app.get('/api/products/getFavorites/:id_user',productsControllers.getFavorites);
+      app.get('/api/products/getUserProfile/:id',productsControllers.getUserProfile);
+      
       app.get('/api/products/getSaves/:id_user',productsControllers.getSaves);
       app.get('/api/products/getReviewPlateFavoriteIcon/:id_plate',productsControllers.getReviewPlateFavoriteIcon);
       app.get('/api/products/getReviewPlateRate/:id_plate',productsControllers.getReviewPlateRate);
