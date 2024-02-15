@@ -72,7 +72,7 @@ Product.lookFavoritesList = (id_profile) =>{
 			U.name,
 			U.image,
    			U.id
-		from followers as F
+		from favorites_profile as F
 		inner join users as U on U.id = F.id_user
 		where id_profile = $1
  `;
