@@ -750,7 +750,25 @@ async lookFavoritesList(req, res, next) {
             });
         }
     },
-        
+async lookFollowersList (req, res, next) {
+        try {
+
+            const id_profile = req.params.id_profile;    
+            const data = await Product.lookFollowersList (id_profile);
+            console.log(`seguidores obtenidos: ${data}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },        
 async favoritesplates(req, res, next) {
         try {
 
