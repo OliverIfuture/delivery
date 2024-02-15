@@ -80,6 +80,20 @@ return db.manyOrNone(sql, id_profile);
 
 }
 
+Product.lookFollowersList = (id_profile) =>{
+	const sql = `
+		select 
+			U.name,
+			U.image,
+   			U.id
+		from followers as F
+		inner join users as U on U.id = F.id_user
+		where id_profile = $1
+ `;
+return db.manyOrNone(sql, id_profile);
+
+}
+
 Product.getPost = (id_user) =>{
 	const sql = `
 select 
