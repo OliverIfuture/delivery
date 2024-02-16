@@ -238,6 +238,8 @@ module.exports = {
             let order = req.body;
             order.status = 'PENDIENTE DE PAGO';
             const data = await Order.create(order);
+            console.log(`orden creada: ${JSON.stringify(data)}`);
+
 ////recorrer todos los productos de la orden
             for (const product of order.products) {
                 await OrderHasProducts.create(data.id, product.id, product.quantity, data.id_plate);
