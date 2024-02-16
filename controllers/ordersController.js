@@ -209,7 +209,7 @@ module.exports = {
             const data = await Order.create(order);
 ////recorrer todos los productos de la orden
             for (const product of order.products) {
-                await OrderHasProducts.create(data.id, product.id, product.quantity);
+                await OrderHasProducts.create(data.id, product.id, product.quantity, data.id_plate);
 
             }
 
