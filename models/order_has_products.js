@@ -4,7 +4,7 @@ const OrderHasProducts = {};
 
 
 
-OrderHasProducts.create = (id_order, id_product, quantity) => {
+OrderHasProducts.create = (id_order, id_product, quantity, id_plate) => {
     const sql = `
 
     INSERT INTO 
@@ -26,7 +26,7 @@ OrderHasProducts.create = (id_order, id_product, quantity) => {
         quantity,
         new Date(),
         new Date(),
-        1234567890
+        id_plate
     ]);
 }
 
