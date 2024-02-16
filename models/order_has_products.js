@@ -13,10 +13,11 @@ OrderHasProducts.create = (id_order, id_product, quantity) => {
             id_product,
             quantity,
             created_at,
-            updated_at
+            updated_at,
+            id_plate
         )
 
-    VALUES($1, $2, $3, $4, $5)
+    VALUES($1, $2, $3, $4, $5, $6)
     `;
 
     return db.none(sql, [
@@ -24,7 +25,8 @@ OrderHasProducts.create = (id_order, id_product, quantity) => {
         id_product,
         quantity,
         new Date(),
-        new Date()
+        new Date(),
+        1234567890
     ]);
 }
 
