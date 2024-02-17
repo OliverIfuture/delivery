@@ -29,7 +29,30 @@ OrderHasProducts.create = (id_order, id_product, quantity, id_plate) => {
         id_plate
     ]);
 }
+OrderHasProducts.createOrderWithPlate = (id_order, id_plate, quantity) => {
+    const sql = `
 
+    INSERT INTO 
+    order_has_products_plates(
+            id_order,
+            id_plate,
+            quantity,
+            created_at,
+            updated_at
+            
+        )
+
+    VALUES($1, $2, $3, $4, $5)
+    `;
+
+    return db.none(sql, [
+        id_order,
+        id_plate,
+        quantity,
+        new Date(),
+        new Date(),
+    ]);
+}
 OrderHasProducts.createSale = (name, price_wholesale, image1, price, reference, quantity, shift_ref) => {
     const sql = `
 
