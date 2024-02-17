@@ -16,7 +16,7 @@ Order.findByStatus = (status) => {
         O.payMethod,
 	O.hour_program,
   	O.discounts,
-       JSON_AGG(
+       COALESCE( JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
                 'name', P.name,
@@ -27,7 +27,8 @@ Order.findByStatus = (status) => {
                 'image2', P.image2,
                 'image3', P.image3,
                 'quantity', OHP.quantity
-            )) AS products,
+            )
+        ) FILTER (where P.name != ''), '[]') AS products,
        COALESCE( JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', M.id,
@@ -85,7 +86,7 @@ Order.findByStatus = (status) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
-    INNER JOIN
+    left JOIN
         products AS P
     ON
         P.id = OHP.id_product
@@ -97,7 +98,7 @@ Order.findByStatus = (status) => {
 	
 		OHPP.id_order = O.id		
 	
-	INNER JOIN 
+	left JOIN 
 		plates AS M
 	ON 	
 	  OHPP.id_plate = M.id
@@ -106,7 +107,7 @@ Order.findByStatus = (status) => {
         status = $1
     GROUP BY
         O.id, U.id, A.id, U2.id
-    ORDER BY O.id, U.id, A.id, U2.id desc	
+    ORDER BY O.id
     `;
 
     return db.manyOrNone(sql, status);
