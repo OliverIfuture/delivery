@@ -241,9 +241,14 @@ module.exports = {
             console.log(`orden creada: ${JSON.stringify(order.id_plate)}`);
 
             for (const product of order.products) {
+                if(product.id < 1000)
+                {
                 await OrderHasProducts.create(data.id, product.id, product.quantity);
+                }
+                if(product.id > 1000)
+                {
                 await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
-
+                }    
             }
 
                 return res.status(201).json({
