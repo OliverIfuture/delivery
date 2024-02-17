@@ -249,7 +249,23 @@ Order.findByClient = (id_client) => {
                 'image3', P.image3,
                 'quantity', OHP.quantity
             )
-        ) AS products,
+        )AS products,
+       COALESCE( JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', M.id,
+                'name', M.name,
+                'description', M.description,
+                'price', M.price,
+		'price_special', M.price_special,
+                'image1', M.image1,
+                'image2', M.image2,
+                'image3', M.image3,
+				'carbs', M.carbs,
+				'protein', M.protein,
+				'calorias', M.calorias,
+                'quantity', OHP.quantity
+            )
+        ) FILTER (where M.name != ''), '[]') AS plates,
         JSON_BUILD_OBJECT(
             'id', U.id,
             'name', U.name,
@@ -294,11 +310,23 @@ Order.findByClient = (id_client) => {
         products AS P
     ON
         P.id = OHP.id_product
+	
+	INNER JOIN 	
+		order_has_products_plates as OHPP
+	ON
+	
+		OHPP.id_order = O.id		
+	
+	INNER JOIN 
+		plates AS M
+	ON 	
+	  OHPP.id_plate = M.id
+	  
     WHERE
         O.id_client = $1 AND (status != 'ENTREGADO') AND (status != 'CANCELADO') 
     GROUP BY
         O.id, U.id, A.id, U2.id 
-	ORDER BY O.id desc	
+	ORDER BY O.id desc
     `;
 
     return db.manyOrNone(sql, [id_client]);
