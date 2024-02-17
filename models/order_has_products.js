@@ -16,7 +16,7 @@ OrderHasProducts.create = (id_order, id_product, quantity) => {
             updated_at
             )
 
-    VALUES($1, $2, $3, $4, $5, $6)
+    VALUES($1, $2, $3, $4, $5)
     `;
 
     return db.none(sql, [
