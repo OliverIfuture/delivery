@@ -17,7 +17,8 @@ Order.findByStatus = (status) => {
 	O.hour_program,
   	O.discounts,
        COALESCE( JSON_AGG(
-            JSON_BUILD_OBJECT(
+            DISTINCT jsonb_build_object(
+				
                 'id', P.id,
                 'name', P.name,
                 'description', P.description,
@@ -30,7 +31,7 @@ Order.findByStatus = (status) => {
             )
         ) FILTER (where P.name != ''), '[]') AS products,
        COALESCE( JSON_AGG(
-            JSON_BUILD_OBJECT(
+            DISTINCT jsonb_build_object(
                 'id', M.id,
                 'name', M.name,
                 'description', M.description,
@@ -42,7 +43,7 @@ Order.findByStatus = (status) => {
 				'carbs', M.carbs,
 				'protein', M.protein,
 				'calorias', M.calorias,
-                'quantity', OHP.quantity
+                'quantity', OHPP.quantity
             )
         ) FILTER (where M.name != ''), '[]') AS plates,
         JSON_BUILD_OBJECT(
@@ -86,7 +87,7 @@ Order.findByStatus = (status) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
-    left JOIN
+    inner JOIN
         products AS P
     ON
         P.id = OHP.id_product
@@ -98,7 +99,7 @@ Order.findByStatus = (status) => {
 	
 		OHPP.id_order = O.id		
 	
-	left JOIN 
+	inner JOIN 
 		plates AS M
 	ON 	
 	  OHPP.id_plate = M.id
