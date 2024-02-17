@@ -128,8 +128,8 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
         O.payMethod,
 	O.hour_program,
  	O.discounts,
-        JSON_AGG(
-            JSON_BUILD_OBJECT(
+       COALESCE( JSON_AGG(
+            DISTINCT jsonb_build_object(
                 'id', P.id,
                 'name', P.name,
                 'description', P.description,
@@ -140,9 +140,9 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
                 'image3', P.image3,
                 'quantity', OHP.quantity
             )
-        ) AS products,
+        ) FILTER (where P.name != ''), '[]') AS products,
        COALESCE( JSON_AGG(
-            JSON_BUILD_OBJECT(
+            DISTINCT jsonb_build_object(
                 'id', M.id,
                 'name', M.name,
                 'description', M.description,
@@ -216,7 +216,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
     WHERE
         O.id_delivery = $1 AND status = $2 
     GROUP BY
-        O.id, U.id, A.id, U2.id  
+        O.id, U.id, A.id, U2.id 
     `;
 
     return db.manyOrNone(sql, [id_delivery, status]);
@@ -239,8 +239,8 @@ Order.findByClient = (id_client) => {
         O.lat,
         O.lng,
 	O.discounts,
-        JSON_AGG(
-            JSON_BUILD_OBJECT(
+       COALESCE( JSON_AGG(
+            DISTINCT jsonb_build_object(
                 'id', P.id,
                 'name', P.name,
                 'description', P.description,
@@ -251,9 +251,9 @@ Order.findByClient = (id_client) => {
                 'image3', P.image3,
                 'quantity', OHP.quantity
             )
-        )AS products,
+        ) FILTER (where P.name != ''), '[]') AS products,
        COALESCE( JSON_AGG(
-            JSON_BUILD_OBJECT(
+            DISTINCT jsonb_build_object(
                 'id', M.id,
                 'name', M.name,
                 'description', M.description,
@@ -350,8 +350,8 @@ Order.findByClientAndStatus = (id_client, status) => {
         O.lat,
         O.lng,
 	O.discounts,
-        JSON_AGG(
-            JSON_BUILD_OBJECT(
+       COALESCE( JSON_AGG(
+            DISTINCT jsonb_build_object(
                 'id', P.id,
                 'name', P.name,
                 'description', P.description,
@@ -362,9 +362,9 @@ Order.findByClientAndStatus = (id_client, status) => {
                 'image3', P.image3,
                 'quantity', OHP.quantity
             )
-        ) AS products,
+        ) FILTER (where P.name != ''), '[]') AS products,
        COALESCE( JSON_AGG(
-            JSON_BUILD_OBJECT(
+            DISTINCT jsonb_build_object(
                 'id', M.id,
                 'name', M.name,
                 'description', M.description,
