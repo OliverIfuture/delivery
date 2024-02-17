@@ -240,9 +240,9 @@ module.exports = {
             const data = await Order.create(order);
             console.log(`orden creada: ${JSON.stringify(order.id_plate)}`);
 
-////recorrer todos los productos de la orden
             for (const product of order.products) {
-                await OrderHasProducts.create(data.id, product.id, product.quantity, product.id);
+                await OrderHasProducts.create(data.id, product.id, product.quantity);
+                await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
 
             }
 
