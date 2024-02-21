@@ -46,6 +46,27 @@ module.exports = {
         }
         
 },
+
+async getPostAll(req, res, next) {
+        try {            
+         
+         
+            const data = await Product.getPostAll();
+            console.log(`Status: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener posts'
+            });
+        }
+    },
+ 
  async getPost(req, res, next) {
         try {            
          
