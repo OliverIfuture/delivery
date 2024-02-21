@@ -94,6 +94,26 @@ return db.manyOrNone(sql, id_profile);
 
 }
 
+
+Product.getPostAll = () =>{
+	const sql = `
+select 
+p.id,
+P.id_user,
+P.description,
+P.image_post,
+U.name,
+U.image as photo
+
+from post as P
+inner join users as U on U.id = P.id_user 
+order by id desc
+ `;
+return db.manyOrNone(sql);
+}
+
+
+
 Product.getPost = (id_user) =>{
 	const sql = `
 select 
