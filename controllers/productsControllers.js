@@ -1511,7 +1511,38 @@ async turnOff(req, res, next) {
             });
         }
     },  
-        
+
+
+
+async createLikePost  (req, res, next) {
+        try {
+
+            const id_plate = req.params.id_publish; 
+            const username = req.params.username;  
+            const useremail = req.params.useremail;  
+            const id_user = req.params.id_user;  
+
+            const data = await Product.createLikePost (id_publish, username ,useremail, id_user);
+        console.log(`Status: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'Like posteado',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error liKe',
+                error: error
+            });
+        }
+    },
+ 
   async createLike (req, res, next) {
         try {
 
