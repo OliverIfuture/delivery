@@ -107,10 +107,10 @@ async getPostAll(req, res, next) {
 
 
             const data = await Product.createPost(id_user, description, image);
-            return res.status(201).json({
-                succes: true,
+           return res.status(201).json({
+
+                success: true,
                 message: 'El registro se ralizo correctamente',
-                data: data.id
             });
 
         }
