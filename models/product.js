@@ -27,13 +27,22 @@ Product.deletePost = (id, id_user) => {
 Product.createPost = (id_user, description, url) => {
 
     const sql = `
-    INSERT INTO
+with rows as (
+  INSERT INTO
         post(
             id_user,
             description,
             image_post
         )
-    VALUES($1, $2, $3) RETURNING id
+    VALUES($1, $2, $3) RETURNING id, username )
+		INSERT INTO likes_publish(
+			id_answer, 
+			username,
+			useremail,
+			id_user
+		 )
+		SELECT id, username, '0', $5
+		FROM rows
     `;
 
     return db.oneOrNone(sql, [
