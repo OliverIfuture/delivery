@@ -471,6 +471,20 @@ Product.likePublish = (id_publish, username ,useremail, id_user) => {
     return db.manyOrNone(sql, [id_publish, username, useremail, id_user]);
 }
 
+Product.createLikePost = (id_publish, username ,useremail, id_user) => {
+    const sql = `
+    INSERT INTO likes_publish(
+	id_publish, 
+ 	username,
+  	useremail,
+        id_user
+	)
+    VALUES($1, $2, $3, $4  ) RETURNING id
+    
+    `;
+    return db.manyOrNone(sql, [id_publish, username, useremail, id_user]);
+}
+
 Product.createLike = (id_plate, username ,useremail, id_user) => {
     const sql = `
     INSERT INTO commentslikes(
