@@ -138,7 +138,9 @@ U.image as photo,
 				'username',A.username,
 			    'answer', A.answer,
 			    'responseto',A.responseto,
-			    'userid_answer', A.userid_answer
+			    'userid_answer', A.userid_answer,
+			    'image',U.image
+
 		)
 		) FILTER (WHERE C.coment != '0'), '[]') as answersPost	
 
