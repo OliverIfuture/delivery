@@ -36,7 +36,7 @@ with rows as (
         )
     VALUES($1, $2, $3) RETURNING id )
 		INSERT INTO likes_publish(
-			id_answer, 
+			id_publish, 
 			username,
 			useremail,
 			id_user
