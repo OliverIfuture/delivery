@@ -127,17 +127,26 @@ U.image as photo,
 				'id_post',p.id,
 				'id_user',C.id_user,
 			    'coment', C.coment,
-       			    'image',U.image,
-	      			    'username', U.name
-
-
+			    'image',U.image,
+			    'username', U.name
 		)
-		) FILTER (WHERE C.coment != '0'), '[]') as coments		
+		) FILTER (WHERE C.coment != '0'), '[]') as coments,
+	   COALESCE(json_agg(
+           DISTINCT jsonb_build_object(
+                'id', A.id,
+				'id_post',A.id_post,
+				'username',A.username,
+			    'answer', A.answer,
+			    'responseto',A.responseto,
+			    'userid_answer', A.userid_answer
+		)
+		) FILTER (WHERE C.coment != '0'), '[]') as answersPost	
 
 from post as P
 inner join users as U on U.id = P.id_user 
 inner join likes_publish as L on L.id_publish = P.id
 inner join coments_post as C on C.id_post = P.id
+inner join answers_post as A on A.id_post = P.id
 group by p.id,U.name, U.image
 order by id desc
  `;
