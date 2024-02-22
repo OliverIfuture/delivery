@@ -41,7 +41,7 @@ with rows as (
 			useremail,
 			id_user
 		 )
-		SELECT id, username, '0', $5
+		SELECT id, username, '0', $4
 		FROM rows
     `;
 
