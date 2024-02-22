@@ -494,7 +494,16 @@ Product.createLikePost = (id_publish, username ,useremail, id_user) => {
     `;
     return db.manyOrNone(sql, [id_publish, username, useremail, id_user]);
 }
+Product.deleteLikePost = (id) => {
+    const sql = `
 
+    DELETE  
+    FROM likes_publish 
+
+    WHERE id = $1
+    `;
+    return db.none(sql,id);
+}
 Product.createLike = (id_plate, username ,useremail, id_user) => {
     const sql = `
     INSERT INTO commentslikes(
