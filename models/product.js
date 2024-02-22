@@ -120,7 +120,7 @@ U.image as photo,
                 'useremail', L.useremail,
 				'id_user',L.id_user
 		)
-		) FILTER (WHERE L.useremail != '0'), '[]') as likesanswer,
+		) FILTER (WHERE L.useremail != '0'), '[]') as likespost,
 	  COALESCE(json_agg(
            DISTINCT jsonb_build_object(
                 'id', C.id,
