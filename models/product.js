@@ -127,7 +127,9 @@ U.image as photo,
 				'id_post',p.id,
 				'id_user',C.id_user,
 			    'coment', C.coment,
-       			    'image',U.image
+       			    'image',U.image,
+	      			    'username', U.name
+
 
 		)
 		) FILTER (WHERE C.coment != '0'), '[]') as coments		
