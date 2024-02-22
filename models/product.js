@@ -103,10 +103,20 @@ P.id_user,
 P.description,
 P.image_post,
 U.name,
-U.image as photo
+U.image as photo,
+  COALESCE(json_agg(
+		JSON_BUILD_OBJECT(
+                'id', C.id,
+				'id_publish',p.id,
+                'useremail', C.useremail,
+				'id_user',C.id_user
+		)
+		) FILTER (WHERE C.useremail != '0'), '[]') as likesanswer	
 
 from post as P
 inner join users as U on U.id = P.id_user 
+inner join likes_publish as C on C.id_publish = P.id
+group by p.id,U.name, U.image
 order by id desc
  `;
 return db.manyOrNone(sql);
