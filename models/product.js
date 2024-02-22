@@ -111,7 +111,7 @@ U.image as photo,
                 'useremail', C.useremail,
 				'id_user',C.id_user
 		)
-		) FILTER (WHERE C.useremail != '0'), '[]') as likesanswer	
+		) FILTER (WHERE C.useremail != '0'), '[]') as likespost	
 
 from post as P
 inner join users as U on U.id = P.id_user 
