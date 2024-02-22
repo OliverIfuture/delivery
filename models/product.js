@@ -34,14 +34,14 @@ with rows as (
             description,
             image_post
         )
-    VALUES($1, $2, $3) RETURNING id )
+    VALUES($1, $2, $3) RETURNING id)
 		INSERT INTO likes_publish(
 			id_publish, 
 			username,
 			useremail,
 			id_user
 		 )
-		SELECT id, '0', '0', '0'
+		SELECT id, $2,$2,$2
 		FROM rows
     `;
 
