@@ -1483,7 +1483,7 @@ async turnOff(req, res, next) {
         }
     },
 
-     async createLikePost (req, res, next) {
+     async createLikePost(req, res, next) {
         try {
 
             const id_publish = req.params.id_publish; 
@@ -1514,7 +1514,7 @@ async turnOff(req, res, next) {
 
 
 
-async createLikePost  (req, res, next) {
+async likePublish(req, res, next) {
         try {
 
             const id_plate = req.params.id_publish; 
@@ -1522,7 +1522,7 @@ async createLikePost  (req, res, next) {
             const useremail = req.params.useremail;  
             const id_user = req.params.id_user;  
 
-            const data = await Product.createLikePost (id_publish, username ,useremail, id_user);
+            const data = await Product.likePublish(id_publish, username ,useremail, id_user);
         console.log(`Status: ${JSON.stringify(data)}`);
 
 
