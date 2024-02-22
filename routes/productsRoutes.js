@@ -73,6 +73,7 @@ module.exports = (app, upload) => {
 
       app.delete('/api/products/deleteAnswerLike/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteAnswerLike );
       app.delete('/api/products/deleteLikeComment/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikeComment );
+      app.delete('/api/products/deleteLikePost/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikePost );
       app.delete('/api/products/deleteProduct/:id', passport.authenticate('jwt', { session: false }), productsControllers.delete);
       app.delete('/api/products/deleteSale/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteSale);
       app.delete('/api/products/deleteFavorites/:id_plate/:id_user', productsControllers.deleteFavorites);
