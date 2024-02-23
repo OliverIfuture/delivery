@@ -666,7 +666,7 @@ Product.createAnswerPost = (id_coment, username , answer, responseto, id_user) =
 			)
 		    VALUES($1,$2,$3,$4, $5 )
 			RETURNING id, username )
-		INSERT INTO answerslikes(
+		INSERT INTO answerslikes_post(
 			id_answer, 
 			username,
 			useremail,
