@@ -1620,8 +1620,35 @@ async likePublish(req, res, next) {
                 error: error
             });
         }
-    },          
-        
+    },     
+ 
+ async createComent  (req, res, next) {
+        try {
+
+            const comments = req.body;
+             console.log(`Status: ${JSON.stringify(comments)}`);
+
+
+                
+            const data = await Product.createComent (comments);
+             console.log(`Status: ${JSON.stringify(comments)}`);
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'comentario posteado',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error comentando',
+                error: error
+            });
+        }
+    }        
  async createReview (req, res, next) {
         try {
 
