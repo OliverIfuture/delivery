@@ -329,6 +329,36 @@ Product.findFavoritesProfile = (id_profile, id_user) => {
         id_user
     ]);
 }
+
+Product.getAnswersPost = (id) => {
+
+    const sql = `
+select    A.id,
+		  A.username,
+		  A.answer,
+          A.responseto,
+	      A.userid_answer,
+		  U.image,
+       COALESCE(json_agg(
+           DISTINCT jsonb_build_object(
+                'id', C.id,
+				'username',C.username,
+                'useremail', C.useremail,
+				'id_user',C.id_user
+		)
+		) FILTER (WHERE C.useremail != '0'), '[]') as likesanswer		  
+		  from answers_post as A
+		  inner join users as U on U.id = A.userid_answer
+inner join coments_post as R on R.id = A.id_post
+inner join answerslikes_post as C on A.id = C.id_answer
+where R.id = 1
+group by A.id, U.image
+order by A.id   asc
+	`;
+
+    return db.manyOrNone(sql, id);
+}
+
 Product.getAnswers = (id) => {
 
     const sql = `
