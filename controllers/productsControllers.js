@@ -1492,7 +1492,37 @@ async turnOff(req, res, next) {
             });
         }
     }, 
+  async createAnswerPost (req, res, next) {
+        try {
 
+            const id_coment = req.params.id_coment; 
+            const username = req.params.username;  
+            const answer = req.params.answer;  
+            const responseto = req.params.responseto;
+            const id_user = req.params.id_user;
+
+            const data = await Product.createAnswerPost(id_coment, username ,answer, responseto, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'Respuesta  posteada',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error liKe',
+                error: error
+            });
+        }
+    },
+
+ 
   async createAnswer (req, res, next) {
         try {
 
