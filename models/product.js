@@ -499,7 +499,32 @@ FROM rows
         
     ]);
 }
-
+Product.createComent = (comments) => {
+    const sql = `
+with rows as (
+    INSERT INTO coments_post(
+		id_post, 
+		id_user,
+		coment 
+		)
+    VALUES($1,$2,$3 )
+	RETURNING id, id_user)
+INSERT INTO commentslikes_post(
+	id_post,
+   	id_user,
+	username,
+ 	useremail
+ )
+SELECT id, id_user,$4, $4
+FROM rows
+    `;
+    return db.oneOrNone(sql, [
+        comments.id_plate,
+        comments.id_user,
+        comments.review
+	'0'    
+    ]);
+}
 Product.likePublish = (id_publish, username ,useremail, id_user) => {
     const sql = `
     INSERT INTO commentslikes(
