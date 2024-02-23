@@ -521,7 +521,7 @@ FROM rows
     return db.oneOrNone(sql, [
         comments.id_plate,
         comments.id_user,
-        comments.review
+        comments.review,
 	'0'    
     ]);
 }
