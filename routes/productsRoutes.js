@@ -22,6 +22,8 @@ module.exports = (app, upload) => {
       app.get('/api/products/getPostAll', productsControllers.getPostAll);    
 
       app.get('/api/products/findReview/:id', productsControllers.findReview);    
+      app.get('/api/products/findPostComent/:id', productsControllers.findPostComent);    
+      
       app.get('/api/products/favoritesplates/:id', productsControllers.favoritesplates);    
       app.get('/api/products/lookFavoritesList/:id_profile', productsControllers.lookFavoritesList);    
       app.get('/api/products/lookFollowersList/:id_profile', productsControllers.lookFollowersList );    
