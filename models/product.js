@@ -186,6 +186,39 @@ return db.manyOrNone(sql);
 
 }
 
+Product.findPostComent = (id) =>{
+	const sql = `
+select 
+		R.id,
+		U.name as username,
+		U.image,
+		R.coment,
+  		R.id_user,
+        COALESCE(json_agg(
+           DISTINCT jsonb_build_object(
+                'id', C.id,
+				'username',C.username,
+                'useremail', C.useremail,
+				'id_user',C.id_user
+		)
+		) FILTER (WHERE C.useremail != '0'), '[]') as likes 
+		from coments_post  as R
+		
+		inner join post as P on P.id = R.id_post
+	    inner join commentsLikes_post as C on R.id = C.id_post
+		inner join users as U on U.id  = R.id_user  
+		
+		where P.id = $1
+		group by R.id, U.name, R.coment, U.image
+		order by id desc
+
+
+
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
 Product.findReview = (id) =>{
 	const sql = `
 select 
