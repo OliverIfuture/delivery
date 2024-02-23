@@ -143,12 +143,11 @@ U.image as photo,
 
 		)
 		) FILTER (WHERE C.coment != '0'), '[]') as answersPost	
-
-from post as P
+		from post as P
 inner join users as U on U.id = P.id_user 
 inner join likes_publish as L on L.id_publish = P.id
 inner join coments_post as C on C.id_post = P.id
-inner join answers_post as A on A.id_post = P.id
+inner join answers_post as A on A.id_post = C.id
 group by p.id,U.name, U.image
 order by id desc
  `;
