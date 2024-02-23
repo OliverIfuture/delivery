@@ -676,7 +676,7 @@ Product.createAnswerPost = (id_coment, username , answer, responseto, id_user) =
 		FROM rows
 
     `;
-    return db.manyOrNone(sql, [id_review, username, answer, responseto,id_user ]);
+    return db.manyOrNone(sql, [id_coment, username, answer, responseto,id_user ]);
 }
 
 Product.createAnswer = (id_review, username , answer, responseto, id_user) => {
