@@ -350,7 +350,7 @@ select    A.id,
 		  inner join users as U on U.id = A.userid_answer
 inner join coments_post as R on R.id = A.id_post
 inner join answerslikes_post as C on A.id = C.id_answer
-where R.id = 1
+where R.id = $1
 group by A.id, U.image
 order by A.id   asc
 	`;
