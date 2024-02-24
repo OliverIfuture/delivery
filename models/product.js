@@ -676,6 +676,20 @@ Product.createLike = (id_plate, username ,useremail, id_user) => {
     return db.manyOrNone(sql, [id_plate, username, useremail, id_user]);
 }
 
+Product.createLikeAnswerComent = (id_answer, username ,useremail, id_user) => {
+    const sql = `
+    INSERT INTO answerslikes_post(
+	id_answer, 
+ 	username,
+  	useremail,
+        id_user
+	)
+    VALUES($1, $2, $3, $4  ) RETURNING id
+    
+    `;
+    return db.manyOrNone(sql, [id_answer, username, useremail, id_user]);
+}
+
 Product.createLikeAnswer = (id_answer, username ,useremail, id_user) => {
     const sql = `
     INSERT INTO answerslikes(
