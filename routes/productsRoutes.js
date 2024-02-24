@@ -33,6 +33,8 @@ module.exports = (app, upload) => {
       app.get('/api/products/getAnswersPost/:id', productsControllers.getAnswersPost);    
       
       app.get('/api/products/findLikes/:id_plate', productsControllers.findLikes);    
+      app.get('/api/products/findLikesComent/:id_post', productsControllers.findLikesComent);    
+
       app.get('/api/products/getAllStocks/:id_company',passport.authenticate('jwt', {session: false}) , productsControllers.getAllStocks);
       app.get('/api/products/findMyProduct/:name',passport.authenticate('jwt', {session: false}) , productsControllers.findMyProduct);
       app.get('/api/products/getAllCompany',passport.authenticate('jwt', {session: false}) , productsControllers.getAllCompany);     
