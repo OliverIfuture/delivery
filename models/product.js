@@ -639,7 +639,7 @@ Product.createLikeComent = (id_coment, username ,useremail, id_user) => {
     `;
     return db.manyOrNone(sql, [id_coment, username, useremail, id_user]);
 }
-Product.createLikePost = (id_coment, username ,useremail, id_user) => {
+Product.createLikePost = (id_publish, username ,useremail, id_user) => {
     const sql = `
     INSERT INTO likes_publish(
 	id_publish, 
