@@ -1605,7 +1605,7 @@ async deleteLikePost (req, res, next) {
             const useremail = req.params.useremail;  
             const id_user = req.params.id_user;  
 
-            const data = await Product.createLikePost(id_coment, username ,useremail, id_user);
+            const data = await Product.createLikeComent(id_coment, username ,useremail, id_user);
         console.log(`Status: ${JSON.stringify(data)}`);
 
 
