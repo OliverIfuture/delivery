@@ -926,7 +926,7 @@ Product.deleteAnswerLikeComent = (id) => {
     const sql = `
 
     DELETE  
-    FROM answerslikes 
+    FROM answerslikes_post 
 
     WHERE id = $1
     `;
