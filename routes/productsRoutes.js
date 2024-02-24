@@ -6,7 +6,7 @@ module.exports = (app, upload) => {
       app.post('/api/products/create',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.create);
       app.post('/api/products/createPLate',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.createPLate);
       app.post('/api/products/createTab',passport.authenticate('jwt', {session: false}) , upload.array('image', 3), productsControllers.createTab);
-      app.post('/api/products/createGift',passport.authenticate('jwt', {session: false}) , productsControllers.createGift);
+      app.post('/api/products/createGift',passport.authenticate('jwt', {session: false}) , productsControllers.createGift);deleteLikeCommentPost
       app.post('/api/products/createReview',passport.authenticate('jwt', {session: false}) , productsControllers.createReview);
       app.post('/api/products/createComent',passport.authenticate('jwt', {session: false}) , productsControllers.createComent);
       
@@ -84,6 +84,8 @@ module.exports = (app, upload) => {
 
       app.delete('/api/products/deleteAnswerLike/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteAnswerLike );
       app.delete('/api/products/deleteLikeComment/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikeComment );
+      app.delete('/api/products/deleteLikeCommentPost/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikeCommentPost );
+
       app.delete('/api/products/deleteLikePost/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikePost );
       app.delete('/api/products/deleteProduct/:id', passport.authenticate('jwt', { session: false }), productsControllers.delete);
       app.delete('/api/products/deleteSale/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteSale);
