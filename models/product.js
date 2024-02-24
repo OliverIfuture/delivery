@@ -252,6 +252,31 @@ return db.manyOrNone(sql, id);
 
 }
 
+Product.findLikesComent = (id_post) =>{
+	const sql = `
+      select 
+		reviews.id,
+		JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', C.id,
+                'username', U.name,
+                'id_user', C.id_user
+            )
+        ) as likes
+		from reviews
+		
+	
+		inner join commentsLikes as C on reviews.id = C.id_plate
+		inner join users as U on U.id = C.id_user
+		
+		where reviews.id_plate = $1
+		
+		group by reviews.id
+ `;
+return db.manyOrNone(sql, id_post);
+
+}
+
 Product.findLikes = (id_plate) =>{
 	const sql = `
       select 
