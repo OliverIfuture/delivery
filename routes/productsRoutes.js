@@ -84,7 +84,7 @@ module.exports = (app, upload) => {
 
       app.delete('/api/products/deleteAnswerLike/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteAnswerLike );
       app.delete('/api/products/deleteLikeComment/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikeComment );
-      app.delete('/api/products/deleteLikeCommentPost/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikeCommentPost );
+      app.delete('/api/products/deleteLikeCommentPost/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikeCommentPost);
 
       app.delete('/api/products/deleteLikePost/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLikePost );
       app.delete('/api/products/deleteProduct/:id', passport.authenticate('jwt', { session: false }), productsControllers.delete);
