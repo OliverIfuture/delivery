@@ -14,7 +14,8 @@ module.exports = (app, upload) => {
       app.post('/api/products/likePublish/:id_publish/:username/:useremail/:id_user' , productsControllers.likePublish);
       app.post('/api/products/createLikePost/:id_publish/:username/:useremail/:id_user' , productsControllers.createLikePost);
       app.post('/api/products/createLikeComent/:id_coment/:username/:useremail/:id_user' , productsControllers.createLikeComent);
-
+      
+      app.post('/api/products/createLikeAnswerComent/:id_answer/:username/:useremail/:id_user' , productsControllers.createLikeAnswerComent);
       app.post('/api/products/createLikeAnswer/:id_answer/:username/:useremail/:id_user' , productsControllers.createLikeAnswer);
       app.post('/api/products/createAnswer/:id_review/:username/:answer/:responseto/:id_user' , productsControllers.createAnswer);
       app.post('/api/products/createAnswerPost/:id_coment/:username/:answer/:responseto/:id_user' , productsControllers.createAnswerPost);
