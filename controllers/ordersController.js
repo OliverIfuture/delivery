@@ -12,24 +12,16 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         var customer = '';
-
-        describe('create without plan', function () {
-            it('should return an object instance with id', function (done) {
-                this.timeout(60000);
-                conekta.api_key = TEST_KEY;
-                conekta.locale = LOCALE;
-                conekta.Customer.create({
-                    name: 'James Howlett',
-                    email: 'james.howlett@forces.gov',
-                    phone: '55-5555-5555',
-                    cards: ['tok_test_visa_4242']
-                }, function (err, res) {
-                    res = res.toObject();
-                    customer = res.id;
-                    assert(res.hasOwnProperty('id'), true);
-                    done();
-                });
-            });
+        conekta.Customer.create({
+            name: 'James Howlett',
+            email: 'james.howlett@forces.gov',
+            phone: '55-5555-5555',
+            cards: ['tok_test_visa_4242']
+        }, function (err, res) {
+            res = res.toObject();
+            customer = res.id;
+            assert(res.hasOwnProperty('id'), true);
+            done();
         });
 
     },
