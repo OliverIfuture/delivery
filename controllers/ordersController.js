@@ -1,8 +1,7 @@
-//import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
-const CustomersApi = require('conekta');
-const Configuration = require('conekta');
-const Customer = require('conekta');
-const CustomerResponse = require('conekta');
+//const CustomersApi = require('conekta');
+//const Configuration = require('conekta');
+//const Customer = require('conekta');
+//const CustomerResponse = require('conekta');
 
 const { findByDeliveryAndStatus } = require('../models/order');
 const Order = require('../models/order');
@@ -17,12 +16,12 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            Customer = {
+            conekta.Customer = {
                 name: "John Constantine",
                 email: "frank@google.com",
                 phone: "+5215555555555"
             }
-            var customer = Customer;
+            var customer = conekta.Customer;
 
             client.createCustomer(customer).then(response => {
                 var customerResponse = response.data;
