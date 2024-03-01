@@ -11,6 +11,9 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
+
+        try
+        { 
                 customer = conekta.Customer.create({
                     "name": "Fulanito",
                     "email": "fulanito@test.com",
@@ -22,6 +25,12 @@ module.exports = {
                 }, function(err, res) {
                     console.log(res.toObject());
                 });
+        }
+        catch (err) {
+            console.log(err.toString());
+        }
+
+
         
             },
 
