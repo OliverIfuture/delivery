@@ -16,8 +16,8 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
-        const config = new Configuration({ accessToken: apikey });
-        const client = new CustomersApi(config);
+        const config = new conekta.Configuration({ accessToken: apikey });
+        const client = new conekta.CustomersApi(config);
         try {
             conekta.Customer = {
                 name: "John Constantine",
@@ -26,7 +26,7 @@ module.exports = {
             }
             var customer = conekta.Customer;
 
-            client.createCustomer(customer).then(response => {
+            client.conekta.createCustomer(customer).then(response => {
                 var customerResponse = response.data;
                 console.log(customerResponse.id);
             }).catch(error => {
