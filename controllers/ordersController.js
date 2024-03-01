@@ -1,3 +1,4 @@
+import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
 const { findByDeliveryAndStatus } = require('../models/order');
 const Order = require('../models/order');
 const OrderHasProducts = require('../models/order_has_products');
@@ -12,22 +13,17 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            var statusSucces = {
-                success: true,
-                message: 'Cliente se creo correctamente',
-            };
-            customer = await conekta.Customer.create({
-                "name": "Fulanito",
-                "email": "fulanito@test.com",
-                "phone": "+5218181818181",
-                "payment_method": {
-                    "type": "oxxo_recurrent"
-                }
+            const customer: Customer = {
+                name: "John Constantine",
+                email: "frank@google.com",
+                phone: "+5215555555555"
+            }
 
-            }, function (err, res) {
-                console.log(res.toObject());
-                console.log(JSON.stringify(statusSucces));
-                return statusSucces;
+            client.createCustomer(customer).then(response => {
+                const customerResponse = response.data as CustomerResponse;
+                console.log(customerResponse.id);
+            }).catch(error => {
+                console.error("here", error);
             });
         }
         catch (err) {
