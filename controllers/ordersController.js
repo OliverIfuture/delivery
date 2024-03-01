@@ -15,6 +15,9 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
+        const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
+        const config = new Configuration({ accessToken: apikey });
+        const client = new CustomersApi(config);
         try {
             conekta.Customer = {
                 name: "John Constantine",
