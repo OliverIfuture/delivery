@@ -11,31 +11,27 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
-
-        try
-        { 
-                customer = conekta.Customer.create({
-                    "name": "Fulanito",
-                    "email": "fulanito@test.com",
-                    "phone": "+5218181818181",
-                    "payment_method": {
+        try {
+            customer = conekta.Customer.create({
+                "name": "Fulanito",
+                "email": "fulanito@test.com",
+                "phone": "+5218181818181",
+                "payment_method": {
                     "type": "oxxo_recurrent"
-                    }
-                    
-                }, function(err, res) {
-                    console.log(res.toObject());
-                });
+                }
+
+            }, function (err, res) {
+                console.log(res.toObject());
+            });
         }
         catch (err) {
             console.log(err.toString());
         }
 
-
-        
-            },
+    },
 
 
-        async findByDeliveryAndStatus(req, res, next) {
+    async findByDeliveryAndStatus(req, res, next) {
         try {
             const id_delivery = req.params.id_delivery;
             const status = req.params.status;
@@ -43,15 +39,15 @@ module.exports = {
             const data = await Order.findByDeliveryAndStatus(id_delivery, status);
             console.log(`Delivery status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ordenes por estado',
                 error: error,
                 success: false
-            
+
 
             });
         }
@@ -64,15 +60,15 @@ module.exports = {
             const data = await Order.findByStatus(status);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ordenes por estado',
                 error: error,
                 success: false
-            
+
 
             });
         }
@@ -84,9 +80,9 @@ module.exports = {
 
             const data = await Order.findByClient(id_client);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
-            console.log(`Error ${error}`);    
+            console.log(`Error ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ordenes por estado',
                 error: error,
@@ -104,9 +100,9 @@ module.exports = {
 
             const data = await Order.findByClientAndStatus(id_client, status);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
-            console.log(`Error ${error}`);    
+            console.log(`Error ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ordenes por estado',
                 error: error,
@@ -116,20 +112,20 @@ module.exports = {
 
     },
 
-        async updateLatLng(req, res, next) {
+    async updateLatLng(req, res, next) {
         try {
-            
+
             let order = req.body;
             await Order.updateLatLng(order);
-            
+
             return res.status(201).json({
                 success: true,
                 message: 'La orden se actualizo correctamente',
             });
 
-        } 
+        }
         catch (error) {
-            console.log(`Error ${error}`);    
+            console.log(`Error ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Hubo un error al actualizar la orden',
@@ -138,19 +134,19 @@ module.exports = {
         }
     },
 
-        
+
     async updateToDespatched(req, res, next) {
         try {
 
             let order = req.body;
             order.status = 'DESPACHADO';
-             await Order.update(order);
+            await Order.update(order);
 
-                return res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: 'La orden se actualizo correctamente',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -161,20 +157,20 @@ module.exports = {
             });
         }
     },
-    
-            
+
+
     async updateToOnTheWay(req, res, next) {
         try {
 
             let order = req.body;
             order.status = 'EN CAMINO';
-             await Order.update(order);
+            await Order.update(order);
 
-                return res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: 'La orden se actualizo correctamente',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -184,23 +180,23 @@ module.exports = {
                 error: error
             });
         }
-    },  
-        async updateToDelivered(req, res, next) {
+    },
+    async updateToDelivered(req, res, next) {
         try {
-            
+
             let order = req.body;
             order.status = 'ENTREGADO';
             await Order.update(order);
-            
+
 
             return res.status(201).json({
                 success: true,
                 message: 'La orden se entrego correctamente',
             });
 
-        } 
+        }
         catch (error) {
-            console.log(`Error ${error}`);    
+            console.log(`Error ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Hubo un error al actualizar la orden',
@@ -208,19 +204,19 @@ module.exports = {
             });
         }
     },
-        
+
     async cancelOrder(req, res, next) {
         try {
 
             let order = req.body;
             order.status = 'CANCELADO';
-             await Order.cancelOrder(order);
+            await Order.cancelOrder(order);
 
-                return res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: 'La orden se cancelo correctamente',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -230,7 +226,7 @@ module.exports = {
                 error: error
             });
         }
-    }, 
+    },
 
     async create(req, res, next) {
         try {
@@ -238,19 +234,19 @@ module.exports = {
             let order = req.body;
             order.status = 'PAGADO';
             const data = await Order.create(order);
-////recorrer todos los productos de la orden
+            ////recorrer todos los productos de la orden
             for (const product of order.products) {
                 await OrderHasProducts.create(data.id, product.id, product.quantity, data.id_plate);
 
             }
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'La orden se creo correctamente',
                 data: data.id
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -262,7 +258,7 @@ module.exports = {
         }
     },
 
-        
+
     async createCashOrder(req, res, next) {
         try {
 
@@ -272,23 +268,21 @@ module.exports = {
             console.log(`orden creada: ${JSON.stringify(order.id_plate)}`);
 
             for (const product of order.products) {
-                if(product.id < 1000)
-                {
-                await OrderHasProducts.create(data.id, product.id, product.quantity);
+                if (product.id < 1000) {
+                    await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
-                if(product.id > 1000)
-                {
-                await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
-                }    
+                if (product.id > 1000) {
+                    await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
+                }
             }
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'La orden se creo correctamente',
                 data: data.id
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -300,7 +294,7 @@ module.exports = {
         }
     },
 
-async createSale(req, res, next) {
+    async createSale(req, res, next) {
         try {
 
             let sales = req.body;
@@ -314,13 +308,13 @@ async createSale(req, res, next) {
 
             }
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'La orden se creo correctamente',
                 data: data.id
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -332,7 +326,7 @@ async createSale(req, res, next) {
         }
     },
 
- async selectOrder(req, res, next) {
+    async selectOrder(req, res, next) {
         try {
             const date = req.params.date;
             const shift_ref = req.params.shift_ref;
@@ -340,59 +334,59 @@ async createSale(req, res, next) {
             const data = await Order.selectOrder(date, shift_ref);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ventas',
                 error: error,
                 success: false
-            
+
 
             });
         }
     },
- async selectOrderAll(req, res, next) {
+    async selectOrderAll(req, res, next) {
         try {
             const date = req.params.date;
 
             const data = await Order.selectOrderAll(date);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ventas',
                 error: error,
                 success: false
-            
+
 
             });
         }
     },
- async ShiftOrders(req, res, next) {
+    async ShiftOrders(req, res, next) {
         try {
             const shift_ref = req.params.shift_ref;
 
             const data = await Order.ShiftOrders(shift_ref);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ventas',
                 error: error,
                 success: false
-            
+
 
             });
         }
-    }, 
+    },
 
 
 
@@ -401,20 +395,20 @@ async createSale(req, res, next) {
         try {
 
             const sales = req.body;
-             console.log(`Status: ${JSON.stringify(sales)}`);
+            console.log(`Status: ${JSON.stringify(sales)}`);
 
 
-                
+
             const data = await Order.closeShift(sales);
-             console.log(`Status: ${JSON.stringify(data)}`);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Cierre se realizo correctamente',
                 data: data.id
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -424,26 +418,26 @@ async createSale(req, res, next) {
                 error: error
             });
         }
-    },             
+    },
 
-     async insertDateExpenses(req, res, next) {
+    async insertDateExpenses(req, res, next) {
         try {
 
             const sales = req.body;
-             console.log(`Status: ${JSON.stringify(sales)}`);
+            console.log(`Status: ${JSON.stringify(sales)}`);
 
 
-                
+
             const data = await Order.insertDateExpenses(sales);
-             console.log(`Status: ${JSON.stringify(data)}`);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'gasto capturado correctamente',
                 data: data.id
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -453,26 +447,26 @@ async createSale(req, res, next) {
                 error: error
             });
         }
-    },     
-        
-        async insertDateIncome(req, res, next) {
+    },
+
+    async insertDateIncome(req, res, next) {
         try {
 
             const sales = req.body;
-             console.log(`Status: ${JSON.stringify(sales)}`);
+            console.log(`Status: ${JSON.stringify(sales)}`);
 
 
-                
+
             const data = await Order.insertDateIncome(sales);
-             console.log(`Status: ${JSON.stringify(data)}`);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Ingresos capturado correctamente',
                 data: data.id
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -482,52 +476,52 @@ async createSale(req, res, next) {
                 error: error
             });
         }
-    },   
+    },
 
 
- async selectOpenShift(req, res, next) {
+    async selectOpenShift(req, res, next) {
         try {
             const id_company = req.params.id_company;
 
             const data = await Order.selectOpenShift(id_company);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ventas',
                 error: error,
                 success: false
-            
+
 
             });
         }
     },
-     async selectOpenShiftExpenses(req, res, next) {
+    async selectOpenShiftExpenses(req, res, next) {
         try {
             const id_company = req.params.id_company;
 
             const data = await Order.selectOpenShiftExpenses(id_company);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las ventas',
                 error: error,
                 success: false
-            
+
 
             });
         }
-    },    
+    },
 
 
-async selectTotals(req, res, next) {
+    async selectTotals(req, res, next) {
         try {
 
             const shift_ref = req.params.shift_ref;
@@ -539,7 +533,7 @@ async selectTotals(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -549,7 +543,7 @@ async selectTotals(req, res, next) {
     },
 
 
-async selectExpenses(req, res, next) {
+    async selectExpenses(req, res, next) {
         try {
 
             const shift_ref = req.params.shift_ref;
@@ -561,7 +555,7 @@ async selectExpenses(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -571,7 +565,7 @@ async selectExpenses(req, res, next) {
     },
 
 
-async selectIncomes(req, res, next) {
+    async selectIncomes(req, res, next) {
         try {
 
             const shift_ref = req.params.shift_ref;
@@ -583,7 +577,7 @@ async selectIncomes(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -591,8 +585,8 @@ async selectIncomes(req, res, next) {
             });
         }
     },
-        
-   async closeShiftClose(req, res, next) {
+
+    async closeShiftClose(req, res, next) {
         try {
 
             const id_Close_Shift = req.params.id_Close_Shift;
@@ -613,17 +607,17 @@ async selectIncomes(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al realizar el cierre'
             });
         }
-    },     
+    },
 
 
- async deleteExpenses(req, res, next) {
+    async deleteExpenses(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -632,13 +626,13 @@ async selectIncomes(req, res, next) {
             console.log(`a eliminar gasto: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'El gasto se elimino correctamente',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -648,9 +642,9 @@ async selectIncomes(req, res, next) {
                 error: error
             });
         }
-    },       
+    },
 
-async deleteIncomes(req, res, next) {
+    async deleteIncomes(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -659,13 +653,13 @@ async deleteIncomes(req, res, next) {
             console.log(`a eliminar ingreso: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'El ingreso se elimino correctamente',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -675,9 +669,9 @@ async deleteIncomes(req, res, next) {
                 error: error
             });
         }
-    }, 
-        
-async selectShiftClose(req, res, next) {
+    },
+
+    async selectShiftClose(req, res, next) {
         try {
             const data = await Order.selectShiftClose();
             console.log(`Cierres: ${JSON.stringify(data)}`);
@@ -686,7 +680,7 @@ async selectShiftClose(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
