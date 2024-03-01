@@ -11,7 +11,7 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
-        const sdk = require('api')('@conekta-dev-center/v2.1.0#kw2plsjo0e3u');
+        const sdk = require('conekta')('@conekta-dev-center/v2.1.0#kw2plsjo0e3u');
 
         sdk.auth('key_pt4c0MM2XKF8HXGytMz2OFJ');
         sdk.getCustomers({limit: '20', 'accept-language': 'es'})
