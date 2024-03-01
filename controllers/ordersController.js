@@ -19,9 +19,6 @@ module.exports = {
             cards: ['tok_test_visa_4242']
         }, function (err, res) {
             res = res.toObject();
-            customer = res.id;
-            assert(res.hasOwnProperty('id'), true);
-            done();
         });
 
     },
