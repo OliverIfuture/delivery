@@ -21,11 +21,19 @@ module.exports = {
                 }
 
             }, function (err, res) {
-                console.log(res.status);
+                console.log(res.toObject());
+                return res.status(201).json(res);
             });
         }
         catch (err) {
-            console.log(err.toString());
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las ordenes por estado',
+                error: error,
+                success: false
+
+
+            });
         }
 
     },
