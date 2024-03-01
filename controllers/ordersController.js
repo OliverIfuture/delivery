@@ -12,7 +12,7 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            customer = await Customer.create({
+            customer = await conekta.Customer.create({
                 "name": "Fulanito",
                 "email": "fulanito@test.com",
                 "phone": "+5218181818181",
