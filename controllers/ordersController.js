@@ -20,7 +20,7 @@ module.exports = {
                     }
                     
                 }, function(err, res) {
-                    console.log(res.toObject() + 'error mensaje');
+                    console.log(err.toObject());
                 });
         
             },
