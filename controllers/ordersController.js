@@ -20,8 +20,6 @@ module.exports = {
                     "type": "oxxo_recurrent"
                 }
 
-            }, function (err, res) {
-                console.log(res.toObject());
             });
         }
         catch (err) {
