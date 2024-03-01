@@ -1,7 +1,7 @@
 {
   "name": "flutter-app",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "description": "Backend aplicacion delivery",
   "main": "server.js",
   "scripts": {
