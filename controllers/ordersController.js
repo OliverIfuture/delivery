@@ -20,7 +20,7 @@ module.exports = {
                     }
                     
                 }, function(err, res) {
-                    console.log(err.toObject());
+                    console.log(res.toObject());
                 });
         
             },
