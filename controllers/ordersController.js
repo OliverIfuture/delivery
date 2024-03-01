@@ -4,6 +4,7 @@ const OrderHasProducts = require('../models/order_has_products');
 var conekta = require('../node_modules/conekta');
 conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
 conekta.api_version = '2.1.0';
+import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
 
 
 module.exports = {
@@ -12,16 +13,22 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            customer = conekta.Customer.create({
-                "name": "Fulanito",
-                "email": "fulanito@test.com",
-                "phone": "+5218181818181",
-                "payment_method": {
-                    "type": "oxxo_recurrent"
-                }
 
-            }, function (err, res) {
-                console.log(res.toObject());
+            const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
+            const config = new Configuration({ accessToken: apikey });
+            const client = new CustomersApi(config);
+
+            const customer = {
+                name: "John Constantine",
+                email: "frank@google.com",
+                phone: "+5215555555555"
+            }
+
+            client.createCustomer(customer).then(response => {
+                const customerResponse = response.data;
+                console.log(response.data.Customer);
+            }).catch(error => {
+                console.error("here", error);
             });
         }
         catch (err) {
