@@ -5,12 +5,13 @@ var conekta = require('conekta');
 conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
 conekta.api_version = '2.0.0';
 
+
 module.exports = {
 
 
 
         async createClienteOxxo(req, res, next) {
-                customer = conekta.Customer.create({
+                customer = conekta.Custoer.create({
                     "name": "Fulanito",
                     "email": "fulanito@test.com",
                     "phone": "+5218181818181",
