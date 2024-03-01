@@ -11,7 +11,7 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
-              const customer_response = (await api.createCustomer(customer)).data
+              const customer_response = (await conekta.createCustomer(customer)).data
 
                 customer = conekta.Customer.create({
                     "name": "Fulanito",
