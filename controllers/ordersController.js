@@ -12,6 +12,10 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
+            var statusSucces = {
+                success: true,
+                message: 'Cliente se creo correctamente',
+            };
             customer = await conekta.Customer.create({
                 "name": "Fulanito",
                 "email": "fulanito@test.com",
@@ -22,10 +26,7 @@ module.exports = {
 
             }, function (err, res) {
                 console.log(res.toObject());
-                return res.json({
-                    success: true,
-                    message: 'Cliente se creo correctamente',
-                });
+                return statusSucces;
             });
         }
         catch (err) {
