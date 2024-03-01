@@ -3,7 +3,7 @@ const Order = require('../models/order');
 const OrderHasProducts = require('../models/order_has_products');
 var conekta = require('conekta');
 conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
-conekta.api_version = '2.0.0';
+conekta.api_version = '2.1.0';
 
 
 module.exports = {
