@@ -11,9 +11,17 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
-        conekta.getCustomers({limit: '20', 'accept-language': 'es'})
-        .then(({ data }) => console.log(data))
-        .catch(err => console.error(err));
+                customer = conekta.Customer.create({
+                    "name": "Fulanito",
+                    "email": "fulanito@test.com",
+                    "phone": "+5218181818181",
+                    "payment_method": {
+                    "type": "oxxo_recurrent"
+                    }
+                    
+                }, function(err, res) {
+                    console.log(res.toObject());
+                });
         
             },
 
