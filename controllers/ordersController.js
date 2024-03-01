@@ -11,19 +11,12 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
-              console.log(conekta);
+        const sdk = require('api')('@conekta-dev-center/v2.1.0#kw2plsjo0e3u');
 
-                customer = conekta.Customer.create({
-                    "name": "Fulanito",
-                    "email": "fulanito@test.com",
-                    "phone": "+5218181818181",
-                    "payment_method": {
-                    "type": "oxxo_recurrent"
-                    }
-                    
-                }, function(err, res) {
-                    console.log(res.toObject());
-                });
+        sdk.auth('key_pt4c0MM2XKF8HXGytMz2OFJ');
+        sdk.getCustomers({limit: '20', 'accept-language': 'es'})
+        .then(({ data }) => console.log(data))
+        .catch(err => console.error(err));
         
             },
 
