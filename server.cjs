@@ -24,7 +24,7 @@ mercadopago.configure({
 /*
 * SOCKETS
 */
-const orderDeliverySocket = require('./sockets/orders_delivery_socket');
+const orderDeliverySocket = require('./sockets/orders_delivery_socket.js');
 
 /*
 /**
@@ -44,12 +44,12 @@ const upload = multer({
  * * RUTAS 
  * */
 const users = require('./routes/usersRoutes.js');
-const categories = require('./routes/categoriesRoutes');
+const categories = require('./routes/categoriesRoutes.js');
 const passport = require('passport');
-const products = require('./routes/productsRoutes');
-const address = require('./routes/addressRoutes');
-const orders = require('./routes/ordersRoutes');
-const mercadoPagoRoutes = require('./routes/mercadoPagoRoutes');
+const products = require('./routes/productsRoutes.js');
+const address = require('./routes/addressRoutes.js');
+const orders = require('./routes/ordersRoutes.js');
+const mercadoPagoRoutes = require('./routes/mercadoPagoRoutes.js');
 const PORT = process.env.PORT || 4000
 
 
@@ -63,7 +63,7 @@ app.use(express.urlencoded({
 app.use(cors());
 app.use(passport.initialize());
 app.use(passport.session());
-require('./config/passport')(passport);
+require('./config/passport.js')(passport);
 app.disable('x-power-by');
 app.set('PORT', PORT);
 
