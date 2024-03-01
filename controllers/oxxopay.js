@@ -1,5 +1,5 @@
 var conekta = require('conekta');
-conekta.api_key = 'key_eYvWV7gSDkNYXsmr';
+conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
 conekta.api_version = '2.0.0';
 
 
