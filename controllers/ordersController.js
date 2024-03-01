@@ -32,10 +32,10 @@ module.exports = {
             });
         }
         catch (err) {
-            console.log(`Error: ${error}`);
+            console.log(`Error: ${err}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de crear el',
-                error: error,
+                error: err,
                 success: false
 
 
