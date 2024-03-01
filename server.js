@@ -1,4 +1,4 @@
-const express = import('express');
+const express = require('express');
 const app = express();
 
 const http = require('http');
