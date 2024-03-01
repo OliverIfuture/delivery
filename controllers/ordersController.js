@@ -1,11 +1,15 @@
-import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
+//import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
+const CustomersApi = require('conekta');
+const Configuration = require('conekta');
+const Customer = require('conekta');
+const CustomerResponse = require('conekta');
+
 const { findByDeliveryAndStatus } = require('../models/order');
 const Order = require('../models/order');
 const OrderHasProducts = require('../models/order_has_products');
-var conekta = require('../node_modules/conekta');
+var conekta = require('conekta');
 conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
 conekta.api_version = '2.1.0';
-
 
 module.exports = {
 
@@ -13,14 +17,15 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            const customer: Customer = {
+            Customer = {
                 name: "John Constantine",
                 email: "frank@google.com",
                 phone: "+5215555555555"
             }
+            const customer = Customer;
 
             client.createCustomer(customer).then(response => {
-                const customerResponse = response.data as CustomerResponse;
+                const customerResponse = response.data;
                 console.log(customerResponse.id);
             }).catch(error => {
                 console.error("here", error);

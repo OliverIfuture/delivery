@@ -1,15 +1,15 @@
 const passport = require('passport');
-const ordersController = require('../controllers/ordersController');
+const ordersController = require('../controllers/ordersController.js');
 
 module.exports = (app) => {
 
-        /* 
-    *GET ROUTES
-   */
+    /* 
+*GET ROUTES
+*/
     app.get('/api/orders/findByStatus/:status', passport.authenticate('jwt', { session: false }), ordersController.findByStatus);
     app.get('/api/orders/findByDeliveryAndStatus/:id_delivery/:status', passport.authenticate('jwt', { session: false }), ordersController.findByDeliveryAndStatus);
-    app.get('/api/orders/findByClientAndStatus/:id_client/:status', passport.authenticate('jwt', {session: false}), ordersController.findByClientAndStatus);
-    app.get('/api/orders/findByClient/:id_client', passport.authenticate('jwt', {session: false}), ordersController.findByClient);
+    app.get('/api/orders/findByClientAndStatus/:id_client/:status', passport.authenticate('jwt', { session: false }), ordersController.findByClientAndStatus);
+    app.get('/api/orders/findByClient/:id_client', passport.authenticate('jwt', { session: false }), ordersController.findByClient);
 
     app.get('/api/orders/ShiftOrders/:shift_ref', ordersController.ShiftOrders);
     app.get('/api/orders/selectOrderAll/:date', ordersController.selectOrderAll);
@@ -17,9 +17,9 @@ module.exports = (app) => {
     app.get('/api/orders/selectOrder/:date/:shift_ref', ordersController.selectOrder);
     app.get('/api/orders/selectOpenShift/:id_company', ordersController.selectOpenShift);
     app.get('/api/orders/selectOpenShiftExpenses/:id_company', ordersController.selectOpenShiftExpenses);
-    app.get('/api/orders/selectTotals/:shift_ref', ordersController.selectTotals );
-    app.get('/api/orders/selectExpenses/:shift_ref', ordersController.selectExpenses );        
-    app.get('/api/orders/selectIncomes/:shift_ref', ordersController.selectIncomes );        
+    app.get('/api/orders/selectTotals/:shift_ref', ordersController.selectTotals);
+    app.get('/api/orders/selectExpenses/:shift_ref', ordersController.selectExpenses);
+    app.get('/api/orders/selectIncomes/:shift_ref', ordersController.selectIncomes);
     app.get('/api/orders/selectShiftClose', ordersController.selectShiftClose);
 
     /* 
@@ -35,13 +35,13 @@ module.exports = (app) => {
     app.post('/api/orders/insertDateIncome', passport.authenticate('jwt', { session: false }), ordersController.insertDateIncome);
     app.post('/api/orders/insertDateExpenses', passport.authenticate('jwt', { session: false }), ordersController.insertDateExpenses);
 
-       /* 
-    *put ROUTES actualizar
-   */
+    /* 
+ *put ROUTES actualizar
+*/
     app.put('/api/orders/updateToDespatched', passport.authenticate('jwt', { session: false }), ordersController.updateToDespatched);
     app.put('/api/orders/updateToOnTheWay', passport.authenticate('jwt', { session: false }), ordersController.updateToOnTheWay);
-    app.put('/api/orders/updateToDelivered', passport.authenticate('jwt', {session: false}), ordersController.updateToDelivered);
-    app.put('/api/orders/updateLatLng', passport.authenticate('jwt', {session: false}), ordersController.updateLatLng);
+    app.put('/api/orders/updateToDelivered', passport.authenticate('jwt', { session: false }), ordersController.updateToDelivered);
+    app.put('/api/orders/updateLatLng', passport.authenticate('jwt', { session: false }), ordersController.updateLatLng);
     app.put('/api/orders/cancelOrder', passport.authenticate('jwt', { session: false }), ordersController.cancelOrder);
     app.put('/api/orders/closeShiftClose/:id_Close_Shift/:income/:expenses/:change/:total/:total_card/:total_cash/:final_cash', ordersController.closeShiftClose);
 
