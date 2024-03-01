@@ -22,13 +22,16 @@ module.exports = {
 
             }, function (err, res) {
                 console.log(res.toObject());
-                return res.status(201).json(res);
+                return res.status(201).json({
+                    success: true,
+                    message: 'Cliente se creo correctamente',
+                });
             });
         }
         catch (err) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
-                message: 'Hubo un error al tratar de obtener las ordenes por estado',
+                message: 'Hubo un error al tratar de crear el cliente',
                 error: error,
                 success: false
 
