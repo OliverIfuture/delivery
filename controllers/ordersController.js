@@ -21,7 +21,7 @@ module.exports = {
                 }
 
             }, function (err, res) {
-                console.log(res.toObject());
+                console.log(res.status);
             });
         }
         catch (err) {
