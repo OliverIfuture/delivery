@@ -1,7 +1,6 @@
 {
   "name": "flutter-app",
   "version": "1.0.0",
-  "type": "commonjs",
   "description": "Backend aplicacion delivery",
   "main": "server.js",
   "scripts": {
@@ -32,5 +31,6 @@
     "pg": "^8.10.0",
     "pg-promise": "^11.0.2",
     "socket.io": "^2.1.1"
-  }
+  },
+  "type": "module"
 }
