@@ -11,9 +11,7 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
-              const customer_response = (await conekta.createCustomer(customer)).data
-
-                customer = conekta.Customer.create({
+       var  customer = {
                     "name": "Fulanito",
                     "email": "fulanito@test.com",
                     "phone": "+5218181818181",
@@ -21,9 +19,9 @@ module.exports = {
                     "type": "oxxo_recurrent"
                     }
                     
-                }, function(err, res) {
-                    console.log(res.toObject());
-                });
+                }
+              const customer_response = (await conekta.createCustomer(customer)).data
+
         
             },
 
