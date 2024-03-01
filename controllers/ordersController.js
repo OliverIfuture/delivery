@@ -26,6 +26,7 @@ module.exports = {
 
             }, function (err, res) {
                 console.log(res.toObject());
+                console.log(statusSucces.toString());
                 return statusSucces;
             });
         }
