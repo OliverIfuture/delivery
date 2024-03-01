@@ -22,10 +22,10 @@ module.exports = {
                 email: "frank@google.com",
                 phone: "+5215555555555"
             }
-            const customer = Customer;
+            var customer = Customer;
 
             client.createCustomer(customer).then(response => {
-                const customerResponse = response.data;
+                var customerResponse = response.data;
                 console.log(customerResponse.id);
             }).catch(error => {
                 console.error("here", error);
