@@ -1,4 +1,4 @@
-const express = require('express');
+const express = import('express');
 const app = express();
 
 const http = require('http');
@@ -66,7 +66,7 @@ app.use(passport.session());
 require('./config/passport')(passport);
 app.disable('x-power-by');
 app.set('PORT', PORT);
-    
+
 
 
 // LLAMAR A LOS SOCKETS
@@ -85,7 +85,7 @@ mercadoPagoRoutes(app);
 
 server.listen(PORT, function () {
     console.log('Aplicacion de NodeJs ' + process.pid + ' iniciada... : puerto asignado ' + PORT);
-});    
+});
 
 
 
@@ -95,7 +95,7 @@ app.use((err, req, res, next) => {
     console.log(err);
     res.status(err.status || 500).send(err.stack);
 });
-    
+
 module.exports = {
     app: app,
     server: server
