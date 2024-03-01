@@ -11,6 +11,7 @@ module.exports = {
 
 
     async createClienteOxxo(req, res, next) {
+              console.log(conekta);
 
                 customer = conekta.Customer.create({
                     "name": "Fulanito",
