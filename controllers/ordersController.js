@@ -26,7 +26,7 @@ module.exports = {
             }
             var customer = conekta.Customer;
 
-            client.conekta.createCustomer(customer).then(response => {
+            conekta.create(customer).then(response => {
                 var customerResponse = response.data;
                 console.log(customerResponse.id);
             }).catch(error => {
