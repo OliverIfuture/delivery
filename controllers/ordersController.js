@@ -1,4 +1,4 @@
-import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
+require { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
 const { findByDeliveryAndStatus } = require('../models/order');
 const Order = require('../models/order');
 const OrderHasProducts = require('../models/order_has_products');
