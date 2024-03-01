@@ -19,6 +19,7 @@ module.exports = {
             cards: ['tok_test_visa_4242']
         }, function (err, res) {
             res = res.toObject();
+            console.log(customer);
         });
 
     },
