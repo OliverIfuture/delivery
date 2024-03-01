@@ -22,7 +22,7 @@ module.exports = {
 
             }, function (err, res) {
                 console.log(res.toObject());
-                return res.status(201).json({
+                return res.json({
                     success: true,
                     message: 'Cliente se creo correctamente',
                 });
@@ -31,7 +31,7 @@ module.exports = {
         catch (err) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
-                message: 'Hubo un error al tratar de crear el cliente',
+                message: 'Hubo un error al tratar de crear el',
                 error: error,
                 success: false
 
