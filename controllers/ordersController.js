@@ -12,6 +12,8 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
+            conekta.locale = 'es';
+            conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
             const customer = await conekta.Customer.create({
                 name: 'Felipe Gomez',
                 email: 'felipegomez@mail.com'
