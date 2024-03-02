@@ -1,6 +1,7 @@
-//import('conekta').then((conekta) => console.log(conekta));
+import('conekta').then((conekta) => console.log(conekta.default.Customer.post));
+//import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
 
-const conekta = require('conekta');
+const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
 const { findByDeliveryAndStatus } = require('../models/order');
 const Order = require('../models/order');
 const OrderHasProducts = require('../models/order_has_products');
@@ -11,14 +12,18 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            conekta.locale = 'es';
-            conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
-
             const customer = await conekta.Customer.create({
                 name: 'Felipe Gomez',
                 email: 'felipegomez@mail.com'
             });
-            console.log(customer);
+
+            client.createCustomer(customer).then(response => {
+                var customerResponse = response.data;
+                console.log(' siuuuuuuuuu${customerResponse.id}');
+            }).catch(error => {
+                console.error("here", error);
+            });
+
         }
         catch (err) {
             console.log(`Error: ${err}`);
