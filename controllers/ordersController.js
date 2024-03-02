@@ -1,37 +1,24 @@
-//const CustomersApi = require('conekta');
-//const Configuration = require('conekta');
-//const Customer = require('conekta');
-//const CustomerResponse = require('conekta');
+//import('conekta').then((conekta) => console.log(conekta));
 
+const conekta = require('conekta');
 const { findByDeliveryAndStatus } = require('../models/order');
 const Order = require('../models/order');
 const OrderHasProducts = require('../models/order_has_products');
-var conekta = require('conekta');
-conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
-conekta.api_version = '2.1.0';
 
 module.exports = {
 
 
 
     async createClienteOxxo(req, res, next) {
-        const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
-        // const config = new Configuration({ accessToken: apikey });
-        //const client = new CustomersApi(config);
         try {
-            conekta.Customer = {
-                name: "John Constantine",
-                email: "frank@google.com",
-                phone: "+5215555555555"
-            }
-            var customer = conekta.Customer;
+            conekta.locale = 'es';
+            conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
 
-            conekta.Customer.create(customer).then(response => {
-                var customerResponse = response.data;
-                console.log(customerResponse.id);
-            }).catch(error => {
-                console.error("here", error);
+            const customer = await conekta.Customer.create({
+                name: 'Felipe Gomez',
+                email: 'felipegomez@mail.com'
             });
+            console.log(customer);
         }
         catch (err) {
             console.log(`Error: ${err}`);
