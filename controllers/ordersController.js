@@ -12,6 +12,7 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
+            console.log(conekta.default.Customer.post)
             conekta.locale = 'es';
             conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
             const customer = await conekta.Customer.create({
@@ -33,11 +34,8 @@ module.exports = {
                 message: 'Hubo un error al tratar de crear el',
                 error: err,
                 success: false
-
-
             });
         }
-
     },
 
 
