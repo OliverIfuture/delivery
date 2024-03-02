@@ -12,17 +12,20 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            console.log(conekta.default.Customer.post)
-            conekta.locale = 'es';
-            conekta.api_key = 'key_pt4c0MM2XKF8HXGytMz2OFJ';
-            const customer = await conekta.Customer.create({
-                name: 'Felipe Gomez',
-                email: 'felipegomez@mail.com'
-            });
+            const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
+            const config = new Configuration({ accessToken: apikey });
+            const client = new CustomersApi(config);
+
+            var customer = {
+                name: "John Constantine",
+                email: "frank@google.com",
+                phone: "+5215555555555"
+            }
+            Customer = customer;
 
             client.createCustomer(customer).then(response => {
-                var customerResponse = response.data;
-                console.log(' siuuuuuuuuu${customerResponse.id}');
+                const customerResponse = response.data;
+                console.log(customerResponse.id);
             }).catch(error => {
                 console.error("here", error);
             });
@@ -34,8 +37,11 @@ module.exports = {
                 message: 'Hubo un error al tratar de crear el',
                 error: err,
                 success: false
+
+
             });
         }
+
     },
 
 
