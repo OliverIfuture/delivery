@@ -279,7 +279,7 @@ module.exports = {
             let order = req.body;
             order.status = 'PENDIENTE DE PAGO';
             const data = await Order.create(order);
-            console.log(`orden creada: ${JSON.stringify(order.id_plate)}`);
+            console.log(`orden creada: ${JSON.stringify(order)}`);
 
             for (const product of order.products) {
                 if (product.id < 1000) {
