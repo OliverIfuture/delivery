@@ -284,11 +284,9 @@ module.exports = {
             for (const product of order.products) {
                 if (product.id < 1000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
-                    await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
                     
                 }
                 if (product.id > 1000) {
-                    await OrderHasProducts.create(data.id, product.id, product.quantity);                    
                     await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
                 }
             }
