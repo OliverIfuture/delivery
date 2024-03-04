@@ -99,7 +99,7 @@ Order.findByStatus = (status) => {
 	
 		OHPP.id_order = O.id		
 	
-	inner JOIN 
+	left JOIN 
 		plates AS M
 	ON 	
 	  OHPP.id_plate = M.id
