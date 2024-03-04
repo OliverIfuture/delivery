@@ -87,7 +87,7 @@ Order.findByStatus = (status) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
-    inner JOIN
+    left JOIN
         products AS P
     ON
         P.id = OHP.id_product
