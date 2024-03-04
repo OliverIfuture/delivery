@@ -308,7 +308,7 @@ Order.findByClient = (id_client) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
-    INNER JOIN
+    left JOIN
         products AS P
     ON
         P.id = OHP.id_product
