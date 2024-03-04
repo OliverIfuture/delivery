@@ -208,7 +208,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
 	
 		OHPP.id_order = O.id		
 	
-	INNER JOIN 
+	left JOIN 
 		plates AS M
 	ON 	
 	  OHPP.id_plate = M.id
@@ -319,7 +319,7 @@ Order.findByClient = (id_client) => {
 	
 		OHPP.id_order = O.id		
 	
-	INNER JOIN 
+	left JOIN 
 		plates AS M
 	ON 	
 	  OHPP.id_plate = M.id
@@ -429,7 +429,7 @@ Order.findByClientAndStatus = (id_client, status) => {
 	
 		OHPP.id_order = O.id		
 	
-	INNER JOIN 
+	left JOIN 
 		plates AS M
 	ON 	
 	  OHPP.id_plate = M.id
