@@ -42,7 +42,7 @@ module.exports = (app) => {
     app.put('/api/orders/updateToOnTheWay', passport.authenticate('jwt', { session: false }), ordersController.updateToOnTheWay);
     app.put('/api/orders/updateToDelivered', passport.authenticate('jwt', { session: false }), ordersController.updateToDelivered);
     app.put('/api/orders/updateLatLng', passport.authenticate('jwt', { session: false }), ordersController.updateLatLng);
-    app.put('/api/orders/cancelOrder', passport.authenticate('jwt', { session: false }), ordersController.cancelOrder);
+    app.put('/api/orders/cancelOrder', ordersController.cancelOrder);
     app.put('/api/orders/closeShiftClose/:id_Close_Shift/:income/:expenses/:change/:total/:total_card/:total_cash/:final_cash', ordersController.closeShiftClose);
 
     app.delete('/api/orders/deleteExpenses/:id', passport.authenticate('jwt', { session: false }), ordersController.deleteExpenses);
