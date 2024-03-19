@@ -1,5 +1,6 @@
 import('conekta').then((conekta) => console.log(conekta.default.Customer.post));
 //import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
+const stripe = require('stripe')('sk_test_51MjAlBFI81PpmIv2YAPj8eHKg8gcHeJ1KC1pm3MwPMBdKgpv7MI5kd9mQplrKQDpmeBnscEe8eHugRJjrUPsSG7s0001sVTkQc');
 
 const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
 const { findByDeliveryAndStatus } = require('../models/order');
@@ -12,22 +13,12 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
-            const config = new Configuration({ accessToken: apikey });
-            const client = new CustomersApi(config);
-
-            var customer = {
-                name: "John Constantine",
-                email: "frank@google.com",
-                phone: "+5215555555555"
-            }
-            Customer = customer;
-
-            client.createCustomer(customer).then(response => {
-                const customerResponse = response.data;
-                console.log(customerResponse.id);
-            }).catch(error => {
-                console.error("here", error);
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: 2000,
+                currency: 'usd',
+                automatic_payment_methods: {
+                    enabled: true,
+                },
             });
 
         }
@@ -253,12 +244,12 @@ module.exports = {
                 if (product.id < 1000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                     await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
-                    
+
                 }
                 if (product.id > 1000) {
                     await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
-                    
+
                 }
             }
 
@@ -293,12 +284,12 @@ module.exports = {
                 if (product.id < 1000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                     await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
-                    
+
                 }
                 if (product.id > 1000) {
                     await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
-                    
+
                 }
             }
 
