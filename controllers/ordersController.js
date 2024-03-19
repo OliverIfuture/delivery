@@ -1,6 +1,5 @@
 import('conekta').then((conekta) => console.log(conekta.default.Customer.post));
 //import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
-const stripe = require('stripe')('pk_live_51MjAlBFI81PpmIv2GEZe1coH4Y7JTxCgUBSMkJK2Sl1JjNi3PL8QMtiGuFm4FZ37tTgwwzfhwejWwysPp9I66DnK007wdun2TV');
 
 const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
 const { findByDeliveryAndStatus } = require('../models/order');
@@ -13,6 +12,7 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
+            const stripe = require('stripe')('pk_live_51MjAlBFI81PpmIv2GEZe1coH4Y7JTxCgUBSMkJK2Sl1JjNi3PL8QMtiGuFm4FZ37tTgwwzfhwejWwysPp9I66DnK007wdun2TV');
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: 2000,
                 currency: 'usd',
