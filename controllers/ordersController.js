@@ -1,6 +1,6 @@
 import('conekta').then((conekta) => console.log(conekta.default.Customer.post));
 //import { CustomersApi, Configuration, Customer, CustomerResponse } from "conekta";
-const stripe = require('stripe')('sk_test_51MjAlBFI81PpmIv2YAPj8eHKg8gcHeJ1KC1pm3MwPMBdKgpv7MI5kd9mQplrKQDpmeBnscEe8eHugRJjrUPsSG7s0001sVTkQc');
+const stripe = require('stripe')('pk_test_51MjAlBFI81PpmIv239ujdYtWlM0QEDmqgWVST5LjGNg4X94Ysj9cnHTwZKWfJ9myB1yZV6sQOX7qU013YpfOAajZ00jZyQ9cT6');
 
 const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
 const { findByDeliveryAndStatus } = require('../models/order');
