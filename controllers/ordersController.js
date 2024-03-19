@@ -12,7 +12,7 @@ module.exports = {
 
     async createClienteOxxo(req, res, next) {
         try {
-            const stripe = require('stripe')('pk_live_51MjAlBFI81PpmIv2GEZe1coH4Y7JTxCgUBSMkJK2Sl1JjNi3PL8QMtiGuFm4FZ37tTgwwzfhwejWwysPp9I66DnK007wdun2TV');
+            const stripe = require('stripe')('sk_test_51MjAlBFI81PpmIv2YAPj8eHKg8gcHeJ1KC1pm3MwPMBdKgpv7MI5kd9mQplrKQDpmeBnscEe8eHugRJjrUPsSG7s0001sVTkQc');
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: 27459,
                 currency: 'usd',
