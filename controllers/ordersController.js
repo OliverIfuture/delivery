@@ -20,7 +20,8 @@ module.exports = {
                     enabled: true,
                 },
             });
-            console.log(`el payment intent : ${paymentIntent}`);
+            console.log(`el payment intent : ${JSON.stringify(paymentIntent)}`);
+            return res.status(201).json(paymentIntent);
 
         }
         catch (err) {
