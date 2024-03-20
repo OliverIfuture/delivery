@@ -10,7 +10,7 @@ module.exports = {
 
 
 
-    async createClienteOxxo(req, res, next) {
+    async createPymentInten(req, res, next) {
         try {
             const stripe = require('stripe')('sk_test_51MjAlBFI81PpmIv2YAPj8eHKg8gcHeJ1KC1pm3MwPMBdKgpv7MI5kd9mQplrKQDpmeBnscEe8eHugRJjrUPsSG7s0001sVTkQc');
             const paymentIntent = await stripe.paymentIntents.create({
