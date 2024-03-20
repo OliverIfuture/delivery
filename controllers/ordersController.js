@@ -20,7 +20,7 @@ module.exports = {
                     enabled: true,
                 },
             });
-            console.log(paymentIntent);
+            console.log(`el payment intent : ${paymentIntent}`);
 
         }
         catch (err) {
