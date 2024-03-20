@@ -14,7 +14,7 @@ module.exports = {
         try {
             const stripe = require('stripe')('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');
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: 27459,
+                amount: 2100,
                 currency: 'usd',
                 automatic_payment_methods: {
                     enabled: true,
