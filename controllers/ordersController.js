@@ -20,6 +20,7 @@ module.exports = {
                     enabled: true,
                 },
             });
+            console.log(paymentIntent);
 
         }
         catch (err) {
