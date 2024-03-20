@@ -12,10 +12,13 @@ module.exports = {
 
     async createPymentInten(req, res, next) {
         try {
-            const stripe = require('stripe')('sk_test_51MjAlBFI81PpmIv2YAPj8eHKg8gcHeJ1KC1pm3MwPMBdKgpv7MI5kd9mQplrKQDpmeBnscEe8eHugRJjrUPsSG7s0001sVTkQc');
+            const usertoken = req.params.usertoken;
+            const amount = req.params.amount;
+            
+            const stripe = require('stripe')(usertoken);
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: 2100,
-                currency: 'usd',
+                amount: amount,
+                currency: 'mxn',
                 automatic_payment_methods: {
                     enabled: true,
                 },
