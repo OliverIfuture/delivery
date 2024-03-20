@@ -25,7 +25,7 @@ module.exports = (app) => {
     /* 
     *POST ROUTES
    */
-    app.post('/api/orders/createPymentInten', passport.authenticate('jwt', { session: false }), ordersController.createPymentInten);
+    app.post('/api/orders/createPymentInten/:usertoken/:amount', passport.authenticate('jwt', { session: false }), ordersController.createPymentInten);
 
     app.post('/api/orders/create', passport.authenticate('jwt', { session: false }), ordersController.create);
     app.post('/api/orders/createCashOrder', passport.authenticate('jwt', { session: false }), ordersController.createCashOrder);
