@@ -67,11 +67,11 @@ module.exports = (app, upload) => {
       app.get('/api/products/getProfileFavoriteIconSum/:id_profile',productsControllers.getProfileFavoriteIconSum);
       app.get('/api/products/getProfilePlatesIconSumProfile/:id_profile',productsControllers.getProfilePlatesIconSumProfile);
       app.get('/api/products/GgetProfileFollowersIconSumProfile/:id_profile',productsControllers.GgetProfileFollowersIconSumProfile);
-      app.get('/api/products/findByCategory/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategory);
+      app.get('/api/products/findByCategory/:id_category', productsControllers.findByCategory);
       app.get('/api/products/getByCtaegoryPlate/:id_category',passport.authenticate('jwt', {session: false}) , productsControllers.getByCtaegoryPlate);
       app.get('/api/products/findByCategoryStocks/:id_category/:id_company',passport.authenticate('jwt', {session: false}) , productsControllers.findByCategoryStocks);
 
-      app.get('/api/products/findByCategoryAndProductName/:id_category/:product_name', passport.authenticate('jwt', {session: false}), productsControllers.findByCategoryAndProductName);
+      app.get('/api/products/findByCategoryAndProductName/:id_category/:product_name', productsControllers.findByCategoryAndProductName);
        app.get('/api/products/getByCtaegoryAndProductNamePlate/:id_category/:product_name', passport.authenticate('jwt', {session: false}), productsControllers.getByCtaegoryAndProductNamePlate);
       app.get('/api/products/findByCategoryAndProductNameStocks/:id_category/:product_name/:id_company', passport.authenticate('jwt', {session: false}), productsControllers.findByCategoryAndProductNameStocks);
 
