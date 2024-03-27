@@ -20,7 +20,7 @@ module.exports = (app, upload) => {
       app.post('/api/products/createAnswer/:id_review/:username/:answer/:responseto/:id_user' , productsControllers.createAnswer);
       app.post('/api/products/createAnswerPost/:id_coment/:username/:answer/:responseto/:id_user' , productsControllers.createAnswerPost);
 
-      app.get('/api/products/getAll',passport.authenticate('jwt', {session: false}) , productsControllers.getAll);     
+      app.get('/api/products/getAll', productsControllers.getAll);     
       app.get('/api/products/findLast5', productsControllers.findLast5);    
       app.get('/api/products/getPost/:id_user', productsControllers.getPost);    
       app.get('/api/products/getPostAll', productsControllers.getPostAll);    
