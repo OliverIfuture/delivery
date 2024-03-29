@@ -437,6 +437,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
         O.id_client = $1
     GROUP BY
         O.id, U.id, A.id, U2.id 
+		order by O.id desc
     `;
 
     return db.manyOrNone(sql, [id_client]);
@@ -545,6 +546,7 @@ Order.findByClientAndStatus = (id_client, status) => {
         O.id_client = $1 AND status = $2 
     GROUP BY
         O.id, U.id, A.id, U2.id 
+		order by O.id desc
     `;
 
     return db.manyOrNone(sql, [id_client, status]);
