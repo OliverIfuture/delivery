@@ -108,6 +108,8 @@ module.exports = {
             const id_client = req.params.id_client;
 
             const data = await Order.getByClientAndStatusWeb(id_client);
+                        console.log(`orden creada: ${JSON.stringify(data)}`);
+
             return res.status(201).json(data);
         }
         catch (error) {
