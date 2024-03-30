@@ -22,6 +22,8 @@ module.exports = (app, upload) => {
 
       app.get('/api/products/getAll', productsControllers.getAll);     
       app.get('/api/products/findLast5', productsControllers.findLast5);    
+      app.get('/api/products/populars', productsControllers.populars);    
+
       app.get('/api/products/getPost/:id_user', productsControllers.getPost);    
       app.get('/api/products/getPostAll', productsControllers.getPostAll);    
 
