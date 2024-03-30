@@ -151,6 +151,24 @@ order by P.id desc
 return db.manyOrNone(sql, id_user);
 }
 
+
+Product.populars = () =>{
+	const sql = `
+	select * from products where id = 146
+	union 
+	select * from products where id = 88
+	union 
+	select * from products where id = 246
+	union 
+	select * from products where id = 230
+	union 
+	select * from products where id = 307
+ `;
+return db.manyOrNone(sql);
+
+}
+
+
 Product.findLast5 = () =>{
 	const sql = `
 	 SELECT * FROM plates
