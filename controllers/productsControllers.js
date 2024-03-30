@@ -917,7 +917,7 @@ async favoritesplates(req, res, next) {
  async findLast5(req, res, next) {
         try {
             const data = await Product.findLast5();
-            console.log(`Productos obtenidos: ${data}`);
+            console.log(`products : ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
