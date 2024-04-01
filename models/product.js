@@ -1142,7 +1142,7 @@ inner join stock as S
 on P.id = S.id_product
 	
 WHERE
-	C.id = $1 and S.id_company = $1
+	C.id = $1 and S.id_company = $2
     
     `;
     return db.manyOrNone(sql, [id_category, id_company]);
@@ -1171,7 +1171,7 @@ Product.getByCtaegoryAndProductNameSearch = (product_name) => {
     ON
         P.id_category = C.id
     WHERE
-	p.name ILIKE $2
+	p.name ILIKE $1
     `;
 
     return db.manyOrNone(sql, [`%${product_name}%`]);
