@@ -1148,6 +1148,35 @@ WHERE
     return db.manyOrNone(sql, [id_category, id_company]);
 }
 
+Product.getByCtaegoryAndProductNameSearch = (product_name) => {
+    const sql = `
+    SELECT
+        P.id,
+        P.name,
+        P.description,
+        P.price,
+        P.image1,
+        P.image2,
+        P.image3,
+        P.id_category,
+	P.stock,
+	P.id_company,
+	P.state,
+	P.price_special,
+	P.price_buy
+    FROM
+        products AS P
+    INNER JOIN
+        categories AS C
+    ON
+        P.id_category = C.id
+    WHERE
+        C.id = $1 AND p.name ILIKE $2
+    `;
+
+    return db.manyOrNone(sql, [`%${product_name}%`]);
+}
+
 Product.findByCategoryAndProductName = (id_category, product_name) => {
     const sql = `
     SELECT
