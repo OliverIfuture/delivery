@@ -1053,7 +1053,24 @@ async getAllStocks (req, res, next) {
                  });
         }
     },
-        
+
+
+   async getByCtaegoryAndProductNameSearch(req, res, next) {
+        try {
+            const product_name = req.params.product_name; // CLIENTE
+            const data = await Product.getByCtaegoryAndProductNameSearch(product_name);
+            return res.status(201).json(data);
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: `Error al listar los productos por categoria`,
+                success: false,
+                error: error
+            });
+        }
+    },
+ 
         async findByCategoryAndProductName(req, res, next) {
         try {
             const id_category = req.params.id_category; // CLIENTE
