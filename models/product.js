@@ -1142,7 +1142,7 @@ inner join stock as S
 on P.id = S.id_product
 	
 WHERE
-	C.id = $1 and S.id_company = $2
+	C.id = $1 and S.id_company = $1
     
     `;
     return db.manyOrNone(sql, [id_category, id_company]);
