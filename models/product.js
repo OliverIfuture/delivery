@@ -1171,7 +1171,7 @@ Product.getByCtaegoryAndProductNameSearch = (product_name) => {
     ON
         P.id_category = C.id
     WHERE
-        C.id = $1 AND p.name ILIKE $2
+	p.name ILIKE $2
     `;
 
     return db.manyOrNone(sql, [`%${product_name}%`]);
