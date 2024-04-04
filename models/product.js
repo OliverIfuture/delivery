@@ -509,7 +509,7 @@ Product.getReviewPlateFavoriteIconProduct = (id_plate) =>{
 		SELECT 
   count(favoritesproducts) as rate
 FROM 
-  favorites where id_product = $1
+  favoritesproducts where id_product = $1
  `;
 return db.manyOrNone(sql, id_plate);
 
