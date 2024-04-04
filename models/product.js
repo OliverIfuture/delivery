@@ -62,6 +62,21 @@ return db.manyOrNone(sql, id);
 
 }
 
+
+Product.favoritesplatesProducts = (id) =>{
+	const sql = `
+		select 
+			U.name,
+			U.image,
+   			U.id
+		from favoritesproducts as F
+		inner join users as U on U.id = F.id_user
+		where id_product = $1
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
 Product.favoritesplates = (id) =>{
 	const sql = `
 		select 
@@ -306,6 +321,7 @@ Product.findLikesComent = (id_post) =>{
 return db.manyOrNone(sql, id_post);
 
 }
+
 
 Product.findLikes = (id_plate) =>{
 	const sql = `
