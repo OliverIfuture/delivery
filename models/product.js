@@ -234,7 +234,7 @@ select
 		from reviewsproducts  as R
 		
 		inner join products as P on P.id = R.id_product
-	    inner join commentsproducts as C on R.id_product = C.id_product
+	    inner join commentsproducts as C on R.id = C.id_product
 		inner join users as U on U.id  = R.id_user  
 		
 		where P.id = $1
