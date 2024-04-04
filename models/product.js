@@ -343,7 +343,7 @@ Product.findFavoritesProduct = (id_plate, id_user) => {
     FROM
         favoritesproducts
     WHERE
-        id_plate = $1 and id_user = $2`  ;
+        id_product = $1 and id_user = $2`  ;
 
     return db.oneOrNone(sql, [
         id_plate,
