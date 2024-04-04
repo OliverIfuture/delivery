@@ -255,7 +255,7 @@ async setStock(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
             const data = await Product.getReviewPlateFavoriteIconProduct(id_plate);
-             console.log(`stock enviada: ${data}`);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
             return res.status(201).json(data);
 
