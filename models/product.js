@@ -1065,6 +1065,18 @@ Product.deleteAnswerLikeComent = (id) => {
     `;
     return db.none(sql,id);
 }
+
+Product.deleteAnswerLikeProduct = (id) => {
+    const sql = `
+
+    DELETE  
+    FROM answerslikesproducts 
+
+    WHERE id = $1
+    `;
+    return db.none(sql,id);
+}
+
 Product.deleteAnswerLike = (id) => {
     const sql = `
 
