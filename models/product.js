@@ -504,6 +504,17 @@ return db.manyOrNone(sql, id_profile);
 
 }
 
+Product.getReviewPlateFavoriteIconProduct = (id_plate) =>{
+	const sql = `
+		SELECT 
+  count(favoritesproducts) as rate
+FROM 
+  favorites where id_product = $1
+ `;
+return db.manyOrNone(sql, id_plate);
+
+}
+
 Product.getReviewPlateFavoriteIcon = (id_plate) =>{
 	const sql = `
 		SELECT 
