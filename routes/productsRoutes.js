@@ -78,6 +78,8 @@ module.exports = (app, upload) => {
       
       app.get('/api/products/getSaves/:id_user',productsControllers.getSaves);
       app.get('/api/products/getReviewPlateFavoriteIcon/:id_plate',productsControllers.getReviewPlateFavoriteIcon);
+      app.get('/api/products/getReviewPlateFavoriteIconProduct/:id_plate',productsControllers.getReviewPlateFavoriteIconProduct);
+
       app.get('/api/products/getReviewPlateRate/:id_plate',productsControllers.getReviewPlateRate);
       app.get('/api/products/getProfileFavoriteIconSum/:id_profile',productsControllers.getProfileFavoriteIconSum);
       app.get('/api/products/getProfilePlatesIconSumProfile/:id_profile',productsControllers.getProfilePlatesIconSumProfile);
