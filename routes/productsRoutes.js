@@ -121,6 +121,8 @@ module.exports = (app, upload) => {
       app.delete('/api/products/deleteProduct/:id', passport.authenticate('jwt', { session: false }), productsControllers.delete);
       app.delete('/api/products/deleteSale/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteSale);
       app.delete('/api/products/deleteFavorites/:id_plate/:id_user', productsControllers.deleteFavorites);
+      app.delete('/api/products/deleteFavoritesProducts/:id_plate/:id_user', productsControllers.deleteFavoritesProducts);
+
       app.delete('/api/products/deleteFavoritesProfile/:id_profile/:id_user', productsControllers.deleteFavoritesProfile);
       app.delete('/api/products/deleteFollowersProfile/:id_profile/:id_user', productsControllers.deleteFollowersProfile);
       app.delete('/api/products/deletePost/:id/:id_user', productsControllers.deletePost );
