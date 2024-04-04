@@ -68,6 +68,7 @@ Product.favoritesplatesProducts = (id) =>{
 		select 
 			U.name,
 			U.image,
+   			U.lastname as city,
    			U.id
 		from favoritesproducts as F
 		inner join users as U on U.id = F.id_user
