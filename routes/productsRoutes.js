@@ -13,6 +13,8 @@ module.exports = (app, upload) => {
       app.post('/api/products/createComent',passport.authenticate('jwt', {session: false}) , productsControllers.createComent);
       
       app.post('/api/products/createLike/:id_plate/:username/:useremail/:id_user' , productsControllers.createLike);
+      app.post('/api/products/createLikeProduct/:id_plate/:username/:useremail/:id_user' , productsControllers.createLikeProduct);
+
       app.post('/api/products/likePublish/:id_publish/:username/:useremail/:id_user' , productsControllers.likePublish);
       app.post('/api/products/createLikePost/:id_publish/:username/:useremail/:id_user' , productsControllers.createLikePost);
       app.post('/api/products/createLikeComent/:id_coment/:username/:useremail/:id_user' , productsControllers.createLikeComent);
