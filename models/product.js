@@ -332,6 +332,25 @@ return db.manyOrNone(sql, id_plate);
 
 }
 
+
+Product.findFavoritesProduct = (id_plate, id_user) => {
+
+    const sql = `
+    SELECT 
+
+    *
+        
+    FROM
+        favoritesproducts
+    WHERE
+        id_plate = $1 and id_user = $2`  ;
+
+    return db.oneOrNone(sql, [
+        id_plate,
+        id_user
+    ]);
+}
+
 Product.findFavorites = (id_plate, id_user) => {
 
     const sql = `
