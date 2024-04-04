@@ -219,6 +219,7 @@ select
 		R.id,
 		U.name as username,
 		U.image,
+		U.lastname as city,
 		R.review,
 		R.calification,
   		R.id_user,
@@ -237,7 +238,7 @@ select
 		inner join users as U on U.id  = R.id_user  
 		
 		where P.id = $1
-		group by R.id, U.name, R.review, R.calification, U.image
+		group by R.id, U.name, R.review, R.calification, U.image, U.lastname
 		order by id desc
 
 
