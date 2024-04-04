@@ -805,7 +805,7 @@ Product.createAnswerProduct = (id_review, username , answer, responseto, id_user
 			)
 		    VALUES($1,$2,$3,$4, $5 )
 			RETURNING id, username )
-		INSERT INTO answerslikes(
+		INSERT INTO answerslikesproducts(
 			id_answer, 
 			username,
 			useremail,
