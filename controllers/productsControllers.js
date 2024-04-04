@@ -764,6 +764,29 @@ async deleteAnswerLikeComent(req, res, next) {
         }
         
 },   
+
+async deleteAnswerLikeProduct (req, res, next) {
+        try {
+
+            const id = req.params.id; 
+            const data = await Product.deleteAnswerLikeProduct (id);
+
+            return res.status(201).json({
+                message: 'like eliminado',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar',
+                success: false,
+                error: error
+            });
+        }
+        
+},
+ 
 async deleteAnswerLike (req, res, next) {
         try {
 
