@@ -42,6 +42,8 @@ module.exports = (app, upload) => {
       app.get('/api/products/findPostComent/:id', productsControllers.findPostComent);    
       
       app.get('/api/products/favoritesplates/:id', productsControllers.favoritesplates);    
+      app.get('/api/products/favoritesplatesProducts/:id', productsControllers.favoritesplatesProducts);    
+
       app.get('/api/products/lookFavoritesList/:id_profile', productsControllers.lookFavoritesList);    
       app.get('/api/products/lookFollowersList/:id_profile', productsControllers.lookFollowersList );    
 
