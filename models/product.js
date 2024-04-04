@@ -212,6 +212,41 @@ return db.manyOrNone(sql, id);
 
 }
 
+
+Product.findReviewProduct = (id) =>{
+	const sql = `
+select 
+		R.id,
+		U.name as username,
+		U.image,
+		R.review,
+		R.calification,
+  		R.id_user,
+        COALESCE(json_agg(
+		JSON_BUILD_OBJECT(
+                'id', C.id,
+				'username',C.username,
+                'useremail', C.useremail,
+				'id_user',C.id_user
+		)
+		) FILTER (WHERE C.useremail != '0'), '[]') as likes 
+		from reviewsproducts  as R
+		
+		inner join products as P on P.id = R.id_product
+	    inner join commentsproducts as C on R.id_product = C.id_product
+		inner join users as U on U.id  = R.id_user  
+		
+		where P.id = $1
+		group by R.id, U.name, R.review, R.calification, U.image
+		order by id desc
+
+
+
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
 Product.findReview = (id) =>{
 	const sql = `
 select 
