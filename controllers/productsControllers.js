@@ -723,6 +723,30 @@ async setSave(req, res, next) {
         }
         
 },
+
+async deleteFavoritesProducts (req, res, next) {
+        try {
+
+            const id_plate = req.params.id_plate;             
+            const id_user = req.params.id_user; 
+            const data = await Product.deleteFavoritesProducts(id_plate, id_user);
+
+            return res.status(201).json({
+                message: 'eliminado de favoritos',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar',
+                success: false,
+                error: error
+            });
+        }
+        
+},
+ 
 async deleteFavorites (req, res, next) {
         try {
 
