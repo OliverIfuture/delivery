@@ -521,7 +521,28 @@ async findPostComent (req, res, next) {
             });
         }
     },      
-        
+
+
+async findReviewProduct(req, res, next) {
+        try {
+            const id = req.params.id;
+            const data = await Product.findReviewProduct(id);
+            console.log(`Reviews obtenidos: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },  
+ 
+ 
 async findReview(req, res, next) {
         try {
             const id = req.params.id;
