@@ -1190,7 +1190,7 @@ Product.deleteFavoritesProducts = (id_plate, id_user) => {
     DELETE  
     FROM favoritesproducts 
 
-    WHERE id_plate = $1 and id_user = $2
+    WHERE id_product = $1 and id_user = $2
     `;
     return db.none(sql, [
         id_plate,
