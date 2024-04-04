@@ -1088,7 +1088,28 @@ async lookFollowersList (req, res, next) {
                 message: 'error al obtener'
             });
         }
-    },        
+    },    
+
+async favoritesplatesProducts(req, res, next) {
+        try {
+
+            const id = req.params.id;    
+            const data = await Product.favoritesplatesProducts(id);
+            console.log(`Favoritos obtenidos: ${data}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
+ 
 async favoritesplates(req, res, next) {
         try {
 
