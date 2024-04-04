@@ -1022,6 +1022,22 @@ Product.updateStockers = (id_product, stock, id_company) => {
 }
 
 
+Product.setFavoritesProducts = (id_plate, id_user) => {
+    const sql = `
+    INSERT INTO
+        favoritesproducts(
+	    id_product,  
+            id_user
+        )
+    VALUES($1, $2)    
+    `;
+    return db.none(sql, [
+        id_plate,
+        id_user
+    ]);
+}
+
+
 Product.setFavorites = (id_plate, id_user) => {
     const sql = `
     INSERT INTO
