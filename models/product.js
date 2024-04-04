@@ -1115,6 +1115,18 @@ Product.deleteLikeCommentPost = (id) => {
     return db.none(sql,id);
 }
 
+
+Product.deleteLikeCommentProduct = (id) => {
+    const sql = `
+
+    DELETE  
+    FROM commentsproducts 
+
+    WHERE id = $1
+    `;
+    return db.none(sql,id);
+}
+
 Product.deleteLikeComment = (id) => {
     const sql = `
 
