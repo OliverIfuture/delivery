@@ -619,6 +619,36 @@ return db.manyOrNone(sql, id_company);
 }
 
 
+Product.createReviewProduct = (comments) => {
+    const sql = `
+with rows as (
+    INSERT INTO reviewsproducts(
+		id_product, 
+		id_user,
+		review, 
+		calification)
+    VALUES($1,$2,$3,$4 )
+	RETURNING id, id_user)
+INSERT INTO commentsproducts(
+	id_product, 
+	id_user,
+ 	useremail
+ )
+SELECT id, id_user, $5
+FROM rows
+    `;
+    return db.oneOrNone(sql, [
+        comments.id_plate,
+        comments.id_user,
+        comments.review,
+	comments.calification,
+	'0'    
+
+	    
+        
+    ]);
+}
+
 Product.createReview = (comments) => {
     const sql = `
 with rows as (
