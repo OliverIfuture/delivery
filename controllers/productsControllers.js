@@ -248,6 +248,29 @@ async setStock(req, res, next) {
                  });
         }
     }, 
+
+
+       async getReviewPlateFavoriteIconProduct(req, res, next) {
+
+        try {
+            const id_plate = req.params.id_plate;
+            const data = await Product.getReviewPlateFavoriteIconProduct(id_plate);
+             console.log(`stock enviada: ${data}`);
+
+            return res.status(201).json(data);
+
+            
+        } catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al listar los corazones de este platillo ${error}`,
+                success: false,
+                error: error
+                 });
+        }
+    },     
+
+ 
        async getReviewPlateFavoriteIcon(req, res, next) {
 
         try {
