@@ -170,7 +170,7 @@ return db.manyOrNone(sql, id_user);
 
 Product.populars = () =>{
 	const sql = `
-	select * from products where id = 146
+	select * from products where id = 168
 	union 
 	select * from products where id = 88
 	union 
