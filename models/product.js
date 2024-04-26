@@ -185,6 +185,15 @@ return db.manyOrNone(sql);
 }
 
 
+Product.servings = () =>{
+	const sql = `
+select * from plates where id_category = 4
+ `;
+return db.manyOrNone(sql);
+
+}
+
+
 Product.findLast5 = () =>{
 	const sql = `
 	 SELECT * FROM plates
