@@ -565,6 +565,7 @@ Order.create = (order) => {
             updated_at,
             paymethod,
             hour_program,
+	    comments,
 	    discounts
 
 
@@ -581,6 +582,7 @@ Order.create = (order) => {
         new Date(),
         order.paymethod,
         order.hour_program,
+	order.comments,    
         order.discounts
 
 
