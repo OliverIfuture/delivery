@@ -1778,8 +1778,15 @@ Product.createGift = (gift) => {
 
 Product.getIngredients = (id_plate) =>{
 	const sql = `
-	 select * from ingredients where id_plate = $1
- `;
+select 
+I.id,
+I.id_plate,
+I.ingredients,
+P.image2
+
+from ingredients as I
+inner join plates as P on I.id_plate = P.id
+where I.id_plate = $1 `;
 return db.manyOrNone(sql, id_plate);
 
 }
