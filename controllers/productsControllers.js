@@ -2266,6 +2266,25 @@ async createLikeProduct (req, res, next) {
         }
     },   
 
+  async getIngredients(req, res, next) {
+        try {
+            const id_plate = req.params.id_plate;
+            const data = await Product.getIngredients(id_plate);
+            console.log(`products : ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
+
  async createGift (req, res, next) {
         try {
 
