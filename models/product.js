@@ -1776,6 +1776,14 @@ Product.createGift = (gift) => {
     ]);
 }
 
+Product.getIngredients = (id_plate) =>{
+	const sql = `
+	 select * from ingredients where id_plate = $1
+ `;
+return db.manyOrNone(sql, id_plate);
+
+}
+
 
 
 
