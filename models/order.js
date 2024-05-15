@@ -606,7 +606,7 @@ Order.updateCode = (id, code) => {
     `;
     return db.none(sql, [
         id,
-        comments
+        code
     ]);
 }
 
