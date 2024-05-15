@@ -594,6 +594,22 @@ Order.create = (order) => {
     ]);
 }
 
+
+Order.updateCode = (id, code) => {
+    const sql = `
+    UPDATE
+        orders
+    SET
+        comments = $2,
+    WHERE
+        id = $1
+    `;
+    return db.none(sql, [
+        id,
+        comments
+    ]);
+}
+
 Order.update = (order) => {
     const sql = `
     UPDATE
