@@ -600,7 +600,7 @@ Order.updateCode = (id, code) => {
     UPDATE
         orders
     SET
-        comments = $2,
+        comments = $2
     WHERE
         id = $1
     `;
