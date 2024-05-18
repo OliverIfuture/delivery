@@ -18,6 +18,7 @@ Order.findByStatus = (status) => {
   	O.discounts,
         O.comments,
         O.code,
+        HE.extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
 				
@@ -89,6 +90,12 @@ Order.findByStatus = (status) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
+	
+    LEFT JOIN 
+	    has_extras as HE
+	ON 
+	    O.id = HE.id_order	
+     
     left JOIN
         products AS P
     ON
@@ -109,7 +116,7 @@ Order.findByStatus = (status) => {
     WHERE
         status = $1
     GROUP BY
-        O.id, U.id, A.id, U2.id
+        O.id, U.id, A.id, U2.id, HE.extra
     ORDER BY O.id desc
     `;
 
@@ -132,6 +139,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
  	O.discounts,
         O.comments,
         O.code,
+	HE.extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -201,6 +209,12 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
+    
+    LEFT JOIN 
+	    has_extras as HE
+     ON 
+	    O.id = HE.id_order
+     
     left JOIN
         products AS P
     ON
@@ -220,7 +234,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
     WHERE
         O.id_delivery = $1 AND status = $2 
     GROUP BY
-        O.id, U.id, A.id, U2.id  
+        O.id, U.id, A.id, U2.id, HE.extra 
     `;
 
     return db.manyOrNone(sql, [id_delivery, status]);
@@ -245,6 +259,7 @@ Order.findByClient = (id_client) => {
 	O.discounts,
         O.comments,
         O.code,
+	HE.extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -314,6 +329,12 @@ Order.findByClient = (id_client) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
+	
+    LEFT JOIN 
+	    has_extras as HE
+	ON 
+	    O.id = HE.id_order	
+     
     left JOIN
         products AS P
     ON
@@ -333,7 +354,7 @@ Order.findByClient = (id_client) => {
     WHERE
         O.id_client = $1 AND (status != 'ENTREGADO') AND (status != 'CANCELADO') 
     GROUP BY
-        O.id, U.id, A.id, U2.id 
+        O.id, U.id, A.id, U2.id, HE.extra 
 	ORDER BY O.id desc
     `;
 
@@ -357,6 +378,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
 	O.discounts,
         O.comments,
         O.code,
+	HE.extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -426,6 +448,12 @@ Order.getByClientAndStatusWeb = (id_client) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
+
+    LEFT JOIN 
+	    has_extras as HE
+	ON 
+	    O.id = HE.id_order
+
     left JOIN
         products AS P
     ON
@@ -444,7 +472,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
     WHERE
         O.id_client = $1
     GROUP BY
-        O.id, U.id, A.id, U2.id 
+        O.id, U.id, A.id, U2.id, HE.extra 
 		order by O.id desc
     `;
 
@@ -468,6 +496,7 @@ Order.findByClientAndStatus = (id_client, status) => {
 	O.discounts,        
         O.comments,
         O.code,
+	HE.extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -537,6 +566,12 @@ Order.findByClientAndStatus = (id_client, status) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
+	
+     LEFT JOIN 
+	    has_extras as HE
+	ON 
+	    O.id = HE.id_order
+     
     left JOIN
         products AS P
     ON
@@ -555,7 +590,7 @@ Order.findByClientAndStatus = (id_client, status) => {
     WHERE
         O.id_client = $1 AND status = $2 
     GROUP BY
-        O.id, U.id, A.id, U2.id 
+        O.id, U.id, A.id, U2.id, HE.extra 
 		order by O.id desc
     `;
 
