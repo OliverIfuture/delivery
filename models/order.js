@@ -17,6 +17,7 @@ Order.findByStatus = (status) => {
 	O.hour_program,
   	O.discounts,
         O.comments,
+        O.code,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
 				
@@ -130,6 +131,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
 	O.hour_program,
  	O.discounts,
         O.comments,
+        O.code,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -242,6 +244,7 @@ Order.findByClient = (id_client) => {
         O.lng,
 	O.discounts,
         O.comments,
+        O.code,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -353,6 +356,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
         O.lng,
 	O.discounts,
         O.comments,
+        O.code,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -463,6 +467,7 @@ Order.findByClientAndStatus = (id_client, status) => {
         O.lng,
 	O.discounts,        
         O.comments,
+        O.code,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
