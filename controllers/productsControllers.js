@@ -1253,7 +1253,7 @@ async getAllStocks (req, res, next) {
         try {
             const id_category = req.params.id_category;//envia el vliente
             const data = await Product.getByCtaegoryPlate(id_category);
-
+            console.log(`Plato obtenido///////: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
             
