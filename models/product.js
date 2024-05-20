@@ -1361,6 +1361,7 @@ SELECT
 	P.image1,
 	P.image2,
 	P.image3,
+        p.id_category,
 	P.stock,
 	P.price_special,
 	P.price_buy,
