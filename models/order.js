@@ -378,7 +378,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
 	O.discounts,
         O.comments,
         O.code,
-	HE.extra,
+	O.extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -448,12 +448,6 @@ Order.getByClientAndStatusWeb = (id_client) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
-
-    LEFT JOIN 
-	    has_extras as HE
-	ON 
-	    O.id = HE.id_order
-
     left JOIN
         products AS P
     ON
@@ -472,7 +466,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
     WHERE
         O.id_client = $1
     GROUP BY
-        O.id, U.id, A.id, U2.id, HE.extra 
+        O.id, U.id, A.id, U2.id
 		order by O.id desc
     `;
 
