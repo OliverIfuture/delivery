@@ -625,7 +625,7 @@ Order.create = (order) => {
         order.hour_program,
 	order.comments,    
         order.discounts,
-	order.extra    
+	order.extra,    
 	order.total_extra    
     ]);
 }
