@@ -112,7 +112,7 @@ Order.findByStatus = (status) => {
     WHERE
         status = $1
     GROUP BY
-        O.id, U.id, A.id, U2.id, HE.extra
+        O.id, U.id, A.id, U2.id
     ORDER BY O.id desc
     `;
 
@@ -226,7 +226,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
     WHERE
         O.id_delivery = $1 AND status = $2 
     GROUP BY
-        O.id, U.id, A.id, U2.id, HE.extra 
+        O.id, U.id, A.id, U2.id
     `;
 
     return db.manyOrNone(sql, [id_delivery, status]);
@@ -342,7 +342,7 @@ Order.findByClient = (id_client) => {
     WHERE
         O.id_client = $1 AND (status != 'ENTREGADO') AND (status != 'CANCELADO') 
     GROUP BY
-        O.id, U.id, A.id, U2.id, HE.extra 
+        O.id, U.id, A.id, U2.id
 	ORDER BY O.id desc
     `;
 
@@ -569,7 +569,7 @@ Order.findByClientAndStatus = (id_client, status) => {
     WHERE
         O.id_client = $1 AND status = $2 
     GROUP BY
-        O.id, U.id, A.id, U2.id, HE.extra 
+        O.id, U.id, A.id, U2.id
 		order by O.id desc
     `;
 
