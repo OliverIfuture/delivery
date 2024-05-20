@@ -283,11 +283,16 @@ module.exports = {
     },
 
     async create(req, res, next) {
+        
         try {
 
+            const id_plate = req.params.id_plate;
+            const extra = req.params.extra;
+            const price = req.params.extra;
+            
             let order = req.body;
             order.status = 'PAGADO';
-            const data = await Order.create(order);
+            const data = await Order.create(order, id_plate, extra, price);
             ////recorrer todos los productos de la orden
             for (const product of order.products) {
                 if (product.id < 1000) {
