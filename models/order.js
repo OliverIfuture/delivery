@@ -606,11 +606,12 @@ Order.create = (order) => {
             hour_program,
 	    comments,
 	    discounts,
-            extra
+            extra,
+	    total_extra
 
 
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -625,6 +626,7 @@ Order.create = (order) => {
 	order.comments,    
         order.discounts,
 	order.extra    
+	order.total_extra    
     ]);
 }
 
