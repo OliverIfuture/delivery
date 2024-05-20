@@ -18,7 +18,8 @@ Order.findByStatus = (status) => {
   	O.discounts,
         O.comments,
         O.code,
-        HE.extra,
+        O.extra,
+	O.total_extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
 				
@@ -90,12 +91,7 @@ Order.findByStatus = (status) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
-	
-    LEFT JOIN 
-	    has_extras as HE
-	ON 
-	    O.id = HE.id_order	
-     
+
     left JOIN
         products AS P
     ON
@@ -139,7 +135,8 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
  	O.discounts,
         O.comments,
         O.code,
-	HE.extra,
+	O.extra,
+  	O.total_extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -210,11 +207,6 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
     ON
         OHP.id_order = O.id
     
-    LEFT JOIN 
-	    has_extras as HE
-     ON 
-	    O.id = HE.id_order
-     
     left JOIN
         products AS P
     ON
@@ -259,7 +251,8 @@ Order.findByClient = (id_client) => {
 	O.discounts,
         O.comments,
         O.code,
-	HE.extra,
+	O.extra,
+  	O.total_extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -330,11 +323,6 @@ Order.findByClient = (id_client) => {
     ON
         OHP.id_order = O.id
 	
-    LEFT JOIN 
-	    has_extras as HE
-	ON 
-	    O.id = HE.id_order	
-     
     left JOIN
         products AS P
     ON
@@ -379,6 +367,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
         O.comments,
         O.code,
 	O.extra,
+ 	O.total_extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -490,7 +479,8 @@ Order.findByClientAndStatus = (id_client, status) => {
 	O.discounts,        
         O.comments,
         O.code,
-	HE.extra,
+	o.extra,
+  	O.total_extra,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -560,11 +550,6 @@ Order.findByClientAndStatus = (id_client, status) => {
         order_has_products AS OHP
     ON
         OHP.id_order = O.id
-	
-     LEFT JOIN 
-	    has_extras as HE
-	ON 
-	    O.id = HE.id_order
      
     left JOIN
         products AS P
