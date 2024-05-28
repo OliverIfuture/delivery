@@ -501,7 +501,7 @@ async getAdminsNotificationTokens(req, res, next) {
         try {
             
             const body = req.body;
-            console.log('Datos enviados del usuario: ', body);
+            console.log(`Nuevo balance: ${JSON.stringify(body)}`);
 
             await User.updateNotificationToken(body.id, body.notification_token);
 
