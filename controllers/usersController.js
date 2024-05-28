@@ -680,7 +680,7 @@ async deleteAccout(req, res, next) {
             const id = req.params.id;
 
             const data = await User.selectToken(id);
-            console.log(`${JSON.stringify(data)}`);
+            console.log(`token enviado: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
