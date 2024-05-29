@@ -330,9 +330,11 @@ module.exports = {
         try {
 
             let order = req.body;
+            console.log(`orden creada: ${JSON.stringify(order)}`);
+
+            
             order.status = 'PENDIENTE DE PAGO';
             const data = await Order.create(order);
-            console.log(`orden creada: ${JSON.stringify(order)}`);
 
             for (const product of order.products) {
                 if (product.id < 1000) {
