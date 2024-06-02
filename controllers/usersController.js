@@ -603,7 +603,7 @@ async deleteAccout(req, res, next) {
         try {
 
             const idUser = req.params.idUser;
-            console.log(`Address: ${JSON.stringify(idUser)}`);
+            console.log(`id usuario a eliminar $idUser`);
 
             const data = await User.deleteAccout(idUser);
             console.log(`Address: ${JSON.stringify(data)}`);
