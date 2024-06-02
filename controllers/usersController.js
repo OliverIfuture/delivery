@@ -602,9 +602,9 @@ async getAdminsNotificationTokens(req, res, next) {
 async deleteAccout(req, res, next) {
         try {
 
-            const user = req.params;
+            const idUser = req.params.idUser;
 
-            const data = await User.deleteAccout(user.id);
+            const data = await User.deleteAccout(idUser);
             console.log(`Address: ${JSON.stringify(data)}`);
 
 
