@@ -35,6 +35,6 @@ module.exports = (app, upload) => {
     app.put('/api/users/updatePoints/:id/:puntos', UsersController.updatePoints);
 
     //eliminacion de datos para
-    app.delete('/api/users/deleteAccout/:id', passport.authenticate('jwt', { session: false }), UsersController.deleteAccout);
+    app.delete('/api/users/deleteAccout/:id', UsersController.deleteAccout);
 }   
 
