@@ -568,7 +568,7 @@ User.selectToken = (id) => {
     ]);
 }
 
-User.deleteAccout = (id) => {
+User.deleteAccout = (idUser) => {
     const sql = `
 
     DELETE 
@@ -578,10 +578,7 @@ User.deleteAccout = (id) => {
     WHERE id = $1
     `;
 
-    return db.none(sql, [
-        id
-        
-    ]);
+    return db.none(sql,idUser);
 }
 
 User.isPasswordMatched2 = (userPassword, hash) => {
