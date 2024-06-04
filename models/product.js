@@ -4,8 +4,10 @@ const Product = {};
 
 Product.getAll = () =>{
 	const sql = `
-		 select * from products
+		 select * from products		 where id_category != 24
 		 order by id_category
+
+   
  
  
  `;
