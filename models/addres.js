@@ -17,7 +17,8 @@ Address.findByUser = (id_user) => {
         FROM 
             address   
         WHERE
-            id_user = $1         
+            id_user = $1     
+        order by id desc    
     `;  
     return db.manyOrNone(sql, id_user);
 }
