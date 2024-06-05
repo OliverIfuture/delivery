@@ -169,6 +169,16 @@ order by P.id desc
 return db.manyOrNone(sql, id_user);
 }
 
+Product.populars = () =>{
+	const sql = `
+ 	select * from products		 
+ 	where id_category = 24
+		order by id_category
+
+ `;
+return db.manyOrNone(sql);
+
+}
 
 Product.populars = () =>{
 	const sql = `
