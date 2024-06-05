@@ -11,7 +11,7 @@ Category.getAll = () => {
             description,
             image
         FROM
-            categories where name != 'SERVINGS'
+            categories where name != 'SERVINGS' and id != 24
         ORDER BY 
             name 
         `;
