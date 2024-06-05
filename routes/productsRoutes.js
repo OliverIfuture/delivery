@@ -35,6 +35,7 @@ module.exports = (app, upload) => {
       app.get('/api/products/getExtras/:id_plate', productsControllers.getExtras);    
 
       app.get('/api/products/populars', productsControllers.populars);    
+      app.get('/api/products/getGiftsProducts', productsControllers.getGiftsProducts);    
       app.get('/api/products/findServings', productsControllers.findServings);    
 
       app.get('/api/products/getPost/:id_user', productsControllers.getPost);    
