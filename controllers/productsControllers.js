@@ -1149,6 +1149,24 @@ async favoritesplates(req, res, next) {
         }
     },
 
+   async getGiftsProducts(req, res, next) {
+        try {
+            const data = await Product.getGiftsProducts();
+            console.log(`products : ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
+
   async populars(req, res, next) {
         try {
             const data = await Product.populars();
