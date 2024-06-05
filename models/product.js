@@ -169,7 +169,7 @@ order by P.id desc
 return db.manyOrNone(sql, id_user);
 }
 
-Product.populars = () =>{
+Product.getGiftsProducts = () =>{
 	const sql = `
  	select * from products		 
  	where id_category = 24
