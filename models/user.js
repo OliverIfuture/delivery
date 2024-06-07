@@ -361,7 +361,7 @@ User.getUsersMultiNotificationTokens = () => {
     const sql = `
      SELECT         
      notification_token 
-     from users
+     from users where notification_token != ''
     `
     return db.manyOrNone(sql);
 }
