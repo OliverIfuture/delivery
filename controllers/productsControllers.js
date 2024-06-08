@@ -28,8 +28,7 @@ module.exports = {
         try {
 
             const id = req.params.id;
-            const id_user = req.params.id_user;
-            const data = await Product.deletePost(id, id_user);
+            const data = await Product.deletePost(id);
 
             return res.status(201).json({
                 message: 'El post se elimino correctamente',
