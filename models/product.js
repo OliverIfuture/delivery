@@ -14,17 +14,14 @@ Product.getAll = () =>{
 return db.manyOrNone(sql);
 
 }
-Product.deletePost = (id, id_user) => {
+Product.deletePost = (id) => {
 
     const sql = `
     DELETE FROM post
-    WHERE  id = $1 and id_user = $2
+    WHERE  id = $1
     `;
 
-    return db.oneOrNone(sql, [
-        id,
-        id_user
-    ]);
+    return db.oneOrNone(sql,id);
 }
 Product.createPost = (id_user, description, url) => {
 
