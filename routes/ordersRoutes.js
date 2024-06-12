@@ -26,10 +26,13 @@ module.exports = (app) => {
 
     /* 
     *POST ROUTES
+    create guardadp
+    app.post('/api/orders/create/:id_plate/:extra/:price', passport.authenticate('jwt', { session: false }), ordersController.create);
+
    */
     app.post('/api/orders/createPymentInten/:usertoken/:amount', passport.authenticate('jwt', { session: false }), ordersController.createPymentInten);
 
-    app.post('/api/orders/create/:id_plate/:extra/:price', passport.authenticate('jwt', { session: false }), ordersController.create);
+    app.post('/api/orders/create', passport.authenticate('jwt', { session: false }), ordersController.create);
     app.post('/api/orders/createCashOrder', passport.authenticate('jwt', { session: false }), ordersController.createCashOrder);
     app.post('/api/orders/createSale', passport.authenticate('jwt', { session: false }), ordersController.createSale);
 
