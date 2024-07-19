@@ -20,6 +20,7 @@ Order.findByStatus = (status) => {
         O.code,
         O.extra,
 	O.total_extra,
+ 	O.drone_id,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
 				
@@ -137,6 +138,7 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
         O.code,
 	O.extra,
   	O.total_extra,
+   	O.drone_id,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -253,6 +255,7 @@ Order.findByClient = (id_client) => {
         O.code,
 	O.extra,
   	O.total_extra,
+   	O.drone_id,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -368,6 +371,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
         O.code,
 	O.extra,
  	O.total_extra,
+   	O.drone_id,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -481,6 +485,7 @@ Order.findByClientAndStatus = (id_client, status) => {
         O.code,
 	o.extra,
   	O.total_extra,
+   	O.drone_id,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -592,11 +597,13 @@ Order.create = (order) => {
 	    comments,
 	    discounts,
             extra,
-	    total_extra
+	    total_extra,
+            drone_id,
+
 
 
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -611,7 +618,9 @@ Order.create = (order) => {
 	order.comments,    
         order.discounts,
 	order.extra,    
-	order.total_extra    
+	order.total_extra,
+	order.drone_id
+    
     ]);
 }
 
