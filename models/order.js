@@ -598,7 +598,7 @@ Order.create = (order) => {
 	    discounts,
             extra,
 	    total_extra,
-            drone_id,
+            drone_id
 
 
 
