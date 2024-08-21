@@ -83,6 +83,7 @@ module.exports = (app, upload) => {
       
       app.post('/api/products/findSaves/:id_plate/:id_user',productsControllers.findSaves);
 
+      app.get('/api/products/getTickets/:userId',productsControllers.getTickets);
 
       app.get('/api/products/getFavorites/:id_user',productsControllers.getFavorites);
       app.get('/api/products/getUserProfile/:id',productsControllers.getUserProfile);
