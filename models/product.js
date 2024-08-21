@@ -664,6 +664,15 @@ return db.manyOrNone(sql, id_user);
 
 }
 
+Product.getTickets = (userId) =>{
+	const sql = `
+ 		select * from tickets
+		where user_id = $1
+ `;
+return db.manyOrNone(sql, userId);
+
+}
+
 Product.getAllStocks = (id_company) =>{
 	const sql = `
 select products.id,
