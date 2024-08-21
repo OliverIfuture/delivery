@@ -176,7 +176,7 @@ async setStock(req, res, next) {
         try {
             const userId = req.params.userId;
             const data = await Product.getTickets(userId);
-             console.log(`tickets de usuario: ${data}`);
+             console.log(`tickets de usuario: ${JSON.stringify(data)}`);
 
             return res.status(201).json(data);
 
