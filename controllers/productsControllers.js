@@ -169,8 +169,29 @@ async setStock(req, res, next) {
                 error: error
                  });
         }
-    },       
-    async getSaves(req, res, next) {
+    },     
+ 
+  async getTickets(req, res, next) {
+
+        try {
+            const userId = req.params.userId;
+            const data = await Product.getTickets(userId);
+             console.log(`tickets de usuario: ${data}`);
+
+            return res.status(201).json(data);
+
+            
+        } catch (error) {
+                console.log(`Error: ${error}`);
+                return res.status(500).json({
+                message: `Error al listar los cupones ${error}`,
+                success: false,
+                error: error
+                 });
+        }
+    },  
+ 
+ async getSaves(req, res, next) {
 
         try {
             const id_user = req.params.id_user;
