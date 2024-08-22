@@ -181,7 +181,7 @@ async getAdminsNotificationTokens(req, res, next) {
             const data = await User.create(user);
 
             await Rol.create(data.id, 1);//ROL POR DEFECTO CLIENE
-            await User.createticket(data.id);
+           // await User.createticket(data.id);
             return res.status(201).json({
                 succes: true,
                 message: 'El registro se ralizo correctamente, ahora inicia sesion',
