@@ -378,6 +378,20 @@ User.getUserNotificationToken = (id) => {
     return db.oneOrNone(sql, id);
 }
 
+User.createticket = (id) => {
+    const sql = `
+	    INSERT INTO
+	        tickets(
+	            ticket_name,
+	            active,
+	            amount,
+	            user_id
+	        )
+    VALUES('BIENVENIDO', 'ACTIVE, 50, $1) RETURNING id)		
+    `;
+    return db.oneOrNone(sql, id);
+}
+
 User.create = (user) => {
 
     const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
