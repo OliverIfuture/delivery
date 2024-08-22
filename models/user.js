@@ -398,12 +398,12 @@ User.create = (user) => {
 	        )
     VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id)		
 INSERT INTO tickets(
+			user_id,
 			ticket_name,
 			active,
-			amount,
-   			user_id
+			amount
 		 )
-		SELECT id, 'BIENVENIDO', 'ACTIVE', 75
+		SELECT id, 'BIENVENIDO', 'ACTIVE', 50
 		FROM rows
     
     `;
