@@ -384,18 +384,28 @@ User.create = (user) => {
     user.password = myPasswordHashed;
 
     const sql = `
-    INSERT INTO
-        users(
-            email,
-            name,
-            lastname,
-            phone,
-            image,
-            password,
-            created_at,
-            updated_at
-        )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+  	with rows as (
+	    INSERT INTO
+	        users(
+	            email,
+	            name,
+	            lastname,
+	            phone,
+	            image,
+	            password,
+	            created_at,
+	            updated_at
+	        )
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id)		
+INSERT INTO tickets(
+			ticket_name,
+			active,
+			amount,
+   			user_id
+		 )
+		SELECT 'BIENVENIDO', 'ACTIVE', 75, id
+		FROM rows
+    
     `;
 
     return db.oneOrNone(sql, [
