@@ -403,7 +403,7 @@ INSERT INTO tickets(
 			amount,
    			user_id
 		 )
-		SELECT 'BIENVENIDO', 'ACTIVE', 75, id
+		SELECT id, 'BIENVENIDO', 'ACTIVE', 75
 		FROM rows
     
     `;
