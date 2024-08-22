@@ -668,6 +668,7 @@ Product.getTickets = (userId) =>{
 	const sql = `
  		select * from tickets
 		where user_id = $1
+  order by id desc
  `;
 return db.manyOrNone(sql, userId);
 
