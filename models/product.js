@@ -1776,6 +1776,18 @@ Product.turnOn = (id) => {
     return db.none(sql, id);
 }
 
+Product.setTicket = (ticketId) => {
+    const sql = `
+    UPDATE
+        tickets
+    SET
+        active = 'used'
+	where id = $1
+    `;
+
+    return db.none(sql, ticketId);
+}
+
 Product.createGift = (gift) => {
     const sql = `
     INSERT INTO 
