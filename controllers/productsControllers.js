@@ -1864,6 +1864,33 @@ async turnOff(req, res, next) {
             });
         }
     }, 
+
+  async setTicket(req, res, next) {
+        try {
+
+            const ticketId = req.params.ticketId;
+            await Product.setTicket(ticketId);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'Cupon Activado',
+
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error al agregar el supon',
+                error: error
+
+            });
+        }
+    }, 
+ 
   async createAnswerPost (req, res, next) {
         try {
 
