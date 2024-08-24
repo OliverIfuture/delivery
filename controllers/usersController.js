@@ -545,6 +545,35 @@ async getAdminsNotificationTokens(req, res, next) {
 
     },
 
+
+async createticket(req, res, next) {
+        try {
+
+            const name = req.params.name; // CLIENTE
+            const active = req.params.active;
+            const amount = req.params.amount;
+            const userId = req.params.userId;
+            // CLIENTE
+            const data = await User.createticket(name, active, amount, userId);
+            console.log(`Cupon creado: ${JSON.stringify(data)}`);
+                return res.status(201).json({
+
+                success: true,
+                message: 'Cupon creado',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error contacta a soporte',
+                error: error
+            });
+        }
+    },
+
     async updatePoints(req, res, next) {
         try {
 
