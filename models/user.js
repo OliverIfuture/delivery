@@ -378,6 +378,20 @@ User.getUserNotificationToken = (id) => {
     return db.oneOrNone(sql, id);
 }
 
+User.createtickets = (name, active, amount, userId) => {
+    const sql = `
+	    INSERT INTO
+	        tickets(
+	            ticket_name,
+	            active,
+	            amount,
+	            user_id
+	        )
+    VALUES($1, $2, $3, $4)	
+    `;
+    return db.oneOrNone(sql, [name, active, amount, userId]);
+}
+
 User.createticket = (id) => {
     const sql = `
 	    INSERT INTO
