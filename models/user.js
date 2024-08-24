@@ -387,7 +387,7 @@ User.createticket = (id) => {
 	            amount,
 	            user_id
 	        )
-    VALUES('BIENVENIDO', 'ACTIVE, 50, 287)	
+    VALUES('BIENVENIDO', 'ACTIVE', 50, $1)	
     `;
     return db.oneOrNone(sql, id);
 }
