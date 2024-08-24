@@ -554,7 +554,7 @@ async createticket(req, res, next) {
             const amount = req.params.amount;
             const userId = req.params.userId;
             // CLIENTE
-            const data = await User.createticket(name, active, amount, userId);
+            const data = await User.createtickets(name, active, amount, userId);
             console.log(`Cupon creado: ${JSON.stringify(data)}`);
                 return res.status(201).json({
 
