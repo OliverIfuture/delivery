@@ -40,6 +40,7 @@ module.exports = (app, upload) => {
 
 
     /// dealer
+     app.post('/api/users/login_dealer', UsersController.login_dealer);
      app.post('/api/users/create_dealer', UsersController.register_dealer);
 
 }   
