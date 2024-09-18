@@ -697,6 +697,24 @@ User.create_dealer = (user) => {
     ]);
 }
 
+User.selectToken_dealer = (id) => {
+    const sql = `
+    SELECT 
+    notification_token,
+    is_trainer
+    FROM
+        users_dealer
+
+    WHERE
+        id = $1
+    `;
+
+    return db.oneOrNone(sql, [
+        id
+        
+    ]);
+}
+
 
 User.updateNotificationToken_dealer = (id, token) => {
     const sql = `
