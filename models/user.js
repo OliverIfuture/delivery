@@ -697,4 +697,22 @@ User.create_dealer = (user) => {
     ]);
 }
 
+
+User.updateNotificationToken_dealer = (id, token) => {
+    const sql = `
+    UPDATE
+        users_dealer
+    SET
+        notification_token = $2
+    WHERE
+        id = $1
+    `;
+
+    return db.none(sql, [
+        id,
+        token
+    ]);
+}
+
+
 module.exports = User;
