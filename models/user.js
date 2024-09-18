@@ -631,4 +631,32 @@ User.findClient = (name) => {
     return db.manyOrNone(sql, `%${name}%`);
 }
 
+User.create_dealer = (user) => {
+
+    const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
+    user.password = myPasswordHashed;
+
+    const sql = `
+	    INSERT INTO
+	        users_dealer(
+	            name,
+	            phone,
+	            password,
+	            created_at,
+	            updated_at,
+	     	    balance
+	        )
+    VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+        user.name,
+        user.phone,
+        user.password,
+        new Date(),
+        new Date(),
+	user.balance    
+    ]);
+}
+
 module.exports = User;
