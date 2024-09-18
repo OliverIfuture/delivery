@@ -720,8 +720,7 @@ User.findById_dealer = (id, callback) => {
 User.selectToken_dealer = (id) => {
     const sql = `
     SELECT 
-    notification_token,
-    is_trainer
+    notification_token
     FROM
         users_dealer
 
