@@ -37,5 +37,10 @@ module.exports = (app, upload) => {
 
     //eliminacion de datos para
     app.delete('/api/users/deleteAccout/:idUser', UsersController.deleteAccout);
+
+
+    /// dealer
+     app.post('/api/users/create_dealer', UsersController.register_dealer);
+
 }   
 
