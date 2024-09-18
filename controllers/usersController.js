@@ -778,6 +778,69 @@ async deleteAccout(req, res, next) {
         }
     },
 
+
+
+
+
+
+     async login_dealer(req, res, next) {
+        try {
+            const phone = req.body.phone;
+            const password = req.body.password;
+ 
+            const myUser = await User.findByPhone(phone);
+ 
+            if (!myUser) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'El email no fue encontrado'
+                });
+            }
+ 
+            if (User.isPasswordMatched(password, myUser.password)) {
+                const token = jwt.sign({id: myUser.id, email: myUser.email}, keys.secretOrKey, {
+                    // expiresIn: (60*60*24) // 1 HORA
+                   //  expiresIn: (60 * 2) // 2 MINUTOS
+                });
+                const data = {
+                    id: myUser.id,
+                    name: myUser.name,
+                    phone: myUser.phone,
+                    session_token: `JWT ${token}`, // REVISA QUE ESTE LLEGANDO ESTE CAMPO
+                    balance: myUser.balance,
+                    mi_store: myUser.mi_store
+                }
+
+                await User.updateToken_dealer(myUser.id, `JWT ${token}`);
+                
+ 
+                console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
+ 
+                return res.status(201).json({
+                    success: true,
+                    data: data,
+                    message: '! BIENVENIDO !'
+                });
+            }
+            else {
+                return res.status(401).json({
+                    success: false,
+                    message: 'La contraseña es incorrecta'
+                });
+            }
+ 
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al momento de hacer login',
+                error: error
+            });
+        }
+    },
+
+
     async register_dealer(req, res, next) {
         try {
             
