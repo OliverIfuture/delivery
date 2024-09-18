@@ -697,6 +697,26 @@ User.create_dealer = (user) => {
     ]);
 }
 
+User.findById_dealer = (id, callback) => {
+
+    const sql = `
+    SELECT
+        id,
+        name,
+        phone,
+        password,
+        session_token,
+        notification_token,
+        balance,
+    FROM
+        users_dealer
+    WHERE
+        id = $1`;
+    
+    return db.oneOrNone(sql, id).then(user => { callback(null, user); })
+
+}
+
 User.selectToken_dealer = (id) => {
     const sql = `
     SELECT 
