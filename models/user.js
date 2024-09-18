@@ -653,6 +653,22 @@ User.findByPhone = (phone) => {
     return db.oneOrNone(sql, phone);
 }
 
+User.updateToken_dealer = (id, token) => {
+    const sql = `
+    UPDATE
+        users_dealer
+    SET
+        session_token = $2
+    WHERE
+        id = $1
+    `;
+
+    return db.none(sql, [
+        id,
+        token
+    ]);
+}
+
 User.create_dealer = (user) => {
 
     const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
