@@ -43,6 +43,8 @@ module.exports = (app, upload) => {
      app.post('/api/users/create_dealer', UsersController.register_dealer);
      app.post('/api/users/login_dealer', UsersController.login_dealer);
      app.put('/api/users/updateNotificationToken_dealer', UsersController.updateNotificationToken_dealer);    
+     app.get('/api/users/selectToken_dealer/:id',UsersController.selectToken_dealer);
+
 
 }   
 
