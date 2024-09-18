@@ -778,6 +778,29 @@ async deleteAccout(req, res, next) {
         }
     },
 
+    async register_dealer(req, res, next) {
+        try {
+            
+            const user = req.body;
+            const data = await User.create_dealer(user);
+            return res.status(201).json({
+                succes: true,
+                message: 'El registro se ralizo correctamente, ahora inicia sesion',
+                data: data.id
+            });
 
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: true,
+                message: 'error con el registro del ususario',
+                error: error
+
+            });
+        }
+    },
     
 };
