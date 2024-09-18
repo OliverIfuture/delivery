@@ -865,6 +865,28 @@ async deleteAccout(req, res, next) {
     },
 
 
+        async selectToken_dealer(req, res, next) {
+        try {
+
+            const id = req.params.id;
+
+            const data = await User.selectToken_dealer(id);
+            console.log(`token enviado: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener el usuario por ID'
+            });
+        }
+    },
+
+
     async register_dealer(req, res, next) {
         try {
             
