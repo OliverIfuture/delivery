@@ -631,6 +631,28 @@ User.findClient = (name) => {
     return db.manyOrNone(sql, `%${name}%`);
 }
 
+User.findByPhone = (phone) => {
+    const sql = `
+    SELECT
+        U.id,
+        U.name,
+        U.phone,
+        U.password,
+        U.session_token,
+        U.notification_token,
+        U.balance
+	
+    FROM 
+        users AS U
+	
+    WHERE
+        U.phone = $1
+    GROUP BY
+        U.id
+    `
+    return db.oneOrNone(sql, phone);
+}
+
 User.create_dealer = (user) => {
 
     const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
