@@ -840,6 +840,30 @@ async deleteAccout(req, res, next) {
         }
     },
 
+       async updateNotificationToken_dealer(req, res, next) {
+        try {
+            
+            const body = req.body;
+            console.log(`updateNotificationToken_dealer: ${JSON.stringify(body)}`);
+
+            await User.updateNotificationToken_dealer(body.id, body.notification_token);
+
+            return res.status(201).json({
+                success: true,
+                message: 'El token de notificaciones se ha almacenado correctamente'
+            });
+
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error con la actualizacion de datos del usuario',
+                error: error
+            });
+        }
+    },
+
 
     async register_dealer(req, res, next) {
         try {
