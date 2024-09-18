@@ -643,7 +643,7 @@ User.findByPhone = (phone) => {
         U.balance
 	
     FROM 
-        users AS U
+        users_dealer AS U
 	
     WHERE
         U.phone = $1
