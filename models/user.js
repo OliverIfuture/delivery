@@ -697,7 +697,8 @@ User.create_dealer = (user) => {
     ]);
 }
 
-User.findById_dealer = (id) => {
+
+User.findById_dealer =  (id, callback) => {
     const sql = `
     SELECT
         id,
@@ -712,7 +713,7 @@ User.findById_dealer = (id) => {
     WHERE
         id = $1`;
 
-    return db.oneOrNone(sql, id);
+    return db.oneOrNone(sql, id).then(user => { callback(null, user); })
 }
 
 
