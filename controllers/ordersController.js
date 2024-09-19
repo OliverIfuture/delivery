@@ -767,6 +767,8 @@ module.exports = {
         try {
             const id_client = req.params.id_client;
             const data = await Order.findByClientDealer(id_client);
+            console.log(`Ordenes: ${JSON.stringify(data)}`);
+
             return res.status(201).json(data);
         }
         catch (error) {
