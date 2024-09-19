@@ -865,25 +865,26 @@ async deleteAccout(req, res, next) {
     },
 
         async findById_dealer(req, res, next) {
-        try {
+            try {
+                const id = req.params.id;
+        
+                const data = await User.findById_dealer(id);
+                console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+        
+                if (!data) {
+                    return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+                }
+        
+                return res.status(200).json(data); // Cambiar a 200 para respuesta exitosa
+            } catch (error) {
+                console.error(`error: ${error}`); // Usar console.error para errores
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error al obtener el usuario por ID'
+                });
+            }
+        },
 
-            const id = req.params.id;
-
-            const data = await User.findById_dealer(id);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
-            return res.status(201).json(data);
-
-
-        }
-        catch (error) {
-            
-            console.log(`error: ${error}`);
-            return res.status(501).json({
-                succes: false,
-                message: 'error al obtener el usuario por ID'
-            });
-        }
-    },
 
 
         async selectToken_dealer(req, res, next) {
