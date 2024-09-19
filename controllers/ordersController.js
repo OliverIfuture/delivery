@@ -761,6 +761,25 @@ module.exports = {
             });
         }
     },
+
+    async findByClientDealer(req, res, next) {
+
+        try {
+            const id_client = req.params.id_client;
+            const data = await Order.findByClientDealer(id_client);
+            return res.status(201).json(data);
+        }
+        catch (error) {
+            console.log(`Error ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las compras',
+                error: error,
+                success: false
+            })
+        }
+
+    },
+    
 }
 
 
