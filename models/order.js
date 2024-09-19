@@ -1240,5 +1240,6 @@ Order.findByClientDealer = (id_client) => {
     `;
 
     return db.manyOrNone(sql, [id_client]);
+}
 
 module.exports = Order;
