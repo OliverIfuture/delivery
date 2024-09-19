@@ -46,7 +46,6 @@ const upload = multer({
 const users = require('./routes/usersRoutes.js');
 const categories = require('./routes/categoriesRoutes.js');
 const passport = require('passport');
-const passport2 = require('passport2');
 const products = require('./routes/productsRoutes.js');
 const address = require('./routes/addressRoutes.js');
 const orders = require('./routes/ordersRoutes.js');
@@ -65,10 +64,6 @@ app.use(cors());
 app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport.js')(passport);
-require('./config/passport2.js')(passport2);
-app.use(passport2.initialize());
-app.use(passport2.session());
-require('./config/passport2.js')(passport2);
 app.disable('x-power-by');
 app.set('PORT', PORT);
 
