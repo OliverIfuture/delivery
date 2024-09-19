@@ -65,6 +65,7 @@ app.use(cors());
 app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport.js')(passport);
+require('./config/passport2.js')(passport2);
 app.use(passport2.initialize());
 app.use(passport2.session());
 require('./config/passport2.js')(passport2);
