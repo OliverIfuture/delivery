@@ -1,6 +1,5 @@
 const UsersController = require('../controllers/usersController.js');
 const passport = require('passport');
-const passport2 = require('passport2');
 module.exports = (app, upload) => {
     app.get('/api/users/getAll', UsersController.getAll);
     app.get('/api/users/findByState/:state', UsersController.findByState);
@@ -43,7 +42,7 @@ module.exports = (app, upload) => {
     /// dealer
      app.post('/api/users/create_dealer', UsersController.register_dealer);
      app.post('/api/users/login_dealer', UsersController.login_dealer);
-     app.get('/api/users/findById_dealer/:id',passport2.authenticate('jwt', {session: false}) ,UsersController.findById_dealer);    
+     app.get('/api/users/findById_dealer/:id',passport.authenticate('jwt', {session: false}) ,UsersController.findById_dealer);    
      app.put('/api/users/updateNotificationToken_dealer', UsersController.updateNotificationToken_dealer);    
      app.get('/api/users/selectToken_dealer/:id',UsersController.selectToken_dealer);
 
