@@ -1187,7 +1187,7 @@ Order.findByClientDealer = (id_client) => {
     const sql = `
 	select 
 		D.id,
-		D.created_at as timestamp,
+		D.timestamp,
 		D.reference,
 		D.method_pay,
 		D.machine,
