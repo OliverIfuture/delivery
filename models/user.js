@@ -707,7 +707,7 @@ User.findById_dealer = (id, callback) => {
         password,
         session_token,
         notification_token,
-        balance,
+        balance
     FROM
         users_dealer
     WHERE
