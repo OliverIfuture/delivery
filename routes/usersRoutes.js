@@ -1,6 +1,6 @@
 const UsersController = require('../controllers/usersController.js');
 const passport = require('passport');
-const passport2 = require('passport');
+const passport2 = require('passport2');
 module.exports = (app, upload) => {
     app.get('/api/users/getAll', UsersController.getAll);
     app.get('/api/users/findByState/:state', UsersController.findByState);
