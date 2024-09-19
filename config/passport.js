@@ -19,10 +19,8 @@ module.exports = function(passport) {
           else {
               return done(null, false);
           } 
-        })
-    }))
+        }),
 
-    passport.use(new JwtStrategy(opts, (jwt_payload, done) => {
         User.findById_dealer(jwt_payload.id, (err, user) => {
           if (err) {
               return done(err, false);
@@ -33,7 +31,6 @@ module.exports = function(passport) {
           else {
               return done(null, false);
           } 
-        })
+        })     
     }))
-
 }
