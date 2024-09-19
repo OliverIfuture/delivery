@@ -1181,4 +1181,64 @@ select caja.id,
 
     return db.manyOrNone(sql);
 }
+
+Order.findByClientDealer = (id_client) => {
+
+    const sql = `
+	select 
+		D.id,
+		D.created_at as timestamp,
+		D.reference,
+		D.method_pay,
+		D.machine,
+		D.quantity,
+		D.total,
+		       COALESCE( JSON_AGG(
+	            DISTINCT jsonb_build_object(
+					
+	                'id', P.id,
+	                'name', P.name,
+	                'image1', P.image1,
+	                'price', P.price,
+					'price_buy', P.price_buy,
+					'price_sucursal', P.price_sucursal,
+					'created_at', P.created_at,
+	                'state', P.state
+	            )
+	        ) FILTER (where P.name != ''), '[]') AS products,
+			  JSON_BUILD_OBJECT(
+	            'id', U.id,
+	            'name', U.name,
+	            'phone', U.phone
+	        ) AS client,
+		     JSON_BUILD_OBJECT(
+	            'id', S.id,
+	            'name', S.name,
+	            'addres', S.addres,
+	            'telephone', S.telephone,
+	            'logo', S.logo,
+	            'available', S.available
+	       ) AS sucursal
+			
+	from dealer_shop as D
+	
+		    INNER JOIN
+				users_dealer AS U
+			ON
+	        D.user_id = U.id
+			
+			left join 	dealer_products as P 
+			on P.id = D.product_id
+	
+			left join 	dealer_sucursal as S 
+			on S.id = D.sucursal_id
+			
+	where U.id = $1		
+	group by D.id, U.id, S.id
+
+
+    `;
+
+    return db.manyOrNone(sql, [id_client]);
+
 module.exports = Order;
