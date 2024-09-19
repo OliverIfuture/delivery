@@ -19,18 +19,6 @@ module.exports = function(passport) {
           else {
               return done(null, false);
           } 
-        }),
-
-        User.findById_dealer(jwt_payload.id, (err, user) => {
-          if (err) {
-              return done(err, false);
-          } 
-          if (user) {
-              return done(null, user);
-          }
-          else {
-              return done(null, false);
-          } 
-        })     
+        })
     }))
 }
