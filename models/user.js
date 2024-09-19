@@ -746,7 +746,7 @@ User.findByUserIdPhone = (id) => {
         U.balance
 	
     FROM 
-        users AS U
+        users_dealer AS U
     WHERE
         U.id = $1
     GROUP BY
