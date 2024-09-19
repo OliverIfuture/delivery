@@ -734,6 +734,27 @@ User.selectToken_dealer = (id) => {
     ]);
 }
 
+User.findByUserIdPhone = (id) => {
+    const sql = `
+    SELECT
+        U.id,
+        U.name,
+        U.phone,
+        U.password,
+        U.session_token,
+        U.notification_token,
+        U.balance
+	
+    FROM 
+        users AS U
+    WHERE
+        U.id = $1
+    GROUP BY
+        U.id
+    `
+    return db.oneOrNone(sql, id);
+}
+
 
 User.updateNotificationToken_dealer = (id, token) => {
     const sql = `
