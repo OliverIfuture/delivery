@@ -55,6 +55,7 @@ module.exports = (app) => {
     app.delete('/api/orders/deleteIncomes/:id', passport.authenticate('jwt', { session: false }), ordersController.deleteIncomes);
 
     app.get('/api/orders/findByClientDealer/:id_client', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealer);
+    app.get('/api/orders/findByClientDealerRecharge/:id_client', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealerRecharge);
 
     
 }
