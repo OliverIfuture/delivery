@@ -781,6 +781,26 @@ module.exports = {
         }
 
     },
+
+    async findByClientDealerRecharge(req, res, next) {
+
+        try {
+            const id_client = req.params.id_client;
+            const data = await Order.findByClientDealerRecharge(id_client);
+            console.log(`Recargas: ${JSON.stringify(data)}`);
+
+            return res.status(201).json(data);
+        }
+        catch (error) {
+            console.log(`Error ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las recargas',
+                error: error,
+                success: false
+            })
+        }
+
+    },
     
 }
 
