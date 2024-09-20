@@ -1235,8 +1235,41 @@ Order.findByClientDealer = (id_client) => {
 			
 	where U.id = $1		
 	group by D.id, U.id, S.id
+	order by D.id desc
+    `;
 
+    return db.manyOrNone(sql, [id_client]);
+}
 
+Order.findByClientDealerRecharge = (id_client) => {
+
+    const sql = `
+	select 
+	R.id,
+	R.id_client,
+	R.entity,
+	R.created_at,
+	R.reference,
+	R.amount,
+	R.logo,
+		  JSON_BUILD_OBJECT(
+            'id', U.id,
+            'name', U.name,
+            'phone', U.phone
+        ) AS client
+
+		
+from dealer_recharge as R
+
+	    INNER JOIN
+			users_dealer AS U
+		ON
+        R.id_client = U.id
+		
+		
+where U.id = $1 		
+group by R.id, U.id
+order by R.id desc
     `;
 
     return db.manyOrNone(sql, [id_client]);
