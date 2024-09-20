@@ -56,6 +56,7 @@ module.exports = (app) => {
 
     app.get('/api/orders/findByClientDealer/:id_client', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealer);
     app.get('/api/orders/findByClientDealerRecharge/:id_client', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealerRecharge);
+    app.post('/api/orders/createPymentInten2/:usertoken/:amount', passport.authenticate('dealer-jwt', { session: false }), ordersController.createPymentInten);
 
     
 }
