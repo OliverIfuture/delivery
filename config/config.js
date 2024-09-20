@@ -13,10 +13,10 @@ types.setTypeParser(1114, function (stringValue) {
 });
 
 const databaseConfig = {
-    user: 'djomewgzclmvfm',
-    host: 'ec2-52-5-167-89.compute-1.amazonaws.com',
-    database: 'd2p8e37i44vdqm',
-    password:'2b1374a525bfdec543198b1a250f44e95097aa45ccf441c18525aaa991ad6278',
+    user: 'ucc92k2apmdu4l',
+    host:'c67tgmqjrqj9ns.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
+    database: 'dmqjbprnl26kn',
+    password:'p662a5ed74917fca059a56e30205527b6fe21c55bf108eeec67061ff94a673659',
     port: 5432,
     ssl: {
         rejectUnauthorized: false,
