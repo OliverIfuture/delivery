@@ -1275,4 +1275,19 @@ order by R.id desc
     return db.manyOrNone(sql, [id_client]);
 }
 
+Order.insertRecharge = (id_client, balance) => {
+    const sql = `
+    UPDATE
+        users_dealer
+    SET
+        balance = $2
+    WHERE
+        id = $1
+    `;
+    return db.none(sql, [
+        id,
+        balance
+    ]);
+}
+
 module.exports = Order;
