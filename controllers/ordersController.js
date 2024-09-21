@@ -801,6 +801,28 @@ module.exports = {
         }
 
     },
+
+        async insertRecharge(req, res, next) {
+        try {
+
+            const id_client = req.params.id_client;
+            await Order.insertRecharge(id_client);
+
+            return res.status(201).json({
+                success: true,
+                message: 'La recarga se realizo correctamente',
+            });
+
+        }
+        catch (error) {
+            console.log(`Error ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al arealizar la recarga',
+                error: error
+            });
+        }
+    },
     
 }
 
