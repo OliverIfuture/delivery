@@ -1285,7 +1285,7 @@ Order.insertRecharge = (id_client, balance) => {
         id = $1
     `;
     return db.none(sql, [
-        id,
+        id_client,
         balance
     ]);
 }
