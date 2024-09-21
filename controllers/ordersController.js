@@ -806,7 +806,8 @@ module.exports = {
         try {
 
             const id_client = req.params.id_client;
-            await Order.insertRecharge(id_client);
+            const balance = req.params.balance;
+            await Order.insertRecharge(id_client, balance);
 
             return res.status(201).json({
                 success: true,
