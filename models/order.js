@@ -1308,7 +1308,7 @@ dealer_recharge(
     return db.oneOrNone(sql, [
     recharge.id_client,
     recharge.entity,
-      timezone('America/Mexico_City', NOW()),
+    new Date(),
     recharge.amount,
     recharge.logo,
     recharge.reference
