@@ -829,10 +829,9 @@ async createrecharge(req, res, next) {
         try {
 
             let recharge = req.body;
-            const data = await Order.createrecharge(recharge);
             console.log(`el recharge : ${JSON.stringify(recharge)}`);
 
-
+            const data = await Order.createrecharge(recharge);
             return res.status(201).json({
 
                 success: true,
