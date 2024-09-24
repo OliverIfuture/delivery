@@ -1290,4 +1290,29 @@ Order.insertRecharge = (id_client, balance) => {
     ]);
 }
 
+Order.createSale = (recharge) => {
+    const sql = `
+    INSERT INTO
+    
+dealer_recharge(
+    id_client,
+    entity,
+    created_at,
+    amount,
+    logo,
+    reference
+        )
+    VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+    recharge.idClient,
+    recharge.entity,
+    Date.now(),
+    recharge.logo,
+    recharge.amount,
+    recharge.reference
+    ]);
+}
+
 module.exports = Order;
