@@ -1309,8 +1309,8 @@ dealer_recharge(
     recharge.idClient,
     recharge.entity,
     new Date(),
-    recharge.logo,
     recharge.amount,
+    recharge.logo,
     recharge.reference
     ]);
 }
