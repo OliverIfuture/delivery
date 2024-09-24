@@ -1290,7 +1290,7 @@ Order.insertRecharge = (id_client, balance) => {
     ]);
 }
 
-Order.createSale = (recharge) => {
+Order.createrecharge = (recharge) => {
     const sql = `
     INSERT INTO
     
