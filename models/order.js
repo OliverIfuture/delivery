@@ -1308,7 +1308,7 @@ dealer_recharge(
     return db.oneOrNone(sql, [
     recharge.id_client,
     recharge.entity,
-    new Date(),
+    Date.now(),
     recharge.amount,
     recharge.logo,
     recharge.reference
