@@ -24,6 +24,11 @@ module.exports = {
             });
         }
     },
+
+
+
+
+
         
              async delete(req, res, next) {
             try {
@@ -74,5 +79,29 @@ module.exports = {
                 error: error
             });
         }
-    }
+    },
+
+
+async findPromoByGym(req, res, next) {
+        try {
+            const id_company = req.params.id_company;
+
+            const data = await Address.findPromoByGym(id_company);
+        //    console.log(`findPromoByGym: ${JSON.stringify(data)}`);
+            
+            return res.status(201).json(data);
+            
+        } catch (error) {
+            
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las promos',
+                error: error,
+                success: false
+            
+
+            });
+        }
+    },
+        
 }
