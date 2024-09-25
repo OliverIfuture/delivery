@@ -1315,4 +1315,36 @@ dealer_recharge(
     ]);
 }
 
+Order.createOrdeDealer = (order) => {
+    const sql = `
+    INSERT INTO
+    
+dealer_shop(
+    reference,
+    method_pay,
+    machine,
+    quantity,
+    user_id,
+    sucursal_id,
+    product_id,
+    total,
+    timestamp
+        )
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+    order.reference,
+    order.method_pay,
+    order.machine,
+    order.quantity,
+    order.user_id,
+    order.sucursal_id,
+    order.product_id,
+    order.total,
+    order.timestamp
+    ]);
+}
+
+
 module.exports = Order;
