@@ -1342,7 +1342,7 @@ dealer_shop(
     order.sucursal_id,
     order.product_id,
     order.total,
-    order.timestamp
+    Date.now()
     ]);
 }
 
