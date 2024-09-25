@@ -9,6 +9,7 @@ module.exports = (app) => {
     *GET ROUTES
    */
     app.get('/api/address/findByUser/:id_user', passport.authenticate('jwt', { session: false }), addressController.findByUser);
+    app.get('/api/address/findPromoByGym/:id_company', passport.authenticate('dealer-jwt', { session: false }), addressController.findPromoByGym);
 
     /* 
     *POST ROUTES
