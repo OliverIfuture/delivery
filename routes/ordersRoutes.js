@@ -59,6 +59,7 @@ module.exports = (app) => {
     app.post('/api/orders/createPymentInten2/:usertoken/:amount', passport.authenticate('dealer-jwt', { session: false }), ordersController.createPymentInten);
     app.put('/api/orders/insertRecharge/:id_client/:balance', passport.authenticate('dealer-jwt', { session: false }), ordersController.insertRecharge);
     app.post('/api/orders/createrecharge', passport.authenticate('dealer-jwt', { session: false }), ordersController.createrecharge);
+    app.post('/api/orders/createOrdeDealer', passport.authenticate('dealer-jwt', { session: false }), ordersController.createOrdeDealer);
 
     
 }
