@@ -68,4 +68,31 @@ Address.create = (address) => {
     ]);
 }
 
+Address.findPromoByGym = (id_company) => {
+    const sql = `
+        select 
+        	P.id,
+        	P.name,
+        	P.description,
+        	P.available,
+        	        JSON_BUILD_OBJECT(
+                    'id', U.id,
+                    'name', U.name,
+                    'addres', U.addres,
+                    'telephone', U.telephone,
+             	    'logo', U.logo,
+                    'available', U.available
+                ) AS company
+        from dealer_promo as P
+        
+        inner join dealer_sucursal as U
+        	on P.id_company = U.id
+        
+        where U.id = $1
+         
+    `;  
+    return db.manyOrNone(sql, id_company);
+}
+
+
 module.exports = Address;
