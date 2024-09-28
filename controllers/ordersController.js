@@ -874,7 +874,32 @@ async createOrdeDealer(req, res, next) {
             });
         }
     },    
+
     
+async createrechargegym(req, res, next) {
+        try {
+
+            let recharge = req.body;
+            console.log(`el recharge : ${JSON.stringify(recharge)}`);
+
+            const data = await Order.createrechargegym(recharge);
+            return res.status(201).json({
+
+                success: true,
+                message: 'La recarga se creo correctamente',
+                data: data.id
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error creando la recarga',
+                error: error
+            });
+        }
+    },    
     
 }
 
