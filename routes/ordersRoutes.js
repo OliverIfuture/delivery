@@ -61,5 +61,8 @@ module.exports = (app) => {
     app.post('/api/orders/createrecharge', passport.authenticate('dealer-jwt', { session: false }), ordersController.createrecharge);
     app.post('/api/orders/createOrdeDealer', passport.authenticate('dealer-jwt', { session: false }), ordersController.createOrdeDealer);
 
+
+    app.post('/api/orders/createrechargegym', passport.authenticate('dealer-jwt', { session: false }), ordersController.createrechargegym);
+
     
 }
