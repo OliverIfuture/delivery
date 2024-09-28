@@ -11,7 +11,7 @@ module.exports = (io) => {
         });
 
         socket.on('dealer_on', function(data) {
-            console.log(`EMITIO ${JSON.stringify(data)}`);
+            console.log(`machine dealer ${JSON.stringify(data)}`);
            // orderDeliveryNamespace.emit(`position/${data.id_order}`, { lat: data.lat, lng: data.lng  });
         });
 
