@@ -1346,5 +1346,30 @@ dealer_shop(
     ]);
 }
 
+Order.createrechargegym = (recharge) => {
+    const sql = `
+    INSERT INTO
+    
+dealer_recharge_gym(
+    id_client,
+    id_sucursal,
+    entity,
+    amount,
+    reference,
+    created_at
+    )
+    VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+    recharge.id_client,
+    recharge.id_sucursal,
+    recharge.entity,
+    recharge.amount,
+    recharge.reference,
+    Date.now()
+    ]);
+}
+
 
 module.exports = Order;
