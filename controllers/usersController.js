@@ -159,7 +159,6 @@ async getAdminsNotificationTokens(req, res, next) {
     async getAll(req, res, next) {
         try {
             const data = await User.getAll();
-            console.log(`Usuarios: ${data}`);
             return res.status(201).json(data);
 
 
