@@ -12,7 +12,7 @@ module.exports = (io) => {
 
         socket.on('dealer_on', function(data) {
             console.log(`machine dealer ${JSON.stringify(data)}`);
-           // orderDeliveryNamespace.emit(`position/${data.id_order}`, { lat: data.lat, lng: data.lng  });
+            orderDeliveryNamespace.emit(`dealer_on/${data.machine}`, { id_product: data.id_product, msg: data.msg  });
         });
 
         socket.on('disconnect', function(data) {
