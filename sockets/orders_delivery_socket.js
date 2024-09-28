@@ -13,7 +13,7 @@ module.exports = (io) => {
 
         
         socket.on('dealer_on', function(data) {
-          console.log(`machine dealer ${JSON.stringify(data)}`);
+          console.log(`machine dealer ON ${JSON.stringify(data)}`);
           setTimeout(() => {
             orderDeliveryNamespace.emit(`dealer_on/${data.machine}`, { 
               id_product: data.id_product, 
@@ -23,7 +23,7 @@ module.exports = (io) => {
         });
 
         socket.on('dealer_off', function(data) {
-          console.log(`machine dealer ${JSON.stringify(data)}`);
+          console.log(`machine dealer OFF ${JSON.stringify(data)}`);
           setTimeout(() => {
             orderDeliveryNamespace.emit(`dealer_off/${data.machine}`, { 
               id_product: data.id_product, 
