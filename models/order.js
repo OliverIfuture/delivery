@@ -1275,6 +1275,39 @@ order by R.id desc
     return db.manyOrNone(sql, [id_client]);
 }
 
+Order.findByClientDealerRechargeGym = (id_sucursal) => {
+
+    const sql = `
+	select 
+	R.id,
+	R.id_client,
+	R.entity,
+	R.created_at,
+	R.reference,
+	R.amount,
+	JSON_BUILD_OBJECT(
+            'id', U.id,
+            'name', U.name,
+            'phone', U.phone
+        ) AS client
+
+		
+from dealer_recharge_gym as R
+
+	    INNER JOIN
+			users_dealer AS U
+		ON
+        R.id_client = U.id
+		
+		
+where R.id_sucursal = $1 		
+group by R.id, U.id
+order by R.id desc
+    `;
+
+    return db.manyOrNone(sql, [id_client]);
+}
+
 Order.insertRecharge = (id_client, balance) => {
     const sql = `
     UPDATE
