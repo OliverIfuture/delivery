@@ -1305,7 +1305,7 @@ group by R.id, U.id
 order by R.id desc
     `;
 
-    return db.manyOrNone(sql, [id_client]);
+    return db.manyOrNone(sql, [id_sucursal]);
 }
 
 Order.insertRecharge = (id_client, balance) => {
