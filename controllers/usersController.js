@@ -172,6 +172,23 @@ async getAdminsNotificationTokens(req, res, next) {
             });
         }
     },
+
+        async getAllDealer(req, res, next) {
+        try {
+            const data = await User.getAllDealer();
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
     
     async register(req, res, next) {
         try {
