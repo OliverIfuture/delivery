@@ -900,6 +900,26 @@ async createrechargegym(req, res, next) {
             });
         }
     },    
+
+
+async findByClientDealerRechargeGym(req, res, next) {
+
+        try {
+            const id_sucursal = req.params.id_sucursal;
+            const data = await Order.findByClientDealerRechargeGym(id_sucursal);
+            return res.status(201).json(data);
+        }
+        catch (error) {
+            console.log(`Error ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las recargas',
+                error: error,
+                success: false
+            })
+        }
+
+    },
+  
     
 }
 
