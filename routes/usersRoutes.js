@@ -2,6 +2,7 @@ const UsersController = require('../controllers/usersController.js');
 const passport = require('passport');
 module.exports = (app, upload) => {
     app.get('/api/users/getAll', UsersController.getAll);
+    app.get('/api/users/getAllDealer', UsersController.getAllDealer);
     app.get('/api/users/findByState/:state', UsersController.findByState);
     app.get('/api/users/findByMail/:email',UsersController.findByMail);
 
