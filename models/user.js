@@ -13,6 +13,17 @@ User.getAll = () => {
 
     return db.manyOrNone(sql);
 }
+User.getAllDealer = () => {
+    const sql = `
+    SELECT 
+        *
+    FROM
+        users_dealer
+    `;
+
+    return db.manyOrNone(sql);
+}
+
 
 User.findByState = (state) => {
     const sql = `
