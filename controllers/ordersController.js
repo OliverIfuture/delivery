@@ -941,6 +941,25 @@ async findByClientDealerRechargeGym(req, res, next) {
             });
         }
     },  
+    
+async getShiftTurn(req, res, next) {
+        try {
+            const id_sucursal = req.params.id_sucursal;
+            const data = await Order.getShiftTurn(id_sucursal);
+            console.log(`el getShiftTurn : ${JSON.stringify(data)}`);
+
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener los datos del turno',
+                error: error,
+                success: false
+            });
+        }
+    },  
   
     
 }
