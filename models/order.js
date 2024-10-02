@@ -1275,7 +1275,7 @@ order by R.id desc
     return db.manyOrNone(sql, [id_client]);
 }
 
-Order.findByClientDealerRechargeGym = (id_sucursal) => {
+Order.findByClientDealerRechargeGym = (id_sucursal, shift_ref ) => {
 
     const sql = `
 	select 
@@ -1285,6 +1285,7 @@ Order.findByClientDealerRechargeGym = (id_sucursal) => {
 	R.created_at,
 	R.reference,
 	R.amount,
+	R.shift_ref,
 	JSON_BUILD_OBJECT(
             'id', U.id,
             'name', U.name,
@@ -1300,12 +1301,12 @@ from dealer_recharge_gym as R
         R.id_client = U.id
 		
 		
-where R.id_sucursal = $1 		
+where R.id_sucursal = 2 and shift_ref = $2		
 group by R.id, U.id
 order by R.id desc
     `;
 
-    return db.manyOrNone(sql, [id_sucursal]);
+    return db.manyOrNone(sql, [id_sucursal, shift_ref]);
 }
 
 Order.insertRecharge = (id_client, balance) => {
