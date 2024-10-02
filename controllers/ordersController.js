@@ -960,6 +960,33 @@ async getShiftTurn(req, res, next) {
             });
         }
     },  
+
+
+ async closeShiftGym(req, res, next) {
+        try {
+
+            let shiftGym = req.body;
+            console.log(`el shiftGym : ${JSON.stringify(shiftGym)}`);
+
+            const data = await Order.closeShiftGym(shiftGym);
+            return res.status(201).json({
+
+                success: true,
+                message: 'turno cerrado correctamente',
+                data: data.id
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error cerrando turno',
+                error: error
+            });
+        }
+    },    
+   
   
     
 }
