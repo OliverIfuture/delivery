@@ -1422,5 +1422,16 @@ return db.manyOrNone(sql, [id_sucursal, shift_ref]);
 
 }
 
+Order.getShiftTurn = (id_sucursal) =>{
+	const sql = `
+	select * from 
+        dealer_recharge_shift_turn
+	where 
+	state = 'ACTIVE'
+	and id_sucursal = $1
+ `;
+return db.oneOrNone(sql, id_sucursal);
+
+}
 
 module.exports = Order;
