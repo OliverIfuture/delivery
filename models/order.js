@@ -1390,9 +1390,10 @@ dealer_recharge_gym(
     entity,
     amount,
     reference,
-    created_at
+    created_at,
+    shift_ref
     )
-    VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -1401,7 +1402,8 @@ dealer_recharge_gym(
     recharge.entity,
     recharge.amount,
     recharge.reference,
-    Date.now()
+    Date.now(),
+    recharge.shift_ref
     ]);
 }
 
