@@ -64,6 +64,7 @@ module.exports = (app) => {
 
     app.post('/api/orders/createrechargegym', passport.authenticate('dealer-jwt', { session: false }), ordersController.createrechargegym);
     app.get('/api/orders/findByClientDealerRechargeGym/:id_sucursal/:shift_ref', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealerRechargeGym);
+    app.get('/api/orders/getSumShift/:id_sucursal/:shift_ref', passport.authenticate('dealer-jwt', { session: false }), ordersController.getSumShift);
 
     
 }
