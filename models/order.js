@@ -1434,4 +1434,48 @@ return db.oneOrNone(sql, id_sucursal);
 
 }
 
+Order.closeShiftGym = (shiftGym) => {
+    const sql = `
+      UPDATE  dealer_recharge_shift_turn
+	total=$2, 
+	total_recharges=$3, 
+	created_at=$4, 
+	state='CERRADA'
+	WHERE id_sucursal = $1 
+ 	and shift_ref = $5;
+    `;
+
+    return db.none(sql, [
+	shiftGym.id_sucursal,    
+	shiftGym.total,
+	shiftGym.total_recharges,
+	new Date(),
+	shiftGym.shift_ref    
+    ]);
+}
+
+Order.insertNewTurnGym = (shiftGym) => {
+    const sql = `
+    INSERT INTO dealer_recharge_shift_turn(
+	id_sucursal, 
+	total, 
+	total_recharges, 
+	created_at, 
+	shift_ref, 
+	state
+ 	)
+	VALUES ($1, $2, $3, $4, $5, $6);
+    `;
+
+    return db.oneOrNone(sql, [
+    shiftGym.id_sucursal,
+    shiftGym.total,
+    shiftGym.total_recharges,
+    new Date(),
+    shiftGym.shift_ref,
+    'ACTIVE'	    
+    ]);
+}
+
+
 module.exports = Order;
