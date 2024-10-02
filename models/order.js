@@ -1301,7 +1301,7 @@ from dealer_recharge_gym as R
         R.id_client = U.id
 		
 		
-where R.id_sucursal = 2 and shift_ref = $2		
+where R.id_sucursal = $1 and shift_ref = $2		
 group by R.id, U.id
 order by R.id desc
     `;
@@ -1416,7 +1416,7 @@ Order.getSumShift = (id_sucursal, shift_ref) =>{
 	  shift_ref = $2 
 	  AND id_sucursal = $1
  `;
-return db.manyOrNone(sql, id_sucursal, shift_ref);
+return db.manyOrNone(sql, [id_sucursal, shift_ref]);
 
 }
 
