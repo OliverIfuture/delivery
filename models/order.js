@@ -1405,5 +1405,20 @@ dealer_recharge_gym(
     ]);
 }
 
+Order.getSumShift = (id_sucursal, shift_ref) =>{
+	const sql = `
+	SELECT 
+	  SUM(amount) AS total_monto,
+	  COUNT(*) AS total_filas
+	FROM 
+	  dealer_recharge_gym 
+	WHERE 
+	  shift_ref = $2 
+	  AND id_sucursal = $1
+ `;
+return db.manyOrNone(sql, id_sucursal, shift_ref);
+
+}
+
 
 module.exports = Order;
