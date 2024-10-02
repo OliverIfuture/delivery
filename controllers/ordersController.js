@@ -985,7 +985,32 @@ async getShiftTurn(req, res, next) {
                 error: error
             });
         }
-    },    
+    }, 
+
+ async insertNewTurnGym(req, res, next) {
+        try {
+
+            let shiftGym = req.body;
+            console.log(`el insertNewTurnGym : ${JSON.stringify(shiftGym)}`);
+
+            const data = await Order.insertNewTurnGym(shiftGym);
+            return res.status(201).json({
+
+                success: true,
+                message: 'turno abierto correctamente',
+                data: data.id
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error abriendo turno',
+                error: error
+            });
+        }
+    },     
    
   
     
