@@ -927,6 +927,8 @@ async findByClientDealerRechargeGym(req, res, next) {
             const shift_ref =   req.params.shift_ref;
 
             const data = await Order.getSumShift(id_sucursal, shift_ref);
+            console.log(`el getSumShift : ${JSON.stringify(data)}`);
+
             return res.status(201).json(data);
 
         } catch (error) {
