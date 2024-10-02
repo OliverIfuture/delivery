@@ -906,7 +906,8 @@ async findByClientDealerRechargeGym(req, res, next) {
 
         try {
             const id_sucursal = req.params.id_sucursal;
-            const data = await Order.findByClientDealerRechargeGym(id_sucursal);
+            const shift_ref =   req.params.shift_ref;
+            const data = await Order.findByClientDealerRechargeGym(id_sucursal, shift_ref);
             return res.status(201).json(data);
         }
         catch (error) {
