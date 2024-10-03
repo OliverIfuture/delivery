@@ -1491,5 +1491,15 @@ Order.updateToCancelClient = (id) => {
     return db.none(sql, id);
 }
 
+Order.updateToCancelClientToClient = (id, balance) => {
+    const sql = `
+	UPDATE users_dealer
+	SET balance= $2
+	WHERE id = $1
+    `;
+
+    return db.none(sql, [id, balance]);
+}
+
 
 module.exports = Order;
