@@ -1290,7 +1290,8 @@ Order.findByClientDealerRechargeGym = (id_sucursal, shift_ref ) => {
 	JSON_BUILD_OBJECT(
             'id', U.id,
             'name', U.name,
-            'phone', U.phone
+            'phone', U.phone,
+	    'balance', U.balance
         ) AS client
 
 		
