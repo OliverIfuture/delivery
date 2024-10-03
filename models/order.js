@@ -1450,7 +1450,7 @@ Order.closeShiftGym = (shiftGym) => {
 	shiftGym.id_sucursal,    
 	shiftGym.total,
 	shiftGym.total_recharges,
-	new Date(),
+	Date.now(),
 	shiftGym.shift_ref    
     ]);
 }
