@@ -70,6 +70,7 @@ module.exports = (app) => {
     app.post('/api/orders/insertNewTurnGym', passport.authenticate('dealer-jwt', { session: false }), ordersController.insertNewTurnGym);
 
     app.put('/api/orders/updateToCancelClient/:id', passport.authenticate('dealer-jwt', { session: false }), ordersController.updateToCancelClient);
+    app.put('/api/orders/updateToCancelClientToClient/:id', passport.authenticate('dealer-jwt', { session: false }), ordersController.updateToCancelClientToClient);
 
     
 }
