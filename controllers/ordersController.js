@@ -1036,7 +1036,8 @@ async getShiftTurn(req, res, next) {
         try {
 
             const id = req.params.id;
-            const data = await Order.updateToCancelClientToClient(id);
+            const balance = req.params.balance;
+            const data = await Order.updateToCancelClientToClient(id, balance);
             return res.status(201).json({
 
                 success: true,
