@@ -1437,12 +1437,13 @@ return db.oneOrNone(sql, id_sucursal);
 Order.closeShiftGym = (shiftGym) => {
     const sql = `
       UPDATE  dealer_recharge_shift_turn
-	total=$2, 
-	total_recharges=$3, 
-	created_at=$4, 
+      set
+	total = $2, 
+	total_recharges = $3, 
+	created_at = $4, 
 	state='CERRADA'
 	WHERE id_sucursal = $1 
- 	and shift_ref = $5;
+ 	and shift_ref = $5
     `;
 
     return db.none(sql, [
