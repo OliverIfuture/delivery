@@ -1286,6 +1286,7 @@ Order.findByClientDealerRechargeGym = (id_sucursal, shift_ref ) => {
 	R.reference,
 	R.amount,
 	R.shift_ref,
+ 	R.state,
 	JSON_BUILD_OBJECT(
             'id', U.id,
             'name', U.name,
