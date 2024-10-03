@@ -1032,7 +1032,28 @@ async getShiftTurn(req, res, next) {
         }
     },    
   
-    
+     async updateToCancelClientToClient(req, res, next) {
+        try {
+
+            const id = req.params.id;
+            const data = await Order.updateToCancelClientToClient(id);
+            return res.status(201).json({
+
+                success: true,
+                message: 'recarga cancelada en cliente'
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error cancelando en cliente',
+                error: error
+            });
+        }
+    },    
+  
 }
 
 
