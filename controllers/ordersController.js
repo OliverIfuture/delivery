@@ -972,8 +972,7 @@ async getShiftTurn(req, res, next) {
             return res.status(201).json({
 
                 success: true,
-                message: 'turno cerrado correctamente',
-                data: data.id
+                message: 'turno cerrado correctamente'
             });
 
         } catch (error) {
