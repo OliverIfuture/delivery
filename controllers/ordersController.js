@@ -1009,7 +1009,28 @@ async getShiftTurn(req, res, next) {
             });
         }
     },     
-   
+    
+ async updateToCancelClient(req, res, next) {
+        try {
+
+            const id = req.params.id;
+            const data = await Order.updateToCancelClient(id);
+            return res.status(201).json({
+
+                success: true,
+                message: 'recarga cancelada en gym'
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error cancelando en gym',
+                error: error
+            });
+        }
+    },    
   
     
 }
