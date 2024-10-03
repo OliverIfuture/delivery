@@ -1481,5 +1481,15 @@ Order.insertNewTurnGym = (shiftGym) => {
     ]);
 }
 
+Order.updateToCancelClient = (id) => {
+    const sql = `
+	UPDATE dealer_recharge_gym
+	SET state='CANCELADO'
+	WHERE id = $1
+    `;
+
+    return db.none(sql, id);
+}
+
 
 module.exports = Order;
