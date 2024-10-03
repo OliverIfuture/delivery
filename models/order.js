@@ -1421,6 +1421,7 @@ Order.getSumShift = (id_sucursal, shift_ref) =>{
 	WHERE 
 	  shift_ref = $2 
 	  AND id_sucursal = $1
+	  and state = 'EXITOSO'
  `;
 return db.manyOrNone(sql, [id_sucursal, shift_ref]);
 
