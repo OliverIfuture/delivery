@@ -5,6 +5,10 @@ module.exports = (io) => {
 
         console.log('USUARIO CONECTADO AL NAMESPACE /orders/delivery');
 
+        socket.emit('welcome', { message: 'Bienvenido!' });
+
+
+        
         socket.on('position', function(data) {
             console.log(`EMITIO ${JSON.stringify(data)}`);
             orderDeliveryNamespace.emit(`position/${data.id_order}`, { lat: data.lat, lng: data.lng  });
