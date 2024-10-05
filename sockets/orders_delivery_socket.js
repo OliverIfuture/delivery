@@ -12,17 +12,13 @@ module.exports = (io) => {
 
     socket.on('dealer_on', function(data) {
       console.log(`machine dealer ON ${JSON.stringify(data)}`);
-      setTimeout(() => {
-        orderDeliveryNamespace.emit(`dealer_on/${data.machine}`, { id_product: data.id_product, msg: data.msg });
-      }, 3000); // Retraso de 3 segundos (3000 milisegundos)
+      orderDeliveryNamespace.emit(`dealer_on/${data.machine}`, { id_product: data.id_product, msg: data.msg });
     });
 
     socket.on('dealer_off', function(data) {
       console.log('machine dealer OFF recibido:', data);
       console.log(`machine dealer OFF ${JSON.stringify(data)}`);
-      setTimeout(() => {
-        orderDeliveryNamespace.emit(`dealer_off/${data.machine}`, { id_product: data.id_product, msg: data.msg });
-      }, 3000); // Retraso de 3 segundos (3000 milisegundos)
+      orderDeliveryNamespace.emit(`dealer_off/${data.machine}`, { id_product: data.id_product, msg: data.msg });
     });
 
     socket.on('disconnect', function(data) {
