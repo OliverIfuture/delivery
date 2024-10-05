@@ -18,6 +18,7 @@ module.exports = (io) => {
     });
 
     socket.on('dealer_off', function(data) {
+      console.log('machine dealer OFF recibido:', data);
       console.log(`machine dealer OFF ${JSON.stringify(data)}`);
       setTimeout(() => {
         orderDeliveryNamespace.emit(`dealer_off/${data.machine}`, { id_product: data.id_product, msg: data.msg });
