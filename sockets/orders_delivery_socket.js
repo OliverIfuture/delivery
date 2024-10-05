@@ -10,9 +10,9 @@ module.exports = (io) => {
       orderDeliveryNamespace.emit(`position/${data.id_order}`, { lat: data.lat, lng: data.lng });
     });
 
-    socket.on('dealer_on', function(data) {
+   socket.on('dealer_on', function(data) {
       console.log(`machine dealer ON ${JSON.stringify(data)}`);
-      orderDeliveryNamespace.emit(`dealer_on/${data.machine}`, { id_product: data.id_product, msg: data.msg });
+      orderDeliveryNamespace.emit('dealer_on_dealer_1', { id_product: data.id_product, msg: data.msg });
     });
 
     socket.on('dealer_off', function(data) {
