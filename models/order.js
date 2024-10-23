@@ -1191,6 +1191,7 @@ Order.findByClientDealer = (id_client) => {
 		D.reference,
 		D.method_pay,
 		D.machine,
+  		D.state,
 		D.quantity,
 		D.total,
 		       COALESCE( JSON_AGG(
