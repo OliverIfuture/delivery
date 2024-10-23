@@ -1426,8 +1426,8 @@ Order.getSumShift = (id_sucursal, shift_ref) =>{
 		  FROM 
 		    dealer_recharge_gym
 		  WHERE 
-		    shift_ref = 550514 
-		    AND id_sucursal = 2 
+		    shift_ref = $2 
+		    AND id_sucursal = $1
 		    AND state = 'EXITOSO'
 		  UNION ALL
 		  SELECT 
@@ -1436,7 +1436,7 @@ Order.getSumShift = (id_sucursal, shift_ref) =>{
 		  FROM 
 		    dealer_shop
 		  WHERE 
-		    sucursal_id = 2
+		    sucursal_id = $1
 		) AS subconsulta;
 
  `;
