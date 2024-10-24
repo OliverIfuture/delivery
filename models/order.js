@@ -1419,7 +1419,7 @@ Order.getSumShift = (id_sucursal, shift_ref) =>{
 SELECT 
   COALESCE((SELECT SUM(amount) FROM dealer_recharge_gym WHERE shift_ref = $2 AND id_sucursal = $1 AND state = 'EXITOSO'), 0) + 
   COALESCE((SELECT SUM(total) FROM dealer_shop WHERE sucursal_id = $1), 0) AS total_monto,
-  (SELECT COUNT(*)  FROM dealer_recharge_gym WHERE shift_ref = $2 AND id_sucursal = $1 AND state = 'EXITOSO') AS total_filas,
+  COALESCE((SELECT COUNT(*)  FROM dealer_recharge_gym WHERE shift_ref = $2 AND id_sucursal = $1 AND state = 'EXITOSO'),0) AS total_filas,
   COALESCE((SELECT SUM(total) FROM dealer_shop WHERE sucursal_id = $1), 0) AS total_ventas;
 
 
