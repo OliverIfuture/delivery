@@ -1416,28 +1416,30 @@ dealer_recharge_gym(
 
 Order.getSumShift = (id_sucursal, shift_ref) =>{
 	const sql = `
-		SELECT 
-		  SUM(total_monto) AS total_monto, 
-		  SUM(total_filas) AS total_filas
-		FROM (
-		  SELECT 
-		    SUM(amount) AS total_monto, 
-		    COUNT(*) AS total_filas
-		  FROM 
-		    dealer_recharge_gym
-		  WHERE 
-		    shift_ref = $2 
-		    AND id_sucursal = $1
-		    AND state = 'EXITOSO'
-		  UNION ALL
-		  SELECT 
-		    SUM(total) AS total_monto, 
-		    COUNT(*) AS total_filas
-		  FROM 
-		    dealer_shop
-		  WHERE 
-		    sucursal_id = $1
-		) AS subconsulta;
+	SELECT 
+	  ( 
+	    SELECT SUM(amount) 
+	    FROM dealer_recharge_gym 
+	    WHERE shift_ref = 550514 AND id_sucursal = $1 AND state = 'EXITOSO'
+	  ) + 
+	  ( 
+	    SELECT SUM(total) 
+	    FROM dealer_shop 
+	    WHERE sucursal_id = 2
+	  ) AS total_monto,
+	  
+	  ( 
+	    SELECT COUNT(*) 
+	    FROM dealer_recharge_gym 
+	    WHERE shift_ref = $2 AND id_sucursal = $1 AND state = 'EXITOSO'
+	  ) AS total_filas,
+	  
+	  ( 
+	    SELECT COUNT(*) 
+	    FROM dealer_shop 
+	    WHERE sucursal_id = $1
+	  ) AS total_ventas;
+
 
  `;
 return db.manyOrNone(sql, [id_sucursal, shift_ref]);
