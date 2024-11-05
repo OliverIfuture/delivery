@@ -48,7 +48,7 @@ module.exports = (app, upload) => {
      app.put('/api/users/updateNotificationToken_dealer', UsersController.updateNotificationToken_dealer);    
      app.get('/api/users/selectToken_dealer/:id', passport.authenticate('dealer-jwt', { session: false }),UsersController.selectToken_dealer);
 
-     app.get('/api/users/findClientdealer/:name',passport.authenticate('dealer-jwt', {session: false}) ,UsersController.findClient);
+     app.get('/api/users/findClientdealer/:name',passport.authenticate('dealer-jwt', {session: false}) ,UsersController.findClientDealer);
 
 }   
 
