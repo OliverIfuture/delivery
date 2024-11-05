@@ -642,6 +642,19 @@ User.findClient = (name) => {
     return db.manyOrNone(sql, `%${name}%`);
 }
 
+User.findClientDealer = (name) => {
+    const sql = `
+    SELECT
+       *
+    FROM
+      users_dealer
+    WHERE
+        phone ILIKE $1
+    `;
+
+    return db.manyOrNone(sql, `%${name}%`);
+}
+
 User.findByPhone = (phone) => {
     const sql = `
     SELECT
