@@ -1418,10 +1418,10 @@ Order.getSumShift = (id_sucursal, shift_ref) =>{
 	const sql = `
 SELECT 
   COALESCE((SELECT SUM(amount) FROM dealer_recharge_gym WHERE shift_ref = $2 AND id_sucursal = $1 AND state = 'EXITOSO'), 0) + 
-  COALESCE((SELECT SUM(total) FROM dealer_shop WHERE sucursal_id = $1 and method_pay = 'EFECTIVO'), 0) AS total_monto,
-  COALESCE((SELECT SUM(total) FROM dealer_shop WHERE sucursal_id = $1 and method_pay = 'TARJETA'), 0) AS total_monto_app,
+  COALESCE((SELECT SUM(total) FROM dealer_shop WHERE sucursal_id = $1 and method_pay = 'EFECTIVO' and shift_ref = $2), 0) AS total_monto,
+  COALESCE((SELECT SUM(total) FROM dealer_shop WHERE sucursal_id = $1 and method_pay = 'TARJETA' and shift_ref = $2), 0) AS total_monto_app,
   COALESCE((SELECT COUNT(*)  FROM dealer_recharge_gym WHERE shift_ref = $2 AND id_sucursal = $1 AND state = 'EXITOSO'),0) AS total_filas,
-  COALESCE((SELECT COUNT(*) FROM dealer_shop WHERE sucursal_id = $1), 0) AS total_ventas;
+  COALESCE((SELECT COUNT(*) FROM dealer_shop WHERE sucursal_id =$1 and shift_ref = $2), 0) AS total_ventas;
 
 
  `;
