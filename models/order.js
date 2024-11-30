@@ -1182,7 +1182,7 @@ select caja.id,
     return db.manyOrNone(sql);
 }
 
-Order.findByClientDealer = (id_client) => {
+Order.findByClientDealer = (id_client, shift_ref) => {
 
     const sql = `
 	select 
@@ -1194,6 +1194,7 @@ Order.findByClientDealer = (id_client) => {
   		D.state,
 		D.quantity,
 		D.total,
+  	        D.shift_ref,
 		       COALESCE( JSON_AGG(
 	            DISTINCT jsonb_build_object(
 					
@@ -1234,12 +1235,12 @@ Order.findByClientDealer = (id_client) => {
 			left join 	dealer_sucursal as S 
 			on S.id = D.sucursal_id
 			
-	where U.id = $1		
+	where U.id = $1 and D.shift_ref = $2		
 	group by D.id, U.id, S.id
 	order by D.id desc
     `;
 
-    return db.manyOrNone(sql, [id_client]);
+    return db.manyOrNone(sql, [id_client, shift_ref]);
 }
 
 Order.findByClientDealerRecharge = (id_client) => {
