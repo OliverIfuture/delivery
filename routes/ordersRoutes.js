@@ -54,7 +54,7 @@ module.exports = (app) => {
     app.delete('/api/orders/deleteExpenses/:id', passport.authenticate('jwt', { session: false }), ordersController.deleteExpenses);
     app.delete('/api/orders/deleteIncomes/:id', passport.authenticate('jwt', { session: false }), ordersController.deleteIncomes);
 
-    app.get('/api/orders/findByClientDealer/:id_client', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealer);
+    app.get('/api/orders/findByClientDealer/:id_client/:shift_ref', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealer);
     app.get('/api/orders/findByClientDealerRecharge/:id_client', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealerRecharge);
     app.post('/api/orders/createPymentInten2/:usertoken/:amount', passport.authenticate('dealer-jwt', { session: false }), ordersController.createPymentInten);
     app.put('/api/orders/insertRecharge/:id_client/:balance', passport.authenticate('dealer-jwt', { session: false }), ordersController.insertRecharge);
