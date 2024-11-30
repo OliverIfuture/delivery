@@ -1366,9 +1366,10 @@ dealer_shop(
     product_id,
     total,
     timestamp,
-    state
+    state,
+    shift_ref
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -1381,7 +1382,8 @@ dealer_shop(
     order.product_id,
     order.total,
     Date.now(),
-    order.state	    
+    order.state,
+	order.shift_ref	    
     ]);
 }
 
