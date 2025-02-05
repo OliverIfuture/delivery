@@ -965,6 +965,9 @@ async findByClientDealerRechargeGym(req, res, next) {
             });
         }
     },     
+
+
+
     
 async getShiftTurn(req, res, next) {
         try {
@@ -1078,6 +1081,27 @@ async getShiftTurn(req, res, next) {
             });
         }
     },    
+
+
+async  getDealers(req, res, next) {
+        try {
+            const sucursalId = req.params.sucursalId;
+
+            const data = await Order.getDealers(sucursalId);
+            console.log(`el getDealers : ${JSON.stringify(data)}`);
+
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener el total de efectivo en caja',
+                error: error,
+                success: false
+            });
+        }
+    },     
   
 }
 
