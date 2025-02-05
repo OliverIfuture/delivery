@@ -1524,5 +1524,15 @@ Order.updateToCancelClientToClient = (id, balance) => {
     return db.none(sql, [id, balance]);
 }
 
+Order.getDealers = (sucursalId) =>{
+	const sql = `
+SELECT * FROM dealer_dealers
+        where sucursal_id = $1
+        ORDER BY id desc  
+ `;
+return db.oneOrNone(sql, sucursalId);
+
+}
+
 
 module.exports = Order;
