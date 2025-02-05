@@ -1530,7 +1530,7 @@ SELECT * FROM dealer_dealers
         where sucursal_id = $1
         ORDER BY id desc  
  `;
-return db.oneOrNone(sql, sucursalId);
+return db.manyOrNone(sql, sucursalId);
 
 }
 
