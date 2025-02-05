@@ -65,7 +65,7 @@ module.exports = (app) => {
     app.post('/api/orders/createrechargegym', passport.authenticate('dealer-jwt', { session: false }), ordersController.createrechargegym);
     app.get('/api/orders/findByClientDealerRechargeGym/:id_sucursal/:shift_ref', passport.authenticate('dealer-jwt', { session: false }), ordersController.findByClientDealerRechargeGym);
     app.get('/api/orders/getSumShift/:id_sucursal/:shift_ref', passport.authenticate('dealer-jwt', { session: false }), ordersController.getSumShift);
-        app.get('/api/orders/getCortes/:id_sucursal/:shift_ref', passport.authenticate('dealer-jwt', { session: false }), ordersController.getCortes);
+    app.get('/api/orders/getCortes/:id_sucursal/:shift_ref', passport.authenticate('dealer-jwt', { session: false }), ordersController.getCortes);
 
     app.get('/api/orders/getShiftTurn/:id_sucursal', passport.authenticate('dealer-jwt', { session: false }), ordersController.getShiftTurn);
     app.put('/api/orders/closeShiftGym', passport.authenticate('dealer-jwt', { session: false }), ordersController.closeShiftGym);
@@ -73,6 +73,9 @@ module.exports = (app) => {
 
     app.put('/api/orders/updateToCancelClient/:id', passport.authenticate('dealer-jwt', { session: false }), ordersController.updateToCancelClient);
     app.put('/api/orders/updateToCancelClientToClient/:id/:balance', passport.authenticate('dealer-jwt', { session: false }), ordersController.updateToCancelClientToClient);
+    
+    
+    app.get('/api/orders/getDealers/:sucursalId', passport.authenticate('dealer-jwt', { session: false }), ordersController.getDealers);
 
     
 }
