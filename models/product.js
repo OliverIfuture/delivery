@@ -1844,7 +1844,7 @@ Product.createProductDealer = (product) => {
             image1,
             created_at,
             state,
-	    idSucursal
+	    idsucursal
         )
     VALUES($1, $2, $3, $4, $5, $6, 'available',$7) RETURNING id
     `;
