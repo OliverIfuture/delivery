@@ -1865,7 +1865,7 @@ Product.updateProductDealer = (product) => {
     UPDATE
         dealer_products
     SET
-	    image1 = $2,
+	    image1 = $2
 
     where
 
