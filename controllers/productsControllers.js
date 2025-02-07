@@ -2463,7 +2463,8 @@ async createLikeProduct (req, res, next) {
 
    async getAlldealers(req, res, next) {
         try {
-            const data = await Product.getAlldealers();
+            const idsucursal = req.params.idsucursal;
+            const data = await Product.getAlldealers(idsucursal);
             console.log(`Productos obtenidos: ${data}`);
             return res.status(201).json(data);
 
