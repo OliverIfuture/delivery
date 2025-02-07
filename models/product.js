@@ -1882,6 +1882,14 @@ Product.updateProductDealer = (product) => {
 }
 
 
+Product.getAlldealers = (idsucursal) =>{
+	const sql = `
+           select * from 
+	   dealer_products where 
+            idsucursal = $1
+ `;
+return db.manyOrNone(sql, idsucursal);
 
+}
 
 module.exports = Product;
