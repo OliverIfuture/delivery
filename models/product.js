@@ -1865,13 +1865,14 @@ Product.updateProductDealer = (product) => {
     UPDATE
         dealer_products
     SET
-	    image1 = $1,
+	    image1 = $2,
 
     where
 
         id = $1
         `;
     return db.none(sql, [
+	product.id,
         product.image1  
 
     ]);
