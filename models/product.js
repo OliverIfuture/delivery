@@ -1859,6 +1859,26 @@ Product.createProductDealer = (product) => {
 }
 
 
+Product.updateProductDealer = (product) => {
+    const sql = `
+    
+    UPDATE
+        dealer_products
+    SET
+	    image1 = $1,
+
+    where
+
+        id = $1
+        `;
+    return db.none(sql, [
+        product.image1  
+
+    ]);
+
+}
+
+
 
 
 module.exports = Product;
