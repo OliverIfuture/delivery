@@ -1833,6 +1833,32 @@ return db.manyOrNone(sql, id_plate);
 }
 
 
+Product.createProductDealer = (product) => {
+    const sql = `
+    INSERT INTO 
+        dealer_products(
+            name,
+            price,
+            price_buy,
+            price_sucursal,
+            image1,
+            created_at,
+            state
+        )
+    VALUES($1, $2, $3, $4, $5, $6, 'available') RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        product.name,
+        product.price,
+        product.price_buy,
+	product.price_sucursal,    
+        product.image1,
+        new Date(),
+        
+    ]);
+}
+
+
 
 
 module.exports = Product;
