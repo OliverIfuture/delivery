@@ -1843,9 +1843,10 @@ Product.createProductDealer = (product) => {
             price_sucursal,
             image1,
             created_at,
-            state
+            state,
+	    idSucursal
         )
-    VALUES($1, $2, $3, $4, $5, $6, 'available') RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, 'available',$7) RETURNING id
     `;
     return db.oneOrNone(sql, [
         product.name,
@@ -1854,6 +1855,7 @@ Product.createProductDealer = (product) => {
 	product.price_sucursal,    
         product.image1,
         new Date(),
+	product.idSucursal    
         
     ]);
 }
