@@ -2433,7 +2433,7 @@ async createLikeProduct (req, res, next) {
                             }
                         }
 
-                        await Product.update(product);
+                        await Product.updateProductDealer(product);
                         inserts = inserts + 1;
                         if (inserts == files.length) {
                             return res.status(201).json({
