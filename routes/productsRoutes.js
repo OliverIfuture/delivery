@@ -140,7 +140,7 @@ module.exports = (app, upload) => {
 
       app.delete('/api/products/deleteteSave/:id_plate/:id_user', productsControllers.deleteteSave);
       app.post('/api/products/createProductDealer',passport.authenticate('dealer-jwt', {session: false}) , upload.array('image', 1), productsControllers.createProductDealer);
-      app.get('/api/products/getAlldealers', productsControllers.getAlldealers);     
+      app.get('/api/products/getAlldealers/:idsucursal', productsControllers.getAlldealers);     
 
 
 
