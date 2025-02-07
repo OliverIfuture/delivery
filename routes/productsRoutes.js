@@ -139,6 +139,7 @@ module.exports = (app, upload) => {
       app.delete('/api/products/deletePost/:id', productsControllers.deletePost );
 
       app.delete('/api/products/deleteteSave/:id_plate/:id_user', productsControllers.deleteteSave);
+      app.post('/api/products/createProductDealer',passport.authenticate('jwt', {session: false}) , upload.array('image', 1), productsControllers.createProductDealer);
 
 
 
