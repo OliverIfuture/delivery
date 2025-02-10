@@ -2464,7 +2464,7 @@ async createLikeProduct (req, res, next) {
    async getAlldealers(req, res, next) {
         try {
             const idsucursal = req.params.idsucursal;
-            const id_dealer = req.paramrs.iddealer;
+            const id_dealer =  req.params.iddealer;
             const data = await Product.getAlldealers(idsucursal, id_dealer);
             console.log(`Productos obtenidos: ${data}`);
             return res.status(201).json(data);
