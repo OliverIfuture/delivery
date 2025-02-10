@@ -1888,8 +1888,9 @@ Product.getAlldealers = (idsucursal,id_dealer) =>{
 	   dealer_products where 
             idsucursal = $1 and id_dealer = $2
  `;
-return db.manyOrNone(sql, [idsucursal);
-,id_dealer]
+return db.manyOrNone(sql, [
+	idsucursal,id_dealer
+]);
 }
 
 module.exports = Product;
