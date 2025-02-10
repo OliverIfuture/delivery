@@ -2481,4 +2481,33 @@ async createLikeProduct (req, res, next) {
         }
     },
 
+
+       
+   async deleteDealer(req, res, next) {
+        try {
+
+            const product = req.params;
+
+            const data = await Product.deleteDealer(product.id);
+            console.log(`Product to delete: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'producto eliminado correctamente',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error eliminando el producto',
+                error: error
+            });
+        }
+    }, 
+
 }
