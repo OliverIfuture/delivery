@@ -2483,7 +2483,7 @@ async createLikeProduct (req, res, next) {
 
 
        
-   async deleteDealer(req, res, next) {
+   async deleteProductDealer(req, res, next) {
         try {
 
             const product = req.params;
