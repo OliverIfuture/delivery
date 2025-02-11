@@ -13,7 +13,7 @@ module.exports = (io) => {
     socket.on('dealer_on', function(data) {
       console.log('machine dealer ON', data);
       console.log('Emitiendo evento dealer_on_dealer_1...');
-      orderDeliveryNamespace.emit('dealer_on_/${data.machine}', { id_product: data.id_product, msg: data.msg });
+      orderDeliveryNamespace.emit(`dealer_on_${data.machine}`, { id_product: data.id_product, msg: data.msg });
       console.log('Evento dealer_on_dealer_1 emitido');
     });
 
