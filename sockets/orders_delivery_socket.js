@@ -21,7 +21,7 @@ module.exports = (io) => {
     socket.on('dealer_off', function(data) {
       console.log('machine dealer OFF recibido:', data);
       console.log(`machine dealer OFF ${JSON.stringify(data)}`);
-      orderDeliveryNamespace.emit(`dealer_off/${data.machine}`, { id_product: data.id_product, msg: data.msg });
+      orderDeliveryNamespace.emit(`dealer_off_${data.machine}`, { id_product: data.id_product, msg: data.msg });
     });
 
     socket.on('dealer_state', function(data) {
@@ -29,8 +29,8 @@ module.exports = (io) => {
       console.log(`machine dealer state ${JSON.stringify(data)}`);
       
       // Asegurarse de que el evento está siendo emitido correctamente
-      orderDeliveryNamespace.emit(`dealer_state/${data.machine}`, { machine: data.machine, msg: data.state });
-      console.log(`Evento dealer_state/${data.machine} emitido con estado: ${data.state}`);
+      orderDeliveryNamespace.emit(`dealer_state_{data.machine}`, { machine: data.machine, msg: data.state });
+      console.log(`Evento dealer_state_{data.machine} emitido con estado: ${data.state}`);
     });
 
 
