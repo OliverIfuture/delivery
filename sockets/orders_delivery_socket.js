@@ -24,6 +24,12 @@ module.exports = (io) => {
       orderDeliveryNamespace.emit(`dealer_off/${data.machine}`, { id_product: data.id_product, msg: data.msg });
     });
 
+      socket.on('dealer_state', function(data) {
+      console.log('machine dealer state recibido:', data);
+      console.log(`machine dealer state ${JSON.stringify(data)}`);
+      orderDeliveryNamespace.emit(`dealer_state/${data.machine}`, { machine: data.machine, msg: data.state });
+    });
+
     socket.on('disconnect', function(data) {
       console.log('USUARIO DESCONECTADO');
     });
