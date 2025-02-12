@@ -1900,12 +1900,12 @@ return db.manyOrNone(sql, [
 
 Product.deleteDealer = (id) => {
     const sql = `
-
-    DELETE 
-    
-    FROM dealer_products 
-
-    WHERE id = $1
+    UPDATE
+        dealer_products
+    SET
+        state = 'delete'
+	WHERE
+        id = $1 
     `;
 
     return db.none(sql, [
