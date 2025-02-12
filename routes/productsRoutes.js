@@ -142,6 +142,7 @@ module.exports = (app, upload) => {
       app.post('/api/products/createProductDealer',passport.authenticate('dealer-jwt', {session: false}) , upload.array('image', 1), productsControllers.createProductDealer);
       app.get('/api/products/getAlldealers/:idsucursal/:iddealer', productsControllers.getAlldealers);     
       app.delete('/api/products/deleteProductDealer/:id', passport.authenticate('dealer-jwt', { session: false }), productsControllers.deleteProductDealer);
+      app.put('/api/products/updateDealerName/:dealerid/:name', passport.authenticate('dealer-jwt', { session: false }), productsControllers.updateDealerName);
 
 
 
