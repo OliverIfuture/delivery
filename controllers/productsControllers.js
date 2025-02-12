@@ -2516,9 +2516,7 @@ async createLikeProduct (req, res, next) {
         try {
             
             const dealerid = req.params.dealerid;
-            const name = req.params.name;
-            console.log(`Nombre editadoo: ${JSON.stringify(product)}`);
-            
+            const name = req.params.name;            
 
             await Product.updateDealerName(dealerid, name);
 
