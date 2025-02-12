@@ -2510,4 +2510,37 @@ async createLikeProduct (req, res, next) {
         }
     }, 
 
+
+
+    async updateDealerName(req, res, next) {
+        try {
+            
+            const dealerid = req.params.dealerid;
+            const name = req.params.name;
+            console.log(`Nombre editadoo: ${JSON.stringify(product)}`);
+            
+
+            await Product.updateDealerName(dealerid, name);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'nombre de dealer editado',
+
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error con la actualizacion',
+                error: error
+
+            });
+        }
+    },
+
+
 }
