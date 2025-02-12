@@ -1914,4 +1914,19 @@ Product.deleteDealer = (id) => {
     ]);
 }
 
+Product.updateDealerName = (dealerid, name) => {
+    const sql = `
+    UPDATE
+        dealer_dealers
+    SET
+        name = $2
+	WHERE
+        id = $1 
+    `;
+    return db.none(sql, [dealerid, name]);
+}
+
+
+
+
 module.exports = Product;
