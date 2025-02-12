@@ -1890,7 +1890,7 @@ Product.getAlldealers = (idsucursal,id_dealer) =>{
 	const sql = `
            select * from 
 	   dealer_products where 
-            idsucursal = $1 and id_dealer = $2
+            idsucursal = $1 and id_dealer = $2 and state = 'available'
  `;
 return db.manyOrNone(sql, [
 	idsucursal,id_dealer
