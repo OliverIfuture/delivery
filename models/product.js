@@ -1955,6 +1955,14 @@ Product.createDealer = (dealer) => {
 }
 
 
+Product.deleteRepets = (idSucursal, dispense) => {
+    const sql = `
+
+	delete  from dealer_products
+ where idSucursal = $1 and dispense = $2
+    `;
+    return db.none(sql,[idSucursal, dispense]);
+}
 
 
 
