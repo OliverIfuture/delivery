@@ -2541,4 +2541,34 @@ async createLikeProduct (req, res, next) {
     },
 
 
+  async createDealer (req, res, next) {
+        try {
+
+            const dealer = req.body;
+             console.log(`dealer: ${JSON.stringify(dealer)}`);
+
+
+                
+            const data = await Product.createDealer(dealer);
+             console.log(`Status: ${JSON.stringify(dealer)}`);
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'maquina registrada correctamente',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error',
+                error: error
+            });
+        }
+    },       
+
+
+
 }
