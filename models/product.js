@@ -1936,7 +1936,6 @@ Product.createDealer = (dealer) => {
 	 type
  )
 	VALUES (
-	 product, 
 	 $1,
 	 $2, 
 	 $3, 
