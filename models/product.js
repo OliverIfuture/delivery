@@ -1926,6 +1926,34 @@ Product.updateDealerName = (dealerid, name) => {
     return db.none(sql, [dealerid, name]);
 }
 
+Product.createDealer = (dealer) => {
+    const sql = `
+       INSERT INTO dealer_dealers(
+	 machine, 
+	 name, 
+	 sucursal_id, 
+	 status, 
+	 type
+ )
+	VALUES (
+	 product, 
+	 $1,
+	 $2, 
+	 $3, 
+	 $4, 
+	 $5
+ );
+    `;
+    return db.none(sql,[
+	    dealer.machine,
+	    dealer.name,
+	    dealer.sucursal_id,
+	    dealer.status,
+	    dealer.type
+    ]);
+}
+
+
 
 
 
