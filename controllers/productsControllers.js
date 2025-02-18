@@ -2569,6 +2569,28 @@ async createLikeProduct (req, res, next) {
         }
     },       
 
+ async deleteRepets (req, res, next) {
+        try {
+
+            const idSucursal = req.params.idSucursal;
+            const dispense = req.params.dispense;
+            const data = await Product.deleteRepets(idSucursal, dispense);
+
+            return res.status(201).json({
+                message: 'El producto anterior se elimino correctamente',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar el producto',
+                success: false,
+                error: error
+            });
+        }
+        
+},
 
 
 }
