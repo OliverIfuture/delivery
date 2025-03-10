@@ -367,6 +367,20 @@ User.getAdminsNotificationTokens = () => {
     return db.manyOrNone(sql);
 }
 
+User.getAdminsNotificationTokensDealer = () => {
+    const sql = `
+ SELECT
+        U.notification_token
+    FROM 
+        users_dealer AS U
+   
+    WHERE
+        U.id = 2722
+    `
+    return db.manyOrNone(sql);
+}
+
+
 
 User.getUsersMultiNotificationTokens = () => {
     const sql = `
