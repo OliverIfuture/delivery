@@ -133,6 +133,27 @@ async getAdminsNotificationTokens(req, res, next) {
         }
     },
 
+ async getAdminsNotificationTokensDealer(req, res, next) {
+        try {
+            const data = await User.getAdminsNotificationTokensDealer();    
+            let tokens = [];
+
+
+            data.forEach(d => {
+                tokens.push(d.notification_token);
+            });
+
+            console.log('Tokens de admin:', tokens);
+            return res.status(201).json(tokens);
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener los tokens'
+            });
+        }
+    },   
 
  async getUsersMultiNotificationTokens(req, res, next) {
         try {
