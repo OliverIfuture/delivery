@@ -1235,7 +1235,7 @@ Order.findByClientDealer = (id_client, shift_ref) => {
 			left join 	dealer_sucursal as S 
 			on S.id = D.sucursal_id
 			
-	where U.id = $1 and D.shift_ref = $2		
+	where p.idsucursal = $1 and D.shift_ref = $2		
 	group by D.id, U.id, S.id
 	order by D.id desc
     `;
