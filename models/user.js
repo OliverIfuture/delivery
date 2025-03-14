@@ -782,7 +782,9 @@ User.findByUserIdPhone = (id) => {
         U.session_token,
         U.notification_token,
         U.balance,
-	U.company
+	U.company,
+ 	U.activate,
+  	U.isadmin
 	
     FROM 
         users_dealer AS U
