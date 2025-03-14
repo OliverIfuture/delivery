@@ -720,9 +720,11 @@ User.create_dealer = (user) => {
 	            password,
 	            created_at,
 	            updated_at,
-	     	    balance
+	     	    balance,
+	   	    isadmin,
+	 	    activate
 	        )
-    VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -731,7 +733,9 @@ User.create_dealer = (user) => {
         user.password,
         new Date(),
         new Date(),
-	user.balance    
+	user.balance,
+	false,
+	true    
     ]);
 }
 
