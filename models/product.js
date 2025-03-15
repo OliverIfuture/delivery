@@ -1893,6 +1893,7 @@ Product.getAlldealers = (idsucursal,id_dealer) =>{
            select * from 
 	   dealer_products where 
             idsucursal = $1 and id_dealer = $2 and state = 'available'
+	order by dispense asc	
  `;
 return db.manyOrNone(sql, [
 	idsucursal,id_dealer
