@@ -398,6 +398,10 @@ async getAdminsNotificationTokens(req, res, next) {
         try {
             const email = req.body.email;
             const password = req.body.password;
+                
+            console.log(email); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
+            console.log(password); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
+
  
             const myUser = await User.findByEmail(email);
  
