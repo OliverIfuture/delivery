@@ -293,6 +293,8 @@ module.exports = {
             let order = req.body;
             order.status = 'PAGADO';
             const data = await Order.create(order, id_plate, extra, price);
+                        console.log(`productos antes del for : ${JSON.stringify(order.products)}`);
+
             ////recorrer todos los productos de la orden
             for (const product of order.products) {
             console.log(`productos antes del menos 10 : ${JSON.stringify(product)}`);
