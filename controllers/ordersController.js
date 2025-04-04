@@ -295,7 +295,10 @@ module.exports = {
             const data = await Order.create(order, id_plate, extra, price);
             ////recorrer todos los productos de la orden
             for (const product of order.products) {
+            console.log(`productos antes del menos 10 : ${JSON.stringify(product)}`);
+
                 if (product.id < 10000) {
+            console.log(`productos dentro del menos 10 : ${JSON.stringify(product)}`);
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                     await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
 
