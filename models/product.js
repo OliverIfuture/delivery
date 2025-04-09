@@ -674,7 +674,7 @@ return db.manyOrNone(sql, userId);
 
 }
 
-Product.getAllStocks = (id_company) =>{
+Product.getAllStocks = (id_company, id_company_product) =>{
 	const sql = `
 SELECT 
   products.id,
@@ -692,7 +692,7 @@ ORDER BY products.id_category;
  
  
  `;
-return db.manyOrNone(sql, id_company);
+return db.manyOrNone(sql, [id_company, id_company_product]);
 
 }
 
