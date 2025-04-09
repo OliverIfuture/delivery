@@ -66,8 +66,9 @@ module.exports = {
     async findByStatus(req, res, next) {
         try {
             const status = req.params.status;
+            const id_order_company = req.params.id_order_company ?? 1; // <= valor por defecto
 
-            const data = await Order.findByStatus(status);
+            const data = await Order.findByStatus(status, id_order_company);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
