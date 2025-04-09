@@ -1405,7 +1405,7 @@ WHERE
     return db.manyOrNone(sql, id_category);
 }
 
-Product.findByCategoryStocks = (id_category, id_company) => {
+Product.findByCategoryStocks = (id_category, id_company, id_product_company) => {
     const sql = `
 SELECT 
 	P.id,
@@ -1432,10 +1432,10 @@ inner join stock as S
 on P.id = S.id_product
 	
 WHERE
-	C.id = $1 and S.id_company = $2
+	C.id = $1 and S.id_company = $2   AND P.id_company = COALESCE($3, 1)
     
     `;
-    return db.manyOrNone(sql, [id_category, id_company]);
+    return db.manyOrNone(sql, [id_category, id_company, id_product_company]);
 }
 
 Product.getByCtaegoryAndProductNameSearch = (product_name) => {
