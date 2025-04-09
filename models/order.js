@@ -598,12 +598,13 @@ Order.create = (order) => {
 	    discounts,
             extra,
 	    total_extra,
-            drone_id
+            drone_id,
+	    id_order_company
 
 
 
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13, $14) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -619,7 +620,8 @@ Order.create = (order) => {
         order.discounts,
 	order.extra,    
 	order.total_extra,
-	order.drone_id
+	order.drone_id,
+	    order.id_order_company
     
     ]);
 }
