@@ -676,16 +676,19 @@ return db.manyOrNone(sql, userId);
 
 Product.getAllStocks = (id_company) =>{
 	const sql = `
-select products.id,
-	   categories.name as nameCat,
-	   products.name,
-	   stock.stock
-from products
+SELECT 
+  products.id,
+  categories.name AS nameCat,
+  products.name,
+  stock.stock,
+  products.id_company
+FROM products
+INNER JOIN categories ON categories.id = products.id_category
+INNER JOIN stock ON stock.id_product = products.id
+WHERE stock.id_company = $1
+  AND products.id_company = COALESCE($2, 1)
+ORDER BY products.id_category;
 
-inner join categories on categories.id = products.id_category
-inner join stock on stock.id_product = products.id
-where stock.id_company = $1
-order by id_category
  
  
  `;
