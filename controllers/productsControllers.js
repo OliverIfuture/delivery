@@ -1227,7 +1227,8 @@ async getAllStocks (req, res, next) {
 
         try {
             const id_company = req.params.id_company;//envia el vliente
-            const data = await Product.getAllStocks (id_company);
+            const id_company_product = req.params.id_company_product;
+            const data = await Product.getAllStocks (id_company, id_company_product);
             console.log(`Productos obtenidos: ${data}`);
 
             return res.status(201).json(data);
