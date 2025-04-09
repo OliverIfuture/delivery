@@ -41,11 +41,12 @@ Category.create =  (category) => {
             name,
             description,
             created_at,
-            updated_at
+            updated_at,
+            id_category_company
         )
 
      VALUES(
-        $1,$2,$3,$4
+        $1,$2,$3,$4,$5
      )RETURNING id 
     
     
