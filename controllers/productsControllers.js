@@ -1312,8 +1312,9 @@ async getAllStocks (req, res, next) {
         try {
             const id_category = req.params.id_category;//envia el vliente
             const id_company = req.params.id_company;//envia el vliente
+            const id_product_company = req.params.id_product_company;
     
-            const data = await Product.findByCategoryStocks(id_category, id_company);
+            const data = await Product.findByCategoryStocks(id_category, id_company,id_product_company);
 
             return res.status(201).json(data);
 
