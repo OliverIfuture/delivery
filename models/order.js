@@ -3,7 +3,7 @@ const db = require('../config/config');
 const Order = {};
 
 
-Order.findByStatus = (status) => {
+Order.findByStatus = (status, id_order_company) => {
 
     const sql = `
   SELECT 
@@ -111,13 +111,13 @@ Order.findByStatus = (status) => {
 	  OHPP.id_plate = M.id
 		
     WHERE
-        status = $1
+        status = $1 and O.id_order_company = $2
     GROUP BY
         O.id, U.id, A.id, U2.id
     ORDER BY O.id desc
     `;
 
-    return db.manyOrNone(sql, status);
+    return db.manyOrNone(sql, [status, id_order_company]);
 
 }
 
