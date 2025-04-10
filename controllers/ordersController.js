@@ -1108,6 +1108,29 @@ async  getDealers(req, res, next) {
             });
         }
     },     
+
+
+
+     async getNotifications(req, res, next) {
+        try {
+            const idUser = req.params.idUser;
+
+            const data = await Order.getNotifications(idUser);
+            console.log(`el notifications : ${JSON.stringify(data)}`);
+
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las notificaciones',
+                error: error,
+                success: false
+            });
+        }
+    },  
+    
   
 }
 
