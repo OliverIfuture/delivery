@@ -24,6 +24,10 @@ module.exports = (app) => {
     app.get('/api/orders/selectIncomes/:shift_ref', ordersController.selectIncomes);
     app.get('/api/orders/selectShiftClose', ordersController.selectShiftClose);
 
+    app.get('/api/orders/getNotifications/:userid', ordersController.getNotifications);
+
+
+    
     /* 
     *POST ROUTES
     create guardadp
