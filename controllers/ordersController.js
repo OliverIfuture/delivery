@@ -1130,6 +1130,32 @@ async  getDealers(req, res, next) {
             });
         }
     },  
+
+async createNotification(req, res, next) {
+        try {
+
+            let notification = req.body;
+            console.log(`el recharge : ${JSON.stringify(notification)}`);
+
+            const data = await Order.createNotification(notification);
+            return res.status(201).json({
+
+                success: true,
+                message: 'La notificacion se cargo correctamente',
+                data: data.id
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error creando la notificacion',
+                error: error
+            });
+        }
+    },
+
     
   
 }
