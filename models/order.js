@@ -1537,4 +1537,15 @@ return db.manyOrNone(sql, sucursalId);
 }
 
 
+
+Order.getNotifications = (userId) =>{
+	const sql = `
+SELECT * FROM notifications
+        where id_user = $1
+        ORDER BY id desc  
+ `;
+return db.manyOrNone(sql, userId);
+
+}
+
 module.exports = Order;
