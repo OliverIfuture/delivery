@@ -1540,9 +1540,11 @@ return db.manyOrNone(sql, sucursalId);
 
 Order.getNotifications = (userId) =>{
 	const sql = `
-SELECT * FROM notification
-        where id_user = $1
-        ORDER BY id desc  
+SELECT * 
+FROM notification
+WHERE id_user = $1
+ORDER BY id DESC
+LIMIT 10
  `;
 return db.manyOrNone(sql, userId);
 
