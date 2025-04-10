@@ -1540,7 +1540,7 @@ return db.manyOrNone(sql, sucursalId);
 
 Order.getNotifications = (userId) =>{
 	const sql = `
-SELECT * FROM notifications
+SELECT * FROM notification
         where id_user = $1
         ORDER BY id desc  
  `;
