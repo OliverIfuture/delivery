@@ -55,7 +55,8 @@ Category.create =  (category) => {
         category.name,
         category.description,
         new Date(),
-        new Date()
+        new Date(),
+        category.id_category_company
 
 
 
