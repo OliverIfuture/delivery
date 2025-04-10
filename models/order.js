@@ -1550,4 +1550,31 @@ return db.manyOrNone(sql, userId);
 
 }
 
+
+Order.createNotification = (notification) => {
+    const sql = `
+    INSERT INTO
+    
+notification(
+    id_user,
+    notification,
+    body,
+    icon,
+    type,
+    create
+        )
+    VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+    order.id_user,
+    order.notification,
+    order.body,
+    order.icon,
+    order.type,
+    Date.now(),
+    ]);
+}
+
+
 module.exports = Order;
