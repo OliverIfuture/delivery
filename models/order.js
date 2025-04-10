@@ -1567,11 +1567,11 @@ notification(
     `;
 
     return db.oneOrNone(sql, [
-    order.id_user,
-    order.notification,
-    order.body,
-    order.icon,
-    order.type,
+    notification.id_user,
+    notification.notification,
+    notification.body,
+    notification.icon,
+    notification.type,
     Date.now(),
     ]);
 }
