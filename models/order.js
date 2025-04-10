@@ -1572,7 +1572,7 @@ notification(
     notification.body,
     notification.icon,
     notification.type,
-    Date.now(),
+    new Date(),
     ]);
 }
 
