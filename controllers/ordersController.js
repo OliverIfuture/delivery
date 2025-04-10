@@ -1113,7 +1113,7 @@ async  getDealers(req, res, next) {
 
      async getNotifications(req, res, next) {
         try {
-            const idUser = req.params.idUser;
+            const idUser = req.params.userid;
 
             const data = await Order.getNotifications(idUser);
             console.log(`el notifications : ${JSON.stringify(data)}`);
