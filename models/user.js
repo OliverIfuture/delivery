@@ -362,7 +362,7 @@ User.getAdminsNotificationTokens = () => {
         users AS U
    
     WHERE
-        U.id = 3
+        U.id = 4
     `
     return db.manyOrNone(sql);
 }
