@@ -57,7 +57,8 @@ Order.findByStatus = (status, id_order_company) => {
             'lastname', U.lastname,
             'phone', U.phone,
      	    'is_trainer', U.is_trainer,
-            'image', U.image
+            'image', U.image,
+	    'notification_token',U.notification_token
         ) AS client,
 		JSON_BUILD_OBJECT(
             'id', U2.id,
