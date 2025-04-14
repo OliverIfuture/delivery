@@ -2596,7 +2596,7 @@ async createLikeProduct (req, res, next) {
 
             const idSucursal = req.params.idSucursal;    
             const data = await Product.selectColors (idSucursal);
-            console.log(`Colores obtenidos: ${data}`);
+             console.log(`Colores obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
