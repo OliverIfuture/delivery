@@ -2610,11 +2610,11 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
-  async selectOcatios (req, res, next) {
+  async selectOcations(req, res, next) {
         try {
 
             const idSucursal = req.params.idSucursal;    
-            const data = await Product.selectOcatios(idSucursal);
+            const data = await Product.selectOcations(idSucursal);
              console.log(`ocaciones obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
