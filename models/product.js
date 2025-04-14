@@ -1976,6 +1976,13 @@ Product.selectColors = (idSucursal) => {
     return db.manyOrNone(sql,idSucursal);
 }
 
+Product.selectOcations = (idSucursal) => {
+    const sql = `
+
+	select * from ocation where company_id = $1
+    `;
+    return db.manyOrNone(sql,idSucursal);
+}
 
 
 module.exports = Product;
