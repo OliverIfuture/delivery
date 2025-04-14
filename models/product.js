@@ -1968,5 +1968,14 @@ Product.deleteRepets = (idSucursal, dispense) => {
 }
 
 
+Product.selectColors = (idSucursal) => {
+    const sql = `
+
+	select * from colors where company_id = $1
+    `;
+    return db.none(sql,idSucursal);
+}
+
+
 
 module.exports = Product;
