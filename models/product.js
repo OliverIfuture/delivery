@@ -1973,7 +1973,7 @@ Product.selectColors = (idSucursal) => {
 
 	select * from colors where company_id = $1
     `;
-    return db.none(sql,idSucursal);
+    return db.manyOrNone(sql,idSucursal);
 }
 
 
