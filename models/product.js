@@ -1979,7 +1979,7 @@ Product.selectColors = (idSucursal) => {
 Product.selectOcations = (idSucursal) => {
     const sql = `
 
-	select * from ocation where company_id = $1
+	select * from ocation where id_company = $1
     `;
     return db.manyOrNone(sql,idSucursal);
 }
