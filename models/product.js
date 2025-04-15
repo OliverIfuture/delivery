@@ -1991,5 +1991,14 @@ Product.selectAroma = (idSucursal) => {
     return db.manyOrNone(sql,idSucursal);
 }
 
+Product.selectFlores = () =>{
+	const sql = `
+	select * from products where id_category = 1246
+
+ `;
+return db.manyOrNone(sql);
+
+}
+
 
 module.exports = Product;
