@@ -1993,7 +1993,7 @@ Product.selectAroma = (idSucursal) => {
 
 Product.selectFlores = () =>{
 	const sql = `
-	select * from products where id_category = 1246
+	select * from products where id_category = 124
 
  `;
 return db.manyOrNone(sql);
