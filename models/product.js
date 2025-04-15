@@ -1999,6 +1999,13 @@ Product.selectFlores = () =>{
 return db.manyOrNone(sql);
 
 }
+Product.selectSizes = () =>{
+	const sql = `
+	select * from products where id_category = 125
 
+ `;
+return db.manyOrNone(sql);
+
+}
 
 module.exports = Product;
