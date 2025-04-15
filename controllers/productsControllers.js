@@ -2629,5 +2629,24 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
+  async selectAroma(req, res, next) {
+        try {
+
+            const idSucursal = req.params.idSucursal;    
+            const data = await Product.selectAroma(idSucursal);
+             console.log(`aromas obtenidos: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
 
 }
