@@ -1983,6 +1983,13 @@ Product.selectOcations = (idSucursal) => {
     `;
     return db.manyOrNone(sql,idSucursal);
 }
+Product.selectAroma = (idSucursal) => {
+    const sql = `
+
+	select * from aroma where id_company = $1
+    `;
+    return db.manyOrNone(sql,idSucursal);
+}
 
 
 module.exports = Product;
