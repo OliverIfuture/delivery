@@ -107,6 +107,7 @@ module.exports = (app, upload) => {
        app.get('/api/products/findByCategoryAndProductNameStocks/:id_category/:product_name/:id_company', passport.authenticate('jwt', {session: false}), productsControllers.findByCategoryAndProductNameStocks);
        app.get('/api/products/selectColors/:idSucursal', passport.authenticate('jwt', {session: false}), productsControllers.selectColors );
        app.get('/api/products/selectOcations/:idSucursal', passport.authenticate('jwt', {session: false}), productsControllers.selectOcations );
+       app.get('/api/products/selectAroma/:idSucursal', passport.authenticate('jwt', {session: false}), productsControllers.selectAroma);
 
       app.put('/api/products/updateStock', productsControllers.updateProduct);
       app.put('/api/products/update', productsControllers.upateProduct);
