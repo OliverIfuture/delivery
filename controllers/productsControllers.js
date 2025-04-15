@@ -2649,4 +2649,23 @@ async createLikeProduct (req, res, next) {
         }
     },
 
+
+   async selectFlores(req, res, next) {
+        try {
+            const data = await Product.selectFlores();
+            console.log(`flores individuales : ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
+
 }
