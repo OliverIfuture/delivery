@@ -26,11 +26,9 @@ Address.findByUser = (id_user) => {
 Address.delete = (id, id_user) => {
     const sql = `
 
-    DELETE 
-    
-    FROM address 
-
-    WHERE id = $1 and id_user = $2 
+        UPDATE address
+        	SET active= false
+        	WHERE id = $1;
     `;
 
     return db.none(sql, [
