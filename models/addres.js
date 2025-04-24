@@ -51,10 +51,11 @@ Address.create = (address) => {
             lat,
             lng,
             created_at,
-            updated_at
+            updated_at,
+            active
         )
 
-    VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -64,7 +65,8 @@ Address.create = (address) => {
         address.lat,
         address.lng,
         new Date(),
-        new Date()
+        new Date(),
+        address.active
     ]);
 }
 
