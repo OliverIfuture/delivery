@@ -18,7 +18,7 @@ module.exports = (app, upload) => {
     app.post('/api/users/findByCode/:code',UsersController.findByCode);
 
 
-    app.post('/api/users/create', upload.array('image', 1), UsersController.registerWithImage);
+    app.post('/api/users/create', upload.array('image', 1), UsersController.registerWithOutImage);
 
     app.post('/api/users/createticket/:name/:active/:amount/:userId', UsersController.createticket);
     app.post('/api/users/login', UsersController.login);
