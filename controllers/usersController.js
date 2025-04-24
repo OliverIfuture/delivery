@@ -308,6 +308,34 @@ async getAdminsNotificationTokens(req, res, next) {
             });
         }
     },
+
+        async updateNoImage(req, res, next) {
+        try {
+            
+            const user = req.body;
+            console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+            const files = req.files;
+
+            await User.update(user);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'Los datos del usuario se actualizaron correctamente',
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error con la actualizacion de datos del ususario',
+                error: error
+
+            });
+        }
+    },
                 
     async update(req, res, next) {
         try {
