@@ -242,7 +242,7 @@ async getAdminsNotificationTokens(req, res, next) {
             async registerWithOutImage(req, res, next) {
         try {
             
-            const user = JSON.parse(req.body.user);
+            const user = req.body;
             console.log(`Datos de usuario: ${user}`);
 
             const data = await User.create(user);
