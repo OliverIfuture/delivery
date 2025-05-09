@@ -127,6 +127,7 @@ P.id_user,
 P.description,
 p.social,
 P.image_post,
+p.id_company,
 U.name,
 U.image as photo,
   COALESCE(json_agg(
@@ -140,6 +141,7 @@ U.image as photo,
 		from post as P
 inner join users as U on U.id = P.id_user 
 inner join likes_publish as L on L.id_publish = P.id
+where p.id_company = 2
 group by p.id,U.name, U.image
 order by id desc
  `;
