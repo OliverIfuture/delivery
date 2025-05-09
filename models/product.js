@@ -125,10 +125,10 @@ select
 p.id,
 P.id_user,
 P.description,
+p.social,
 P.image_post,
 U.name,
 U.image as photo,
-U.social,
   COALESCE(json_agg(
            DISTINCT jsonb_build_object(
                 'id', L.id,
