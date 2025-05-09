@@ -128,6 +128,7 @@ P.description,
 P.image_post,
 U.name,
 U.image as photo,
+U.social,
   COALESCE(json_agg(
            DISTINCT jsonb_build_object(
                 'id', L.id,
