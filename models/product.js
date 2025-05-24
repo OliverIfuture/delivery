@@ -182,13 +182,7 @@ return db.manyOrNone(sql);
 
 Product.populars = () =>{
 	const sql = `
-	select * from products where id = 1644
-	union 
-	select * from products where id = 1678
-	union 
-	select * from products where id = 1643
-	union 
-	select * from products where id = 1676
+	select * from products where id_category = 190
 
  `;
 return db.manyOrNone(sql);
