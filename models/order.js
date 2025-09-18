@@ -21,6 +21,8 @@ Order.findByStatus = (status, id_order_company) => {
         O.extra,
 	O.total_extra,
  	O.drone_id,
+    O.lat,
+	O.lng,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
 				
@@ -140,6 +142,8 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
 	O.extra,
   	O.total_extra,
    	O.drone_id,
+	    O.lat,
+	O.lng,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -257,6 +261,8 @@ Order.findByClient = (id_client) => {
 	O.extra,
   	O.total_extra,
    	O.drone_id,
+	    O.lat,
+	O.lng,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -373,6 +379,8 @@ Order.getByClientAndStatusWeb = (id_client) => {
 	O.extra,
  	O.total_extra,
    	O.drone_id,
+	    O.lat,
+	O.lng,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -487,6 +495,8 @@ Order.findByClientAndStatus = (id_client, status) => {
 	o.extra,
   	O.total_extra,
    	O.drone_id,
+	    O.lat,
+	O.lng,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
