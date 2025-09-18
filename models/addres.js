@@ -64,7 +64,7 @@ Address.create = (address) => {
         address.lng,
         new Date(),
         new Date(),
-        address.active
+        true
     ]);
 }
 
