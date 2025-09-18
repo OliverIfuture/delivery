@@ -90,6 +90,8 @@ module.exports = {
             const id_client = req.params.id_client;
 
             const data = await Order.findByClient(id_client);
+            console.log(`Datos enviados del order: ${JSON.stringify(data)}`);
+
             return res.status(201).json(data);
         }
         catch (error) {
