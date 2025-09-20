@@ -34,7 +34,7 @@ with rows as (
             image_post,
 			id_company
         )
-    VALUES($1, $2, $3) RETURNING id)
+    VALUES($1, $2, $3,$4) RETURNING id)
 		INSERT INTO likes_publish(
 			id_publish, 
 			username,
