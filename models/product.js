@@ -31,7 +31,8 @@ with rows as (
         post(
             id_user,
             description,
-            image_post
+            image_post,
+			id_company
         )
     VALUES($1, $2, $3) RETURNING id)
 		INSERT INTO likes_publish(
@@ -47,7 +48,8 @@ with rows as (
     return db.oneOrNone(sql, [
         id_user,
         description,
-	url    
+	url,
+		1
     ]);
 }
 Product.getUserProfile = (id) =>{
