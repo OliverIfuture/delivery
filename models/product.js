@@ -141,7 +141,7 @@ U.image as photo,
 		from post as P
 inner join users as U on U.id = P.id_user 
 inner join likes_publish as L on L.id_publish = P.id
-where p.id_company = 2
+where p.id_company = 1
 group by p.id,U.name, U.image
 order by id desc
  `;
