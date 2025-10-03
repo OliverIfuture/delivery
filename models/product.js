@@ -1356,15 +1356,25 @@ SELECT
 	P.id_company,
 	P.state,
 	P.price_special,
-	P.price_buy
-FROM
-	products as P
+	P.price_buy,
+	        COALESCE(json_agg(
+		JSON_BUILD_OBJECT(
+                'id', F.id,
+				'product_id',F.id_product,
+                'flavor', F.flavor,
+				'id_company',F.id_company,
+				'active',F.activate
+		)
+		)FILTER (WHERE F.id IS NOT NULL), '[]') as flavor 
+					 FROM products as P
 INNER JOIN 
 	categories as C
 ON
 	p.id_category = C.id
-WHERE
-	C.id = $1
+left JOIN flavor as F on P.id = F.id_product		
+WHERE C.id = $1
+group by p.id
+
     
     `;
     return db.manyOrNone(sql, id_category);
