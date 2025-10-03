@@ -1682,10 +1682,10 @@ async updateAdmin(req, res, next) {
     async delete(req, res, next) {
         try {
 
-            const product = req.params;
+            const id = req.params.id;
 
-            const data = await Product.delete(product.id);
-            console.log(`Product to delete: ${JSON.stringify(data)}`);
+            const data = await Product.delete(id);
+            console.log(`Product to delete: ${JSON.stringify(id)}`);
 
 
                 return res.status(201).json({
