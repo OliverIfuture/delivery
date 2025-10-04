@@ -1456,7 +1456,7 @@ WHERE
 
 Product.findByCategoryStocks = (id_category, id_company, id_product_company) => {
     const sql = `
-SELECT 
+SELECT
 	P.id,
 	P.name,
 	P.description,
@@ -1467,21 +1467,43 @@ SELECT
 	P.id_category,
 	P.stock,
 	P.id_company,
-	S.stock as state,
+	S.stock AS state,
 	P.price_special,
 	P.price_buy,
- 	P.price_wholesale
+	P.price_wholesale,
+    -- NUEVA COLUMNA: Agregamos los sabores como un array JSON
+	COALESCE(json_agg(
+		JSON_BUILD_OBJECT(
+			'id', F.id,
+			'product_id', F.id_product,
+			'flavor', F.flavor,
+			'id_company', F.id_company,
+			'active', F.activate
+		)
+	) FILTER (WHERE F.id IS NOT NULL), '[]') AS flavor
 FROM
-	products as P
-INNER JOIN 
-	categories as C
+	products AS P
+INNER JOIN
+	categories AS C
 ON
-	p.id_category = C.id
-inner join stock as S
-on P.id = S.id_product
-	
+	P.id_category = C.id
+INNER JOIN 
+	stock AS S
+ON 
+	P.id = S.id_product
+-- LEFT JOIN es crucial para obtener los sabores (F) sin excluir productos que no tienen ninguno
+LEFT JOIN 
+	flavor AS F 
+ON 
+	P.id = F.id_product
 WHERE
-	C.id = $1 and S.id_company = $2   AND P.id_company = COALESCE($3, 1)
+	C.id = $1 
+	AND S.id_company = $2 
+	AND P.id_company = COALESCE($3, 1)
+-- Agrupamos por todas las columnas NO agregadas
+GROUP BY
+	P.id, P.name, P.description, P.price, P.image1, P.image2, P.image3,
+	P.id_category, P.stock, P.id_company, S.stock, P.price_special, P.price_buy, P.price_wholesale;
     
     `;
     return db.manyOrNone(sql, [id_category, id_company, id_product_company]);
