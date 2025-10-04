@@ -2080,4 +2080,24 @@ return db.manyOrNone(sql);
 
 }
 
+
+Product.createFlavor = (flavor) => {
+    const sql = `
+	INSERT INTO public.flavor(
+	id_product, 
+	flavor, 
+	id_company, 
+	activate
+	)
+	VALUES ($1, $2, $3, $4);
+
+    `;
+    return db.oneOrNone(sql, [
+        flavor.idProduct,
+        flavor.flavor,
+        flavor.idCompany,
+        flavor.activate
+    ]);
+}
+
 module.exports = Product;
