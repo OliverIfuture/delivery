@@ -2093,9 +2093,9 @@ Product.createFlavor = (flavor) => {
 
     `;
     return db.oneOrNone(sql, [
-        flavor.idProduct,
+        flavor.id_product,
         flavor.flavor,
-        flavor.idCompany,
+        flavor.id_company,
         flavor.activate
     ]);
 }
