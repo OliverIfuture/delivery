@@ -2684,4 +2684,33 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
+
+  async createFlavor  (req, res, next) {
+        try {
+
+            const flavor = req.body;
+             console.log(`Status: ${JSON.stringify(flavor)}`);
+
+
+                
+            const data = await Product.createFlavor (flavor);
+             console.log(`Status: ${JSON.stringify(flavor)}`);
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'sabor creado',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error creando el sabor',
+                error: error
+            });
+        }
+    },    
+
 }
