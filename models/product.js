@@ -1701,6 +1701,42 @@ Product.update = (product) => {
 
 }
 
+Product.updateAdminApp = (product) => {
+    const sql = `
+    
+    UPDATE
+        products
+    SET
+            name = $2,
+            description = $3,
+            price = $4,
+            id_category = $5,
+	    	id_company = $6, 
+     	    price_special = $7,
+	    	price_buy = $8,
+     	    state = $9,
+	    	price_wholesale = $10
+
+    where
+
+        id = $1
+        `;
+    return db.none(sql, [
+        product.id,
+        product.name,
+        product.description,
+        product.price,
+        product.idCategory,
+		product.id_company,
+        product.price_special,
+        product.price_buy,
+		product.state,
+		product.price_special    
+
+    ]);
+
+}
+
 Product.updateAdmin = (product) => {
     const sql = `
     
