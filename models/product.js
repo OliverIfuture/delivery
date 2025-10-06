@@ -1714,8 +1714,7 @@ Product.updateAdminApp = (product) => {
 	    	id_company = $6, 
      	    price_special = $7,
 	    	price_buy = $8,
-     	    state = $9,
-	    	price_wholesale = $10
+	    	price_wholesale = $9
 
     where
 
@@ -1730,7 +1729,6 @@ Product.updateAdminApp = (product) => {
 		product.id_company,
         product.price_special,
         product.price_buy,
-		product.state,
 		product.price_special    
 
     ]);
