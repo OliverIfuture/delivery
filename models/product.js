@@ -2145,4 +2145,17 @@ Product.deleteFlavor = (id) => {
     return db.oneOrNone(sql,id);
 }
 
+Product.updateFlavor = (id, activate) => {
+    const sql = `
+    UPDATE
+        flavor
+    SET
+        activate = $2
+	WHERE
+        id $1
+    `;
+    return db.none(sql, [id, activate]);
+}
+
+
 module.exports = Product;
