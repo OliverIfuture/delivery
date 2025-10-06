@@ -2743,4 +2743,26 @@ async createLikeProduct (req, res, next) {
         }
     },    
 
+  async deleteFlavor (req, res, next) {
+        try {
+
+            const id = req.params.id;
+            const data = await Product.deleteFlavor(id);
+
+            return res.status(201).json({
+                message: 'El sabor se elimino correctamente',
+                success: true
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar el sabor',
+                success: false,
+                error: error
+            });
+        }
+        
+},
+
 }
