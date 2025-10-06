@@ -1401,10 +1401,10 @@ SELECT
 	        COALESCE(json_agg(
 		JSON_BUILD_OBJECT(
                 'id', F.id,
-				'product_id',F.id_product,
+				'id_product',F.id_product,
                 'flavor', F.flavor,
 				'id_company',F.id_company,
-				'active',F.activate
+				'activate',F.activate
 		)
 		)FILTER (WHERE F.id IS NOT NULL), '[]') as flavor 
 					 FROM products as P
