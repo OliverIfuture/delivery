@@ -2152,7 +2152,7 @@ Product.updateFlavor = (id, activate) => {
     SET
         activate = $2
 	WHERE
-        id $1
+        id = $1
     `;
     return db.none(sql, [id, activate]);
 }
