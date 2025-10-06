@@ -1725,7 +1725,7 @@ Product.updateAdminApp = (product) => {
         product.name,
         product.description,
         product.price,
-        product.idCategory,
+        product.id_category,
 		product.id_company,
         product.price_special,
         product.price_buy,
