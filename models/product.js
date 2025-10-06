@@ -2135,4 +2135,14 @@ Product.createFlavor = (flavor) => {
     ]);
 }
 
+Product.deleteFlavor = (id) => {
+
+    const sql = `
+    DELETE FROM flavor
+    WHERE  id = $1
+    `;
+
+    return db.oneOrNone(sql,id);
+}
+
 module.exports = Product;
