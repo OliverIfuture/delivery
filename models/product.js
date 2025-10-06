@@ -1503,7 +1503,8 @@ WHERE
 -- Agrupamos por todas las columnas NO agregadas
 GROUP BY
 	P.id, P.name, P.description, P.price, P.image1, P.image2, P.image3,
-	P.id_category, P.stock, P.id_company, S.stock, P.price_special, P.price_buy, P.price_wholesale;
+	P.id_category, P.stock, P.id_company, S.stock, P.price_special, P.price_buy, P.price_wholesale
+	order by S.stock desc
     
     `;
     return db.manyOrNone(sql, [id_category, id_company, id_product_company]);
