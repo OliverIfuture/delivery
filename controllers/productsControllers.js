@@ -2765,4 +2765,34 @@ async createLikeProduct (req, res, next) {
         
 },
 
+ async updateFlavor (req, res, next) {
+        try {
+
+            const id = req.params.id;             
+            const activate = req.params.activate; 
+         
+            console.log(`Nuevo stock: ${id} ${activate}`);
+
+            const data = await Product.updateFlavor(id, activate);
+            console.log(`Nuevo stock: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'sabor actualizado',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error al actualizar el sabor',
+                error: error
+            });
+        }
+    },      
+
 }
