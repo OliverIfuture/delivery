@@ -1415,6 +1415,7 @@ ON
 left JOIN flavor as F on P.id = F.id_product		
 WHERE C.id = $1
 group by p.id
+order by P.stock = 'true' desc
 
     
     `;
