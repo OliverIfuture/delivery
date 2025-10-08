@@ -52,6 +52,9 @@ module.exports = (app, upload) => {
 
      app.get('/api/users/findClientdealer/:name',passport.authenticate('dealer-jwt', {session: false}) ,UsersController.findClientDealer);
     app.get('/api/users/getAdminsNotificationTokensDealer', passport.authenticate('dealer-jwt', {session: false}), UsersController.getAdminsNotificationTokensDealer);
-
+   
+    
+    
+app.post('/api/users/createWithImageUserAndCompany', upload.fields([{ name: 'image', 1 },{ name: 'imageLogo', 1 } ]), UsersController.createWithImageUserAndCompany);
 }   
 
