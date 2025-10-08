@@ -818,4 +818,76 @@ User.updateNotificationToken_dealer = (id, token) => {
 }
 
 
+User.createWithImageUserAndCompany = (user, company) => {
+    // 1. Hash de la contraseña
+    const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
+    user.password = myPasswordHashed;
+
+    // Consulta para insertar el usuario, asegurando que se devuelva el ID
+    const sqlUser = `
+        INSERT INTO
+            users(
+                email,
+                name,
+                lastname,
+                phone,
+                image,
+                password,
+                created_at,
+                updated_at
+            )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8) 
+        RETURNING id
+    `;
+
+    // Usamos la cadena de promesas:
+    return db.one(sqlUser, [
+        user.email,
+        user.name,
+        user.lastname,
+        user.phone,
+        user.image,
+        user.password,
+        new Date(),
+        new Date()
+    ])
+    .then(data => {
+        // 'data' contiene el ID del usuario recién creado: { id: <user_id> }
+        const newUserId = data.id;
+        
+        // 2. Asignar el ID del usuario a la compañía
+        company.user_id = newUserId;
+        
+        // 3. Consulta para insertar la compañía
+        // Se asume la inclusión de created_at y updated_at para buenas prácticas.
+        const sqlCompany = `
+            INSERT INTO public.company(
+                name, addres, telephone, user_id, logo, state, available, type, lat, lng, created_at, updated_at
+            )
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `;
+        
+        return db.none(sqlCompany, [
+            company.name,
+            company.addres,
+            company.telephone,
+            company.user_id, // Usamos el ID recuperado
+            company.logo,
+            company.state,
+            company.available,
+            company.type,
+            company.lat,
+            company.lng,
+            new Date(),
+            new Date()
+        ])
+        .then(() => {
+            // Devolver el ID del usuario al controlador para que pueda asignar los roles
+            return { id: newUserId };
+        });
+    });
+};
+
+
+
 module.exports = User;
