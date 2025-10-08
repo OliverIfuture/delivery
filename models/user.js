@@ -862,9 +862,9 @@ User.createWithImageUserAndCompany = (user, company) => {
         // Se asume la inclusión de created_at y updated_at para buenas prácticas.
         const sqlCompany = `
             INSERT INTO public.company(
-                name, addres, telephone, user_id, logo, state, available, type, lat, lng, created_at, updated_at
+                name, addres, telephone, user_id, logo, state, available, type, lat, lng
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `;
         
         return db.none(sqlCompany, [
@@ -877,9 +877,7 @@ User.createWithImageUserAndCompany = (user, company) => {
             company.available,
             company.type,
             company.lat,
-            company.lng,
-            new Date(),
-            new Date()
+            company.lng
         ])
         .then(() => {
             // Devolver el ID del usuario al controlador para que pueda asignar los roles
