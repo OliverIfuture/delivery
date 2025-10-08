@@ -55,6 +55,8 @@ module.exports = (app, upload) => {
    
     
     
-app.post('/api/users/createWithImageUserAndCompany', upload.fields([{ name: 'image', 1 },{ name: 'imageLogo', 1 } ]), UsersController.createWithImageUserAndCompany);
-}   
+app.post('/api/users/createWithImageUserAndCompany', upload.fields([
+    { name: 'image', maxCount: 1 }, 
+    { name: 'imageLogo', maxCount: 1 } 
+]), UsersController.createWithImageUserAndCompany);}   
 
