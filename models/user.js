@@ -275,47 +275,74 @@ User.findByQR = (id) => {
 
 User.findByEmail = (email) => {
     const sql = `
-    SELECT
-        U.id,
-        U.email,
-        U.name,
-        U.lastname,
-        U.image,
-        U.phone,
-        U.password,
-        U.session_token,
-        U.notification_token,
-        U.autenticated,
-        U.is_trainer,
-        U.document,
-        U.gym,        
-        U.state,
-        U.credential,
-        U.keystore,
-        U.balance,
-	U.mi_store,
-        json_agg(
-            json_build_object(
-                'id', R.id,
-                'name', R.name,
-                'image', R.image,
-                'route', R.route
-            )
-        ) AS roles
-    FROM 
-        users AS U
-    INNER JOIN
-        user_has_roles AS UHR
-    ON
-        UHR.id_user = U.id
-    INNER JOIN
-        roles AS R
-    ON
-        R.id = UHR.id_rol
-    WHERE
-        U.email = $1
-    GROUP BY
-        U.id
+SELECT
+    U.id,
+    U.email,
+    U.name,
+    U.lastname,
+    U.image,
+    U.phone,
+    U.password,
+    U.session_token,
+    U.notification_token,
+    U.autenticated,
+    U.is_trainer,
+    U.document,
+    U.gym,
+    U.state,
+    U.credential,
+    U.keystore,
+    U.balance,
+    U.mi_store,
+    -- CORRECCIÓN: Usamos jsonb_agg + FILTER + extracción de índice (-> 0) para obtener
+    -- un objeto único o NULL. Esto resuelve el error 'MAX(json) does not exist'.
+    COALESCE(
+        (
+            jsonb_agg(
+                jsonb_build_object( -- Usamos jsonb_build_object por consistencia con jsonb_agg
+                    'id', C.id,
+                    'name', C.name,
+                    'addres', C.addres,
+                    'telephone', C.telephone,
+                    'logo', C.logo,
+                    'state', C.state,
+                    'available', C.available,
+                    'type', C.type,
+                    'lat', C.lat,
+                    'lng', C.lng
+                )
+            ) FILTER (WHERE C.id IS NOT NULL) -- Solo agregamos si la compañía existe
+        ) -> 0, -- Extrae el primer (y único) objeto JSON del array resultante
+        '{}'::jsonb -- Devuelve un objeto vacío si no hay compañía
+    ) AS company,
+    -- Roles existentes
+    json_agg(
+        json_build_object(
+            'id', R.id,
+            'name', R.name,
+            'image', R.image,
+            'route', R.route
+        )
+    ) AS roles
+FROM
+    users AS U
+INNER JOIN
+    user_has_roles AS UHR
+ON
+    UHR.id_user = U.id
+INNER JOIN
+    roles AS R
+ON
+    R.id = UHR.id_rol
+LEFT JOIN -- Unir la tabla company de forma opcional
+    company AS C
+ON
+    C.user_id = U.id
+WHERE
+    U.email = $1
+GROUP BY
+    U.id
+
     `
     return db.oneOrNone(sql, email);
 }
