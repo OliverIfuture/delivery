@@ -498,7 +498,8 @@ async getAdminsNotificationTokens(req, res, next) {
 
                 await User.updateToken(myUser.id, `JWT ${token}`);
                 
- 
+             console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+
                 console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
  
                 return res.status(201).json({
