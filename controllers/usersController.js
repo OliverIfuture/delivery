@@ -492,7 +492,8 @@ async getAdminsNotificationTokens(req, res, next) {
                     credential: myUser.credential,
                     keystore: myUser.keystore,
                     balance: myUser.balance,
-                    mi_store: myUser.mi_store
+                    mi_store: myUser.mi_store,
+                    company: myUser.company
                 }
 
                 await User.updateToken(myUser.id, `JWT ${token}`);
