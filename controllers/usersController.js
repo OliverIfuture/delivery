@@ -453,78 +453,81 @@ async getAdminsNotificationTokens(req, res, next) {
 
 
  async login(req, res, next) {
-        try {
-            const email = req.body.email;
-            const password = req.body.password;
-                
-            console.log(email); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
-            console.log(password); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
+            
+        console.log(`Email recibido: ${email}`);
+        console.log(`Password recibido: ${password}`);
 
- 
-            const myUser = await User.findByEmail(email);
- 
-            if (!myUser) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'El email no fue encontrado'
-                });
-            }
- 
-            if (User.isPasswordMatched(password, myUser.password)) {
-                const token = jwt.sign({id: myUser.id, email: myUser.email}, keys.secretOrKey, {
-                    // expiresIn: (60*60*24) // 1 HORA
-                   //  expiresIn: (60 * 2) // 2 MINUTOS
-                });
-                const data = {
-                    id: myUser.id,
-                    name: myUser.name,
-                    lastname: myUser.lastname,
-                    email: myUser.email,
-                    phone: myUser.phone,
-                    image: myUser.image,
-                    session_token: `JWT ${token}`, // REVISA QUE ESTE LLEGANDO ESTE CAMPO
-                    autenticated: myUser.autenticated,
-                    is_trainer: myUser.is_trainer,
-                    document: myUser.document,
-                    roles: myUser.roles,
-                    gym: myUser.gym,
-                    state: myUser.state,
-                    credential: myUser.credential,
-                    keystore: myUser.keystore,
-                    balance: myUser.balance,
-                    mi_store: myUser.mi_store,
-                    company: myUser.company
-                }
+        const myUser = await User.findByEmail(email);
 
-                await User.updateToken(myUser.id, `JWT ${token}`);
-                
-             console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
-
-                console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
- 
-                return res.status(201).json({
-                    success: true,
-                    data: data,
-                    message: '! BIENVENIDO !'
-                });
-            }
-            else {
-                return res.status(401).json({
-                    success: false,
-                    message: 'La contraseña es incorrecta'
-                });
-            }
- 
-        } 
-        catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
+        if (!myUser) {
+            return res.status(401).json({
                 success: false,
-                message: 'Error al momento de hacer login',
-                error: error
+                message: 'El email no fue encontrado'
             });
         }
-    },
+
+        if (User.isPasswordMatched(password, myUser.password)) {
+            const token = jwt.sign({id: myUser.id, email: myUser.email}, keys.secretOrKey, {
+                // expiresIn: (60*60*24) // 1 HORA
+                // expiresIn: (60 * 2) // 2 MINUTOS
+            });
+            const data = {
+                id: myUser.id,
+                name: myUser.name,
+                lastname: myUser.lastname,
+                email: myUser.email,
+                phone: myUser.phone,
+                image: myUser.image,
+                session_token: `JWT ${token}`, // REVISA QUE ESTE LLEGANDO ESTE CAMPO
+                autenticated: myUser.autenticated,
+                is_trainer: myUser.is_trainer,
+                document: myUser.document,
+                roles: myUser.roles,
+                gym: myUser.gym,
+                state: myUser.state,
+                credential: myUser.credential,
+                keystore: myUser.keystore,
+                balance: myUser.balance,
+                mi_store: myUser.mi_store,
+                company: myUser.company
+            }
+
+            await User.updateToken(myUser.id, `JWT ${token}`);
+            
+            // CORRECCIÓN: Usamos JSON.stringify con indentación (null, 2) para ver arrays legibles
+            console.log(`--- DATOS COMPLETOS DEL USUARIO ENVIADOS AL CLIENTE ---`);
+            console.log(JSON.stringify(data, null, 2));
+
+            // La línea anterior ya incluye roles y company.
+            // console.log(`DATA ENVIADA ${data.roles}`); // Comentamos esta línea ya que no es legible
+
+            return res.status(201).json({
+                success: true,
+                data: data,
+                message: '! BIENVENIDO !'
+            });
+        }
+        else {
+            return res.status(401).json({
+                success: false,
+                message: 'La contraseña es incorrecta'
+            });
+        }
+
+    } 
+    catch (error) {
+        console.log(`Error: ${error}`);
+        return res.status(501).json({
+            success: false,
+            message: 'Error al momento de hacer login',
+            error: error
+        });
+    }
+},
+
 
      async loginQr(req, res, next) {
         try {
