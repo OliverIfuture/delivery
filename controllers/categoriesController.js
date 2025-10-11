@@ -4,7 +4,7 @@ module.exports = {
 
     async getAll(req, res, next) {
         try {
-            const id_category_company = req.params.id_category_company ?? 1; // <= valor por defecto
+            const id_category_company = req.params.id_category_company ?? 4; // <= valor por defecto
             const data = await Category.getAll(id_category_company);
             console.log(`Categorias: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
