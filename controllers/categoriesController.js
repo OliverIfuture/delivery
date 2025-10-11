@@ -22,6 +22,25 @@ module.exports = {
         }
     },
 
+        async getAllByStore(req, res, next) {
+        try {
+            const id_category_company = req.params.id_category_company
+            const data = await Category.getAllByStore(id_category_company);
+            console.log(`Categorias: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+            
+        } catch (error) {
+            
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las categorias',
+                error: error,
+                success: false
+            
+
+            });
+        }
+    },
 
         async getAllPlates(req, res, next) {
         try {
