@@ -56,7 +56,7 @@ return db.manyOrNone(sql);
 
 }
 
-Product.getAllByStoregetAllByStore = () =>{
+Product.getAllByStoregetAllByStore = (id_category_company) =>{
 	const sql = `
 SELECT
     P.id,
@@ -106,7 +106,7 @@ ORDER BY
  
  
  `;
-return db.manyOrNone(sql);
+return db.manyOrNone(sql, id_category_company);
 
 }
 Product.deletePost = (id) => {
