@@ -41,7 +41,7 @@ LEFT JOIN
 ON 
     P.id = F.id_product
 WHERE
-    P.id_category != 24 and P.id_company =4 -- Filtramos por el id de la categoría del producto
+    P.id_category != 24 and P.id_company = 1 -- Filtramos por el id de la categoría del producto
 GROUP BY 
     P.id, P.name, P.description, P.price, P.image1, P.image2, P.image3, 
     P.id_category, P.stock, P.id_company, P.state, P.price_special, P.price_buy
