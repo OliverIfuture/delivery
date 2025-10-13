@@ -2212,5 +2212,15 @@ Product.updateFlavor = (id, activate) => {
     return db.none(sql, [id, activate]);
 }
 
+Product.getAllServices = (id) =>{
+	const sql = `
+	select * from services 
+	where business_id = $1
+ 
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
 
 module.exports = Product;
