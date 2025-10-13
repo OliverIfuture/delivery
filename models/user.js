@@ -877,7 +877,7 @@ User.createWithImageUserAndCompany = (user, company) => {
         user.password,
         new Date(),
         new Date()
-    ])
+	])
     .then(data => {
         // 'data' contiene el ID del usuario recién creado: { id: <user_id> }
         const newUserId = data.id;
@@ -889,9 +889,9 @@ User.createWithImageUserAndCompany = (user, company) => {
         // Se asume la inclusión de created_at y updated_at para buenas prácticas.
         const sqlCompany = `
             INSERT INTO public.company(
-                name, addres, telephone, user_id, logo, state, available, type, lat, lng
+                name, addres, telephone, user_id, logo, state, available, type, lat, lng, wantsAppointments
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         `;
         
         return db.none(sqlCompany, [
@@ -904,7 +904,8 @@ User.createWithImageUserAndCompany = (user, company) => {
             company.available,
             company.type,
             company.lat,
-            company.lng
+            company.lng,
+			company.wantsAppointments
         ])
         .then(() => {
             // Devolver el ID del usuario al controlador para que pueda asignar los roles
