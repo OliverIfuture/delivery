@@ -2801,11 +2801,8 @@ async createLikeProduct (req, res, next) {
             const id = req.params.id;
             const data = await Product.getAllServices(id);
              console.log(`Servicios recibidos: ${JSON.stringify(data)}`);
-            return res.status(201).json({
-                succes: true,
-                message: 'Servicios obtenidos correctamente',
-                data: data.id
-            });
+              return res.status(201).json(data);
+
 
         }
         catch (error) {
