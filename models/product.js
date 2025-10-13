@@ -2223,7 +2223,7 @@ return db.manyOrNone(sql, id);
 }
 Product.getSchedulesAvailable = (id) =>{
 	const sql = `
-	select * from services 
+	select * from available_schedules 
 	where business_id = $1
  
  `;
