@@ -2288,4 +2288,14 @@ WHERE
     `;
     return db.manyOrNone(sql,[id, startdatetime]);
 }
+
+Product.getCompanyByUser = (id) => {
+
+    const sql = `
+    select * from company where user_id = $1
+		`;
+    
+    return db.oneOrNone(sql, id)
+
+}
 module.exports = Product;
