@@ -2232,4 +2232,41 @@ return db.manyOrNone(sql, [id, day]);
 }
 
 
+Product.registerAppointment = (appointment) => {
+    // Se ha modificado el SQL para que no espere appointment_id
+    // y para que acepte los timestamps generados aquí.
+    const sql = `
+        INSERT INTO public.appointments(
+            client_id,
+            business_id,
+            service_id,
+            start_datetime,
+            end_datetime,
+            duration_minutes,
+            status,
+            client_notes,
+            provider_notes,
+            price,
+            created_at,
+            updated_at
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING appointment_id;
+    `;
+    return db.oneOrNone(sql, [
+        // Se han eliminado los campos que se generan automáticamente
+        appointment.client_id,
+        appointment.business_id,
+        appointment.service_id,
+        appointment.start_datetime,
+        appointment.end_datetime,
+        appointment.duration_minutes,
+        appointment.status,
+        appointment.client_notes,
+        appointment.provider_notes,
+        appointment.price,
+        new Date(), // Correcto: Genera el timestamp actual para created_at
+        new Date()  // Correcto: Genera el timestamp actual para updated_at
+    ]);
+}
 module.exports = Product;
