@@ -2858,4 +2858,26 @@ async createLikeProduct (req, res, next) {
         }
     },     
 
+
+   async selectAppoimentHour (req, res, next) {
+        try {
+
+            const id = req.params.idSucursal;    
+         const startdatetime = req.params.startdatetime;
+            const data = await Product.selectAppoimentHour (id, startdatetime);
+             console.log(`selectAppoimentHour obtenidos: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener'
+            });
+        }
+    },
+
 }
