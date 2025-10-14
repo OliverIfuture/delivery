@@ -159,6 +159,7 @@ module.exports = (app, upload) => {
 
 
       app.post('/api/products/registerAppointment',passport.authenticate('jwt', {session: false}) , productsControllers.registerAppointment);
+       app.get('/api/products/selectAppoimentHour/:id/:startdatetime', passport.authenticate('jwt', {session: false}), productsControllers.selectAppoimentHour );
 
 
 
