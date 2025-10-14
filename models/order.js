@@ -1603,7 +1603,8 @@ SELECT
     a.price,
     s.service_name,  -- Dato de la tabla services
     c.name AS business_name, -- Dato de la tabla company
-    c.logo AS business_logo  -- Dato de la tabla company
+    c.logo AS business_logo,  -- Dato de la tabla company
+	c.telephone
 FROM
     appointments AS a
 LEFT JOIN
