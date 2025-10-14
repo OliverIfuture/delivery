@@ -1620,4 +1620,38 @@ return db.manyOrNone(sql, userId);
 
 }
 
+Order.getAppoimentsByCompany = (id) =>{
+	const sql = `
+    select 
+	a.business_id,
+	a.appointment_id,
+	a.client_id,
+	a.service_id,
+    a.start_datetime,
+	a.end_datetime,
+	a.duration_minutes,
+	a.client_notes,
+	a.provider_notes,
+    a.status,
+	a.payments_status,
+    a.price,
+    s.service_name,  -- Dato de la tabla services
+    c.name AS business_name, -- Dato de la tabla company
+    c.logo AS business_logo,  -- Dato de la tabla company
+	c.telephone
+FROM
+    appointments AS a
+LEFT JOIN
+    services AS s ON a.service_id = s.service_id
+LEFT JOIN
+    company AS c ON a.business_id = c.id -- Asumiendo que la tabla se llama 'company' y la llave es 'id'
+WHERE
+    a.business_id = $1 -- Filtrando por el ID del cliente
+ORDER BY
+    a.start_datetime DESC; -- Ordenando las más recientes primero
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
 module.exports = Order;
