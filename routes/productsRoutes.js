@@ -158,5 +158,8 @@ module.exports = (app, upload) => {
       app.delete('/api/products/deleteFlavor/:id', productsControllers.deleteFlavor);
 
 
+      app.post('/api/products/registerAppointment',passport.authenticate('jwt', {session: false}) , productsControllers.registerAppointment);
+
+
 
 }
