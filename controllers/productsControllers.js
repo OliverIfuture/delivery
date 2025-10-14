@@ -2880,4 +2880,24 @@ async createLikeProduct (req, res, next) {
         }
     },
 
+
+   async getCompanyByUser(req, res, next) {
+        try {
+            const id = req.params.id;
+            const data = await Product.getCompanyByUser(id);
+             console.log(`compamy obtenidos: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener el negocio'
+            });
+        }
+    },
+ 
 }
