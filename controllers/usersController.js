@@ -1078,64 +1078,65 @@ async deleteAccout(req, res, next) {
 
 
 async createWithImageUserAndCompany(req, res, next) {
-    try {
-        // 1. Parsear los datos JSON
-        const user = JSON.parse(req.body.user);
-        const company = JSON.parse(req.body.company);
+        try {
+            // 1. Parsear los datos JSON
+            const user = JSON.parse(req.body.user);
+            const company = JSON.parse(req.body.company);
 
-        console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
-        console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
+            console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+            console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
 
-        // Acceder a los archivos cargados. Multer (con upload.fields) los pone en req.files 
-        // como un objeto, no como un array plano.
-        const files = req.files; 
-        
-        // 2. Procesar la Imagen del Usuario (Campo: 'image')
-        if (files.image && files.image.length > 0) {
-            const userImageFile = files.image[0];
-            const pathImage = `user_image_${Date.now()}`;
-            const url = await storage(userImageFile, pathImage);
-            
-            user.image = url; // Asigna la URL de la imagen al modelo de usuario
-            
+            const files = req.files;
+
+            // 2. Procesar la Imagen del Usuario
+            if (files.image && files.image.length > 0) {
+                const userImageFile = files.image[0];
+                const pathImage = `user_image_${Date.now()}`;
+                const url = await storage(userImageFile, pathImage);
+                user.image = url;
+            }
+
+            // 3. Procesar el Logo de la Compañía
+            if (files.imageLogo && files.imageLogo.length > 0) {
+                const companyLogoFile = files.imageLogo[0];
+                const pathLogo = `company_logo_${Date.now()}`;
+                const urlLogo = await storage(companyLogoFile, pathLogo);
+                company.logo = urlLogo;
+            }
+
+            // 4. Crear usuario y compañía en la base de datos
+            const data = await User.createWithImageUserAndCompany(user, company);
+
+            // 5. **ASIGNACIÓN DE ROLES CONDICIONAL (LÓGICA ACTUALIZADA)**
+            // Se comprueba si la compañía es para agendar citas.
+            if (company.wantsappointments === true) {
+                // Si es de tipo consulta/servicio, se asignan los roles de Cliente y Servicio.
+                console.log('Asignando roles para negocio de SERVICIOS.');
+                await Rol.create(data.id, 1); // ROL: Cliente
+                await Rol.create(data.id, 4); // ROL: Servicio/Consultorio (se asume que el ID es 4)
+            } else {
+                // Si es de tipo tienda, se asignan los roles originales.
+                console.log('Asignando roles para negocio de TIENDA.');
+                await Rol.create(data.id, 1); // ROL: Cliente
+                await Rol.create(data.id, 2); // ROL: Repartidor
+                await Rol.create(data.id, 3); // ROL: Tienda
+            }
+
+            // 7. Respuesta exitosa
+            return res.status(201).json({
+                succes: true,
+                message: 'El registro se realizó correctamente, ahora inicia sesión',
+                data: data.id
+            });
+
         }
-
-        // 3. Procesar el Logo de la Compañía (Campo: 'imageLogo')
-        if (files.imageLogo && files.imageLogo.length > 0) {
-            const companyLogoFile = files.imageLogo[0];
-            const pathLogo = `company_logo_${Date.now()}`; // Nombre único para el logo
-            const urlLogo = await storage(companyLogoFile, pathLogo);
-            
-            company.logo = urlLogo; // Asigna la URL del logo al modelo de compañía (asumo que el campo se llama 'logo')
-            
+        catch (error) {
+            console.log(`Error en createWithImageUserAndCompany: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'Error con el registro del usuario y la compañía',
+                error: error
+            });
         }
-
-        // 4. Crear usuario y compañía en la base de datos
-        // NOTA: Se asume que esta función en el modelo maneja la creación de ambos.
-        // Asegúrate de que tu modelo 'User.createWithImageUserAndCompany' también guarde la compañía.
-        const data = await User.createWithImageUserAndCompany(user, company);
-
-        // 5. Asignación de Roles
-        await Rol.create(data.id, 1); // ROL: Cliente
-        await Rol.create(data.id, 2); // ROL: Repartidor
-        await Rol.create(data.id, 3); // ROL: Tienda
-
-        
-        // 7. Respuesta exitosa
-        return res.status(201).json({
-            succes: true,
-            message: 'El registro se realizó correctamente, ahora inicia sesión',
-            data: data.id
-        });
-
-    }
-    catch (error) {
-        console.log(`Error en createWithImageUserAndCompany: ${error}`);
-        return res.status(501).json({
-            succes: false, // Debería ser 'false' si hubo un error.
-            message: 'Error con el registro del usuario y la compañía',
-            error: error
-        });
-    }
-}   
+    }  
 };
