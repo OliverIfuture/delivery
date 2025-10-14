@@ -2269,4 +2269,21 @@ Product.registerAppointment = (appointment) => {
         new Date()  // Correcto: Genera el timestamp actual para updated_at
     ]);
 }
+
+Product.selectAppoimentHour = (id, startdatetime) => {
+    const sql = `
+
+SELECT
+    start_datetime -- Solo necesitamos saber la hora de inicio para bloquearla
+FROM
+    appointments
+WHERE
+    business_id = $1 -- Parámetro 1: El ID del negocio (UUID)
+    AND status IN ('Pending', 'Confirmed') -- Consideramos citas pendientes y confirmadas como "ocupadas"
+    -- Comparamos que el campo start_datetime esté dentro del rango del día seleccionado
+    AND start_datetime >= date_trunc('day', $2::timestamptz) -- Desde el inicio del día ($2)
+    AND start_datetime < date_trunc('day', $2::timestamptz) + interval '1 day'; -- Hasta el final del día ($2)
+    `;
+    return db.manyOrNone(sql,[id, startdatetime]);
+}
 module.exports = Product;
