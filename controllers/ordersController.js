@@ -1175,7 +1175,26 @@ async createNotification(req, res, next) {
                 success: false
             });
         }
-    },   
+    }, 
+
+        async  getAppoimentsByCompany(req, res, next) {
+        try {
+            const id = req.params.id;
+
+            const data = await Order.getAppoimentsByCompany(id);
+            console.log(`el appoiments : ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las citas',
+                error: error,
+                success: false
+            });
+        }
+    },
   
 }
 
