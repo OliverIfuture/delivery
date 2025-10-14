@@ -1593,5 +1593,30 @@ notification(
     ]);
 }
 
+Order.getAppoiments = (userId) =>{
+	const sql = `
+SELECT
+    a.appointment_id,
+    a.start_datetime,
+    a.status,
+	a.payments_status,
+    a.price,
+    s.service_name,  -- Dato de la tabla services
+    c.name AS business_name, -- Dato de la tabla company
+    c.logo AS business_logo  -- Dato de la tabla company
+FROM
+    appointments AS a
+LEFT JOIN
+    services AS s ON a.service_id = s.service_id
+LEFT JOIN
+    company AS c ON a.business_id = c.id -- Asumiendo que la tabla se llama 'company' y la llave es 'id'
+WHERE
+    a.client_id = $1 -- Filtrando por el ID del cliente
+ORDER BY
+    a.start_datetime DESC; -- Ordenando las más recientes primero
+ `;
+return db.manyOrNone(sql, userId);
+
+}
 
 module.exports = Order;
