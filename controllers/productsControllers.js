@@ -2818,7 +2818,8 @@ async createLikeProduct (req, res, next) {
         try {
             
             const id = req.params.id;
-            const data = await Product.getSchedulesAvailable(id);
+         const day = req.params.day;
+            const data = await Product.getSchedulesAvailable(id, day);
              console.log(`getSchedulesAvailable recibidos: ${JSON.stringify(data)}`);
               return res.status(201).json(data);
 
