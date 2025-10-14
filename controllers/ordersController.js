@@ -1158,7 +1158,24 @@ async createNotification(req, res, next) {
         }
     },
 
-    
+    async  getAppoiments(req, res, next) {
+        try {
+            const userId = req.params.userId;
+
+            const data = await Order.getAppoiments(userId);
+            console.log(`el appoiments : ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las citas',
+                error: error,
+                success: false
+            });
+        }
+    },   
   
 }
 
