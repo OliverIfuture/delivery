@@ -2248,9 +2248,10 @@ Product.registerAppointment = (appointment) => {
             provider_notes,
             price,
             created_at,
-            updated_at
+            updated_at,
+			payments_status
         )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING appointment_id;
     `;
     return db.oneOrNone(sql, [
@@ -2266,7 +2267,8 @@ Product.registerAppointment = (appointment) => {
         appointment.provider_notes,
         appointment.price,
         new Date(), // Correcto: Genera el timestamp actual para created_at
-        new Date()  // Correcto: Genera el timestamp actual para updated_at
+        new Date(),  // Correcto: Genera el timestamp actual para updated_at
+		appointment.payments_status
     ]);
 }
 
