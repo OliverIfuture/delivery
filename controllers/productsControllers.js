@@ -2835,4 +2835,27 @@ async createLikeProduct (req, res, next) {
         }
     },
 
+ async registerAppointment  (req, res, next) {
+        try {
+
+            const appointment = req.body;
+            const data = await Product.registerAppointment (appointment);
+             console.log(`appointments: ${JSON.stringify(appointment)}`);
+
+                return res.status(201).json({
+                success: true,
+                message: 'cita creada',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error creando la cita',
+                error: error
+            });
+        }
+    },     
+
 }
