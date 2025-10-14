@@ -2862,7 +2862,7 @@ async createLikeProduct (req, res, next) {
    async selectAppoimentHour (req, res, next) {
         try {
 
-            const id = req.params.idSucursal;    
+            const id = req.params.id;    
          const startdatetime = req.params.startdatetime;
             const data = await Product.selectAppoimentHour (id, startdatetime);
              console.log(`selectAppoimentHour obtenidos: ${JSON.stringify(data)}`);
