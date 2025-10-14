@@ -916,6 +916,14 @@ User.createWithImageUserAndCompany = (user, company) => {
     });
 };
 
+User.getCompanyByUser = (id) => {
 
+    const sql = `
+    select * from company where user_id = $1
+		`;
+    
+    return db.oneOrNone(sql, id)
+
+}
 
 module.exports = User;
