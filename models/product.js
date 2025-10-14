@@ -2221,13 +2221,13 @@ Product.getAllServices = (id) =>{
 return db.manyOrNone(sql, id);
 
 }
-Product.getSchedulesAvailable = (id) =>{
+Product.getSchedulesAvailable = (id, day) =>{
 	const sql = `
 	select * from available_schedules 
-	where business_id = $1
+	where business_id = $1 and day_of_week = $2
  
  `;
-return db.manyOrNone(sql, id);
+return db.manyOrNone(sql, [id, day]);
 
 }
 
