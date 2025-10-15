@@ -2361,4 +2361,15 @@ Product.updateService = (services) => {
 
 }
 
+
+Product.deleteService = (id) => {
+
+    const sql = `
+    DELETE FROM services
+    WHERE  id = $1
+    `;
+
+    return db.oneOrNone(sql,id);
+}
+
 module.exports = Product;
