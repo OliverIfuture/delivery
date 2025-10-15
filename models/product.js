@@ -2333,4 +2333,14 @@ Product.createService = (services) => {
     ]);
 }
 
+Product.getAllServices = (id) =>{
+	const sql = `
+	select * from services 
+	where business_id = $1
+ 
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
 module.exports = Product;
