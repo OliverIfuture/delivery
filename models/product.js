@@ -2298,4 +2298,39 @@ Product.getCompanyByUser = (id) => {
     return db.oneOrNone(sql, id)
 
 }
+
+// Se asume que esta función está dentro de tu modelo (ej: product.js o un nuevo service.js)
+// y que 'db' es tu conexión a la base de datos (pg-promise).
+
+Product.createService = (services) => {
+    const sql = `
+        INSERT INTO 
+            services(
+                business_id,
+                service_name,
+                description,
+                default_duration_minutes,
+                default_price,
+                available
+            )
+        VALUES (
+            $1, 
+            $2, 
+            $3, 
+            $4, 
+            $5,
+            $6
+        )
+        RETURNING service_id;
+    `;
+    return db.oneOrNone(sql, [
+        services.business_id,
+        services.service_name,
+        services.description,
+        services.default_duration_minutes,
+        services.default_price,
+        services.available
+    ]);
+}
+
 module.exports = Product;
