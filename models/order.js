@@ -1654,4 +1654,17 @@ return db.manyOrNone(sql, id);
 
 }
 
+Order.updateAppointmentStatus = (id, newStatus) => {
+    const sql = `
+    UPDATE public.appointments
+	SET  status = $2
+	WHERE appointment_id = $1
+    `;
+    return db.none(sql, [
+        id,
+        newStatus
+    ]);
+}
+
+
 module.exports = Order;
