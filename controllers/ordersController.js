@@ -1195,6 +1195,29 @@ async createNotification(req, res, next) {
             });
         }
     },
+
+       async updateAppointmentStatus (req, res, next) {
+        try {
+
+            const id = req.params.appointmentId;
+            const newStatus = req.params.newStatus;
+            await Order.updateAppointmentStatus(id, newStatus);
+
+            return res.status(201).json({
+                success: true,
+                message: 'La cita se actualizo correctamente',
+            });
+
+        }
+        catch (error) {
+            console.log(`Error ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al actualizar la cita',
+                error: error
+            });
+        }
+    }, 
   
 }
 
