@@ -2343,4 +2343,22 @@ return db.manyOrNone(sql, id);
 
 }
 
+
+Product.updateService = (services) => {
+    const sql = `
+	UPDATE public.services
+	
+	SET available=$2
+	
+	WHERE  service_id = $1
+        `;
+    return db.none(sql, [
+       services.service_id,	
+		services.available
+
+
+    ]);
+
+}
+
 module.exports = Product;
