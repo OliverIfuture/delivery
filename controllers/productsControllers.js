@@ -2900,30 +2900,49 @@ async createLikeProduct (req, res, next) {
         }
     },
 
- async createService (req, res, next) {
-        try {
+async createServiceWithSchedule(req, res, next) {
+    try {
+        // req.body es el objeto completo que enviaste desde Flutter.
+        // Contiene las llaves 'service' y 'schedules'.
 
-            const services = req.body;
-             console.log(`el service: ${JSON.stringify(services)}`);
+        // 1. Extraemos el objeto del servicio
+        const service = req.body.service;
+        
+        // 2. Extraemos el array de horarios
+        const schedules = req.body.schedules;
 
+        console.log(`Servicio recibido: ${JSON.stringify(service)}`);
+        console.log(`Horarios recibidos: ${JSON.stringify(schedules)}`);
 
-                
-            const data = await Product.createService(services);
-                return res.status(201).json({
-                success: true,
-                message: 'services registrado correctamente',
-            });
-            
-        } catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
+        // --- Lógica para guardar en la Base de Datos ---
 
-                success: false,
-                message: 'Hubo un error',
-                error: error
-            });
+        // 3. Primero, insertas el servicio para obtener su ID.
+        //    (Asegúrate que tu función `createService` devuelva el objeto creado con su ID).
+        const data = await Product.createService(service);
+        const newServiceId = data.service_id; 
+
+        // 4. Luego, recorres el array de horarios y los insertas uno por uno,
+        //    asociándolos con el ID del servicio que acabas de crear.
+        for (const schedule of schedules) {
+            // A cada objeto de horario le asignas el ID del servicio recién creado.
+            schedule.service_id = newServiceId; 
+            await Product.createSchedule(schedule); // Asumiendo que tienes una función para crear horarios.
         }
-    },       
+
+        return res.status(201).json({
+            success: true,
+            message: 'Servicio y horarios registrados correctamente',
+        });
+        
+    } catch (error) {
+        console.log(`Error: ${error}`);
+        return res.status(501).json({
+            success: false,
+            message: 'Hubo un error al registrar el servicio con sus horarios',
+            error: error
+        });
+    }
+},  
  
   async getAllServicesNotTrueOnly(req, res, next) {
         try {
