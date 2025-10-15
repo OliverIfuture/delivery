@@ -86,6 +86,7 @@ module.exports = (app) => {
     app.get('/api/orders/getDealers/:sucursalId', passport.authenticate('dealer-jwt', { session: false }), ordersController.getDealers);
     app.get('/api/orders/getAppoiments/:userId', passport.authenticate('jwt', { session: false }), ordersController.getAppoiments);
     app.get('/api/orders/getAppoimentsByCompany/:id', passport.authenticate('jwt', { session: false }), ordersController.getAppoimentsByCompany);
+    app.put('/api/orders/updateAppointmentStatus/:appointmentId/:newStatus', passport.authenticate('jwt', { session: false }), ordersController.updateAppointmentStatus);
 
     
 }
