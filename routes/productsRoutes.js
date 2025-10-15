@@ -161,7 +161,7 @@ module.exports = (app, upload) => {
       app.post('/api/products/registerAppointment',passport.authenticate('jwt', {session: false}) , productsControllers.registerAppointment);
        app.get('/api/products/selectAppoimentHour/:id/:startdatetime', passport.authenticate('jwt', {session: false}), productsControllers.selectAppoimentHour );
       app.get('/api/products/getCompanyByUser/:id',passport.authenticate('jwt', {session: false}) , productsControllers.getCompanyByUser);
-      app.post('/api/products/createService',passport.authenticate('jwt', {session: false}) , productsControllers.createService);
+      app.post('/api/products/createServiceWithSchedule',passport.authenticate('jwt', {session: false}) , productsControllers.createServiceWithSchedule);
       app.get('/api/products/getAllServicesNotTrueOnly/:id', productsControllers.getAllServicesNotTrueOnly);    
       app.put('/api/products/updateService', productsControllers.updateService);
       app.delete('/api/products/deleteService/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteService);
