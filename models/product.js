@@ -2332,6 +2332,32 @@ Product.createService = (services) => {
         services.available
     ]);
 }
+Product.createSchedule = (schedule) => {
+    const sql = `
+        INSERT INTO 
+            available_schedules(
+                business_id,
+                day_of_week,
+                start_time,
+                end_time
+                -- No incluimos 'schedule_id' porque es de tipo SERIAL y se genera automáticamente.
+            )
+        VALUES (
+            $1, 
+            $2, 
+            $3, 
+            $4
+        )
+        RETURNING schedule_id; -- Opcional: devuelve el ID del horario recién creado.
+    `;
+    return db.oneOrNone(sql, [
+        schedule.business_id,
+        schedule.day_of_week,
+        schedule.start_time,
+        schedule.end_time
+    ]);
+}
+
 
 Product.getAllServicesNotTrueOnly = (id) =>{
 	const sql = `
