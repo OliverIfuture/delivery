@@ -2333,7 +2333,7 @@ Product.createService = (services) => {
     ]);
 }
 
-Product.getAllServices = (id) =>{
+Product.getAllServicesNotTrueOnly = (id) =>{
 	const sql = `
 	select * from services 
 	where business_id = $1
