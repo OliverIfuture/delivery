@@ -2944,4 +2944,33 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
+
+        async updateService(req, res, next) {
+        try {
+            
+            const services = req.body;
+            console.log(`Datos enviados del usuario: ${JSON.stringify(services)}`);
+            
+
+            await Product.updateService(services);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'servicio actualizado correctamente',
+
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error con la actualizacion de services',
+                error: error
+
+            });
+        }
+    }, 
 }
