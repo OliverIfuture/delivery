@@ -2215,7 +2215,7 @@ Product.updateFlavor = (id, activate) => {
 Product.getAllServices = (id) =>{
 	const sql = `
 	select * from services 
-	where business_id = $1
+	where business_id = $1 and available = true
  
  `;
 return db.manyOrNone(sql, id);
