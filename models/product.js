@@ -2339,14 +2339,16 @@ Product.createSchedule = (schedule) => {
                 business_id,
                 day_of_week,
                 start_time,
-                end_time
+                end_time,
+				duration
                 -- No incluimos 'schedule_id' porque es de tipo SERIAL y se genera automáticamente.
             )
         VALUES (
             $1, 
             $2, 
             $3, 
-            $4
+            $4, 
+			$5
         )
         RETURNING schedule_id; -- Opcional: devuelve el ID del horario recién creado.
     `;
@@ -2354,7 +2356,8 @@ Product.createSchedule = (schedule) => {
         schedule.business_id,
         schedule.day_of_week,
         schedule.start_time,
-        schedule.end_time
+        schedule.end_time,
+		schedule.duration
     ]);
 }
 
