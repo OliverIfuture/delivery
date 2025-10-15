@@ -2925,5 +2925,23 @@ async createLikeProduct (req, res, next) {
         }
     },       
  
- 
+  async getAllServicesNotTrueOnly(req, res, next) {
+        try {
+            
+            const id = req.params.id;
+            const data = await Product.getAllServicesNotTrueOnly(id);
+             console.log(`Servicios recibidos getAllServicesNotTrueOnly: ${JSON.stringify(data)}`);
+              return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener los servicios'
+            });
+        }
+    },
 }
