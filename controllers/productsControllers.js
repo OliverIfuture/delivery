@@ -2899,5 +2899,31 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
+
+ async createService (req, res, next) {
+        try {
+
+            const services = req.body;
+             console.log(`el service: ${JSON.stringify(services)}`);
+
+
+                
+            const data = await Product.createService(services);
+                return res.status(201).json({
+                success: true,
+                message: 'services registrado correctamente',
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error',
+                error: error
+            });
+        }
+    },       
+ 
  
 }
