@@ -2366,7 +2366,7 @@ Product.deleteService = (id) => {
 
     const sql = `
     DELETE FROM services
-    WHERE  id = $1
+    WHERE  service_id = $1
     `;
 
     return db.oneOrNone(sql,id);
