@@ -1052,6 +1052,38 @@ async updateStockers (req, res, next) {
         }
     },      
 
+
+async updateStockersNewApp (req, res, next) {
+        try {
+
+            const id_product = req.params.id_product;             
+            const stock = req.params.stock; 
+            const id_company = req.params.id_company; 
+            console.log(`Nuevo stock: ${id_product} ${stock} ${id_company}`);
+
+            const data = await Product.updateStockersNewApp(id_product, stock, id_company);
+            console.log(`Nuevo stock updateStockersNewApp: ${JSON.stringify(data)}`);
+
+
+                return res.status(201).json({
+
+                success: true,
+                message: 'Estock actualizado',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error al actualizar',
+                error: error
+            });
+        }
+    },      
+ 
+
       async getAll(req, res, next) {
         try {
             const data = await Product.getAll();
