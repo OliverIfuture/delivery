@@ -1574,6 +1574,58 @@ GROUP BY
     return db.manyOrNone(sql, [id_category, id_company, id_product_company]);
 }
 
+Product.findByCategoryStocksNewApp = (id_category, id_company, id_product_company) => {
+    const sql = `
+SELECT
+	P.id,
+	P.name,
+	P.description,
+	P.price,
+	P.image1,
+	P.image2,
+	P.image3,
+	P.id_category,
+	P.stock,
+	P.id_company,
+	P.state,
+	P.price_special,
+	P.price_buy,
+    -- NUEVA COLUMNA: Agregamos los sabores como un array JSON
+	COALESCE(json_agg(
+		JSON_BUILD_OBJECT(
+			'id', F.id,
+			'id_product', F.id_product,
+			'flavor', F.flavor,
+			'id_company', F.id_company,
+			'activate', F.activate
+		)
+	) FILTER (WHERE F.id IS NOT NULL), '[]') AS flavor
+FROM
+	products AS P
+INNER JOIN
+	categories AS C
+ON
+	P.id_category = C.id
+
+-- LEFT JOIN es crucial para obtener los sabores (F) sin excluir productos que no tienen ninguno
+LEFT JOIN 
+	flavor AS F 
+ON 
+	P.id = F.id_product
+WHERE
+	C.id = $1
+	AND C.id_category_company = $2
+
+-- Agrupamos por todas las columnas NO agregadas
+GROUP BY
+	P.id, P.name, P.description, P.price, P.image1, P.image2, P.image3,
+	P.id_category,  P.id_company, P.price_special, P.price_buy, P.price_wholesale
+	order by P.state desc
+    
+    `;
+    return db.manyOrNone(sql, [id_category, id_company, id_product_company]);
+}
+
 Product.getByCtaegoryAndProductNameSearch = (product_name) => {
     const sql = `
     SELECT
