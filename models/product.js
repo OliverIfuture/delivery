@@ -1092,11 +1092,12 @@ Product.create = (product) => {
             stock,
 			state,
 			price_special,
-			price_buy
+			price_buy,
+			id_company
 			
             
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, 'true', $10, $11, $12) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, 'true', $10, $11, $12, $13) RETURNING id
     `;
     return db.oneOrNone(sql, [
         product.name,
@@ -1110,7 +1111,8 @@ Product.create = (product) => {
         new Date(),
 		product.state,
 		product.price_special,
-		product.price_buy
+		product.price_buy,
+		product.id_company
         
     ]);
 }
