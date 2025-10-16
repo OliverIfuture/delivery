@@ -87,7 +87,31 @@ module.exports = {
         
 }
 
+    async delete(req, res, next) {
+        try {
 
+            const id = req.params.id;
+            console.log(`Categoria enviada: ${id}`);
+
+            const data = await Category.delete(id);
+
+            return res.status(201).json({
+                message: ' la categoria se elimino correctamente',
+                success: true,
+                data: data.id
+
+            });
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar la categoria',
+                success: false,
+                error: error
+            });
+        }
+        
+}
 
 
 }
