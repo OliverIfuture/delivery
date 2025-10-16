@@ -1189,6 +1189,17 @@ Product.updateStockers = (id_product, stock, id_company) => {
     `;
     return db.none(sql, [id_product, stock, id_company]);
 }
+Product.updateStockersNewApp = (id_product, stock, id_company) => {
+    const sql = `
+    UPDATE
+        products
+    SET
+        state = $2
+	WHERE
+        id_product = $1 and id_company = $3
+    `;
+    return db.none(sql, [id_product, stock, id_company]);
+}
 
 
 Product.setFavoritesProducts = (id_plate, id_user) => {
