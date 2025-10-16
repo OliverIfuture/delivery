@@ -97,9 +97,7 @@ module.exports = {
 
             return res.status(201).json({
                 message: ' la categoria se elimino correctamente',
-                success: true,
-                data: data.id
-
+                success: true
             });
             
         } catch (error) {
