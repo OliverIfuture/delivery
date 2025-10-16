@@ -1679,8 +1679,7 @@ Product.findByCategoryAndProductNameStocks = (id_category, product_name, id_comp
 	P.id_company,
 	S.stock as state,
 	P.price_special,
-	P.price_buy,
- 	P.price_wholesale
+	P.price_buy
     FROM
         products AS P
     INNER JOIN
