@@ -1615,6 +1615,7 @@ ON
 WHERE
 	C.id = $1
 	AND C.id_category_company = $2
+		AND P.id_company = COALESCE($3, 1)
 
 -- Agrupamos por todas las columnas NO agregadas
 GROUP BY
