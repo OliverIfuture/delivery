@@ -125,6 +125,7 @@ module.exports = (app, upload) => {
       app.put('/api/products/setTicket/:ticketId', productsControllers.setTicket);
 
       app.put('/api/products/updateStockers/:id_product/:stock/:id_company', productsControllers.updateStockers);
+      app.put('/api/products/updateStockersNewApp/:id_product/:stock/:id_company', productsControllers.updateStockers);
       app.put('/api/products/updateFlavor/:id/:activate', productsControllers.updateFlavor);
 
       app.delete('/api/products/deleteAnswerLike/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteAnswerLike );
