@@ -1196,7 +1196,7 @@ Product.updateStockersNewApp = (id_product, stock, id_company) => {
     SET
         state = $2
 	WHERE
-        id_product = $1 and id_company = $3
+        id = $1 and id_company = $3
     `;
     return db.none(sql, [id_product, stock, id_company]);
 }
