@@ -15,5 +15,6 @@ module.exports = (app) => {
     *POST ROUTES
    */
     app.post('/api/categories/create', passport.authenticate('jwt', { session: false }), categoriesController.create);
+    app.delete('/api/categories/delete/:id', passport.authenticate('jwt', { session: false }), categoriesController.delete);
 
 }
