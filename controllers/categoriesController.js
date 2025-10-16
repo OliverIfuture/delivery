@@ -85,7 +85,7 @@ module.exports = {
             });
         }
         
-}
+},
 
     async delete(req, res, next) {
         try {
