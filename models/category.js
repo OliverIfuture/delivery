@@ -79,5 +79,12 @@ Category.create =  (category) => {
 
     ]);
 }
+Category.delete = (id) => {
+    const sql =
+        `
+ delete from categories where id = $1
+        `;
+    return db.none(sql,id);
+}
 
 module.exports = Category;
