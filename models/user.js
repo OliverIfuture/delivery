@@ -948,4 +948,14 @@ User.getCompanyByUser = (id) => {
 
 }
 
+User.getCompanyById = (id) => {
+
+    const sql = `
+    select * from company where id = $1
+		`;
+    
+    return db.oneOrNone(sql, id)
+
+}
+
 module.exports = User;
