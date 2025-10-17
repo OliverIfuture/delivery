@@ -958,4 +958,15 @@ User.getCompanyById = (id) => {
 
 }
 
+User.getAllCompanies = () => {
+    const sql = `
+    SELECT 
+        *
+    FROM
+        company
+    `;
+
+    return db.manyOrNone(sql);
+}
+
 module.exports = User;
