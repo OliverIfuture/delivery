@@ -1988,7 +1988,8 @@ Product.findMyProduct = (name) => {
 Product.getAllCompany = () =>{
 	const sql = `
 		 select * from company
-		 order by id
+        where available = 'true'
+		 order by id 
  
  
  `;
