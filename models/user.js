@@ -969,4 +969,14 @@ User.getAllCompanies = () => {
     return db.manyOrNone(sql);
 }
 
+User.getMembershipPlan = () => {
+    const sql = `
+    SELECT 
+        *
+    FROM
+        membership_plans
+    `;
+
+    return db.manyOrNone(sql);
+}
 module.exports = User;
