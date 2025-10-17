@@ -514,6 +514,28 @@ User.update = (user) => {
     ]);
 }
 
+User.updateNoImage = (user) => {
+    const sql = `
+    UPDATE
+        users
+    SET
+        name = $2,
+        lastname = $3,
+        phone = $4,
+        updated_at = $5
+    WHERE
+        id = $1
+    `;
+
+    return db.none(sql, [
+        user.id,
+        user.name,
+        user.lastname,
+        user.phone,
+        new Date()
+    ]);
+}
+
 User.updateTrainer = (user) => {
     const sql = `
     UPDATE
