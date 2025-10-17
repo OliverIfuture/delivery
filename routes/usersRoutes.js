@@ -54,6 +54,7 @@ module.exports = (app, upload) => {
     app.get('/api/users/getAdminsNotificationTokensDealer', passport.authenticate('dealer-jwt', {session: false}), UsersController.getAdminsNotificationTokensDealer);
       app.get('/api/users/getCompanyById/:id',passport.authenticate('jwt', {session: false}) ,UsersController.getCompanyById);
      app.get('/api/users/getAllCompanies', passport.authenticate('jwt', {session: false}), UsersController.getAllCompanies);
+     app.get('/api/users/getMembershipPlan', passport.authenticate('jwt', {session: false}), UsersController.getMembershipPlan);
 
     
     
