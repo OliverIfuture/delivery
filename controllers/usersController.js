@@ -1160,7 +1160,7 @@ async createWithImageUserAndCompany(req, res, next) {
                 error: error
             });
         }
-    }  
+    }  ,
 
 
             async getAllCompanies(req, res, next) {
