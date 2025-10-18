@@ -979,4 +979,19 @@ User.getMembershipPlan = () => {
 
     return db.manyOrNone(sql);
 }
+
+User.renewMembership = (company) => {
+    const sql = `
+    UPDATE public.company
+	SET  state = $2, membership_plan= $3, membership_expires_at= $4, membership_status= $5
+	WHERE id = $1
+    `;
+    return db.none(sql, [
+        company.id,
+        company.state,
+        company.membership_plan,
+		company.membership_expires_at,
+		company.membership_status
+    ]);
+}
 module.exports = User;
