@@ -983,7 +983,7 @@ User.getMembershipPlan = () => {
 User.renewMembership = (company) => {
     const sql = `
     UPDATE public.company
-	SET  state = $2, membership_plan= $3, membership_expires_at= $4, membership_status= $5
+	SET  state = $2, membership_plan= $3, membership_expires_at= $4, membership_status= $5, available = $6
 	WHERE id = $1
     `;
     return db.none(sql, [
@@ -991,7 +991,8 @@ User.renewMembership = (company) => {
         company.state,
         company.membership_plan,
 		company.membership_expires_at,
-		company.membership_status
+		company.membership_status,
+		company.available
     ]);
 }
 module.exports = User;
