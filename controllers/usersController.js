@@ -1207,7 +1207,7 @@ async createWithImageUserAndCompany(req, res, next) {
 
             return res.status(201).json({
                 succes: true,
-                message: 'membresia actualizada correctamente,
+                message: 'membresia actualizada correctamente',
             });
 
         }
