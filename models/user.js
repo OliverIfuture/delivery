@@ -490,7 +490,7 @@ User.create = (user) => {
     ]);
 }
 
-User.create = (user) => {
+User.createWithImageDelivery = (user) => {
 
     const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
     user.password = myPasswordHashed;
