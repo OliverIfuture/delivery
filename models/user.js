@@ -1031,6 +1031,21 @@ User.updateCompanyStatus = (companyId, newStatus) => {
 
     ]);
 }
+User.updateCompanyPaymentMethods = (company) => {
+    const sql = `
+    UPDATE company
+	SET cashaccept= $2, 
+	creditcardaccepted = $3 
+	where = id = $1
+    `;
+
+    return db.none(sql, [
+        company.id,
+        company.cashaccept, 
+		company.creditcardaccepted
+
+    ]);
+}
 
 
 module.exports = User;
