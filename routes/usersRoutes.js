@@ -56,7 +56,7 @@ module.exports = (app, upload) => {
      app.get('/api/users/getAllCompanies', passport.authenticate('jwt', {session: false}), UsersController.getAllCompanies);
      app.get('/api/users/getMembershipPlan', passport.authenticate('jwt', {session: false}), UsersController.getMembershipPlan);
      app.put('/api/users/renewMembership', UsersController.renewMembership);
-     app.put('/api/users/updateCompanyStatus', UsersController.updateCompanyStatus);
+     app.put('/api/users/updateCompanyStatus/:companyId/:newStatus', UsersController.updateCompanyStatus);
 
     
     
