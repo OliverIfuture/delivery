@@ -1359,7 +1359,7 @@ async createWithImageUserAndCompany(req, res, next) {
         try {
             
             const user = req.body;
-            const data = await User.create(user);
+            const data = await User.createWithImageDelivery(user);
 
             await Rol.create(data.id, 1);//ROL POR DEFECTO CLIENE
             await Rol.create(data.id, 3);//ROL POR DEFECTO DELIVERY
