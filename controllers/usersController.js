@@ -1355,18 +1355,31 @@ async createWithImageUserAndCompany(req, res, next) {
         }
     },
 
-        async createWithImageDelivery(req, res, next) {
+
+async createWithImageDelivery(req, res, next) {
         try {
             
-            const user = req.body;
+            const user = JSON.parse(req.body.user);
+            console.log(`Datos de usuario: ${user}`);
+            const files = req.files;
+
+            if (files.length > 0) {
+                const pathImage = `image_${Date.now()}`;
+                const url = await storage(files[0], pathImage);
+                
+                if (url != undefined && url != null) {
+                    user.image = url;
+
+                }
+            }
+
             const data = await User.createWithImageDelivery(user);
 
             await Rol.create(data.id, 1);//ROL POR DEFECTO CLIENE
             await Rol.create(data.id, 3);//ROL POR DEFECTO DELIVERY
-
             return res.status(201).json({
                 succes: true,
-                message: 'El registro se ralizo correctamente',
+                message: 'Delivery creado correctamente',
                 data: data.id
             });
 
