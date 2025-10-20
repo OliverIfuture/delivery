@@ -62,6 +62,7 @@ module.exports = (app, upload) => {
      app.put('/api/users/updateStripeKeys/:companyId/:publishableKey/:secretKey', UsersController.updateStripeKeys);
      app.put('/api/users/updateCompanyDetails', UsersController.updateCompanyDetails);
      app.put('/api/users/extendMembership/:companyId/:monthsToAdd', UsersController.extendMembership);
+     app.get('/api/users/getByRole/:id',passport.authenticate('jwt', {session: false}) ,UsersController.getByRole);
 
     
     
