@@ -17,6 +17,7 @@ module.exports = (app, upload) => {
 
     app.post('/api/users/findByCode/:code',UsersController.findByCode);
 
+    app.post('/api/users/createWithImageDelivery', upload.array('image', 1), UsersController.createWithImageDelivery);
 
     app.post('/api/users/create', upload.array('image', 1), UsersController.registerWithImage);
     app.post('/api/users/registerWithOutImage', UsersController.registerWithOutImage);
