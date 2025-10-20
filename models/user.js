@@ -889,7 +889,7 @@ User.createWithImageUserAndCompany = (user, company) => {
         RETURNING id
     `;
 
-    // Usamos la cadena de promesas:
+    // Usamos la cadena de promesas para asegurar el orden de las operaciones
     return db.one(sqlUser, [
         user.email,
         user.name,
@@ -899,24 +899,25 @@ User.createWithImageUserAndCompany = (user, company) => {
         user.password,
         new Date(),
         new Date()
-	])
-    .then(data => {
-        // 'data' contiene el ID del usuario recién creado: { id: <user_id> }
-        const newUserId = data.id;
+    ])
+    .then(userData => {
+        // 'userData' contiene el ID del usuario recién creado: { id: <user_id> }
+        const newUserId = userData.id;
         
         // 2. Asignar el ID del usuario a la compañía
         company.user_id = newUserId;
         
-        // 3. Consulta para insertar la compañía
-        // Se asume la inclusión de created_at y updated_at para buenas prácticas.
+        // 3. Consulta para insertar la compañía y DEVOLVER su ID
         const sqlCompany = `
             INSERT INTO public.company(
                 name, addres, telephone, user_id, logo, state, available, type, lat, lng, wantsAppointments, cashaccept, creditcardaccepted
             )
             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING id
         `;
         
-        return db.none(sqlCompany, [
+        // Se usa db.one para esperar el ID de la compañía de vuelta
+        return db.one(sqlCompany, [
             company.name,
             company.addres,
             company.telephone,
@@ -927,16 +928,37 @@ User.createWithImageUserAndCompany = (user, company) => {
             company.type,
             company.lat,
             company.lng,
-			company.wantsAppointments,
-			company.cashaccept,
-			company.creditcardaccepted
+            company.wantsAppointments,
+            company.cashaccept,
+            company.creditcardaccepted
         ])
-        .then(() => {
-            // Devolver el ID del usuario al controlador para que pueda asignar los roles
-            return { id: newUserId };
+        .then(companyData => {
+            // 'companyData' contiene el ID de la compañía: { id: <company_id> }
+            const newCompanyId = companyData.id;
+
+            // 4. Consulta para actualizar el campo mi_store del usuario
+            const sqlUpdateUser = `
+                UPDATE 
+                    users
+                SET
+                    mi_store = $1
+                WHERE
+                    id = $2
+            `;
+            
+            // Ejecutamos la actualización
+            return db.none(sqlUpdateUser, [
+                newCompanyId,
+                newUserId
+            ])
+            .then(() => {
+                // 5. Devolver el ID del usuario al controlador para que pueda asignar los roles
+                return { id: newUserId };
+            });
         });
     });
 };
+
 
 User.getCompanyByUser = (id) => {
 
