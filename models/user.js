@@ -1047,5 +1047,19 @@ User.updateCompanyPaymentMethods = (company) => {
     ]);
 }
 
+User.updateCompanyStripeKeys = (companyId, stripePublishableKey, stripeSecretKey) => {
+    const sql = `
+  UPDATE company
+	SET  stripePublishableKey = $2,  stripeSecretKey = $3
+	WHERE id = $3
+    `;
+
+    return db.none(sql, [
+        companyId,
+        stripePublishableKey,
+		stripeSecretKey
+    ]);
+}
+
 
 module.exports = User;
