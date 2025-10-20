@@ -1303,5 +1303,31 @@ async createWithImageUserAndCompany(req, res, next) {
         }
     },
 
+
+        async updateCompanyDetails(req, res, next) {
+        try {
+            
+            const company = req.body;
+            console.log(`Datos enviados del updateCompanyDetails: ${JSON.stringify(company)}`);
+            await User.updateCompanyDetails(company);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'empresa actualizada correctamente',
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error con la actualizacion de la empresa',
+                error: error
+
+            });
+        }
+    },
     
 };
