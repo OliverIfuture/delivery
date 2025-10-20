@@ -1060,6 +1060,38 @@ User.updateCompanyStripeKeys = (companyId, stripePublishableKey, stripeSecretKey
 		stripeSecretKey
     ]);
 }
+User.extendMembership = (companyId, monthsToAdd) => {
+    const sql = `
+UPDATE public.company
+SET
+    -- Se establece el estado de la membresía como 'active' tras la renovación.
+    membership_status = 'active',
 
+    -- Se calcula la nueva fecha de expiración.
+    membership_expires_at = (
+        -- Se utiliza una sentencia CASE para decidir la fecha base para el cálculo.
+        CASE
+            -- SI la fecha de expiración es nula O es una fecha en el pasado...
+            WHEN membership_expires_at IS NULL OR membership_expires_at < NOW()
+            -- ENTONCES la nueva fecha de expiración será la fecha actual MÁS el intervalo de meses.
+            THEN NOW() + ($2 * INTERVAL '1 month')
+            
+            -- SI NO (si la membresía aún está vigente)...
+            ELSE
+            -- ENTONCES la nueva fecha será la fecha de expiración existente MÁS el intervalo de meses.
+            membership_expires_at + ($2 * INTERVAL '1 month')
+        END
+    )
+WHERE
+    -- La condición para asegurar que solo se actualice la empresa correcta.
+    id = $1;
+
+    `;
+
+    return db.none(sql, [
+        companyId,
+        monthsToAdd
+    ]);
+}
 
 module.exports = User;
