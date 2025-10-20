@@ -1036,7 +1036,7 @@ User.updateCompanyPaymentMethods = (company) => {
     UPDATE company
 	SET cashaccept= $2, 
 	creditcardaccepted = $3 
-	where = id = $1
+	where id = $1
     `;
 
     return db.none(sql, [
