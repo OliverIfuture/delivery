@@ -1094,4 +1094,57 @@ WHERE
     ]);
 }
 
+User.updateCompanyDetails = (company) => {
+    const sql = `
+
+UPDATE public.company
+SET
+    name = $1,
+    addres = $2,
+    telephone = $3,
+    user_id = $4,
+    logo = $5,
+    state = $6,
+    available = $7,
+    type = $8,
+    lat = $9,
+    lng = $10,
+    wantsappointments = $11,
+    cashaccept = $12,
+    creditcardaccepted = $13,
+    stripeSecretKey = $14,
+    stripePublishableKey = $15,
+    membership_plan = $16,
+    membership_expires_at = $17,
+    membership_status = $18,
+    stripe_subscription_id = $19
+WHERE
+    id = $20; -- La condición para asegurar que solo se actualice la empresa correcta.
+
+    `;
+
+    return db.none(sql, [
+		company.name,
+		company.addres,
+		company.telephone,
+		company.user_id,
+		company.logo,
+		company.state,
+		company.available,
+		company.type,
+		company.lat,
+		company.lng,
+		company.wantsappointments,
+		company.cashaccept,
+		company.creditcardaccepted,
+		company.stripeSecretKey,
+		company.stripePublishableKey,
+		company.membership_plan,
+		company.membership_expires_at,
+		company.membership_status,
+		company.stripe_subscription_id,
+		company.id
+    ]);
+}
+
 module.exports = User;
