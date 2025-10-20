@@ -1276,5 +1276,32 @@ async createWithImageUserAndCompany(req, res, next) {
             });
         }
     },
+
+   async updateStripeKeys(req, res, next) {
+        try {
+            
+            const companyId = req.params.companyId;
+            const publishableKey = req.params.publishableKey;
+            const secretKey = req.params.secretKey;
+            console.log(`datos de actualizacion:companyId = $companyId ,publishableKey: $publishableKey, secretKey :$secretKey`);
+
+            await User.updateStripeKeys(companyId, publishableKey, secretKey);
+
+            return res.status(201).json({
+                success: true,
+                message: 'ctualizando llaves de Stripe confirmado'
+            });
+
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error con la actualizacion de datos de Stripe',
+                error: error
+            });
+        }
+    },
+
     
 };
