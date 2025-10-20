@@ -1050,7 +1050,7 @@ User.updateCompanyPaymentMethods = (company) => {
 User.updateStripeKeys = (companyId, stripePublishableKey, stripeSecretKey) => {
     const sql = `
   UPDATE company
-	SET  stripePublishableKey = $2,  stripeSecretKey = $3
+	SET   "stripeSecretKey"=$3, "stripePublishableKey"=$2
 	WHERE id = $3
     `;
 
