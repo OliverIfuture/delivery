@@ -1181,4 +1181,17 @@ WHERE
     ]);
 }
 
+User.getByRole = (id) => {
+    const sql = `
+    SELECT 
+        *
+    FROM
+        users
+        WHERE mi_store = $1
+    `;
+    return db.manyOrNone(sql,[
+        state
+    ]);
+}
+
 module.exports = User;
