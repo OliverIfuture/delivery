@@ -995,4 +995,20 @@ User.renewMembership = (company) => {
 		company.available
     ]);
 }
+
+User.updateCompanyStatus = (companyId, newStatus) => {
+    const sql = `
+   UPDATE company
+	SET  state = $2
+	WHERE id = $1
+    `;
+
+    return db.none(sql, [
+        companyId,
+        newStatus
+
+    ]);
+}
+
+
 module.exports = User;
