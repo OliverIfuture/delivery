@@ -1223,5 +1223,31 @@ async createWithImageUserAndCompany(req, res, next) {
             });
         }
     },
-           
+
+
+   async updateCompanyStatus(req, res, next) {
+        try {
+            
+            const companyId = req.params.companyId;
+            const newStatus = req.params.newStatus;
+            console.log(`datos de actualizacion:companyId = $companyId , newStatus: $newStatus`);
+
+            await User.updateCompanyStatus(companyId, newStatus);
+
+            return res.status(201).json({
+                success: true,
+                message: 'status de empresa actualizado'
+            });
+
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error con la actualizacion de datos de la empresa',
+                error: error
+            });
+        }
+    },
+    
 };
