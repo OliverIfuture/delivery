@@ -1355,5 +1355,32 @@ async createWithImageUserAndCompany(req, res, next) {
         }
     },
 
-    
+        async createWithImageDelivery(req, res, next) {
+        try {
+            
+            const user = req.body;
+            const data = await User.create(user);
+
+            await Rol.create(data.id, 1);//ROL POR DEFECTO CLIENE
+            await Rol.create(data.id, 3);//ROL POR DEFECTO DELIVERY
+
+            return res.status(201).json({
+                succes: true,
+                message: 'El registro se ralizo correctamente',
+                data: data.id
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: true,
+                message: 'error con el registro del ususario',
+                error: error
+
+            });
+        }
+    },
 };
