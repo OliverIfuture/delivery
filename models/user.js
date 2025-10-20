@@ -1051,7 +1051,7 @@ User.updateStripeKeys = (companyId, stripePublishableKey, stripeSecretKey) => {
     const sql = `
   UPDATE company
 	SET   "stripeSecretKey"=$3, "stripePublishableKey"=$2
-	WHERE id = $3
+	WHERE id = $1
     `;
 
     return db.none(sql, [
