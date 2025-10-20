@@ -59,6 +59,7 @@ module.exports = (app, upload) => {
      app.put('/api/users/updateCompanyStatus/:companyId/:newStatus', UsersController.updateCompanyStatus);
      app.put('/api/users/updateCompanyPaymentMethods', UsersController.updateCompanyPaymentMethods);
      app.put('/api/users/updateStripeKeys/:companyId/:publishableKey/:secretKey', UsersController.updateStripeKeys);
+     app.put('/api/users/updateCompanyDetails', UsersController.updateCompanyDetails);
 
     
     
