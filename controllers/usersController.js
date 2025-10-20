@@ -1329,5 +1329,31 @@ async createWithImageUserAndCompany(req, res, next) {
             });
         }
     },
+
+       async extendMembership(req, res, next) {
+        try {
+            
+            const companyId = req.params.companyId;
+            const monthsToAdd = req.params.monthsToAdd;
+            console.log(`datos de actualizacion:companyId = $companyId ,monthsToAdd: monthsToAdd`);
+
+            await User.extendMembership(companyId, monthsToAdd);
+
+            return res.status(201).json({
+                success: true,
+                message: 'meses agregados correctamente'
+            });
+
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error con la actualizacion de datos de meses',
+                error: error
+            });
+        }
+    },
+
     
 };
