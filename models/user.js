@@ -1189,9 +1189,7 @@ User.getByRole = (id) => {
         users
         WHERE mi_store = $1
     `;
-    return db.manyOrNone(sql,[
-        state
-    ]);
+    return db.manyOrNone(sql, id);
 }
 
 module.exports = User;
