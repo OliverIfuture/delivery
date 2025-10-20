@@ -1249,5 +1249,32 @@ async createWithImageUserAndCompany(req, res, next) {
             });
         }
     },
+
+
+    async updateCompanyPaymentMethods(req, res, next) {
+        try {
+            
+            const company = req.body;
+            console.log(`Datos enviados del updateCompanyPaymentMethods: ${JSON.stringify(company)}`);
+            await User.updateCompanyPaymentMethods(company);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'medios de pago actualizados correctamente',
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error con la actualizacion de los medios de pago',
+                error: error
+
+            });
+        }
+    },
     
 };
