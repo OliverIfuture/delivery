@@ -1283,7 +1283,7 @@ async createWithImageUserAndCompany(req, res, next) {
             const companyId = req.params.companyId;
             const publishableKey = req.params.publishableKey;
             const secretKey = req.params.secretKey;
-            console.log(`datos de actualizacion:companyId = $companyId ,publishableKey: $publishableKey, secretKey :$secretKey`);
+            console.log(`datos de actualizacion:companyId = ${companyId} ,publishableKey: ${publishableKey}, secretKey :${secretKey}`);
 
             await User.updateStripeKeys(companyId, publishableKey, secretKey);
 
