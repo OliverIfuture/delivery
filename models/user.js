@@ -221,7 +221,7 @@ User.findDeliveryMen = (id) => {
     ON
         R.id = UHR.id_rol
     WHERE
-        R.id = 3  
+        R.id = 3  and U.mi_store = $1
     `;
     return db.manyOrNone(sql, id);
 }
