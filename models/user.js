@@ -1206,7 +1206,7 @@ User.getAgoraConfig = () => {
 User.updateAgoraConfig = (agoraConfig) => {
     const sql = `
     UPDATE agora_config
-	app_id= $2, token_test= $3, channel_name= $4
+	set app_id= $2, token_test= $3, channel_name= $4
 	WHERE id = $1
     `;
 
