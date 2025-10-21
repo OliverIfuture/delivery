@@ -11,8 +11,8 @@ module.exports = {
 
     async findDeliveryMan(req, res, next) {
         try {
-
-            const data = await User.findDeliveryMen();
+            const id = req.params.id;
+            const data = await User.findDeliveryMen(id);
             console.log(`Repartidores: ${data}`);
             return res.status(201).json(data);
 
