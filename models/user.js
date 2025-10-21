@@ -1203,4 +1203,19 @@ User.getAgoraConfig = () => {
 
 }
 
+User.updateAgoraConfig = (agoraConfig) => {
+    const sql = `
+    UPDATE agora_config
+	app_id= $2, token_test= $3, channel_name= $4
+	WHERE id = $1
+    `;
+
+    return db.none(sql, [
+        agoraConfig.id,
+        agoraConfig.app_id, 
+		agoraConfig.token_test,
+		agoraConfig.channel_name
+    ]);
+}
+
 module.exports = User;
