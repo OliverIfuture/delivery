@@ -189,7 +189,7 @@ User.findByUserId = (id) => {
     return db.oneOrNone(sql, id);
 }
 
-User.findDeliveryMen = () => {
+User.findDeliveryMen = (id) => {
     const sql = `
     SELECT
         U.id,
@@ -223,7 +223,7 @@ User.findDeliveryMen = () => {
     WHERE
         R.id = 3  
     `;
-    return db.manyOrNone(sql);
+    return db.manyOrNone(sql, id);
 }
 
 User.findByQR = (id) => {
