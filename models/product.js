@@ -2503,4 +2503,58 @@ Product.deleteService = (id) => {
     return db.oneOrNone(sql,id);
 }
 
+Product.getByCompany = (id) =>{
+	const sql = `
+SELECT
+    P.id,
+    P.name,
+    P.description,
+    P.price,
+    P.image1,
+    P.image2,
+    P.image3,
+    P.id_category,
+    P.stock,
+    P.id_company,
+    P.state,
+    P.price_special,
+    P.price_buy,
+    COALESCE(json_agg(
+        JSON_BUILD_OBJECT(
+            'id', F.id,
+            'product_id',F.id_product,
+            'flavor', F.flavor,
+            'id_company',F.id_company,
+            'active',F.activate
+        )
+    ) FILTER (WHERE F.id IS NOT NULL), '[]') AS flavor
+FROM
+    products AS P
+-- No necesitamos el INNER JOIN a categories (C) si solo filtramos por P.id_category
+-- Pero lo dejamos por si se usa en otro contexto, aunque no se selecciona nada de C.
+INNER JOIN
+    categories AS C
+ON
+    P.id_category = C.id
+-- El LEFT JOIN es crucial para obtener los sabores (F)
+LEFT JOIN 
+    flavor AS F 
+ON 
+    P.id = F.id_product
+WHERE
+    P.id_company = $1 -- Filtramos por el id de la categoría del producto
+GROUP BY 
+    P.id, P.name, P.description, P.price, P.image1, P.image2, P.image3, 
+    P.id_category, P.stock, P.id_company, P.state, P.price_special, P.price_buy
+ORDER BY 
+    P.id_category;
+
+   
+ 
+ 
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
 module.exports = Product;
