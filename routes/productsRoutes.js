@@ -169,6 +169,7 @@ module.exports = (app, upload) => {
       app.put('/api/products/updateService', productsControllers.updateService);
       app.delete('/api/products/deleteService/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteService);
 
+      app.get('/api/products/getByCompany/:id', productsControllers.getByCompany);     
 
 
 }
