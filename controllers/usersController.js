@@ -1436,4 +1436,32 @@ async createWithImageDelivery(req, res, next) {
             });
         }
     },
+
+
+   
+        async updateAgoraConfig(req, res, next) {
+        try {
+            
+            const agoraConfig = req.body;
+            console.log(`Datos enviados del updateAgoraConfig: ${JSON.stringify(agoraConfig)}`);
+            await User.updateAgoraConfig(agoraConfig);
+
+            return res.status(201).json({
+                succes: true,
+                message: 'live actualizado correctamente',
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: false,
+                message: 'Hubo un error con la actualizacion del live',
+                error: error
+
+            });
+        }
+    }, 
 };
