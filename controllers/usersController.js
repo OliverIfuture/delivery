@@ -1417,4 +1417,23 @@ async createWithImageDelivery(req, res, next) {
             });
         }
     },
+
+            async getAgoraConfig(req, res, next) {
+        try {
+
+            const data = await User.getAgoraConfig();
+            console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener los getAgoraConfig'
+            });
+        }
+    },
 };
