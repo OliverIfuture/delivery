@@ -1192,4 +1192,15 @@ User.getByRole = (id) => {
     return db.manyOrNone(sql, id);
 }
 
+User.getAgoraConfig = () => {
+
+    const sql = `
+    SELECT * FROM public.agora_config
+    ORDER BY id DESC LIMIT 1 
+		`;
+    
+    return db.oneOrNone(sql)
+
+}
+
 module.exports = User;
