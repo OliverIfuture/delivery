@@ -867,9 +867,9 @@ async deleteAccout(req, res, next) {
     async findByCode(req, res, next) {
         try {
             const codes = req.params.code;
-            const code = await User.findByCode(codes);
+            const data = await User.findByCode(codes);
 
-            console.log(`codigo: ${code}`);
+            console.log(`codigo: ${data}`);
 
  
             if (!code) {
@@ -880,10 +880,8 @@ async deleteAccout(req, res, next) {
             }
 
             else{
-                return res.status(201).json({
-                success: true,
-                message: 'codigo aplicado',
-            });
+                return res.status(201).json(data);
+
             }
 
  
