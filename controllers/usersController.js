@@ -867,7 +867,8 @@ async deleteAccout(req, res, next) {
     async findByCode(req, res, next) {
         try {
             const code = req.params.code;
-            const data = await User.findByCode(code);
+            const id = req.params.id;
+            const data = await User.findByCode(code, id);
 
             console.log(`codigo: ${data}`);
 
