@@ -944,9 +944,9 @@ User.createWithImageUserAndCompany = (user, company) => {
         // 3. Consulta para insertar la compañía y DEVOLVER su ID
         const sqlCompany = `
             INSERT INTO public.company(
-                name, addres, telephone, user_id, logo, state, available, type, lat, lng, wantsAppointments, cashaccept, creditcardaccepted
+                name, addres, telephone, user_id, logo, state, available, type, lat, lng, wantsAppointments, cashaccept, creditcardaccepted,code, points
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING id
         `;
         
@@ -964,7 +964,9 @@ User.createWithImageUserAndCompany = (user, company) => {
             company.lng,
             company.wantsAppointments,
             company.cashaccept,
-            company.creditcardaccepted
+            company.creditcardaccepted,
+			company.code,
+			company.points
         ])
         .then(companyData => {
             // 'companyData' contiene el ID de la compañía: { id: <company_id> }
