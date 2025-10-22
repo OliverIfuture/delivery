@@ -1218,4 +1218,16 @@ User.updateAgoraConfig = (agoraConfig) => {
     ]);
 }
 
+User.updateState = (id) => {
+    const sql = `
+    UPDATE
+        company
+    SET
+        pos = false
+    WHERE
+        id = $1
+    `;
+    return db.none(sql,id);
+}
+
 module.exports = User;
