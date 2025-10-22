@@ -65,6 +65,7 @@ module.exports = (app, upload) => {
      app.get('/api/users/getByRole/:id',passport.authenticate('jwt', {session: false}) ,UsersController.getByRole);
      app.get('/api/users/getAgoraConfig',passport.authenticate('jwt', {session: false}) ,UsersController.getAgoraConfig);
      app.put('/api/users/updateAgoraConfig', UsersController.updateAgoraConfig);
+     app.put('/api/users/chageState/:id', UsersController.chageState);
 
     
     
