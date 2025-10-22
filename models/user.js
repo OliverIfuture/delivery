@@ -100,7 +100,7 @@ User.findByMail = (email, callback) => {
 }
 
 
-User.findByCode = (code) => {
+User.findByCode = (code, id) => {
 
     const sql = `
     SELECT 
@@ -110,9 +110,11 @@ User.findByCode = (code) => {
     FROM
         codes
     WHERE
-        code = $1`;
+        code = $1 and id_company = $2
+		
+		`;
     
-    return db.oneOrNone(sql, code)
+    return db.oneOrNone(sql, [code, id])
 
 }
 User.getShops = (employed) => {
