@@ -1218,7 +1218,7 @@ User.updateAgoraConfig = (agoraConfig) => {
     ]);
 }
 
-User.updateState = (id) => {
+User.chageState = (id) => {
     const sql = `
     UPDATE
         company
