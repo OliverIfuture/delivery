@@ -1483,4 +1483,29 @@ async createWithImageDelivery(req, res, next) {
         }
     },
 
+
+       async chageState(req, res, next) {
+        try {
+            
+            const id = req.params.id;
+            console.log(`Nuevo balance: ${id}`);
+
+            await User.chageState(id);
+
+            return res.status(201).json({
+                success: true,
+                message: 'El token de notificaciones se ha almacenado correctamente'
+            });
+
+        } 
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error con la actualizacion de datos del usuario',
+                error: error
+            });
+        }
+    },
+
 };
