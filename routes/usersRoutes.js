@@ -15,7 +15,7 @@ module.exports = (app, upload) => {
     app.get('/api/users/getShops/:employed',passport.authenticate('jwt', {session: false}) ,UsersController.getShops);
     app.get('/api/users/findClient/:name',passport.authenticate('jwt', {session: false}) ,UsersController.findClient);
 
-    app.get('/api/users/findByCode/:code',UsersController.findByCode);
+    app.get('/api/users/findByCode/:code/:id',UsersController.findByCode);
 
     app.post('/api/users/createWithImageDelivery', upload.array('image', 1), UsersController.createWithImageDelivery);
 
