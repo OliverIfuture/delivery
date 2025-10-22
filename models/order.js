@@ -845,7 +845,7 @@ Order.ShiftOrders = (shift_ref ) => {
     const sql = `
  SELECT 
         S.id,
-		S.id_client,
+		S.client_id,
 		S.client_name,
         S.name_store,
         S.cash,
