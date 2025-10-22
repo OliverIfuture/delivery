@@ -1032,8 +1032,8 @@ User.getMembershipPlan = () => {
     SELECT 
         *
     FROM
-        membership_plans
-    `;
+        membership_plans 
+		order by id asc    `;
 
     return db.manyOrNone(sql);
 }
