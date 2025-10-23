@@ -1507,4 +1507,31 @@ async createWithImageDelivery(req, res, next) {
         }
     },
 
+    async createDiscountCode(req, res, next) {
+        try {
+            
+            const newCode = req.body;
+            console.log(`Datos de usuario: ${newCode}`);
+
+            const data = await User.createDiscountCode(newCode);
+            return res.status(201).json({
+                succes: true,
+                message: 'El codigo se creo correctamente',
+                data: data.id
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: true,
+                message: 'error con el registro del codigo',
+                error: error
+
+            });
+        }
+    },   
+
 };
