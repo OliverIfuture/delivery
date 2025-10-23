@@ -384,7 +384,7 @@ module.exports = {
             ////recorrer todos los productos de la orden
             for (const product of sales.products) {
                 console.log(`aqui entran los productos ${JSON.stringify(sales)}`);
-                await OrderHasProducts.createSale(product.name, product.price, product.image1, product.price_buy, sales.reference, product.quantity, sales.shift_ref);
+                await OrderHasProducts.createSale(product.name, product.price, product.image1, product.price_buy, sales.reference, product.quantity, sales.shift_ref, product.state);
 
 
             }
