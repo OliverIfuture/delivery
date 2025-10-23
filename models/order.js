@@ -859,7 +859,9 @@ Order.ShiftOrders = (shift_ref ) => {
         S.employed,
         S.is_trainer,
         S.image_client,
-        S.reference,	
+        S.reference,
+		S.client_name,
+		S.client_id,
 	S.hour,
         S.shift_ref,
         JSON_AGG(
