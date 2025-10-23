@@ -1517,7 +1517,6 @@ async createWithImageDelivery(req, res, next) {
             return res.status(201).json({
                 succes: true,
                 message: 'El codigo se creo correctamente',
-                data: data.id
             });
 
         }
