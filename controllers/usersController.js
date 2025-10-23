@@ -1533,4 +1533,25 @@ async createWithImageDelivery(req, res, next) {
         }
     },   
 
+           async getDiscountCodesByCompany(req, res, next) {
+        try {
+
+            const data = await User.getDiscountCodesByCompany();
+            console.log(`Datos enviados de los getDiscountCodesByCompany: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener los codigos'
+            });
+        }
+    },
+
+
+    
 };
