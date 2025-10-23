@@ -384,7 +384,16 @@ module.exports = {
             ////recorrer todos los productos de la orden
             for (const product of sales.products) {
                 console.log(`aqui entran los productos ${JSON.stringify(sales)}`);
-                await OrderHasProducts.createSale(product.name, product.price, product.image1, product.price_buy, sales.reference, product.quantity, sales.shift_ref, product.state, product.id);
+                  // 3. **NUEVA LÓGICA: CALCULAR Y ACTUALIZAR EL STOCK**
+                //    Parseamos los valores a números para hacer la resta
+                const currentStock = parseInt(product.state || '0'); 
+                const soldQuantity = parseInt(product.quantity || '0');
+                console.log(`  Stock Actual (product.state): ${currentStock}`);
+                console.log(`  Cantidad Vendida: ${soldQuantity}`);
+                console.log(`  Nuevo Stock Calculado: ${newStock}`);
+                // Calculamos el nuevo stock
+                const newStock = currentStock - soldQuantity;
+                await OrderHasProducts.createSale(product.name, product.price, product.image1, product.price_buy, sales.reference, product.quantity, sales.shift_ref, newStock, product.id);
 
 
             }
