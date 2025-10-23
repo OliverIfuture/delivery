@@ -375,28 +375,61 @@ module.exports = {
         }
     },
 
-    async createSale(req, res, next) {
+     async createSale(req, res, next) {
         try {
-
             let sales = req.body;
-            const data = await Order.createSale(sales);
-            const newStock = 0;
+            // 1. Crear el registro principal de la venta
+            const data = await Order.createSale(sales); 
+
             ////recorrer todos los productos de la orden
             for (const product of sales.products) {
-                console.log(`aqui entran los productos ${JSON.stringify(sales)}`);
-                  // 3. **NUEVA LÓGICA: CALCULAR Y ACTUALIZAR EL STOCK**
+                
+                // 3. **LÓGICA CORREGIDA: CALCULAR Y ACTUALIZAR EL STOCK**
                 //    Parseamos los valores a números para hacer la resta
                 const currentStock = parseInt(product.state || '0'); 
                 const soldQuantity = parseInt(product.quantity || '0');
+                
+                // Calculamos el nuevo stock
+                // **CORRECCIÓN: 'newStock' se declara DENTRO del loop con 'const'**
+                const newStock = currentStock - soldQuantity; 
+
+                console.log(`Actualizando stock para Producto ID ${product.id}:`);
                 console.log(`  Stock Actual (product.state): ${currentStock}`);
                 console.log(`  Cantidad Vendida: ${soldQuantity}`);
                 console.log(`  Nuevo Stock Calculado: ${newStock}`);
-                // Calculamos el nuevo stock
-                newStock = currentStock - soldQuantity;
-                await OrderHasProducts.createSale(product.name, product.price, product.image1, product.price_buy, sales.reference, product.quantity, sales.shift_ref, newStock, product.id);
 
-
+                // 2. Insertar el detalle de la venta (el producto vendido)
+                //    (Ahora se pasa 'newStock' a la función)
+                await OrderHasProducts.createSale(
+                    product.name, 
+                    product.price, 
+                    product.image1, 
+                    product.price_buy, 
+                    sales.reference, 
+                    product.quantity, 
+                    sales.shift_ref,
+                    newStock, // Pasando el stock ya calculado
+                    product.id
+                );
             }
+
+            return res.status(201).json({
+                success: true,
+                message: 'La orden se creo correctamente',
+                data: data.id
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error creado la orden',
+                error: error
+            });
+        }
+    },
+
+
 
             return res.status(201).json({
 
