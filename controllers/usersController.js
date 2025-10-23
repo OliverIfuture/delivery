@@ -1553,6 +1553,28 @@ async createWithImageDelivery(req, res, next) {
         }
     },
 
+    async deleteDiscountCode(req, res, next) {
+        try {
+
+            const id = req.params.id;
+            const data = await User.deleteDiscountCode(id);
+                return res.status(201).json({
+                success: true,
+                message: 'el codigo se elimino correctamente',
+            });
+            
+            
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error eliminando el codigo',
+                error: error
+            });
+        }
+    },
+
 
     
 };
