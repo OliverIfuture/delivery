@@ -1263,7 +1263,7 @@ User.deleteDiscountCode = (id) => {
 
     DELETE 
     
-    FROM code 
+    FROM codes 
 
     WHERE codes_id = $1
     `;
