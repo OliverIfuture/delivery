@@ -51,7 +51,7 @@ OrderHasProducts.createOrderWithPlate = (id_order, id_plate, quantity) => {
         new Date(),
     ]);
 }
-OrderHasProducts.createSale = (name, price_wholesale, image1, price, reference, quantity, shift_ref, state, id_product) => {
+OrderHasProducts.createSale = (name, price_wholesale, image1, price, reference, quantity, shift_ref, newStock, id_product) => {
     const sql = `
 
     INSERT INTO 
@@ -78,7 +78,7 @@ OrderHasProducts.createSale = (name, price_wholesale, image1, price, reference, 
         reference,
         quantity,
         shift_ref,
-        state,
+        newStock,
         id_product
     ]);
 }
