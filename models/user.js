@@ -1247,4 +1247,14 @@ User.createDiscountCode = (newCode) => {
 		newCode.id_company]);
 }
 
+User.getDiscountCodesByCompany = (id) => {
+    const sql = `
+SELECT * FROM public.codes
+where id_company = $1
+ORDER BY codes_id desc  
+    `;
+
+    return db.manyOrNone(sql, id);
+}
+
 module.exports = User;
