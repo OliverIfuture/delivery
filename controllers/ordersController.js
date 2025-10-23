@@ -380,7 +380,7 @@ module.exports = {
 
             let sales = req.body;
             const data = await Order.createSale(sales);
-
+            const newStock = 0;
             ////recorrer todos los productos de la orden
             for (const product of sales.products) {
                 console.log(`aqui entran los productos ${JSON.stringify(sales)}`);
@@ -392,7 +392,7 @@ module.exports = {
                 console.log(`  Cantidad Vendida: ${soldQuantity}`);
                 console.log(`  Nuevo Stock Calculado: ${newStock}`);
                 // Calculamos el nuevo stock
-                const newStock = currentStock - soldQuantity;
+                newStock = currentStock - soldQuantity;
                 await OrderHasProducts.createSale(product.name, product.price, product.image1, product.price_buy, sales.reference, product.quantity, sales.shift_ref, newStock, product.id);
 
 
