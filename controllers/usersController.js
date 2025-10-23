@@ -1536,7 +1536,8 @@ async createWithImageDelivery(req, res, next) {
            async getDiscountCodesByCompany(req, res, next) {
         try {
 
-            const data = await User.getDiscountCodesByCompany();
+            const id = req.params.id;
+            const data = await User.getDiscountCodesByCompany(id);
             console.log(`Datos enviados de los getDiscountCodesByCompany: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
