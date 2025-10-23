@@ -1257,4 +1257,18 @@ ORDER BY codes_id desc
     return db.manyOrNone(sql, id);
 }
 
+
+User.deleteDiscountCode = (id) => {
+    const sql = `
+
+    DELETE 
+    
+    FROM code 
+
+    WHERE codes_id = $1
+    `;
+
+    return db.none(sql,id);
+}
+
 module.exports = User;
