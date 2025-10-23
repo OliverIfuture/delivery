@@ -733,9 +733,11 @@ sales(
     image_client,
     reference,
     hour,
-    shift_ref
+    shift_ref,
+	client_name,
+	client_id
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11,$12) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11,$12, $13, $14) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -750,8 +752,9 @@ sales(
     sales.image_client,
     sales.reference,
     sales.hour,
-    sales.shift_ref
-
+    sales.shift_ref,
+	sales.client_name,
+	sales.client_id	
     ]);
 }
 
