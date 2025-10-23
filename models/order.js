@@ -1676,5 +1676,20 @@ Order.updateAppointmentStatus = (id, newStatus) => {
     ]);
 }
 
+Order.updateSaleStatus = (id, status) => {
+    const sql = `
+    UPDATE
+        sales
+    SET
+        status = $2
+    WHERE
+        id = $1
+    `;
+    return db.none(sql, [
+        id,
+        status
+    ]);
+}
+
 
 module.exports = Order;
