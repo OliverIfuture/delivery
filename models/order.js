@@ -883,7 +883,7 @@ Order.ShiftOrders = (shift_ref ) => {
     INNER JOIN
         order_sales AS P
     ON
-        P.reference = S.reference where S.shift_ref = $1 and S.status = 'SUCCES'
+        P.reference = S.reference where S.shift_ref = $1
        GROUP BY
         S.id
 	ORDER BY S.id ASC
