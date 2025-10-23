@@ -78,7 +78,8 @@ OrderHasProducts.createSale = (name, price_wholesale, image1, price, reference, 
         reference,
         quantity,
         shift_ref,
-        state
+        state,
+        id_product
     ]);
 }
 
