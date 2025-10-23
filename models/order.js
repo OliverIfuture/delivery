@@ -876,7 +876,7 @@ Order.ShiftOrders = (shift_ref ) => {
 		'product_coast', P.product_coast,
                 'reference', P.reference,
 		'quantity', P.quantity,
-		'state', P.state,
+		'state', P.state
             )
         ) AS productsOrder
 
