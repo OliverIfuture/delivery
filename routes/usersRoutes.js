@@ -67,6 +67,7 @@ module.exports = (app, upload) => {
      app.put('/api/users/updateAgoraConfig', UsersController.updateAgoraConfig);
      app.put('/api/users/chageState/:id', UsersController.chageState);
     app.post('/api/users/createDiscountCode', UsersController.createDiscountCode);
+     app.get('/api/users/getDiscountCodesByCompany',passport.authenticate('jwt', {session: false}) ,UsersController.getDiscountCodesByCompany);
 
     
     
