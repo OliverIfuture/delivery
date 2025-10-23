@@ -866,6 +866,7 @@ Order.ShiftOrders = (shift_ref ) => {
 		S.client_id,
 	S.hour,
         S.shift_ref,
+		S.status,
         JSON_AGG(
             JSON_BUILD_OBJECT(
                 'id', P.id,
