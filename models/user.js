@@ -1234,4 +1234,17 @@ User.chageState = (id) => {
     return db.none(sql,id);
 }
 
+User.createDiscountCode = (newCode) => {
+    const sql = `
+	    INSERT INTO public.codes(
+	code, active, amount, id_company)  
+    VALUES($1, $2, $3, $4)	
+    `;
+    return db.oneOrNone(sql, [
+		newCode.code, 
+		newCode.active, 
+		newCode.amount, 
+		newCode.id_company]);
+}
+
 module.exports = User;
