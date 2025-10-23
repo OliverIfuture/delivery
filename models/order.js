@@ -1085,7 +1085,7 @@ select
 
 
 
-from sales as totals where shift_ref = $1
+from sales as totals where shift_ref = $1 and status = 'SUCCES'
     `;
     return db.manyOrNone(sql,[
         shift_ref
