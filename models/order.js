@@ -845,6 +845,54 @@ Order.selectOrderAll = (date ) => {
     return db.manyOrNone(sql, date);
 }
 
+Order.ClientOrdersGet = (shift_ref ) => {
+    const sql = `
+SELECT 
+        S.id,
+		S.client_id,
+		S.client_name,
+        S.name_store,
+        S.cash,
+        S.credit_card,
+        S.points,
+        S.date,
+        S.total,
+        S.employed,
+        S.is_trainer,
+        S.image_client,
+        S.reference,
+		S.client_name,
+		S.client_id,
+	S.hour,
+        S.shift_ref,
+		S.status,
+        JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', P.id,
+                'product_name', P.product_name,
+                'product_price', P.product_price,
+                'image_product', P.image_product,
+		'product_coast', P.product_coast,
+                'reference', P.reference,
+		'quantity', P.quantity,
+		'state', P.state,
+		'id_product', P.id_product		
+            )
+        ) AS productsOrder
+
+    FROM 
+        sales AS S
+    INNER JOIN
+        order_sales AS P
+    ON
+        P.reference = S.reference where S.client_id = $1
+       GROUP BY
+        S.id
+	ORDER BY S.id desc
+    `;
+    return db.manyOrNone(sql, shift_ref);
+}
+
 
 Order.ShiftOrders = (shift_ref ) => {
     const sql = `
@@ -889,7 +937,7 @@ Order.ShiftOrders = (shift_ref ) => {
         P.reference = S.reference where S.shift_ref = $1
        GROUP BY
         S.id
-	ORDER BY S.id ASC
+	ORDER BY S.id desc
     `;
     return db.manyOrNone(sql, shift_ref);
 }
