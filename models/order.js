@@ -1664,7 +1664,9 @@ SELECT
     s.service_name,  -- Dato de la tabla services
     c.name AS business_name, -- Dato de la tabla company
     c.logo AS business_logo,  -- Dato de la tabla company
-	c.telephone
+	c.telephone,
+	c.lat,
+	c.lng
 FROM
     appointments AS a
 LEFT JOIN
