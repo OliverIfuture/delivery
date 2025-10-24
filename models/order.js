@@ -1684,7 +1684,7 @@ return db.manyOrNone(sql, userId);
 
 Order.getAppoimentsByCompany = (id) =>{
 	const sql = `
-    select 
+   select 
 	a.business_id,
 	a.appointment_id,
 	a.client_id,
@@ -1700,11 +1700,14 @@ Order.getAppoimentsByCompany = (id) =>{
     s.service_name,  -- Dato de la tabla services
     c.name AS business_name, -- Dato de la tabla company
     c.logo AS business_logo,  -- Dato de la tabla company
-	c.telephone
+	c.telephone,
+	u.name,
+	u.phone
 FROM
     appointments AS a
 LEFT JOIN
     services AS s ON a.service_id = s.service_id
+LEFT JOIN users as u ON u.id = a.client_id	
 LEFT JOIN
     company AS c ON a.business_id = c.id -- Asumiendo que la tabla se llama 'company' y la llave es 'id'
 WHERE
