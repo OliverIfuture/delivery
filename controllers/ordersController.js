@@ -493,6 +493,26 @@ module.exports = {
 
 
 
+    async ClientOrdersGet(req, res, next) {
+        try {
+            const id = req.params.id;
+
+            const data = await Order.ClientOrdersGet(id);
+            console.log(`Status: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las ventas',
+                error: error,
+                success: false
+
+
+            });
+        }
+    },
 
     async closeShift(req, res, next) {
         try {
