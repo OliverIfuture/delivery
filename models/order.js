@@ -1744,9 +1744,6 @@ Order.updateSaleStatus = (id, status) => {
 Order.getSalesByDateRange = (id, startDate, endDate) => {
     // Lee el query del archivo SQL
     const sql = `
--- Este query obtiene todas las ventas de una compañía específica dentro de un rango de fechas
--- y agrupa los productos de cada venta en un campo JSON llamado "productsorder".
-
 SELECT
     s.id,
     s.name_store,
@@ -1791,16 +1788,10 @@ FROM
 -- Usamos LEFT JOIN para asegurar que la venta se muestre
 -- incluso si, por alguna razón, no tuviera productos asociados.
 LEFT JOIN
-    public.order_has_products AS ohp ON s.reference = ohp.reference
+    public.order_sales AS ohp ON s.reference = ohp.reference
         
 WHERE
-    -- $1 = ID de la compañía (mi_store)
-    s.company_id = $1 
-    
-    -- $2 = Fecha de Inicio (startDate)
-    -- $3 = Fecha de Fin (endDate)
-    -- Aseguramos que la fecha de la venta esté dentro del rango seleccionado
-    AND s.date BETWEEN $2 AND $3
+ s.date BETWEEN $2 AND $3
     
     -- Opcional: Nos aseguramos de traer solo ventas completadas
     AND s.status = 'SUCCES' 
