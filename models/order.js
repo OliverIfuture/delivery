@@ -1741,5 +1741,81 @@ Order.updateSaleStatus = (id, status) => {
     ]);
 }
 
+Order.getSalesByDateRange = (id, startDate, endDate) => {
+    // Lee el query del archivo SQL
+    const sql = `
+-- Este query obtiene todas las ventas de una compañía específica dentro de un rango de fechas
+-- y agrupa los productos de cada venta en un campo JSON llamado "productsorder".
+
+SELECT
+    s.id,
+    s.name_store,
+    s.cash,
+    s.credit_card,
+    s.points,
+    s.date,
+    s.total,
+    s.employed,
+    s.is_trainer,
+    s.image_client,
+    s.reference,
+    s.hour,
+    s.shift_ref,
+    s.status,
+    s.client_name,
+    s.client_id,
+    
+    -- COALESCE previene que el valor sea NULL si una venta no tiene productos,
+    -- devolviendo un array JSON vacío '[]' en su lugar.
+    -- FILTER (WHERE ohp.id IS NOT NULL) evita que se agregue un objeto [null]
+    -- si la venta existe pero no tiene productos en la tabla de detalles.
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'id', ohp.id,
+                'product_name', ohp.product_name,
+                'product_price', ohp.product_price,
+                'image_product', ohp.image_product,
+                'product_coast', ohp.product_coast,
+                'reference', ohp.reference,
+                'quantity', ohp.quantity,
+                'id_product', ohp.id_product -- Asumiendo que este campo existe en 'order_has_products'
+            )
+        ) FILTER (WHERE ohp.id IS NOT NULL),
+        '[]'::json
+    ) AS productsorder
+    
+FROM
+    public.sales AS s
+    
+-- Usamos LEFT JOIN para asegurar que la venta se muestre
+-- incluso si, por alguna razón, no tuviera productos asociados.
+LEFT JOIN
+    public.order_has_products AS ohp ON s.reference = ohp.reference
+        
+WHERE
+    -- $1 = ID de la compañía (mi_store)
+    s.company_id = $1 
+    
+    -- $2 = Fecha de Inicio (startDate)
+    -- $3 = Fecha de Fin (endDate)
+    -- Aseguramos que la fecha de la venta esté dentro del rango seleccionado
+    AND s.date BETWEEN $2 AND $3
+    
+    -- Opcional: Nos aseguramos de traer solo ventas completadas
+    AND s.status = 'SUCCES' 
+    
+GROUP BY
+    -- Agrupamos por el ID de la venta para que json_agg funcione correctamente
+    s.id
+    
+ORDER BY
+    -- Mostramos las ventas más recientes primero
+    s.date DESC, s.hour DESC;
+
+    `;
+    return db.manyOrNone(sql, [id, startDate, endDate]);
+}
+
 
 module.exports = Order;
