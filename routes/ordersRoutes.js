@@ -26,6 +26,7 @@ module.exports = (app) => {
     app.get('/api/orders/selectShiftClose', ordersController.selectShiftClose);
 
     app.get('/api/orders/getNotifications/:userid', ordersController.getNotifications);
+    app.get('/api/orders/getSalesByDateRange/:id/:startDate/:endDate', passport.authenticate('jwt', { session: false }), ordersController.getSalesByDateRange);
 
 
     
