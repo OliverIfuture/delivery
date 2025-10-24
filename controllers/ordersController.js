@@ -1283,7 +1283,29 @@ async createNotification(req, res, next) {
             });
         }
     },
-     
+
+
+          async  getSalesByDateRange(req, res, next) {
+        try {
+            const id = req.params.id;
+            const startDate = req.params.startDate;
+            const endDate = req.params.endDate;
+
+            const data = await Order.getSalesByDateRange(id, startDate, endDate);
+            console.log(`el reporte de dias : ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las ventas',
+                error: error,
+                success: false
+            });
+        }
+    },
+  
   
 }
 
