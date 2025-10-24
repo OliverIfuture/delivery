@@ -14,6 +14,7 @@ module.exports = (app) => {
     app.get('/api/orders/findByClient/:id_client', passport.authenticate('jwt', { session: false }), ordersController.findByClient);
 
     app.get('/api/orders/ShiftOrders/:shift_ref', ordersController.ShiftOrders);
+    app.get('/api/orders/ClientOrdersGet/:id', ordersController.ClientOrdersGet);
     app.get('/api/orders/selectOrderAll/:date', ordersController.selectOrderAll);
 
     app.get('/api/orders/selectOrder/:date/:shift_ref', ordersController.selectOrder);
