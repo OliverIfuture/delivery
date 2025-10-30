@@ -1221,7 +1221,7 @@ User.getAgoraConfigall = () => {
 User.updateAgoraConfig = (agoraConfig) => {
     const sql = `
     UPDATE agora_config
-	set app_id= $2, token_test= $3, channel_name= $4, on_live = $5
+	set app_id= $2, token_test= $3, channel_name= $4, on_live = $5, image_event = $6, day = $7, cost = $8
 	WHERE id = $1
     `;
 
@@ -1230,7 +1230,10 @@ User.updateAgoraConfig = (agoraConfig) => {
         agoraConfig.app_id, 
 		agoraConfig.token_test,
 		agoraConfig.channel_name,
-		agoraConfig.on_live
+		agoraConfig.on_live,
+		agoraConfig.image_event,
+		agoraConfig.day,
+		agoraConfig.cost
     ]);
 }
 
