@@ -1607,7 +1607,7 @@ async createWithImageDelivery(req, res, next) {
             }
 
             // 3. Obtener el path opcional (ej: 'ad_banners') o usar 'uploads'
-            const path = req.params.pathName; || 'uploads'; 
+            const path = req.params.pathName;
             const file = files[0]; // Tomar el primer archivo
             
             // 4. Crear un nombre único para el archivo en el storage
