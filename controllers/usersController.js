@@ -1608,13 +1608,17 @@ async createWithImageDelivery(req, res, next) {
 
             // 3. Obtener el path opcional (ej: 'ad_banners') o usar 'uploads'
             const path = req.params.pathName;
-            const file = files[0]; // Tomar el primer archivo
-            
             // 4. Crear un nombre único para el archivo en el storage
-            const pathImage = `${path}/${Date.now()}_${file.originalname}`;
-            
-            // 5. Llamar a tu función de storage (la misma que ya tenías)
-            const url = await storage(file, pathImage);
+
+            if (files.length > 0) {
+                const pathImage = `${path}/${Date.now()}_${file.originalname}`;
+                const url = await storage(files[0], pathImage);
+                
+                if (url != undefined && url != null) {
+                    user.image = url;
+
+                }
+            }            
 
             // 6. Validar que la subida fue exitosa
             if (url != undefined && url != null) {
