@@ -1593,7 +1593,54 @@ async createWithImageDelivery(req, res, next) {
             });
         }
     },
+  async filesupload(req, res, next) {
+        try {
+            // 1. Obtener los archivos (gracias a multer)
+            const files = req.files;
 
+            // 2. Validar que se envió un archivo
+            if (!files || files.length == 0) {
+                return res.status(400).json({
+                    succes: false,
+                    message: 'No se envió ningún archivo',
+                });
+            }
+
+            // 3. Obtener el path opcional (ej: 'ad_banners') o usar 'uploads'
+            const path = req.params.pathName; || 'uploads'; 
+            const file = files[0]; // Tomar el primer archivo
+            
+            // 4. Crear un nombre único para el archivo en el storage
+            const pathImage = `${path}/${Date.now()}_${file.originalname}`;
+            
+            // 5. Llamar a tu función de storage (la misma que ya tenías)
+            const url = await storage(file, pathImage);
+
+            // 6. Validar que la subida fue exitosa
+            if (url != undefined && url != null) {
+                // 7. **RESPUESTA EXITOSA**
+                // Devolver la URL en el campo 'data' para que ResponseApi.fromJson() la lea
+                return res.status(201).json({
+                    succes: true,
+                    message: 'Imagen subida correctamente',
+                    data: url // <-- ¡AQUÍ ESTÁ LA URL!
+                });
+            } else {
+                return res.status(501).json({
+                    succes: false,
+                    message: 'Error al subir la imagen al servidor',
+                });
+            }
+
+        } catch (error) {
+            console.log(`Error en uploadImage: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'Error interno del servidor al subir la imagen',
+                error: error
+            });
+        }
+    }
 
     
 };
