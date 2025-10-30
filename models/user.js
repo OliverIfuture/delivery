@@ -1207,6 +1207,17 @@ User.getAgoraConfig = () => {
 
 }
 
+User.getAgoraConfigall = () => {
+
+    const sql = `
+    SELECT * FROM public.agora_config
+    ORDER BY id DESC
+		`;
+    
+    return db.manyOrNone(sql)
+
+}
+
 User.updateAgoraConfig = (agoraConfig) => {
     const sql = `
     UPDATE agora_config
