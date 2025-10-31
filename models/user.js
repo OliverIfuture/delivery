@@ -1199,8 +1199,8 @@ User.getByRole = (id) => {
 User.getAgoraConfig = () => {
 
     const sql = `
-    SELECT * FROM public.agora_config
-    ORDER BY id DESC LIMIT 1 
+    SELECT * FROM public.agora_config where on_live = true
+    ORDER BY id DESC limit 1
 		`;
     
     return db.oneOrNone(sql)
