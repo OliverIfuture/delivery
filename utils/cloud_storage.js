@@ -65,9 +65,15 @@ module.exports = (file, pathImage, deletePathImage) => {
                 });
 
                 blobStream.on('finish', () => {
+                    // --- ¡CAMBIO CRÍTICO AQUÍ! ---
+                    // Debemos codificar el nombre del archivo para la URL.
+                    // Esto convierte 'ad_banners/file.jpg' en 'ad_banners%2Ffile.jpg'
+                    const encodedFileName = encodeURIComponent(fileUpload.name);
+
                     // The public URL can be used to directly access the file via HTTP.
-                    // <-- Usa el UUID generado
-                    const url = format(`https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${fileUpload.name}?alt=media&token=${uuid}`);
+                    // <-- Usa el nombre codificado
+                    const url = format(`https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedFileName}?alt=media&token=${uuid}`);
+                    
                     console.log('URL DE CLOUD STORAGE ', url);
                     resolve(url);
                 });
@@ -77,3 +83,4 @@ module.exports = (file, pathImage, deletePathImage) => {
         }
     });
 }
+
