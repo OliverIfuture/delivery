@@ -2,9 +2,9 @@ const { Storage } = require('@google-cloud/storage');
 const { format } = require('util');
 const env = require('../config/env')
 const url = require('url');
-const { v4: uuidv4 } = require('uuid');
-const uuid = uuidv4();
+const { v4: uuidv4 } = require('uuid'); // <-- Mantenemos el import aquí
 
+// const uuid = uuidv4(); // <-- ¡ELIMINADO DE AQUÍ!
 
 const storage = new Storage({
     projectId: "premium-delivery-app",
@@ -20,6 +20,11 @@ const bucket = storage.bucket("gs://premium-delivery-app.appspot.com//");
 module.exports = (file, pathImage, deletePathImage) => {
     return new Promise((resolve, reject) => {
         
+        // --- ¡NUEVO! ---
+        // Genera un UUID único PARA ESTA subida
+        const uuid = uuidv4(); 
+        // --- FIN DEL CAMBIO ---
+
         console.log('delete path', deletePathImage)
         if (deletePathImage) {
 
@@ -45,9 +50,9 @@ module.exports = (file, pathImage, deletePathImage) => {
                 let fileUpload = bucket.file(`${pathImage}`);
                 const blobStream = fileUpload.createWriteStream({
                     metadata: {
-                        contentType: 'image/png',
+                        contentType: 'image/png', // O el tipo de archivo correcto
                         metadata: {
-                            firebaseStorageDownloadTokens: uuid,
+                            firebaseStorageDownloadTokens: uuid, // <-- Usa el UUID generado
                         }
                     },
                     resumable: false
@@ -61,6 +66,7 @@ module.exports = (file, pathImage, deletePathImage) => {
 
                 blobStream.on('finish', () => {
                     // The public URL can be used to directly access the file via HTTP.
+                    // <-- Usa el UUID generado
                     const url = format(`https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${fileUpload.name}?alt=media&token=${uuid}`);
                     console.log('URL DE CLOUD STORAGE ', url);
                     resolve(url);
