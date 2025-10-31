@@ -1220,9 +1220,33 @@ User.getAgoraConfigall = () => {
 
 User.updateAgoraConfig = (agoraConfig) => {
     const sql = `
+WITH main_update AS (
+    -- Paso 1: Ejecuta tu actualización original en la fila seleccionada
     UPDATE agora_config
-	set app_id= $2, token_test= $3, channel_name= $4, on_live = $5, image_event = $6, day = $7, cost = $8
-	WHERE id = $1
+    SET 
+        app_id = $2, 
+        token_test = $3, 
+        channel_name = $4, 
+        on_live = $5, 
+        image_event = $6, 
+        day = $7, 
+        cost = $8
+    WHERE id = $1
+    -- Devuelve el ID y el estado 'on_live' que acabamos de establecer
+    RETURNING id, on_live 
+)
+-- Paso 2: Actualiza las otras filas, pero SÓLO si se cumplen las condiciones
+UPDATE agora_config
+SET on_live = false
+WHERE
+    -- Condición 1: Solo ejecuta esto SI la fila que actualizamos (main_update) se puso en 'true'
+    (SELECT on_live FROM main_update) = true
+    
+    -- Condición 2: Y no toques la fila que acabamos de actualizar
+    AND id != (SELECT id FROM main_update)
+    
+    -- Condición 3: Y solo actualiza las que ya estaban en 'true' (para no hacer trabajo innecesario)
+    AND on_live = true;
     `;
 
     return db.none(sql, [
