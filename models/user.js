@@ -23,7 +23,7 @@ User.getAllDealer = () => {
 
     return db.manyOrNone(sql);
 }
-
+ 
 
 User.findByState = (state) => {
     const sql = `
