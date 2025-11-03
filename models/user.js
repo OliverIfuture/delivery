@@ -1310,4 +1310,34 @@ User.deleteDiscountCode = (id) => {
     return db.none(sql,id);
 }
 
+User.createWholesaleUser = (user) => {
+
+    const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
+    user.password = myPasswordHashed;
+
+    const sql = `
+	    INSERT INTO
+	        users_mayoreo(
+	            email,
+	            name,
+	            phone,
+	            password,
+	            created_at,
+	            updated_at,
+				id_company
+	        )
+    VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+        user.email,
+        user.name,
+        user.phone,
+        user.password,
+        new Date(),
+        new Date(),
+		user.id_company
+    ]);
+}
+
 module.exports = User;
