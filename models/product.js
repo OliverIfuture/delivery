@@ -2519,7 +2519,7 @@ SELECT
     P.state,
     P.price_special,
     P.price_buy,
-	P.price_wholasale,
+	P.price_wholesale,
     COALESCE(json_agg(
         JSON_BUILD_OBJECT(
             'id', F.id,
