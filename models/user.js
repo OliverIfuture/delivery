@@ -1340,4 +1340,15 @@ User.createWholesaleUser = (user) => {
     ]);
 }
 
+User.getWholesaleUsersByCompany = (id) => {
+    const sql = `
+    SELECT 
+        *
+    FROM
+        users_mayoreo
+        WHERE id_company = $1
+    `;
+    return db.manyOrNone(sql, id);
+}
+
 module.exports = User;
