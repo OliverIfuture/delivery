@@ -1645,7 +1645,7 @@ async filesupload(req, res, next) {
             error: error
         });
     }
-}
+},
 
             async createWholesaleUser(req, res, next) {
         try {
