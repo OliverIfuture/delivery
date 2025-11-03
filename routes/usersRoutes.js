@@ -73,6 +73,9 @@ module.exports = (app, upload) => {
      app.get('/api/users/getDiscountCodesByCompany/:id',passport.authenticate('jwt', {session: false}) ,UsersController.getDiscountCodesByCompany);
 
     
+    app.post('/api/users/createWholesaleUser', UsersController.createWholesaleUser);
+
+    
     
 app.post('/api/users/createWithImageUserAndCompany', upload.fields([
     { name: 'image', maxCount: 1 }, 
