@@ -1647,5 +1647,32 @@ async filesupload(req, res, next) {
     }
 }
 
+            async createWholesaleUser(req, res, next) {
+        try {
+            
+            const user = req.body;
+            console.log(`Datos de usuario: ${user}`);
+
+            const data = await User.createWholesaleUser(user);
+            return res.status(201).json({
+                succes: true,
+                message: 'Usuario de mayoreo registrado',
+                data: data.id
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                succes: true,
+                message: 'error con el registro del ususario',
+                error: error
+
+            });
+        }
+    },
+    
     
 };
