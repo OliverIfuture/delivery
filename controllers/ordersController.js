@@ -1305,6 +1305,28 @@ async createNotification(req, res, next) {
             });
         }
     },
+
+
+   async createCotization(req, res, next) {
+        try {
+            let order = req.body;
+            const data = await Order.createCotization(order); 
+
+            return res.status(201).json({
+                success: true,
+                message: 'La cotizacion se creo correctamente',
+                data: data.id
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error creado la cotizacion',
+                error: error
+            });
+        }
+    },
   
   
 }
