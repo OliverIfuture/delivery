@@ -1873,13 +1873,18 @@ left join users_mayoreo as t on c.client_id = t.id
 }
 
 
+/* =================================================================
+// ===== FUNCION DEL MODELO (CORREGIDA CON LOGS Y 'state') ========
+// =================================================================
+*/
 Order.confirm = (id) => {
     // db.tx es la forma de pg-promise de manejar transacciones
-    // Si algo falla, hace ROLLBACK automatico.
     return db.tx(async t => {
         
-        // 1. Obtener la cotización y bloquear la fila para la actualización
-        // 'FOR UPDATE' es crucial para evitar que dos personas confirmen al mismo tiempo
+        console.log(`\n======================================================`);
+        console.log(`[Order.confirm] Iniciando transacción para Cotización ID: ${id}`);
+        
+        // 1. Obtener la cotización y bloquear la fila
         const quote = await t.oneOrNone(
             'SELECT * FROM cotizaciones WHERE id = $1 FOR UPDATE', 
             [id]
@@ -1887,58 +1892,60 @@ Order.confirm = (id) => {
 
         // --- Validaciones iniciales ---
         if (!quote) {
-            // No existe
-            return { 
-                success: false, 
-                message: 'Cotización no encontrada', 
-                statusCode: 404 // Not Found
-            };
+            console.error('[Order.confirm] Error: Cotización no encontrada');
+            return { success: false, message: 'Cotización no encontrada', statusCode: 404 };
         }
         if (quote.is_completed) {
-            // Ya está confirmada, no hacer nada.
-            return { 
-                success: false, 
-                message: 'Esta cotización ya fue confirmada', 
-                statusCode: 400 // Bad Request
-            };
+            console.warn('[Order.confirm] Info: Esta cotización ya fue confirmada');
+            return { success: false, message: 'Esta cotización ya fue confirmada', statusCode: 400 };
         }
         if (new Date(quote.expires_at) < new Date()) {
-            // Cotización expirada
-            return { 
-                success: false, 
-                message: 'Esta cotización ha expirado y ya no puede confirmarse', 
-                statusCode: 410 // Gone
-            };
+            console.warn('[Order.confirm] Error: Cotización expirada');
+            return { success: false, message: 'Esta cotización ha expirado', statusCode: 410 };
         }
 
         const productsInQuote = quote.products; // Es un array JSON
         const availableProducts = [];
         const unavailableProducts = [];
         let newTotal = 0.0;
-        let stockWasSufficient = true; // Asumimos que todo está bien al inicio
+        let stockWasSufficient = true; 
+
+        console.log(`[Order.confirm] Verificando stock para ${productsInQuote.length} productos...`);
 
         // 2. VERIFICAR STOCK (Producto por producto)
         for (const product of productsInQuote) {
+            
+            console.log(`--- Verificando Producto ID: ${product.id} (Nombre: ${product.name}) ---`);
+
             // Obtenemos el stock actual (usando 'state') Y el precio
             const dbProduct = await t.oneOrNone(
-                // ***** CAMBIO AQUÍ *****
                 'SELECT state, price_wholesale FROM products WHERE id = $1', 
                 [product.id]
             );
             
-            // Convertimos el stock de la BD (que es string) a número
-            // ***** CAMBIO AQUÍ *****
-            const currentStock = parseInt(dbProduct.state, 10);
+            let currentStock = 0; // Por defecto 0
             
-            if (currentStock >= product.quantity) {
+            // **CORRECCIÓN DE BUG CRÍTICO:**
+            // Comprobar si el producto existe y si 'state' no es nulo
+            if (dbProduct && dbProduct.state !== null && dbProduct.state !== undefined) {
+                currentStock = parseInt(dbProduct.state, 10);
+            } else {
+                console.error(`[Order.confirm] ¡PRODUCTO NO ENCONTRADO O SIN STATE! ID: ${product.id}`);
+            }
+
+            const quantityNeeded = parseInt(product.quantity, 10); // Asegurarnos que la cantidad es int
+
+            console.log(`[Order.confirm] Stock en BD (state): ${currentStock} | Cantidad Requerida: ${quantityNeeded}`);
+            
+            if (currentStock >= quantityNeeded) {
                 // SÍ hay stock
-                // Usamos el precio de la BD para el nuevo total (más seguro)
+                console.log(`[Order.confirm] Stock: SUFICIENTE`);
                 product.price_wholesale = parseFloat(dbProduct.price_wholesale); 
                 availableProducts.push(product);
-                // Acumulamos el total de los productos que SÍ están
-                newTotal += (product.price_wholesale * product.quantity);
+                newTotal += (product.price_wholesale * quantityNeeded);
             } else {
                 // NO hay stock
+                console.log(`[Order.confirm] Stock: INSUFICIENTE`);
                 stockWasSufficient = false;
                 unavailableProducts.push(product.name);
             }
@@ -1949,25 +1956,27 @@ Order.confirm = (id) => {
         // ---- Escenario A: TODO el stock estuvo disponible ----
         if (stockWasSufficient) {
             
-            // 4. DESCONTAR STOCK (AHORA SÍ)
-            // Creamos un array de promesas para actualizar el stock
+            console.log(`[Order.confirm] Escenario A: Stock SUFICIENTE para todo. Descontando...`);
+            
+            // 4. DESCONTAR STOCK
             const updates = availableProducts.map(product => {
+                console.log(`[Order.confirm] Descontando ${product.quantity} de Producto ID: ${product.id}`);
                 return t.none(
-                    // ***** CAMBIO AQUÍ *****
                     'UPDATE products SET state = (state::int - $1)::text WHERE id = $2',
                     [product.quantity, product.id]
                 );
             });
-            await t.batch(updates); // Ejecutar todos los updates de stock en lote
+            await t.batch(updates); // Ejecutar todos los updates de stock
 
             // 5. MARCAR COTIZACIÓN COMO COMPLETADA
             await t.none(
                 'UPDATE cotizaciones SET is_completed = true WHERE id = $1',
                 [id]
             );
-
-            // 6. Devolver éxito
-            // (COMMIT es automático al salir de db.tx sin error)
+            
+            console.log(`[Order.confirm] ¡ÉXITO! Cotización ID ${id} confirmada.`);
+            console.log(`======================================================\n`);
+            
             return {
                 success: true,
                 statusCode: 200,
@@ -1979,34 +1988,35 @@ Order.confirm = (id) => {
         // ---- Escenario B: Faltó stock (Tu nueva lógica) ----
         else {
             
+            console.log(`[Order.confirm] Escenario B: Stock INSUFICIENTE para: ${unavailableProducts.join(', ')}`);
+            
             // 4. ACTUALIZAR LA COTIZACIÓN con los productos que SÍ están
-            // Convertimos el array de productos disponibles a JSON string
             const newProductsJson = JSON.stringify(availableProducts);
 
             const updatedQuote = await t.one(
                 `UPDATE cotizaciones 
                  SET products = $1, total = $2 
                  WHERE id = $3
-                 RETURNING *`, // Devolvemos la cotización actualizada
+                 RETURNING *`, 
                 [newProductsJson, newTotal, id]
             );
 
-            // 5. Devolver un error "controlado"
-            // (COMMIT es automático, porque la *transacción* fue exitosa, aunque la *confirmación* falló)
+            console.log(`[Order.confirm] Cotización ID ${id} actualizada con productos disponibles.`);
+            console.log(`======================================================\n`);
+            
             return {
                 success: false,
-                message: `Stock insuficiente para: ${unavailableProducts.join(', ')}. La cotización se actualizó con los productos disponibles. Por favor, revisa y re-envía al cliente.`,
+                message: `Stock insuficiente para: ${unavailableProducts.join(', ')}. La cotización se actualizó.`,
                 statusCode: 409, // Conflict
                 data: {
                     status: 'UPDATED',
-                    unavailable: unavailableProducts, // Nombres de productos que faltaron
-                    updatedQuote: updatedQuote // La cotización con la nueva lista
+                    unavailable: unavailableProducts,
+                    updatedQuote: updatedQuote 
                 }
             };
         }
         
     }); // Fin de la transacción db.tx
 }
-
 
 module.exports = Order;
