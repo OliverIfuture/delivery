@@ -1,11 +1,10 @@
-const db = require('../config/config'); // Importar la conexión a la BD
+const db = require('../config/config.js');
 
 const Exercise = {};
 
-/**
- * Inserta un nuevo ejercicio en la base de datos.
- */
+// **FUNCIÓN PARA CREAR UN EJERCICIO**
 Exercise.create = (exercise) => {
+    // **CORRECCIÓN: Se usa exercise.idCompany (camelCase) que viene de la app**
     const sql = `
     INSERT INTO exercises(
         id_company,
@@ -20,28 +19,21 @@ Exercise.create = (exercise) => {
     )
     VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;
     `;
-    
-    return db.one(sql, [
-        exercise.idCompany, // Asegúrate que coincida con tu modelo Flutter (idCompany)
+
+    return db.oneOrNone(sql, [
+        exercise.idCompany, // <-- CORREGIDO
         exercise.name,
         exercise.description,
         exercise.muscleGroup,
         exercise.equipment,
-        exercise.mediaUrl,  // URL de Firebase
+        exercise.mediaUrl,
         exercise.mediaType,
         new Date(),
         new Date()
-    ])
-    .then(data => data.id) // Devuelve solo el ID generado
-    .catch(err => {
-        console.log('Error en Exercise.create SQL: ', err);
-        throw err;
-    });
+    ]);
 };
 
-/**
- * Busca todos los ejercicios por el ID de la compañía (entrenador).
- */
+// **FUNCIÓN PARA OBTENER EJERCICIOS POR COMPAÑÍA (ENTRENADOR)**
 Exercise.findByCompany = (id_company) => {
     const sql = `
     SELECT
@@ -60,9 +52,36 @@ Exercise.findByCompany = (id_company) => {
     ORDER BY
         muscle_group, name;
     `;
-    
     return db.manyOrNone(sql, id_company);
 };
 
+// **FUNCIÓN PARA ACTUALIZAR UN EJERCICIO**
+Exercise.update = (exercise) => {
+    const sql = `
+    UPDATE
+        exercises
+    SET
+        name = $2,
+        description = $3,
+        muscle_group = $4,
+        equipment = $5,
+        media_url = $6,
+        media_type = $7,
+        updated_at = $8
+    WHERE
+        id = $1;
+    `;
+    return db.none(sql, [
+        exercise.id,
+        exercise.name,
+        exercise.description,
+        exercise.muscleGroup,
+        exercise.equipment,
+        exercise.mediaUrl,
+        exercise.mediaType,
+        new Date()
+    ]);
+};
 
 module.exports = Exercise;
+
