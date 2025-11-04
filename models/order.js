@@ -1919,14 +1919,16 @@ Order.confirm = (id) => {
 
         // 2. VERIFICAR STOCK (Producto por producto)
         for (const product of productsInQuote) {
-            // Obtenemos el stock actual Y el precio (para recalcular el total)
+            // Obtenemos el stock actual (usando 'state') Y el precio
             const dbProduct = await t.oneOrNone(
-                'SELECT stock, price_wholesale FROM products WHERE id = $1', 
+                // ***** CAMBIO AQUÍ *****
+                'SELECT state, price_wholesale FROM products WHERE id = $1', 
                 [product.id]
             );
             
             // Convertimos el stock de la BD (que es string) a número
-            const currentStock = parseInt(dbProduct.stock, 10);
+            // ***** CAMBIO AQUÍ *****
+            const currentStock = parseInt(dbProduct.state, 10);
             
             if (currentStock >= product.quantity) {
                 // SÍ hay stock
@@ -1951,7 +1953,8 @@ Order.confirm = (id) => {
             // Creamos un array de promesas para actualizar el stock
             const updates = availableProducts.map(product => {
                 return t.none(
-                    'UPDATE products SET stock = (stock::int - $1)::text WHERE id = $2',
+                    // ***** CAMBIO AQUÍ *****
+                    'UPDATE products SET state = (state::int - $1)::text WHERE id = $2',
                     [product.quantity, product.id]
                 );
             });
