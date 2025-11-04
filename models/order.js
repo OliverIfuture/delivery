@@ -1847,8 +1847,28 @@ Order.createCotization = (order) => {
 
 Order.getSavedCotizations  = (id ) => {
     const sql = `
-select * from cotizaciones where company_id = $1 order by id desc
-    `;
+select 
+c.id,
+c.company_id,
+c.user_id,
+c.client_name,
+t.email as client_email,
+t.phone as client_phone,
+c.products,
+c.total,
+c.is_completed,
+c.created_at,
+c.expires_at,
+c.client_id
+
+
+from cotizaciones as c
+
+inner join users as u on c.user_id = u.id
+left join users_mayoreo as t on c.client_id = t.id
+
+ where company_id = $1 order by id desc
+ `;
     return db.manyOrNone(sql, id);
 }
 
