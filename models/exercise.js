@@ -21,7 +21,7 @@ Exercise.create = (exercise) => {
     `;
 
     return db.oneOrNone(sql, [
-        exercise.idCompany, // <-- CORREGIDO
+        exercise.id_company, // <-- CORREGIDO
         exercise.name,
         exercise.description,
         exercise.muscleGroup,
