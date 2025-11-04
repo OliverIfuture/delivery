@@ -1626,13 +1626,13 @@ async filesupload(req, res, next) {
             // 7. **RESPUESTA EXITOSA**
             // Devolver la URL en el campo 'data' para que ResponseApi.fromJson() la lea
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'Imagen subida correctamente',
                 data: url // <-- ¡AQUÍ ESTÁ LA URL!
             });
         } else {
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'Error al subir la imagen al servidor',
             });
         }
