@@ -1328,7 +1328,29 @@ async createNotification(req, res, next) {
         }
     },
   
-  
+
+    async getSavedCotizations(req, res, next) {
+        try {
+            const id = req.params.id;
+
+            const data = await Order.getSavedCotizations(id);
+            console.log(`getSavedCotizations: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las cotizaciones',
+                error: error,
+                success: false
+
+
+            });
+        }
+    },
+
+    
 }
 
 
