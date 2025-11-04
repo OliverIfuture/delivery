@@ -94,5 +94,6 @@ module.exports = (app) => {
     app.put('/api/orders/updateAppointmentStatus/:appointmentId/:newStatus', passport.authenticate('jwt', { session: false }), ordersController.updateAppointmentStatus);
     app.put('/api/orders/updateSaleStatus/:id/:status', passport.authenticate('jwt', { session: false }), ordersController.updateSaleStatus);
 
-    
+    app.get('/api/orders/getSavedCotizations/:id', ordersController.getSavedCotizations);
+
 }
