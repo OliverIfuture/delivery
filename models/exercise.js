@@ -83,5 +83,15 @@ Exercise.update = (exercise) => {
     ]);
 };
 
+Exercise.delete = (id) => {
+    const sql = `
+    DELETE FROM
+        exercises
+    WHERE
+        id = $1;
+    `;
+    return db.none(sql, id);
+};
+
 module.exports = Exercise;
 
