@@ -1375,7 +1375,7 @@ async createNotification(req, res, next) {
             // 3. Si fue exitoso (Escenario A)
             return res.status(200).json({ // 200 OK
                 success: true,
-                message: data.message,
+                message: 'cotizacion confirmada correctamente',
                 data: data.data 
             });
 
