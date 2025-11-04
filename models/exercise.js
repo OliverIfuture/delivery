@@ -24,10 +24,10 @@ Exercise.create = (exercise) => {
         exercise.id_company, // <-- CORREGIDO
         exercise.name,
         exercise.description,
-        exercise.muscleGroup,
+        exercise.muscle_group,
         exercise.equipment,
-        exercise.mediaUrl,
-        exercise.mediaType,
+        exercise.media_url,
+        exercise.media_type,
         new Date(),
         new Date()
     ]);
@@ -75,10 +75,10 @@ Exercise.update = (exercise) => {
         exercise.id,
         exercise.name,
         exercise.description,
-        exercise.muscleGroup,
+        exercise.muscle_group,
         exercise.equipment,
-        exercise.mediaUrl,
-        exercise.mediaType,
+        exercise.media_url,
+        exercise.media_type,
         new Date()
     ]);
 };
