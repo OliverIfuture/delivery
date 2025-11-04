@@ -77,6 +77,26 @@ module.exports = {
         }
     },
 
+        async delete(req, res, next) {
+        try {
+            const id = req.params.id;
+            await Exercise.delete(id);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Ejercicio eliminado con éxito'
+            });
+
+        } catch (error) {
+            console.log(`Error en exercisesController.delete: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al eliminar el ejercicio',
+                error: error
+            });
+        }
+    }
+
     // Aquí irían las funciones async update() y async delete()
 
 };
