@@ -1350,6 +1350,44 @@ async createNotification(req, res, next) {
         }
     },
 
+
+
+  async confirmCotization(req, res, next) {
+        try {
+            const id = req.params.id;
+            
+            // 1. Llamamos a la nueva funcion en el modelo (Order.confirm)
+            // Esta funcion hara la transaccion y nos devolvera un resultado detallado
+            const data = await Order.confirm(id);
+
+            // 2. El modelo nos devolverá un objeto con el estado
+            if (!data.success) {
+                // Si no fue exitoso (ej. sin stock o expirada), 
+                // devolvemos el status y mensaje de error que preparó el modelo
+                return res.status(data.statusCode || 409).json({ // 409 Conflict (sin stock) o 410 (Expirada)
+                    success: false,
+                    message: data.message,
+                    error: data.error,
+                    data: data.data // Aquí viaja la cotización actualizada (Escenario B)
+                });
+            }
+
+            // 3. Si fue exitoso (Escenario A)
+            return res.status(200).json({ // 200 OK
+                success: true,
+                message: data.message,
+                data: data.data 
+            });
+
+        } catch (error) {
+            console.log(`Error en confirmCotization Controller: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de confirmar la cotización',
+                error: error,
+                success: false
+            });
+        }
+    },
     
 }
 
