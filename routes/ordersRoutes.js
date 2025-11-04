@@ -95,5 +95,6 @@ module.exports = (app) => {
     app.put('/api/orders/updateSaleStatus/:id/:status', passport.authenticate('jwt', { session: false }), ordersController.updateSaleStatus);
 
     app.get('/api/orders/getSavedCotizations/:id', ordersController.getSavedCotizations);
+    app.put('/api/orders/confirmCotization/:id', passport.authenticate('jwt', { session: false }), ordersController.confirmCotization);
 
 }
