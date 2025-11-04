@@ -1409,7 +1409,7 @@ async createNotification(req, res, next) {
             console.log(`[cancelCotization] Éxito: ${data.message}`);
             return res.status(200).json({
                 success: true,
-                message: data.message,
+                message: 'cotizacion cancelada con exito',
                 data: data.data
             });
 
