@@ -2019,4 +2019,68 @@ Order.confirm = (id) => {
     }); // Fin de la transacción db.tx
 }
 
+
+/* =================================================================
+// ===== NUEVA FUNCION DEL MODELO (CANCELAR Y DEVOLVER STOCK) ======
+// =================================================================
+*/
+Order.cancel = (id) => {
+    // Usamos una transacción. Si algo falla, se revierte todo.
+    return db.tx(async t => {
+
+        console.log(`\n======================================================`);
+        console.log(`[Order.cancel] Iniciando transacción para Cotización ID: ${id}`);
+
+        // 1. Obtener la cotización y bloquear la fila
+        const quote = await t.oneOrNone(
+            'SELECT * FROM cotizaciones WHERE id = $1 FOR UPDATE', 
+            [id]
+        );
+
+        // --- Validaciones ---
+        if (!quote) {
+            console.error('[Order.cancel] Error: Cotización no encontrada');
+            return { success: false, message: 'Cotización no encontrada', statusCode: 404 };
+        }
+        if (!quote.is_completed) {
+            console.warn('[Order.cancel] Info: Esta cotización ya está "Pendiente", no se puede cancelar.');
+            return { success: false, message: 'Esta cotización no está confirmada, no se puede cancelar.', statusCode: 400 };
+        }
+
+        const productsToReturn = quote.products; // Array JSON de productos
+        
+        console.log(`[Order.cancel] Devolviendo stock para ${productsToReturn.length} productos...`);
+
+        // 2. CREAR LOTE DE DEVOLUCIÓN DE STOCK
+        const updates = productsToReturn.map(product => {
+            console.log(`[Order.cancel] Devolviendo ${product.quantity} a Producto ID: ${product.id}`);
+            return t.none(
+                // USAMOS EL SIGNO '+' PARA DEVOLVER EL STOCK
+                'UPDATE products SET state = (state::int + $1)::text WHERE id = $2',
+                [product.quantity, product.id]
+            );
+        });
+        
+        // 3. EJECUTAR LOTE DE DEVOLUCIÓN
+        await t.batch(updates);
+
+        // 4. MARCAR COTIZACIÓN COMO NO COMPLETADA (PENDIENTE)
+        await t.none(
+            'UPDATE cotizaciones SET is_completed = false WHERE id = $1',
+            [id]
+        );
+
+        console.log(`[Order.cancel] ¡ÉXITO! Cotización ID ${id} cancelada. Stock devuelto.`);
+        console.log(`======================================================\n`);
+
+        return {
+            success: true,
+            statusCode: 200,
+            message: '¡Cotización cancelada! El stock ha sido devuelto al inventario.',
+            data: { status: 'CANCELLED' }
+        };
+
+    }); // Fin de la transacción db.tx
+}
+
 module.exports = Order;
