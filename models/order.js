@@ -1840,7 +1840,7 @@ Order.createCotization = (order) => {
 	    order.is_completed,    
         order.created_at,
 	   order.expires_at,    
-	   order.client_id
+	   order.idClient
     
     ]);
 }
