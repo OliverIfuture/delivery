@@ -1845,6 +1845,12 @@ Order.createCotization = (order) => {
     ]);
 }
 
+Order.getSavedCotizations  = (id ) => {
+    const sql = `
+select * from cotizaciones where company_id = $1 order by id desc
+    `;
+    return db.manyOrNone(sql, id);
+}
 
 
 module.exports = Order;
