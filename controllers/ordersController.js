@@ -1388,6 +1388,45 @@ async createNotification(req, res, next) {
             });
         }
     },
+
+
+      * ==========================================================
+    * NUEVA FUNCION PARA CANCELAR COTIZACION (Devolver Stock)
+    * ==========================================================
+    */
+    async cancelCotization(req, res, next) {
+        try {
+            const id = req.params.id;
+            console.log(`[cancelCotization] Intentando cancelar Cotización ID: ${id}`);
+
+            // Llamamos a la nueva función del modelo
+            const data = await Order.cancel(id);
+
+            // El modelo nos devolverá un objeto con el estado
+            if (!data.success) {
+                console.warn(`[cancelCotization] Advertencia: ${data.message}`);
+                return res.status(data.statusCode || 400).json({
+                    success: false,
+                    message: data.message
+                });
+            }
+
+            console.log(`[cancelCotization] Éxito: ${data.message}`);
+            return res.status(200).json({
+                success: true,
+                message: data.message,
+                data: data.data
+            });
+
+        } catch (error) {
+            console.error(`[cancelCotization] Error fatal: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error en el servidor al cancelar la cotización',
+                error: error.message
+            });
+        }
+    },
     
 }
 
