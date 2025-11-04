@@ -27,5 +27,11 @@ module.exports = (app, upload) => {
 
     // --- RUTAS DELETE ---
     // (Aquí irá la ruta para eliminar)
+        // RUTA PARA ELIMINAR UN EJERCICIO
+    app.delete(
+        '/api/exercises/delete/:id', 
+        passport.authenticate('jwt', { session: false }), 
+        exercisesController.delete
+    );
 
 }
