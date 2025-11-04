@@ -1814,4 +1814,37 @@ ORDER BY
 }
 
 
+Order.createCotization = (order) => {
+    const sql = `
+    INSERT INTO
+        orders(
+            company_id,
+            user_id,
+            client_name,
+            products,
+            total,
+            is_completed,
+            created_at,
+            expires_at,
+	        client_id
+        )
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+        order.company_id,
+        order.user_id,
+        order.client_name,
+        order.products,
+        order.total,
+	    order.is_completed,    
+        order.created_at,
+	   order.expires_at,    
+	   order.client_id
+    
+    ]);
+}
+
+
+
 module.exports = Order;
