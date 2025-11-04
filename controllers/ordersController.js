@@ -1389,11 +1389,6 @@ async createNotification(req, res, next) {
         }
     },
 
-
-      * ==========================================================
-    * NUEVA FUNCION PARA CANCELAR COTIZACION (Devolver Stock)
-    * ==========================================================
-    */
     async cancelCotization(req, res, next) {
         try {
             const id = req.params.id;
