@@ -1817,7 +1817,7 @@ ORDER BY
 Order.createCotization = (order) => {
     const sql = `
     INSERT INTO
-        orders(
+        cotizaciones(
             company_id,
             user_id,
             client_name,
