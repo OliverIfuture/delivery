@@ -1373,4 +1373,22 @@ User.getClientsByCompany = (id_company) => {
     return db.manyOrNone(sql, id_company);
 }
 
+User.createInvitation = (email, id_company) => {
+    const sql = `
+        INSERT INTO trainer_invitations(
+            client_email,
+            id_company,
+            status,
+            created_at
+        )
+        VALUES($1, $2, 'pendiente', $3)
+    `;
+    return db.none(sql, [
+        email,
+        id_company,
+        new Date()
+    ]);
+}
+
+
 module.exports = User;
