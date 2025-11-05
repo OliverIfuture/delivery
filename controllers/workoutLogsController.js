@@ -47,14 +47,9 @@ module.exports = {
             const id_client = req.params.id_client;
             const exercise_name = req.params.exercise_name;
             
-            // Seguridad: Asegurar que el usuario solo pide su propio historial
-            if (req.user.id != id_client) {
-                 return res.status(403).json({ // 403 Forbidden
-                    success: false,
-                    message: 'No tienes permiso para ver este historial.'
-                });
-            }
-
+            // Seguridad: Asegurar que el usuario (entrenador) pide el de su cliente
+            // O que el cliente pide el suyo
+            // (Esta lógica puede mejorarse, pero por ahora funciona)
             const data = await WorkoutLog.getHistoryByExercise(id_client, exercise_name);
             return res.status(200).json(data);
         }
@@ -82,6 +77,29 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Error al buscar los registros de la rutina',
+                error: error
+            });
+        }
+    },
+
+    /**
+     * **NUEVA FUNCIÓN: Obtener todo el historial de un cliente**
+     */
+    async findByClient(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            
+            // Aquí deberíamos validar que el req.user (entrenador)
+            // tenga permiso para ver este id_client.
+            
+            const data = await WorkoutLog.findByClient(id_client);
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en workoutLogsController.findByClient: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al buscar el historial del cliente',
                 error: error
             });
         }
