@@ -76,7 +76,7 @@ module.exports = (app, upload) => {
      app.post('/api/users/createWholesaleUser', UsersController.createWholesaleUser);
      app.get('/api/users/getWholesaleUsersByCompany/:id',passport.authenticate('jwt', {session: false}) ,UsersController.getWholesaleUsersByCompany);
      app.get('/api/users/getClientsByCompany/:id_company', UsersController.getClientsByCompany);
-    app.post('/api/users/inviteClient', passport.authenticate('jwt', { session: false }), usersController.inviteClient);
+    app.post('/api/users/inviteClient', passport.authenticate('jwt', { session: false }), UsersController.inviteClient);
 
     
     
