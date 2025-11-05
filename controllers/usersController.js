@@ -534,7 +534,12 @@ async getAdminsNotificationTokens(req, res, next) {
         }
 
         if (User.isPasswordMatched(password, myUser.password)) {
-            const token = jwt.sign({id: myUser.id, email: myUser.email}, keys.secretOrKey, {
+            const token = jwt.sign(
+    { 
+        id: myUser.id, 
+        email: myUser.email,
+        id_entrenador: myUser.id_entrenador // <-- ¡AÑADE ESTA LÍNEA!
+    }, keys.secretOrKey, {
                 // expiresIn: (60*60*24) // 1 HORA
                 // expiresIn: (60 * 2) // 2 MINUTOS
             });
