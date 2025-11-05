@@ -77,7 +77,7 @@ Diet.findActiveByClient = (id_client) => {
         FROM
             diets AS d
         INNER JOIN
-            companies AS c ON d.id_company = c.id
+            company AS c ON d.id_company = c.id
         WHERE
             d.id_client = $1
         ORDER BY
