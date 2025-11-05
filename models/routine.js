@@ -128,7 +128,7 @@ Routine.findActiveByClient = (id_client) => {
         FROM
             routines AS r
         INNER JOIN
-            companies AS c ON r.id_company = c.id
+            company AS c ON r.id_company = c.id
         WHERE
             r.id_client = $1 AND r.is_active = true
     `;
