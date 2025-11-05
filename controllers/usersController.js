@@ -211,33 +211,136 @@ async getAdminsNotificationTokens(req, res, next) {
         }
     },
     
+
     async register(req, res, next) {
         try {
-            
             const user = req.body;
-            const data = await User.create(user);
+            
+            // --- LÓGICA DE INVITACIÓN DE ENTRENADOR ---
+            let id_entrenador = null;
+            const invitation = await User.findInvitationByEmail(user.email);
+            
+            if (invitation) {
+                // Si se encontró una invitación pendiente, asignamos el ID
+                id_entrenador = invitation.id_company;
+                console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
+            }
+            // --- FIN LÓGICA DE INVITACIÓN ---
 
-            await Rol.create(data.id, 1);//ROL POR DEFECTO CLIENE
-             await User.createticket(data.id);
-            return res.status(201).json({
-                succes: true,
-                message: 'El registro se ralizo correctamente, ahora inicia sesion',
-                data: data.id
+            // Pasamos el id_entrenador (que será null si no hay invitación)
+            const data = await User.create(user, id_entrenador);
+
+            // Asignar rol por defecto (asumimos rol 'Cliente' con id '3')
+            await Rol.create(data.id, 3); 
+
+            // --- LÓGICA DE INVITACIÓN (Actualizar) ---
+            if (invitation) {
+                // Si se usó una invitación, la marcamos como 'aceptada'
+                await User.updateInvitationStatus(user.email);
+                console.log(`Invitación para ${user.email} marcada como 'aceptada'.`);
+            }
+            // --- FIN LÓGICA ---
+
+            const token = jwt.sign({ id: data.id, email: user.email }, keys.secretOrKey, {
+                // expiresIn: 86400 // 1 dia
             });
 
-        }
+            const userData = {
+                id: data.id,
+                name: user.name,
+                lastname: user.lastname,
+                email: user.email,
+                phone: user.phone,
+                image: user.image,
+                session_token: `JWT ${token}`
+            };
 
+            return res.status(201).json({
+                success: true,
+                message: 'El registro se realizo correctamente',
+                data: userData
+            });
+
+        } 
         catch (error) {
-            console.log(`Error: ${error}`);
+            console.log(`Error en usersController.register: ${error}`);
             return res.status(501).json({
-
-                succes: true,
-                message: 'error con el registro del ususario',
+                success: false,
+                message: 'Hubo un error con el registro del usuario',
                 error: error
-
             });
         }
     },
+
+    async registerWithImage(req, res, next) {
+        try {
+            const user = JSON.parse(req.body.user);
+
+            // --- LÓGICA DE INVITACIÓN DE ENTRENADOR ---
+            let id_entrenador = null;
+            const invitation = await User.findInvitationByEmail(user.email);
+            
+            if (invitation) {
+                id_entrenador = invitation.id_company;
+                console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
+            }
+            // --- FIN LÓGICA DE INVITACIÓN ---
+
+            const files = req.files;
+
+            if (files.length > 0) {
+                const path = `image_${Date.now()}`;
+                const url = await storage(files[0], path);
+
+                if (url != undefined && url != null) {
+                    user.image = url;
+                }
+            }
+
+            // Pasamos el id_entrenador
+            const data = await User.create(user, id_entrenador);
+            
+            // Asignar rol por defecto (asumimos rol 'Cliente' con id '3')
+            await Rol.create(data.id, 3);
+
+             // --- LÓGICA DE INVITACIÓN (Actualizar) ---
+             if (invitation) {
+                await User.updateInvitationStatus(user.email);
+                console.log(`Invitación para ${user.email} marcada como 'aceptada'.`);
+            }
+            // --- FIN LÓGICA ---
+
+            const token = jwt.sign({ id: data.id, email: user.email }, keys.secretOrKey, {
+                // expiresIn: 86400 // 1 dia
+            });
+
+            const userData = {
+                id: data.id,
+                name: user.name,
+                lastname: user.lastname,
+                email: user.email,
+                phone: user.phone,
+                image: user.image,
+                session_token: `JWT ${token}`
+            };
+
+            return res.status(201).json({
+                success: true,
+                message: 'El registro se realizo correctamente',
+                data: userData
+            });
+
+        } 
+        catch (error) {
+            console.log(`Error en usersController.registerWithImage: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error con el registro del usuario',
+                error: error
+            });
+        }
+    },
+
 
             async registerWithOutImage(req, res, next) {
         try {
@@ -268,46 +371,7 @@ async getAdminsNotificationTokens(req, res, next) {
             });
         }
     },
-        async registerWithImage(req, res, next) {
-        try {
-            
-            const user = JSON.parse(req.body.user);
-            console.log(`Datos de usuario: ${user}`);
-            const files = req.files;
 
-            if (files.length > 0) {
-                const pathImage = `image_${Date.now()}`;
-                const url = await storage(files[0], pathImage);
-                
-                if (url != undefined && url != null) {
-                    user.image = url;
-
-                }
-            }
-
-            const data = await User.create(user);
-
-            await Rol.create(data.id, 1);//ROL POR DEFECTO CLIENE
-            await User.createticket(data.id);
-            return res.status(201).json({
-                succes: true,
-                message: 'El registro se ralizo correctamente, ahora inicia sesion',
-                data: data.id
-            });
-
-        }
-
-        catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
-
-                succes: true,
-                message: 'error con el registro del ususario',
-                error: error
-
-            });
-        }
-    },
 
         async updateNoImage(req, res, next) {
         try {
