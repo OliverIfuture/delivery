@@ -75,5 +75,17 @@ WorkoutLog.findByRoutine = (id_routine) => {
     return db.manyOrNone(sql, id_routine);
 };
 
+/**
+ * **NUEVA FUNCIÓN: Obtiene todo el historial de un cliente**
+ */
+WorkoutLog.findByClient = (id_client) => {
+    const sql = `
+        SELECT * FROM workout_logs
+        WHERE id_client = $1
+        ORDER BY created_at DESC
+    `;
+    return db.manyOrNone(sql, id_client);
+};
+
 
 module.exports = WorkoutLog;
