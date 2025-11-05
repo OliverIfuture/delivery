@@ -91,7 +91,8 @@ User.findByMail = (email, callback) => {
         credential,
         keystore,
         balance,
-	mi_store
+	mi_store,
+	id_entrenador
     FROM
         users
     WHERE
