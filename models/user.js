@@ -1351,4 +1351,26 @@ User.getWholesaleUsersByCompany = (id) => {
     return db.manyOrNone(sql, id);
 }
 
+// En tu archivo models/user.js
+
+// RECOMENDADO: Solo selecciona los datos seguros y necesarios.
+User.getClientsByCompany = (id_company) => {
+    const sql = `
+        SELECT
+            id,
+            email,
+            name,
+            lastname,
+            phone,
+            image
+        FROM
+            users
+        WHERE
+            id_entrenador = $1
+        ORDER BY
+            name ASC
+    `;
+    return db.manyOrNone(sql, id_company);
+}
+
 module.exports = User;
