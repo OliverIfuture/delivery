@@ -554,6 +554,7 @@ async getAdminsNotificationTokens(req, res, next) {
                 autenticated: myUser.autenticated,
                 is_trainer: myUser.is_trainer,
                 document: myUser.document,
+                id_entrenador: myUser.id_entrenador,
                 roles: myUser.roles,
                 gym: myUser.gym,
                 state: myUser.state,
