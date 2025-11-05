@@ -51,6 +51,7 @@ const orders = require('./routes/ordersRoutes.js');
 const mercadoPagoRoutes = require('./routes/mercadoPagoRoutes.js');
 const exercises = require('./routes/exercisesRoutes.js');
 const routines = require('./routes/routinesRoutes.js'); // **NUEVA RUTA AÑADIDA**
+const diets = require('./routes/dietsRoutes.js');
 const PORT = process.env.PORT || 4000
 
 
@@ -83,6 +84,7 @@ orders(app);
 mercadoPagoRoutes(app);
 exercises(app, upload);
 routines(app); // **NUEVA RUTA AÑADIDA**
+diets(app);
 
 
 
