@@ -1,5 +1,6 @@
 const db = require('../config/config');
 const crypto = require('crypto');
+const keys = require('../config/keys.js'); // <-- **ESTA LÍNEA ES LA CORRECCIÓN**
 
 const User = {};
 
