@@ -1393,4 +1393,22 @@ User.createInvitation = (email, id_company) => {
 }
 
 
+User.findInvitationByEmail = (email) => {
+    const sql = `
+        SELECT id_company, status FROM trainer_invitations
+        WHERE client_email = $1 AND status = 'pendiente'
+    `;
+    return db.oneOrNone(sql, email);
+};
+
+
+User.updateInvitationStatus = (email) => {
+    const sql = `
+        UPDATE trainer_invitations SET status = 'aceptada'
+        WHERE client_email = $1
+    `;
+    return db.none(sql, email);
+};
+
+
 module.exports = User;
