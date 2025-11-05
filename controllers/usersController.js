@@ -1698,5 +1698,26 @@ async filesupload(req, res, next) {
     },
 
 
+
+    
+    async getClientsByCompany(req, res, next) {
+        try {
+            const id_company = req.params.id_company;
+            const data = await User.getClientsByCompany(id_company);
+            console.log(`getClientsByCompany: ${data}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                succes: false,
+                message: 'error al obtener los repartidores'
+            });
+        }
+    },
+
     
 };
