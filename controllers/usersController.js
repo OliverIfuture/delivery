@@ -1719,5 +1719,51 @@ async filesupload(req, res, next) {
         }
     },
 
-    
+      async inviteClient(req, res, next) {
+        try {
+            const email = req.body.email;
+            const id_company = req.user.mi_store; // ID del entrenador (viene del token JWT)
+
+            if (!email || !id_company) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan datos (email o id de compañía)'
+                });
+            }
+
+            // (Opcional) Verificar si el usuario ya existe y ya tiene un entrenador
+            const existingUser = await User.findByEmail(email);
+            if (existingUser && existingUser.id_entrenador) {
+                 return res.status(409).json({ // 409 Conflict
+                    success: false,
+                    message: 'Este usuario ya está asignado a un entrenador.'
+                });
+            }
+
+            // Crear la invitación en la nueva tabla
+            await User.createInvitation(email, id_company);
+            
+            // (Lógica futura: enviar un email real al cliente)
+
+            return res.status(201).json({
+                success: true,
+                message: `Invitación enviada a ${email}. Se registrará cuando el usuario cree su cuenta.`
+            });
+        } 
+        catch (error) {
+            console.log(`Error en usersController.inviteClient: ${error}`);
+            // Manejar error de "ya existe" (UNIQUE constraint)
+            if (error.code === '23505') {
+                 return res.status(409).json({
+                    success: false,
+                    message: 'Ya existe una invitación pendiente para este email.'
+                });
+            }
+            return res.status(501).json({
+                success: false,
+                message: 'Error al crear la invitación',
+                error: error
+            });
+        }
+    }
 };
