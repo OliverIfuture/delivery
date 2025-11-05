@@ -297,6 +297,7 @@ SELECT
     U.keystore,
     U.balance,
     U.mi_store,
+	U.id_entrenador,
     -- CORRECCIÓN: Usamos jsonb_agg + FILTER + extracción de índice (-> 0) para obtener
     -- un objeto único o NULL. Esto resuelve el error 'MAX(json) does not exist'.
     COALESCE(
