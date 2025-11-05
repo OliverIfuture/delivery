@@ -460,27 +460,28 @@ User.createticket = (id) => {
     return db.oneOrNone(sql, id);
 }
 
-User.create = (user) => {
+User.create = (user, id_entrenador) => { // <-- CAMBIO AQUÍ
 
-    const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
+    // Encriptar contraseña
+    const myPasswordHashed = crypto.createHmac('sha256', keys.secretOrKey).update(user.password).digest('hex');
     user.password = myPasswordHashed;
 
     const sql = `
-	    INSERT INTO
-	        users(
-	            email,
-	            name,
-	            lastname,
-	            phone,
-	            image,
-	            password,
-	            created_at,
-	            updated_at
-	        )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+        INSERT INTO users(
+            email,
+            name,
+            lastname,
+            phone,
+            image,
+            password,
+            created_at,
+            updated_at,
+            id_entrenador -- <-- NUEVA COLUMNA
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id -- <-- NUEVO VALOR
     `;
-
-    return db.oneOrNone(sql, [
+    
+    return db.one(sql, [
         user.email,
         user.name,
         user.lastname,
@@ -488,9 +489,10 @@ User.create = (user) => {
         user.image,
         user.password,
         new Date(),
-        new Date()
+        new Date(),
+        id_entrenador // <-- NUEVO VALOR
     ]);
-}
+};
 
 User.createWithImageDelivery = (user) => {
 
