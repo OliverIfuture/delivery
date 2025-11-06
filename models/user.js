@@ -1465,4 +1465,20 @@ User.updateChargesEnabled = (id_company, charges_enabled) => {
     ]);
 };
 
+User.findNotificationToken = (id_user) => {
+    const sql = `
+        SELECT
+            notification_token
+        FROM
+            users 
+        WHERE
+            id = $1
+    `;
+    // Usamos oneOrNone y .then para devolver solo el string del token
+    return db.oneOrNone(sql, id_user)
+        .then(result => {
+            return (result && result.notification_token) ? result.notification_token : null;
+        });
+};
+
 module.exports = User;
