@@ -168,6 +168,7 @@ User.findByUserId = (id) => {
         U.keystore,
         U.balance,
 	U.mi_store,
+	U.id_entrenador,
         json_agg(
             json_build_object(
                 'id', R.id,
