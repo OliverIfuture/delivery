@@ -1413,6 +1413,20 @@ User.updateInvitationStatus = (email) => {
     `;
     return db.none(sql, email);
 };
-
+User.findCompanyById = (id_company) => {
+    // Asumiendo que tu tabla se llama 'company'
+    const sql = `
+        SELECT
+            id,
+            name,
+            stripe_secret_key,
+            stripe_publishable_key
+        FROM
+            company 
+        WHERE
+            id = $1
+    `;
+    return db.oneOrNone(sql, id_company);
+};
 
 module.exports = User;
