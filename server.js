@@ -61,7 +61,14 @@ const PORT = process.env.PORT || 4000
 
 
 app.use(logger('dev'));
-app.use(express.json());
+// Usamos express.json() CON la opción "verify"
+app.use(express.json({
+    verify: (req, res, buf) => {
+        // Guardamos el body "crudo" (raw) en una nueva variable
+        // para que el webhook de Stripe pueda usarlo
+        req.rawBody = buf;
+    }
+}));
 app.use(express.urlencoded({
     extended: true
 }));
