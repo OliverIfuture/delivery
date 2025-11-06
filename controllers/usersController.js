@@ -1604,7 +1604,7 @@ async createWithImageDelivery(req, res, next) {
 
             const data = await User.createDiscountCode(newCode);
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'El codigo se creo correctamente',
             });
 
