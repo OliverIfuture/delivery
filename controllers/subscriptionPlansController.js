@@ -1,4 +1,5 @@
 const SubscriptionPlan = require('../models/subscriptionPlan.js');
+const User = require('../models/user.js'); // **CAMBIO: Importamos User**
 const keys = require('../config/keys.js'); // Asumo que tienes tus claves de Stripe aquí o en un .env
 
 // Configurar Stripe (puedes mover esto a un archivo de config si lo prefieres)
@@ -19,7 +20,9 @@ module.exports = {
             const id_company = req.user.mi_store; // ID del entrenador
             
             // 1. Obtener la compañía (entrenador) para sacar su clave secreta de Stripe
-            const company = await Company.findById(id_company);
+            // **CAMBIO: Llamamos a la función del modelo User**
+            const company = await User.findCompanyById(id_company); 
+            
             if (!company || !company.stripe_secret_key) {
                 return res.status(400).json({
                     success: false,
@@ -88,7 +91,8 @@ module.exports = {
             }
 
             // 2. Obtener la clave secreta del entrenador
-            const company = await Company.findById(id_company);
+            // **CAMBIO: Llamamos a la función del modelo User**
+            const company = await User.findCompanyById(id_company);
             if (!company || !company.stripe_secret_key) {
                 return res.status(400).json({
                     success: false,
