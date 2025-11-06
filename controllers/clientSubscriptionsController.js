@@ -105,7 +105,7 @@ module.exports = {
             // O una configuración especial para que el webhook reciba el body "crudo" (raw)
             // Para este controlador, asumiremos que estás usando la clave secreta del ADMIN para verificar
             const adminStripe = require('stripe')(keys.stripeAdminSecretKey); // Clave del admin para verificar
-            event = adminStripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+            event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
         
         } catch (err) {
             console.log(`❌ Error en Webhook: ${err.message}`);
