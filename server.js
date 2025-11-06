@@ -56,6 +56,7 @@ const workoutLogs = require('./routes/workoutLogsRoutes.js');
 const subscriptionPlans = require('./routes/subscriptionPlansRoutes.js');
 const clientSubscriptions = require('./routes/clientSubscriptionsRoutes.js'); // <-- AÑADE ESTA
 const stripeConnect = require('./routes/stripeConnectRoutes.js');
+const clientProgress = require('./routes/clientProgressRoutes.js');
 const PORT = process.env.PORT || 4000
 
 
@@ -100,6 +101,7 @@ workoutLogs(app);
 subscriptionPlans(app);
 clientSubscriptions(app); 
 stripeConnect(app); // <-- AÑADE ESTA LÍNEA
+clientProgress(app);
 server.listen(PORT, function () {
     console.log('Aplicacion de NodeJs ' + process.pid + ' iniciada... : puerto asignado ' + PORT);
 });
