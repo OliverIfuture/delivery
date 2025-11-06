@@ -1415,12 +1415,13 @@ User.updateInvitationStatus = (email) => {
 };
 User.findCompanyById = (id_company) => {
     // Asumiendo que tu tabla se llama 'company'
+    // **AÑADIDAS COMILLAS DOBLES para respetar el camelCase**
     const sql = `
         SELECT
             id,
             name,
-            stripe_secret_key,
-            stripe_publishable_key
+            "stripeSecretKey",
+            "stripePublishableKey"
         FROM
             company 
         WHERE
