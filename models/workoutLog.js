@@ -88,4 +88,30 @@ WorkoutLog.findByClient = (id_client) => {
 };
 
 
+WorkoutLog.getTrainerFeed = (id_company) => {
+    const sql = `
+        SELECT
+            w.id,
+            w.exercise_name,
+            w.set_number,
+            w.completed_reps,
+            w.completed_weight,
+            w.created_at,
+            u.id as id_client,
+            u.name as client_name,
+            COALESCE(u.image, '') as client_image
+        FROM
+            workout_logs AS w
+        INNER JOIN
+            users AS u ON w.id_client = u.id
+        WHERE
+            w.id_company = $1
+        ORDER BY
+            w.created_at DESC
+        LIMIT 20 -- Limitar a los 20 más recientes
+    `;
+    return db.manyOrNone(sql, id_company);
+};
+
+
 module.exports = WorkoutLog;
