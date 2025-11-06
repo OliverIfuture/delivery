@@ -1422,13 +1422,47 @@ User.findCompanyById = (id_company) => {
             id,
             name,
             "stripeSecretKey",
-            "stripePublishableKey"
+            "stripePublishableKey",
+            "stripeAccountId", -- <-- NUEVO
+            "chargesEnabled"   -- <-- NUEVO
         FROM
             company 
         WHERE
             id = $1
     `;
     return db.oneOrNone(sql, id_company);
+};
+
+/**
+ * Guarda el ID de la cuenta de Stripe (acct_...) en la DB
+ */
+User.updateStripeAccountId = (id_company, stripe_account_id) => {
+    const sql = `
+        UPDATE company
+        SET "stripeAccountId" = $1, updated_at = $2
+        WHERE id = $3
+    `;
+    return db.none(sql, [
+        stripe_account_id,
+        new Date(),
+        id_company
+    ]);
+};
+
+/**
+ * Actualiza el estado de 'chargesEnabled' (lo llama el webhook o getAccountStatus)
+ */
+User.updateChargesEnabled = (id_company, charges_enabled) => {
+    const sql = `
+        UPDATE company
+        SET "chargesEnabled" = $1, updated_at = $2
+        WHERE id = $3
+    `;
+    return db.none(sql, [
+        charges_enabled,
+        new Date(),
+        id_company
+    ]);
 };
 
 module.exports = User;
