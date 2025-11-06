@@ -53,6 +53,7 @@ const exercises = require('./routes/exercisesRoutes.js');
 const routines = require('./routes/routinesRoutes.js'); // **NUEVA RUTA AÑADIDA**
 const diets = require('./routes/dietsRoutes.js');
 const workoutLogs = require('./routes/workoutLogsRoutes.js');
+const subscriptionPlans = require('./routes/subscriptionPlansRoutes.js');
 const PORT = process.env.PORT || 4000
 
 
@@ -87,7 +88,7 @@ exercises(app, upload);
 routines(app); // **NUEVA RUTA AÑADIDA**
 diets(app);
 workoutLogs(app);
-
+subscriptionPlans(app);
 
 server.listen(PORT, function () {
     console.log('Aplicacion de NodeJs ' + process.pid + ' iniciada... : puerto asignado ' + PORT);
