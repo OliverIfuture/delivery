@@ -1,24 +1,24 @@
 const ClientSubscription = require('../models/clientSubscription.js');
-const User = require('../models/user.js'); // Usamos el modelo User para obtener la info de la compañía
-const keys = require('../config/keys.js'); // Asumo que tienes tus claves de Stripe aquí
+const User = require('../models/user.js'); 
+const keys = require('../config/keys.js'); 
 
-// Esta es tu CLAVE SECRETA DE WEBHOOK.
-// Debes generarla en tu Dashboard de Stripe en la sección "Webhooks"
-// y añadirla a tu archivo 'keys.js' o .env
 const endpointSecret = keys.stripeWebhookSecret; 
+// Clave secreta del Admin (o una clave de plataforma) para verificar el webhook
+// Es más seguro usar la clave de la cuenta que *recibe* el webhook
+const adminStripe = require('stripe')(keys.stripeAdminSecretKey); 
 
 module.exports = {
 
     /**
-     * Crea una sesión de Stripe Checkout para un plan específico.
-     * El cliente es redirigido a esta sesión para pagar.
+     * NUEVA FUNCIÓN: Crea una suscripción y devuelve el PaymentIntent
+     * para el SDK nativo de Flutter.
      */
-    async createCheckoutSession(req, res, next) {
+    async createSubscriptionIntent(req, res, next) {
         try {
             const { id_plan, id_company, price_id } = req.body;
             const id_client = req.user.id;
             
-            // 1. Obtener la compañía (entrenador) para usar su clave secreta de Stripe
+            // 1. Obtener la compañía (entrenador) para usar su clave secreta
             const company = await User.findCompanyById(id_company);
             if (!company || !company.stripeSecretKey) {
                 return res.status(400).json({
@@ -29,8 +29,7 @@ module.exports = {
             
             const stripe = require('stripe')(company.stripeSecretKey);
 
-            // 2. Crear un Cliente en Stripe (o buscar uno existente)
-            // Usamos el email del usuario logueado
+            // 2. Crear/Obtener un Cliente en Stripe
             let customer;
             const existingCustomers = await stripe.customers.list({
                 email: req.user.email,
@@ -46,65 +45,54 @@ module.exports = {
                 });
             }
 
-            // 3. Crear la Sesión de Checkout
-            const session = await stripe.checkout.sessions.create({
-                payment_method_types: ['card'],
-                line_items: [
-                    {
-                        price: price_id, // El ID del precio del plan (ej. price_1P...)
-                        quantity: 1,
-                    },
-                ],
-                mode: 'subscription', // ¡Importante! Esto lo hace recurrente
+            // 3. Crear la Suscripción
+            // La "magia" está en 'payment_behavior: 'default_incomplete''
+            // y 'expand: ['latest_invoice.payment_intent']'
+            const subscription = await stripe.subscriptions.create({
                 customer: customer.id,
-                // URLs a las que Stripe redirigirá al usuario
-                // Debes crear estas páginas en tu app de Flutter
-                success_url: 'https://tu-app.com/checkout/success?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url: 'https://tu-app.com/checkout/cancel',
-                
-                // Guardamos nuestros IDs de BD en los metadatos de Stripe
-                // para saber a quién activar cuando el Webhook nos avise.
-                subscription_data: {
-                    metadata: {
-                        id_client: id_client,
-                        id_company: id_company,
-                        id_plan: id_plan
-                    }
+                items: [{ price: price_id }], // El ID del precio (ej. price_1P...)
+                payment_behavior: 'default_incomplete', // No la cobra, solo la prepara
+                payment_settings: { save_default_payment_method: 'on_subscription' },
+                expand: ['latest_invoice.payment_intent'], // Pide que se genere la 1ra factura
+                metadata: {
+                    id_client: id_client,
+                    id_company: id_company,
+                    id_plan: id_plan
                 }
             });
 
-            // 4. Devolver la URL de pago a la app de Flutter
+            // 4. Devolver los secretos al SDK de Flutter
             return res.status(200).json({
                 success: true,
-                url: session.url, // La app de Flutter debe abrir esta URL
-                id: session.id
+                subscriptionId: subscription.id,
+                // El secreto del cliente para la hoja de pago nativa
+                clientSecret: subscription.latest_invoice.payment_intent.client_secret, 
+                customerId: customer.id,
+                // La clave pública del entrenador (NO LA SECRETA)
+                publishableKey: company.stripePublishableKey 
             });
 
         } catch (error) {
-            console.log(`Error en createCheckoutSession: ${error}`);
+            console.log(`Error en createSubscriptionIntent: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al crear la sesión de pago',
+                message: 'Error al crear la intención de suscripción',
                 error: error.message
             });
         }
     },
 
     /**
-     * Endpoint para que Stripe nos avise de eventos (ej. pago exitoso)
+     * WEBHOOK DE STRIPE - ACTUALIZADO
+     * Escucha eventos de facturas (invoice) en lugar de checkout
      */
     async stripeWebhook(req, res, next) {
-        // Esta función es compleja y requiere 'stripe' y 'express.raw'
-        // Por ahora, nos centraremos en el evento 'checkout.session.completed'
         
         const sig = req.headers['stripe-signature'];
         let event;
 
         try {
-            // Nota: Esto requiere que uses `app.use(express.raw({type: 'application/json'}));` 
-            // O una configuración especial para que el webhook reciba el body "crudo" (raw)
-            // Para este controlador, asumiremos que estás usando la clave secreta del ADMIN para verificar
-            const adminStripe = require('stripe')(keys.stripeAdminSecretKey); // Clave del admin para verificar
+            // Usamos req.rawBody (que configuramos en server.js)
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
         
         } catch (err) {
@@ -114,25 +102,34 @@ module.exports = {
 
         // Manejar el evento
         switch (event.type) {
-            case 'checkout.session.completed':
-                const session = event.data.object;
+            
+            // CAMBIO: Este es el nuevo evento para suscripciones
+            case 'invoice.payment_succeeded':
+                const invoice = event.data.object;
                 
-                // Obtener los metadatos que guardamos
-                const metadata = session.subscription_data.metadata;
-                
-                // Crear el registro de suscripción en nuestra BD
-                const subscriptionData = {
-                    id_client: metadata.id_client,
-                    id_company: metadata.id_company,
-                    id_plan: metadata.id_plan,
-                    stripe_subscription_id: session.subscription, // ID de la suscripción
-                    stripe_customer_id: session.customer,
-                    status: 'active', // ¡Activado!
-                    // (Aquí también deberíamos obtener 'current_period_end' de Stripe)
-                };
+                // Si es el primer pago de una suscripción
+                if (invoice.billing_reason === 'subscription_create') {
+                    const subscriptionId = invoice.subscription;
+                    const customerId = invoice.customer;
+                    
+                    // Necesitamos obtener la suscripción para leer los metadatos
+                    const subscription = await adminStripe.subscriptions.retrieve(subscriptionId);
+                    const metadata = subscription.metadata;
 
-                await ClientSubscription.create(subscriptionData);
-                console.log('✅ Suscripción creada y activada en la BD para el cliente:', metadata.id_client);
+                    // Crear el registro de suscripción en nuestra BD
+                    const subscriptionData = {
+                        id_client: metadata.id_client,
+                        id_company: metadata.id_company,
+                        id_plan: metadata.id_plan,
+                        stripe_subscription_id: subscriptionId,
+                        stripe_customer_id: customerId,
+                        status: 'active', // ¡Activado!
+                        current_period_end: new Date(subscription.current_period_end * 1000)
+                    };
+
+                    await ClientSubscription.create(subscriptionData);
+                    console.log('✅ Suscripción (Webhook) creada y activada en la BD para el cliente:', metadata.id_client);
+                }
                 break;
                 
             case 'invoice.payment_failed':
@@ -143,7 +140,7 @@ module.exports = {
                 break;
                 
             case 'customer.subscription.deleted':
-                // El cliente canceló desde el portal de Stripe
+                // El cliente canceló
                 const canceledSubId = event.data.object.id;
                 await ClientSubscription.updateStatus(canceledSubId, 'canceled');
                 console.log('❌ Suscripción cancelada:', canceledSubId);
@@ -161,6 +158,7 @@ module.exports = {
      * Verifica el estado de la suscripción de un cliente
      */
     async getSubscriptionStatus(req, res, next) {
+        // (Esta función sigue igual y es correcta)
         try {
             const id_client = req.user.id; // El ID del cliente logueado
             const data = await ClientSubscription.findActiveByClient(id_client);
