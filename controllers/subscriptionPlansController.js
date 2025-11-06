@@ -1,13 +1,6 @@
 const SubscriptionPlan = require('../models/subscriptionPlan.js');
-const User = require('../models/user.js'); // **CAMBIO: Importamos User**
-const keys = require('../config/keys.js'); // Asumo que tienes tus claves de Stripe aquí o en un .env
-
-// Configurar Stripe (puedes mover esto a un archivo de config si lo prefieres)
-// Usamos la clave secreta de la plataforma (Admin) para crear productos en nombre de otras cuentas
-// o (mejor) usamos la clave del entrenador si está conectado con Stripe Connect.
-// Por simplicidad, usaremos la clave del entrenador.
-// const stripe = require('stripe')(keys.stripeSecretKey); 
-
+const User = require('../models/user.js'); // Importamos User
+const keys = require('../config/keys.js'); 
 
 module.exports = {
 
@@ -16,36 +9,35 @@ module.exports = {
      */
     async create(req, res, next) {
         try {
-            const plan = req.body; // { name: "Plan Básico", price: 500 }
-            const id_company = req.user.mi_store; // ID del entrenador
+            const plan = req.body; 
+            const id_company = req.user.mi_store; 
             
-            // 1. Obtener la compañía (entrenador) para sacar su clave secreta de Stripe
-            // **CAMBIO: Llamamos a la función del modelo User**
             const company = await User.findCompanyById(id_company); 
             
-            if (!company || !company.stripe_secret_key) {
+            // **CORRECCIÓN: Usar camelCase**
+            if (!company || !company.stripeSecretKey) {
                 return res.status(400).json({
                     success: false,
                     message: 'El entrenador no tiene una clave de Stripe configurada.'
                 });
             }
             
-            // Inicializar Stripe con la clave secreta del ENTRENADOR
-            const stripe = require('stripe')(company.stripe_secret_key);
+            // **CORRECCIÓN: Usar camelCase**
+            const stripe = require('stripe')(company.stripeSecretKey);
 
             // 2. Crear el Producto en Stripe
             const stripeProduct = await stripe.products.create({
                 name: plan.name,
-                type: 'service', // Es un servicio
+                type: 'service', 
             });
 
             // 3. Crear el Precio (Suscripción mensual) en Stripe
             const stripePrice = await stripe.prices.create({
                 product: stripeProduct.id,
-                unit_amount: (plan.price * 100).toFixed(0), // Stripe maneja centavos
+                unit_amount: (plan.price * 100).toFixed(0), 
                 currency: 'mxn',
                 recurring: {
-                    interval: 'month', // Cobrar cada mes
+                    interval: 'month', 
                 },
             });
 
@@ -79,9 +71,8 @@ module.exports = {
     async delete(req, res, next) {
         try {
             const id_plan = req.params.id;
-            const id_company = req.user.mi_store; // ID del entrenador
+            const id_company = req.user.mi_store; 
 
-            // 1. Obtener el plan de NUESTRA BD para sacar los IDs de Stripe
             const plan = await SubscriptionPlan.findById(id_plan, id_company);
             if (!plan) {
                 return res.status(404).json({
@@ -90,23 +81,22 @@ module.exports = {
                 });
             }
 
-            // 2. Obtener la clave secreta del entrenador
-            // **CAMBIO: Llamamos a la función del modelo User**
+            // **CORRECCIÓN: Usar camelCase**
             const company = await User.findCompanyById(id_company);
-            if (!company || !company.stripe_secret_key) {
+            if (!company || !company.stripeSecretKey) {
                 return res.status(400).json({
                     success: false,
                     message: 'El entrenador no tiene una clave de Stripe configurada.'
                 });
             }
 
-            const stripe = require('stripe')(company.stripe_secret_key);
+            // **CORRECCIÓN: Usar camelCase**
+            const stripe = require('stripe')(company.stripeSecretKey);
 
-            // 3. Desactivar el Producto en Stripe (más seguro que borrar)
+            // 3. Desactivar el Producto en Stripe
             await stripe.products.update(plan.stripe_product_id, {
                 active: false
             });
-            // (Opcional: Desactivar el precio también)
             await stripe.prices.update(plan.stripe_price_id, {
                 active: false
             });
