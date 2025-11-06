@@ -145,6 +145,29 @@ module.exports = {
                 await ClientSubscription.updateStatus(canceledSubId, 'canceled');
                 console.log('❌ Suscripción cancelada:', canceledSubId);
                 break;
+
+                // --- **NUEVA LÓGICA PARA ONBOARDING DEL ENTRENADOR** ---
+            case 'account.updated':
+                const account = event.data.object;
+                const accountId = account.id;
+                const chargesEnabled = account.charges_enabled;
+
+                console.log(`Webhook 'account.updated': ${accountId}, charges_enabled: ${chargesEnabled}`);
+                
+                // Actualizar nuestra base de datos
+                try {
+                    // Buscamos la compañía por su "stripeAccountId"
+                    const sql = `SELECT id FROM company WHERE "stripeAccountId" = $1`;
+                    const company = await db.oneOrNone(sql, [accountId]);
+                    
+                    if (company) {
+                        await User.updateChargesEnabled(company.id, chargesEnabled);
+                        console.log(`✅ Estado de Stripe Connect actualizado para la compañía ${company.id}`);
+                    }
+                } catch (e) {
+                    console.log(`Error al actualizar estado de cuenta ${accountId}: ${e}`);
+                }
+                break;
             
             default:
                 console.log(`Evento de Webhook no manejado: ${event.type}`);
