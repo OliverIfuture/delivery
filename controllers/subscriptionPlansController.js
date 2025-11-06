@@ -1,5 +1,4 @@
 const SubscriptionPlan = require('../models/subscriptionPlan.js');
-const Company = require('../models/company.js'); // Necesitamos el modelo Company para obtener las claves de Stripe
 const keys = require('../config/keys.js'); // Asumo que tienes tus claves de Stripe aquí o en un .env
 
 // Configurar Stripe (puedes mover esto a un archivo de config si lo prefieres)
