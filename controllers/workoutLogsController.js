@@ -105,4 +105,29 @@ module.exports = {
         }
     },
 
+    async getTrainerFeed(req, res, next) {
+        try {
+            // Seguridad: Asegura que el entrenador solo pueda ver su propio feed
+            const id_company = req.user.mi_store; 
+            
+            if (req.params.id_company != id_company) {
+                 return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permiso para ver este feed.'
+                });
+            }
+
+            const data = await WorkoutLog.getTrainerFeed(id_company);
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en workoutLogsController.getTrainerFeed: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener el feed de actividad',
+                error: error
+            });
+        }
+    },
+
 };
