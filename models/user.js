@@ -1369,7 +1369,8 @@ User.getClientsByCompany = (id_company) => {
             name,
             lastname,
             phone,
-            image
+            image,
+			notification_token
         FROM
             users
         WHERE
