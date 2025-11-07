@@ -3,45 +3,51 @@ const admin = require('firebase-admin');
 
 // --- ¡AQUÍ ESTÁ LA SOLUCIÓN! ---
 
-// 1. Carga las credenciales desde la VARIABLE DE ENTORNO de Heroku
-const serviceAccountChatJSON = process.env.FIREBASE_CHAT_CREDS; 
+// 1. Carga las credenciales desde las VARIABLES DE ENTORNO separadas
 let serviceAccountChat;
 let firestoreDb;
 let messaging;
 
 try {
-  if (serviceAccountChatJSON) {
-    serviceAccountChat = JSON.parse(serviceAccountChatJSON);
-    
-    // **LA LÍNEA DE CORRECCIÓN CLAVE:**
-    // Reemplaza el texto '\\n' por un salto de línea real '\n'
-    serviceAccountChat.private_key = serviceAccountChat.private_key.replace(/\\n/g, '\n');
-    
-  } else {
-    throw new Error('La variable de entorno FIREBASE_CHAT_CREDS no está configurada.');
+  // Leemos las 3 variables de Heroku
+  const projectId = process.env.FIREBASE_CHAT_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CHAT_CLIENT_EMAIL;
+  // Heroku maneja bien los saltos de línea (\n) si se pegan directamente,
+  // pero por si acaso, reemplazamos '\\n' por '\n'
+  const privateKey = process.env.FIREBASE_CHAT_PRIVATE_KEY.replace(/\\n/g, '\n');
+
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error('Faltan las variables de entorno de Firebase Chat (PROJECT_ID, CLIENT_EMAIL, o PRIVATE_KEY).');
   }
+
+  // Creamos el objeto de credenciales
+  serviceAccountChat = {
+    projectId: projectId,
+    clientEmail: clientEmail,
+    privateKey: privateKey
+  };
+
+  // 2. Inicializa una SEGUNDA app de Firebase con un nombre único
+  let chatApp;
+  if (admin.apps.some(app => app.name === 'chatApp')) {
+      chatApp = admin.app('chatApp');
+  } else {
+      chatApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccountChat)
+      }, 'chatApp');
+  }
+
+  // 3. Obtén las instancias de Firestore y Messaging desde la NUEVA app
+  firestoreDb = chatApp.firestore();
+  messaging = chatApp.messaging();
+  
+  console.log(`--- chatApp de Firebase inicializada con ÉXITO para el proyecto: ${projectId} ---`);
+
 } catch (e) {
   console.error('!!!!!!!!!! ERROR FATAL AL INICIALIZAR FIREBASE CHAT !!!!!!!!!!');
   console.error(e);
   // Si esto falla, las variables de abajo serán 'undefined' y el app crasheará.
 }
-
-
-// 2. Inicializa una SEGUNDA app de Firebase con un nombre único
-let chatApp;
-if (admin.apps.some(app => app.name === 'chatApp')) {
-    chatApp = admin.app('chatApp');
-} else {
-    // Si no existe, la crea
-    chatApp = admin.initializeApp({
-      credential: admin.credential.cert(serviceAccountChat) // Ahora 'serviceAccountChat' está corregido
-    }, 'chatApp');
-}
-
-// 3. Obtén las instancias de Firestore y Messaging desde la NUEVA app
-firestoreDb = chatApp.firestore();
-messaging = chatApp.messaging();
-
 // --- FIN DE LA SOLUCIÓN ---
 
 
