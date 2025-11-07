@@ -1,7 +1,9 @@
 const User = require('../models/user.js'); 
 const admin = require('firebase-admin'); 
 
-// --- ¡LÓGICA DE INICIALIZACIÓN (LA DEJAREMOS IGUAL)! ---
+// --- ¡AQUÍ ESTÁ LA SOLUCIÓN! ---
+
+// 1. Carga las credenciales desde las VARIABLES DE ENTORNO separadas
 let serviceAccountChat;
 let firestoreDb;
 let messaging;
@@ -10,18 +12,22 @@ try {
   // Leemos las 3 variables de Heroku
   const projectId = process.env.FIREBASE_CHAT_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CHAT_CLIENT_EMAIL;
+  // Heroku maneja bien los saltos de línea (\n) si se pegan directamente,
+  // pero por si acaso, reemplazamos '\\n' por '\n'
   const privateKey = process.env.FIREBASE_CHAT_PRIVATE_KEY.replace(/\\n/g, '\n');
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error('Faltan las variables de entorno de Firebase Chat (PROJECT_ID, CLIENT_EMAIL, o PRIVATE_KEY).');
   }
 
+  // Creamos el objeto de credenciales
   serviceAccountChat = {
     projectId: projectId,
     clientEmail: clientEmail,
     privateKey: privateKey
   };
 
+  // 2. Inicializa una SEGUNDA app de Firebase con un nombre único
   let chatApp;
   if (admin.apps.some(app => app.name === 'chatApp')) {
       chatApp = admin.app('chatApp');
@@ -31,6 +37,7 @@ try {
       }, 'chatApp');
   }
 
+  // 3. Obtén las instancias de Firestore y Messaging desde la NUEVA app
   firestoreDb = chatApp.firestore();
   messaging = chatApp.messaging();
   
@@ -39,8 +46,9 @@ try {
 } catch (e) {
   console.error('!!!!!!!!!! ERROR FATAL AL INICIALIZAR FIREBASE CHAT !!!!!!!!!!');
   console.error(e);
+  // Si esto falla, las variables de abajo serán 'undefined' y el app crasheará.
 }
-// --- FIN DE LA LÓGICA DE INICIALIZACIÓN ---
+// --- FIN DE LA SOLUCIÓN ---
 
 
 module.exports = {
@@ -50,6 +58,8 @@ module.exports = {
      */
     async sendMessage(req, res, next) {
         try {
+            // **SE ELIMINÓ LA LÍNEA DE LOG DEFECTUOSA QUE CAUSABA EL CRASH**
+
             // 1. Obtener datos de la solicitud
             const { recipientId, messageContent, chatRoomId } = req.body;
             
@@ -81,37 +91,31 @@ module.exports = {
                     .collection('messages')
                     .add(messageData);
 
-            // --- **PRUEBA DE DEPURACIÓN: NOTIFICACIONES DESACTIVADAS TEMPORALMENTE** ---
-            
             // 4. Obtener el Token de Notificación del destinatario
-            // const recipientToken = await User.findNotificationToken(recipientId);
+            const recipientToken = await User.findNotificationToken(recipientId);
 
-            // if (recipientToken) {
-            //     // 5. Enviar la notificación push (Usando la NUEVA instancia de Messaging)
-            //     const payload = {
-            //         notification: {
-            //             title: `Nuevo mensaje de ${senderName}`,
-            //             body: messageContent,
-            //         },
-            //         data: {
-            //             'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-            //             'screen': '/chat',
-            //             'chatRoomId': chatRoomId,
-            //             'senderId': senderId,
-            //             'recipientId': recipientId
-            //         }
-            //     };
+            if (recipientToken) {
+                // 5. Enviar la notificación push (Usando la NUEVA instancia de Messaging)
+                const payload = {
+                    notification: {
+                        title: `Nuevo mensaje de ${senderName}`,
+                        body: messageContent,
+                    },
+                    data: {
+                        'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                        'screen': '/chat',
+                        'chatRoomId': chatRoomId,
+                        'senderId': senderId,
+                        'recipientId': recipientId
+                    }
+                };
                 
-            //     await messaging.sendToDevice(recipientToken, payload);
-            //     console.log(`Notificación enviada a ${recipientId}`);
-            // } else {
-            //     console.log(`No se encontró token de notificación para el usuario ${recipientId}. Mensaje guardado pero no enviado.`);
-            // }
+                await messaging.sendToDevice(recipientToken, payload);
+                console.log(`Notificación enviada a ${recipientId}`);
+            } else {
+                console.log(`No se encontró token de notificación para el usuario ${recipientId}. Mensaje guardado pero no enviado.`);
+            }
             
-            console.log('Mensaje guardado en Firestore. Notificaciones omitidas para depuración.');
-            // --- **FIN DE LA PRUEBA DE DEPURACIÓN** ---
-
-
             // 6. Devolver éxito
             return res.status(201).json({
                 success: true,
@@ -119,7 +123,6 @@ module.exports = {
             });
 
         } catch (error) {
-            // Si el error 404 persiste, significa que 'firestoreDb.collection(...)' está fallando.
             console.log(`Error en chatController.sendMessage: ${error}`);
             return res.status(501).json({
                 success: false,
