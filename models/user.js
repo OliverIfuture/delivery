@@ -1482,4 +1482,11 @@ User.findNotificationToken = (id_user) => {
         });
 };
 
+User.countInvitationsByCompany = (id_company) => {
+    const sql = `
+        SELECT COUNT(*) FROM trainer_invitations WHERE id_company = $1
+    `;
+    return db.one(sql, id_company);
+};
+
 module.exports = User;
