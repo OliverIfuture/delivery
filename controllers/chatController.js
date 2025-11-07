@@ -1,5 +1,44 @@
 const User = require('../models/user.js'); 
-const admin = require('firebase-admin'); // Para Firestore y Notificaciones
+const admin = require('firebase-admin'); // Importamos 'admin'
+
+// --- ¡AQUÍ ESTÁ LA SOLUCIÓN! ---
+
+// 1. Carga las credenciales desde la VARIABLE DE ENTORNO de Heroku
+// (Esto evita subir el archivo JSON a GitHub)
+const serviceAccountChatJSON = process.env.FIREBASE_CHAT_CREDS; 
+let serviceAccountChat;
+
+try {
+  if (serviceAccountChatJSON) {
+    serviceAccountChat = JSON.parse(serviceAccountChatJSON);
+  } else {
+    throw new Error('La variable de entorno FIREBASE_CHAT_CREDS no está configurada.');
+  }
+} catch (e) {
+  console.error('Error al parsear las credenciales de Firebase Chat:', e);
+  console.error('Asegúrate de copiar el JSON completo en la Config Var de Heroku.');
+}
+
+
+// 2. Inicializa una SEGUNDA app de Firebase con un nombre único
+// (Tu app 'default' de server.js se seguirá usando para el storage)
+let chatApp;
+if (admin.apps.some(app => app.name === 'chatApp')) {
+    // Si ya existe (ej. por un hot-reload), simplemente la obtiene
+    chatApp = admin.app('chatApp');
+} else {
+    // Si no existe, la crea
+    chatApp = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccountChat)
+    }, 'chatApp');
+}
+
+// 3. Obtén las instancias de Firestore y Messaging desde la NUEVA app
+const firestoreDb = chatApp.firestore();
+const messaging = chatApp.messaging();
+
+// --- FIN DE LA SOLUCIÓN ---
+
 
 module.exports = {
 
@@ -33,9 +72,8 @@ module.exports = {
                 senderRole: senderRole,
             };
 
-            // 3. Guardar el mensaje en Firestore
-            const db = admin.firestore();
-            await db.collection('chats')
+            // 3. Guardar el mensaje en Firestore (Usando la NUEVA instancia de DB)
+            await firestoreDb.collection('chats')
                     .doc(chatRoomId)
                     .collection('messages')
                     .add(messageData);
@@ -44,22 +82,22 @@ module.exports = {
             const recipientToken = await User.findNotificationToken(recipientId);
 
             if (recipientToken) {
-                // 5. Enviar la notificación push
+                // 5. Enviar la notificación push (Usando la NUEVA instancia de Messaging)
                 const payload = {
                     notification: {
                         title: `Nuevo mensaje de ${senderName}`,
                         body: messageContent,
                     },
                     data: {
-                        // (Opcional) Puedes enviar datos extra aquí
-                        // para que la app sepa qué chat abrir al tocar la notificación
                         'click_action': 'FLUTTER_NOTIFICATION_CLICK',
                         'screen': '/chat',
                         'chatRoomId': chatRoomId,
+                        'senderId': senderId,
+                        'recipientId': recipientId
                     }
                 };
                 
-                await admin.messaging().sendToDevice(recipientToken, payload);
+                await messaging.sendToDevice(recipientToken, payload);
                 console.log(`Notificación enviada a ${recipientId}`);
             } else {
                 console.log(`No se encontró token de notificación para el usuario ${recipientId}. Mensaje guardado pero no enviado.`);
