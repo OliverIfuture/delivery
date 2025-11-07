@@ -1,43 +1,45 @@
 const User = require('../models/user.js'); 
-const admin = require('firebase-admin'); // Importamos 'admin'
+const admin = require('firebase-admin'); 
 
-// --- ¡AQUÍ ESTÁ LA SOLUCIÓN! ---
+// --- ¡LÓGICA DE INICIALIZACIÓN DEPURADA! ---
 
 // 1. Carga las credenciales desde la VARIABLE DE ENTORNO de Heroku
-// (Esto evita subir el archivo JSON a GitHub)
 const serviceAccountChatJSON = process.env.FIREBASE_CHAT_CREDS; 
 let serviceAccountChat;
+let firestoreDb;
+let messaging;
 
 try {
   if (serviceAccountChatJSON) {
     serviceAccountChat = JSON.parse(serviceAccountChatJSON);
   } else {
-    throw new Error('La variable de entorno FIREBASE_CHAT_CREDS no está configurada.');
+    // Si no hay credenciales de chat, el servidor no puede arrancar
+    throw new Error('¡CRÍTICO! La variable de entorno FIREBASE_CHAT_CREDS no está configurada.');
   }
+
+  // 2. Inicializa una SEGUNDA app de Firebase con un nombre único
+  let chatApp;
+  if (admin.apps.some(app => app.name === 'chatApp')) {
+      chatApp = admin.app('chatApp');
+      console.log('--- chatApp de Firebase REUTILIZADA ---');
+  } else {
+      chatApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccountChat)
+      }, 'chatApp');
+      console.log('--- chatApp de Firebase INICIALIZADA POR PRIMERA VEZ ---');
+  }
+
+  // 3. Obtén las instancias de Firestore y Messaging desde la NUEVA app
+  firestoreDb = chatApp.firestore();
+  messaging = chatApp.messaging();
+
 } catch (e) {
-  console.error('Error al parsear las credenciales de Firebase Chat:', e);
-  console.error('Asegúrate de copiar el JSON completo en la Config Var de Heroku.');
+    console.error('!!!!!!!!!! ERROR FATAL AL INICIALIZAR FIREBASE CHAT !!!!!!!!!!');
+    console.error(e);
+    // Si falla aquí, las variables firestoreDb y messaging serán 'undefined'
+    // y el controlador fallará (lo cual es bueno, porque nos avisa)
 }
-
-
-// 2. Inicializa una SEGUNDA app de Firebase con un nombre único
-// (Tu app 'default' de server.js se seguirá usando para el storage)
-let chatApp;
-if (admin.apps.some(app => app.name === 'chatApp')) {
-    // Si ya existe (ej. por un hot-reload), simplemente la obtiene
-    chatApp = admin.app('chatApp');
-} else {
-    // Si no existe, la crea
-    chatApp = admin.initializeApp({
-      credential: admin.credential.cert(serviceAccountChat)
-    }, 'chatApp');
-}
-
-// 3. Obtén las instancias de Firestore y Messaging desde la NUEVA app
-const firestoreDb = chatApp.firestore();
-const messaging = chatApp.messaging();
-
-// --- FIN DE LA SOLUCIÓN ---
+// --- FIN DE LA LÓGICA DE INICIALIZACIÓN ---
 
 
 module.exports = {
@@ -47,10 +49,15 @@ module.exports = {
      */
     async sendMessage(req, res, next) {
         try {
+            // **LOG DE DEPURACIÓN CLAVE**
+            // Verifiquemos con qué proyecto se inicializó esta instancia de firestore
+            console.log('--- ID DEL PROYECTO FIRESTORE (sendMessage):', firestoreDb.app.options.credential.projectId);
+
             // 1. Obtener datos de la solicitud
             const { recipientId, messageContent, chatRoomId } = req.body;
             
-            // Datos del remitente (vienen del token JWT)
+            // ... (resto de tu lógica de sendMessage) ...
+            
             const senderId = req.user.id;
             const senderName = req.user.name;
             const senderRole = req.user.mi_store ? 'trainer' : 'client';
@@ -62,27 +69,23 @@ module.exports = {
                 });
             }
 
-            // 2. Preparar el objeto del mensaje para Firestore
             const messageData = {
                 senderId: senderId,
                 senderName: senderName,
                 receiverId: recipientId,
                 content: messageContent,
-                timestamp: admin.firestore.Timestamp.now(), // Usar el timestamp del servidor
+                timestamp: admin.firestore.Timestamp.now(), 
                 senderRole: senderRole,
             };
 
-            // 3. Guardar el mensaje en Firestore (Usando la NUEVA instancia de DB)
             await firestoreDb.collection('chats')
                     .doc(chatRoomId)
                     .collection('messages')
                     .add(messageData);
 
-            // 4. Obtener el Token de Notificación del destinatario
             const recipientToken = await User.findNotificationToken(recipientId);
 
             if (recipientToken) {
-                // 5. Enviar la notificación push (Usando la NUEVA instancia de Messaging)
                 const payload = {
                     notification: {
                         title: `Nuevo mensaje de ${senderName}`,
@@ -103,7 +106,6 @@ module.exports = {
                 console.log(`No se encontró token de notificación para el usuario ${recipientId}. Mensaje guardado pero no enviado.`);
             }
             
-            // 6. Devolver éxito
             return res.status(201).json({
                 success: true,
                 message: 'Mensaje enviado correctamente.'
