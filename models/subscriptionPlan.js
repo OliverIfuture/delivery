@@ -77,4 +77,12 @@ SubscriptionPlan.findById = (id_plan, id_company) => {
 };
 
 
+SubscriptionPlan.countByCompany = (id_company) => {
+    const sql = `
+        SELECT COUNT(*) FROM subscription_plans WHERE id_company = $1
+    `;
+    return db.one(sql, id_company);
+};
+
+
 module.exports = SubscriptionPlan;
