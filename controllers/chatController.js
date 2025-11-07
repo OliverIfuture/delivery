@@ -58,8 +58,7 @@ module.exports = {
      */
     async sendMessage(req, res, next) {
         try {
-            // Log de depuración
-            console.log('--- ID DEL PROYECTO FIRESTORE (sendMessage):', firestoreDb.app.options.credential.projectId);
+            // **SE ELIMINÓ LA LÍNEA DE LOG DEFECTUOSA QUE CAUSABA EL CRASH**
 
             // 1. Obtener datos de la solicitud
             const { recipientId, messageContent, chatRoomId } = req.body;
