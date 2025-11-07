@@ -66,6 +66,27 @@ Exercise.update = (exercise) => {
     ]);
 };
 
+Exercise.findByCompany = (id_company) => {
+    const sql = `
+    SELECT
+        id,
+        id_company,
+        name,
+        description,
+        muscle_group,
+        equipment,
+        media_url,
+        media_type
+    FROM
+        exercises
+    WHERE
+        id_company = $1
+    ORDER BY
+        muscle_group, name;
+    `;
+    return db.manyOrNone(sql, id_company);
+};
+
 /**
  * Elimina un ejercicio
  */
