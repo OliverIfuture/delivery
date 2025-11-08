@@ -1510,23 +1510,7 @@ User.getTotalCompanies = () => {
 /**
  * Obtiene la lista completa de compañías para el panel de admin
  */
-User.getAllCompanies = () => {
-    const sql = `
-        SELECT
-            id,
-            name,
-            telephone,
-            type,
-            state,
-            available,
-            "chargesEnabled"
-        FROM
-            company
-        ORDER BY
-            created_at DESC
-    `;
-    return db.manyOrNone(sql);
-};
+
 
 /**
  * Aprueba o suspende una compañía (cambia 'available')
