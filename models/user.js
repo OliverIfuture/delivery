@@ -1489,4 +1489,55 @@ User.countInvitationsByCompany = (id_company) => {
     return db.one(sql, id_company);
 };
 
+// --- **NUEVAS FUNCIONES PARA EL SUPER-ADMIN** ---
+
+/**
+ * Obtiene un conteo de todos los usuarios (clientes y entrenadores)
+ */
+User.getTotalUsers = () => {
+    const sql = `SELECT COUNT(*) FROM users`;
+    return db.one(sql);
+};
+
+/**
+ * Obtiene un conteo de todas las compañías (tiendas y entrenadores)
+ */
+User.getTotalCompanies = () => {
+    const sql = `SELECT COUNT(*) FROM company`;
+    return db.one(sql);
+};
+
+/**
+ * Obtiene la lista completa de compañías para el panel de admin
+ */
+User.getAllCompanies = () => {
+    const sql = `
+        SELECT
+            id,
+            name,
+            telephone,
+            type,
+            state,
+            available,
+            "chargesEnabled"
+        FROM
+            company
+        ORDER BY
+            created_at DESC
+    `;
+    return db.manyOrNone(sql);
+};
+
+/**
+ * Aprueba o suspende una compañía (cambia 'available')
+ */
+User.updateCompanyStatus = (id_company, status) => {
+    const sql = `
+        UPDATE company
+        SET available = $1, updated_at = $2
+        WHERE id = $3
+    `;
+    return db.none(sql, [status, new Date(), id_company]);
+};
+
 module.exports = User;
