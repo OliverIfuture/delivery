@@ -76,5 +76,33 @@ ClientSubscription.findActiveByClient = (id_client) => {
     return db.oneOrNone(sql, id_client); 
 };
 
+// --- **NUEVAS FUNCIONES PARA EL SUPER-ADMIN** ---
+
+/**
+ * Obtiene el conteo total de suscripciones activas
+ */
+ClientSubscription.getTotalActiveSubscriptions = () => {
+    const sql = `
+        SELECT COUNT(*) FROM client_subscriptions
+        WHERE status = 'active'
+    `;
+    return db.one(sql);
+};
+
+/**
+ * Obtiene el ingreso total (suma de los planes activos)
+ * (Esto es una simplificación, no un cálculo de ingresos reales,
+ * pero sirve para el dashboard)
+ */
+ClientSubscription.getTotalRevenue = () => {
+    const sql = `
+        SELECT SUM(p.price) 
+        FROM client_subscriptions AS cs
+        JOIN subscription_plans AS p ON cs.id_plan = p.id
+        WHERE cs.status = 'active'
+    `;
+    return db.one(sql);
+};
+
 
 module.exports = ClientSubscription;
