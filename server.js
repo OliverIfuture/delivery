@@ -59,7 +59,7 @@ const stripeConnect = require('./routes/stripeConnectRoutes.js');
 const clientProgress = require('./routes/clientProgressRoutes.js');
 const chat = require('./routes/chatRoutes.js');
 const trainerDashboard = require('./routes/trainerDashboardRoutes.js');
-const superAdmin = require('.routes/superAdminRoutes.js');
+const superAdmin = require('./routes/superAdminRoutes.js');
 const PORT = process.env.PORT || 4000
 
 
