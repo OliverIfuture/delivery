@@ -1,6 +1,6 @@
 const superAdminController = require('../controllers/superAdminController.js');
 const passport = require('passport');
-const authMiddleware = require('authMiddleware.js'); // Importar el middleware
+const authMiddleware = require('.authMiddleware.js'); // Importar el middleware
 
 module.exports = (app) => {
 
