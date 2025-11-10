@@ -5,14 +5,17 @@ module.exports = {
     /**
      * Crear una nueva rutina (AHORA SOPORTA CLIENTES GRATUITOS)
      */
-    async create(req, res, next) {
+   async create(req, res, next) {
         try {
             const routine = req.body; 
             
             // --- NUEVA LÓGICA DE ASIGNACIÓN BLINDADA ---
-            // Si req.user.mi_store tiene un valor real (no null, no undefined, no 0, no ""), úsalo.
-            // Si no, FUERZA que sea null.
-            routine.id_company = req.user.mi_store || null;
+            // Verificamos explícitamente que NO sea '0' ni 0.
+            let idCompany = req.user.mi_store;
+            if (idCompany === 0 || idCompany === '0' || idCompany === '') {
+                idCompany = null;
+            }
+            routine.id_company = idCompany;
 
             // Si es nulo (Freemium), el cliente es el propio usuario logueado
             if (routine.id_company === null) {
@@ -20,8 +23,8 @@ module.exports = {
             }
             // ----------------------------------
 
-            console.log('--- INTENTANDO CREAR RUTINA ---');
-            console.log('ID Company final:', routine.id_company);
+            console.log('--- INTENTANDO CREAR RUTINA (CORREGIDO) ---');
+            console.log('ID Company final:', routine.id_company); // AHORA DEBE DECIR 'null'
             console.log('ID Client final:', routine.id_client);
 
             if (!routine.id_client) {
@@ -45,6 +48,7 @@ module.exports = {
             });
         }
     },
+
 
     /**
      * Actualizar una rutina
@@ -93,10 +97,15 @@ module.exports = {
     /**
      * Activar una rutina
      */
-    async setActive(req, res, next) {
+  async setActive(req, res, next) {
         try {
             const id_routine = req.body.id_routine;
-            const id_client = req.user.mi_store ? req.body.id_client : req.user.id;
+            // Aplicamos la misma lógica blindada aquí por si acaso
+            let idCompany = req.user.mi_store;
+            if (idCompany === 0 || idCompany === '0' || idCompany === '') {
+                idCompany = null;
+            }
+            const id_client = idCompany ? req.body.id_client : req.user.id;
 
             await Routine.setActive(id_routine, id_client);
             
@@ -114,6 +123,7 @@ module.exports = {
             });
         }
     },
+
 
     /**
      * Buscar todas las rutinas creadas por un entrenador
