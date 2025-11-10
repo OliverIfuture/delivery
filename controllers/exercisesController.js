@@ -95,8 +95,36 @@ module.exports = {
                 error: error
             });
         }
-    }
+    },
 
-    // Aquí irían las funciones async update() y async delete()
 
+    /**
+     * NUEVO: Obtener solo ejercicios globales
+     */
+    async getGlobal(req, res, next) {
+        try {
+            const data = await Exercise.getGlobalExercises();
+            return res.status(201).json(data);
+        }
+        catch (error) {
+            console.log(`Error en getGlobal: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener ejercicios globales',
+                error: error
+            });
+        }
+    },
+
+       async update(req, res, next) {
+        try {
+            const exercise = req.body;
+            await Exercise.update(exercise);
+            return res.status(201).json({ success: true, message: 'El ejercicio se actualizo correctamente' });
+        }
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({ success: false, message: 'Hubo un error al actualizar el ejercicio', error: error });
+        }
+    },
 };
