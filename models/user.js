@@ -468,7 +468,8 @@ User.createticket = (id) => {
 User.create = (user, id_entrenador) => { // <-- CAMBIO AQUÍ
 
     // Encriptar contraseña
-    const myPasswordHashed = crypto.createHmac('sha256', keys.secretOrKey).update(user.password).digest('hex');
+	    const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
+
     user.password = myPasswordHashed;
 
     const sql = `
