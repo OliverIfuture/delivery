@@ -154,4 +154,23 @@ module.exports = {
         }
     },
 
+    /**
+     * NUEVO: Obtener todas las rutinas de un cliente
+     */
+    async findAllByClient(req, res, next) {
+        try {
+            const id_client = req.user.id; // Usamos el ID del token por seguridad
+            const data = await Routine.findAllByClient(id_client);
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en routinesController.findAllByClient: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al buscar las rutinas del cliente',
+                error: error
+            });
+        }
+    },
+
 };
