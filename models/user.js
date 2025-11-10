@@ -1524,4 +1524,27 @@ User.updateCompanyStatus = (id_company, status) => {
     return db.none(sql, [status, new Date(), id_company]);
 };
 
+/**
+ * Obtiene todos los ENTRENADORES disponibles para contratar
+ */
+User.getAvailableTrainers = () => {
+    const sql = `
+        SELECT
+            id,
+            name,
+            description, -- Asegúrate de tener una columna descripción en tu tabla company si quieres mostrarla, si no, quita esto
+            logo,
+            telephone
+        FROM
+            company
+        WHERE
+            type = 'ENTRENADOR' 
+            AND available = 'true'
+            AND "chargesEnabled" = true -- Solo mostrar los que pueden cobrar
+        ORDER BY
+            name ASC
+    `;
+    return db.manyOrNone(sql);
+};
+
 module.exports = User;
