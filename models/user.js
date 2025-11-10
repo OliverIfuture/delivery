@@ -1533,7 +1533,6 @@ User.getAvailableTrainers = () => {
         SELECT
             id,
             name,
-            description, -- Asegúrate de tener una columna descripción en tu tabla company si quieres mostrarla, si no, quita esto
             logo,
             telephone
         FROM
