@@ -27,4 +27,8 @@ module.exports = (app) => {
     // Eliminar una rutina
     app.delete('/api/routines/delete/:id', passport.authenticate('jwt', { session: false }), routinesController.delete);
 
+    // **NUEVA RUTA: Obtener TODAS las rutinas del cliente**
+    app.get('/api/routines/findAllByClient', passport.authenticate('jwt', { session: false }), routinesController.findAllByClient);
+    // ...
+
 }
