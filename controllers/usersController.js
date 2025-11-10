@@ -1835,5 +1835,20 @@ async filesupload(req, res, next) {
                 error: error
             });
         }
-    }
+    },
+
+    async getAvailableTrainers(req, res, next) {
+        try {
+            const data = await User.getAvailableTrainers();
+            return res.status(200).json(data);
+        } 
+        catch (error) {
+            console.log(`Error en getAvailableTrainers: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener entrenadores',
+                error: error
+            });
+        }
+    },
 };
