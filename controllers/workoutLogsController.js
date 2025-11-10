@@ -12,7 +12,7 @@ module.exports = {
             // Asegurarnos que el id_client viene del token (más seguro)
             log.id_client = req.user.id; 
             // Asegurarnos que el id_company viene del entrenador asignado
-            log.id_company = req.user.id_entrenador;
+            log.id_company = req.user.id_entrenador || null; 
 
             if (!log.id_company) {
                  return res.status(400).json({
