@@ -9,20 +9,23 @@ module.exports = {
         try {
             const routine = req.body; 
             
-            // --- NUEVA LÓGICA DE ASIGNACIÓN ---
-            if (req.user.mi_store) {
-                // CASO 1: Es un ENTRENADOR creando la rutina para un cliente
-                routine.id_company = req.user.mi_store;
-                // 'routine.id_client' debe venir en el body
-            } else {
-                // CASO 2: Es un USUARIO GRATUITO creando su propia rutina
-                routine.id_company = null; // Sin entrenador
-                routine.id_client = req.user.id; // Se asigna a sí mismo
+            // --- NUEVA LÓGICA DE ASIGNACIÓN BLINDADA ---
+            // Si req.user.mi_store tiene un valor real (no null, no undefined, no 0, no ""), úsalo.
+            // Si no, FUERZA que sea null.
+            routine.id_company = req.user.mi_store || null;
+
+            // Si es nulo (Freemium), el cliente es el propio usuario logueado
+            if (routine.id_company === null) {
+                 routine.id_client = req.user.id;
             }
             // ----------------------------------
 
+            console.log('--- INTENTANDO CREAR RUTINA ---');
+            console.log('ID Company final:', routine.id_company);
+            console.log('ID Client final:', routine.id_client);
+
             if (!routine.id_client) {
-                 return res.status(400).json({ success: false, message: 'Falta el ID del cliente.' });
+                 return res.status(400).json({ success: false, message: 'Error: No se pudo identificar al cliente para esta rutina.' });
             }
 
             const data = await Routine.create(routine);
@@ -38,7 +41,7 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Error al crear la rutina',
-                error: error
+                error: error.message || error
             });
         }
     },
@@ -49,15 +52,7 @@ module.exports = {
     async update(req, res, next) {
         try {
             const routine = req.body;
-            
-            // Validación de seguridad básica:
-            // Si es entrenador, debe ser SU rutina (id_company coincide).
-            // Si es cliente, debe ser SU rutina (id_company es null Y id_client coincide).
-            // (Por simplicidad ahora, confiamos en el ID de la rutina, 
-            // pero idealmente deberíamos validar la propiedad aquí).
-
             await Routine.update(routine);
-            
             return res.status(200).json({
                 success: true,
                 message: 'La rutina se ha actualizado correctamente.'
@@ -79,8 +74,7 @@ module.exports = {
     async delete(req, res, next) {
         try {
             const id_routine = req.params.id;
-            await Routine.delete(id_routine); // Ya no validamos id_company aquí para simplificar
-            
+            await Routine.delete(id_routine); 
             return res.status(200).json({
                 success: true,
                 message: 'La rutina se ha eliminado correctamente.'
@@ -102,8 +96,6 @@ module.exports = {
     async setActive(req, res, next) {
         try {
             const id_routine = req.body.id_routine;
-            // El id_client lo sacamos del token si es un usuario gratuito, 
-            // o del body si es un entrenador.
             const id_client = req.user.mi_store ? req.body.id_client : req.user.id;
 
             await Routine.setActive(id_routine, id_client);
@@ -127,7 +119,6 @@ module.exports = {
      * Buscar todas las rutinas creadas por un entrenador
      */
     async findByTrainer(req, res, next) {
-        // ... (sin cambios)
         try {
             const id_company = req.params.id_company;
             const data = await Routine.findByTrainer(id_company);
@@ -159,7 +150,7 @@ module.exports = {
      */
     async findAllByClient(req, res, next) {
         try {
-            const id_client = req.user.id; // Usamos el ID del token por seguridad
+            const id_client = req.user.id; 
             const data = await Routine.findAllByClient(id_client);
             return res.status(200).json(data);
         }
@@ -172,5 +163,4 @@ module.exports = {
             });
         }
     },
-
 };
