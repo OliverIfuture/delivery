@@ -2,10 +2,6 @@ const db = require('../config/config.js');
 
 const Routine = {};
 
-/**
- * Crea una nueva rutina
- * El objeto 'routine' debe tener: id_company, id_client, name, plan_data (JSON)
- */
 Routine.create = (routine) => {
     const sql = `
         INSERT INTO routines(
@@ -20,20 +16,16 @@ Routine.create = (routine) => {
         VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
     `;
     return db.one(sql, [
-        routine.id_company,
+        routine.id_company, // Puede ser null ahora
         routine.id_client,
         routine.name,
-        routine.plan_data, // Este debe ser un objeto JSON (o un string JSON)
-        routine.is_active ?? false, // Por defecto no está activa
+        routine.plan_data,
+        routine.is_active ?? false,
         new Date(),
         new Date()
     ]);
 };
 
-/**
- * Actualiza una rutina
- * El objeto 'routine' debe tener: id (de la rutina), id_company, name, plan_data
- */
 Routine.update = (routine) => {
     const sql = `
         UPDATE routines
@@ -42,57 +34,43 @@ Routine.update = (routine) => {
             plan_data = $2,
             updated_at = $3
         WHERE
-            id = $4 AND id_company = $5 -- Doble validación de seguridad
+            id = $4 
+            -- Eliminamos la restricción de id_company aquí para permitir auto-edición
     `;
     return db.none(sql, [
         routine.name,
         routine.plan_data,
         new Date(),
-        routine.id,
-        routine.id_company
+        routine.id
     ]);
 };
 
-/**
- * Elimina una rutina.
- * Solo el entrenador que la creó puede eliminarla.
- */
-Routine.delete = (id_routine, id_company) => {
+Routine.delete = (id_routine) => {
     const sql = `
         DELETE FROM routines
-        WHERE id = $1 AND id_company = $2
+        WHERE id = $1
     `;
-    return db.none(sql, [id_routine, id_company]);
+    return db.none(sql, [id_routine]);
 };
 
-/**
- * Activa una rutina.
- * Usa una transacción para asegurar que solo una rutina esté activa.
- */
-Routine.setActive = (id_routine, id_client, id_company) => {
-    // db.tx es la forma de pg-promise de manejar transacciones
-    // Si algo falla, hace ROLLBACK automático.
+Routine.setActive = (id_routine, id_client) => {
     return db.tx(async t => {
         // 1. Desactivar todas las rutinas de este cliente
         await t.none(`
             UPDATE routines
             SET is_active = false, updated_at = $1
-            WHERE id_client = $2 AND id_company = $3
-        `, [new Date(), id_client, id_company]);
+            WHERE id_client = $2
+        `, [new Date(), id_client]);
         
         // 2. Activar la rutina seleccionada
         await t.none(`
             UPDATE routines
             SET is_active = true, updated_at = $1
-            WHERE id = $2 AND id_client = $3 AND id_company = $4
-        `, [new Date(), id_routine, id_client, id_company]);
+            WHERE id = $2 AND id_client = $3
+        `, [new Date(), id_routine, id_client]);
     });
 };
 
-/**
- * Busca todas las rutinas creadas por un entrenador
- * Se une con 'users' para obtener el nombre del cliente
- */
 Routine.findByTrainer = (id_company) => {
     const sql = `
         SELECT
@@ -103,7 +81,7 @@ Routine.findByTrainer = (id_company) => {
             r.is_active,
             r.plan_data,
             u.name as client_name,
-            u.image as client_image
+            COALESCE(u.image, '') as client_image
         FROM
             routines AS r
         INNER JOIN
@@ -116,9 +94,6 @@ Routine.findByTrainer = (id_company) => {
     return db.manyOrNone(sql, id_company);
 };
 
-/**
- * Busca la rutina que está activa para un cliente
- */
 Routine.findActiveByClient = (id_client) => {
     const sql = `
         SELECT
@@ -127,14 +102,12 @@ Routine.findActiveByClient = (id_client) => {
             c.logo as trainer_logo
         FROM
             routines AS r
-        INNER JOIN
+        LEFT JOIN -- LEFT JOIN porque ahora puede no tener compañía
             company AS c ON r.id_company = c.id
         WHERE
             r.id_client = $1 AND r.is_active = true
     `;
-    // oneOrNone porque el cliente solo debe tener una activa
     return db.oneOrNone(sql, id_client); 
 };
-
 
 module.exports = Routine;
