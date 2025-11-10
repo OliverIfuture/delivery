@@ -100,16 +100,27 @@ Exercise.delete = (id, id_company) => {
 };
 
 /**
- * Obtiene todos los ejercicios de una compañía
+ * Obtiene los ejercicios de una compañía MÁS los globales
  */
 Exercise.getByCompany = (id_company) => {
-    // (Tu lógica de 'getByCompany' existente...)
     const sql = `
         SELECT * FROM exercises
-        WHERE id_company = $1
+        WHERE id_company = $1 OR id_company IS NULL
         ORDER BY name ASC
     `;
     return db.manyOrNone(sql, id_company);
+};
+
+/**
+ * NUEVO: Obtiene SOLO los ejercicios globales (para usuarios freemium)
+ */
+Exercise.getGlobalExercises = () => {
+    const sql = `
+        SELECT * FROM exercises
+        WHERE id_company IS NULL
+        ORDER BY name ASC
+    `;
+    return db.manyOrNone(sql);
 };
 
 /**
