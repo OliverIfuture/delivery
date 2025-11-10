@@ -77,7 +77,7 @@ module.exports = (app, upload) => {
      app.get('/api/users/getWholesaleUsersByCompany/:id',passport.authenticate('jwt', {session: false}) ,UsersController.getWholesaleUsersByCompany);
      app.get('/api/users/getClientsByCompany/:id_company', UsersController.getClientsByCompany);
     app.post('/api/users/inviteClient', passport.authenticate('jwt', { session: false }), UsersController.inviteClient);
-    app.get('/api/users/getAvailableTrainers', passport.authenticate('jwt', { session: false }), usersController.getAvailableTrainers);
+    app.get('/api/users/getAvailableTrainers', passport.authenticate('jwt', { session: false }), UsersController.getAvailableTrainers);
     
     
 app.post('/api/users/createWithImageUserAndCompany', upload.fields([
