@@ -12,6 +12,10 @@ module.exports = (app, upload) => {
         exercisesController.findByCompany
     );
 
+       // NUEVA RUTA
+    app.get('/api/exercises/getGlobal', passport.authenticate('jwt', { session: false }), exercisesController.getGlobal);
+
+
     // --- RUTAS POST ---
     // Usada para crear un nuevo ejercicio con imagen
     // (Coincide con ExerciseProvider.create)
