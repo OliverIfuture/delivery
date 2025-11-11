@@ -1547,4 +1547,14 @@ User.getAvailableTrainers = () => {
     return db.manyOrNone(sql);
 };
 
+User.updateTrainer = (id_user, id_trainer) => {
+    const sql = `
+        UPDATE users
+        SET id_entrenador = $1, updated_at = $2
+        WHERE id = $3
+    `;
+    return db.none(sql, [id_trainer, new Date(), id_user]);
+};
+
+
 module.exports = User;
