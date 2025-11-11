@@ -5,6 +5,7 @@ const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
 const { findByDeliveryAndStatus } = require('../models/order');
 const Order = require('../models/order');
 const User = require('../models/user');
+const Affiliate = require('../models/affiliate');
 const OrderHasProducts = require('../models/order_has_products');
 
 module.exports = {
