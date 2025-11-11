@@ -130,4 +130,23 @@ Routine.findAllByClient = (id_client) => {
     return db.manyOrNone(sql, id_client);
 };
 
+Routine.findAllByClient = (id_client) => {
+    const sql = `
+        SELECT 
+            r.*,
+            c.name as trainer_name,
+            c.logo as trainer_logo
+        FROM 
+            routines AS r
+        LEFT JOIN
+            company AS c ON r.id_company = c.id
+        WHERE 
+            r.id_client = $1
+        ORDER BY 
+            r.is_active DESC, r.updated_at DESC
+    `;
+    return db.manyOrNone(sql, id_client);
+};
+
+
 module.exports = Routine;
