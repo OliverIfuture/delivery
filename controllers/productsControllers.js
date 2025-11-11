@@ -3114,5 +3114,26 @@ async createServiceWithSchedule(req, res, next) {
             });
         }
     },
+
+ async findById(req, res, next) {
+        try {
+            const id_product = req.params.id;
+            const data = await Product.findById(id_product);
+            
+            if (!data) {
+                return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+            }
+            
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en productsController.findById: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener el producto',
+                error: error.message
+            });
+        }
+    },
  
 }
