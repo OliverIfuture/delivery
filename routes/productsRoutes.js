@@ -174,6 +174,6 @@ module.exports = (app, upload) => {
     app.get(
         '/api/products/getAllForAffiliates', 
         passport.authenticate('jwt', { session: false }), 
-        productsController.getAllForAffiliates
+        productsControllers.getAllForAffiliates
     );
 }
