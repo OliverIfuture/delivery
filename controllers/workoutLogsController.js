@@ -7,25 +7,20 @@ module.exports = {
      */
     async create(req, res, next) {
         try {
-            const log = req.body; // El objeto JSON completo del log
-            
-            // Asegurarnos que el id_client viene del token (más seguro)
+            const log = req.body; 
             log.id_client = req.user.id; 
-            // Asegurarnos que el id_company viene del entrenador asignado
+            
+            // --- CORRECCIÓN FREEMIUM ---
+            // Si tiene entrenador, lo usamos. Si no, se queda en null.
+            // Y lo más importante: ¡QUITAMOS EL IF QUE BLOQUEABA!
             log.id_company = req.user.id_entrenador || null; 
-
-            if (!log.id_company) {
-                 return res.status(400).json({
-                    success: false,
-                    message: 'Este usuario no está asignado a un entrenador.'
-                });
-            }
+            // ---------------------------
 
             const data = await WorkoutLog.create(log);
             
             return res.status(201).json({
                 success: true,
-                message: 'El progreso se ha guardado correctamente.',
+                message: 'Progreso registrado correctamente.',
                 data: { 'id': data.id }
             });
         }
@@ -34,11 +29,10 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Error al guardar el progreso',
-                error: error
+                error: error.message || error
             });
         }
     },
-
     /**
      * Obtener el historial de un ejercicio para un cliente
      */
