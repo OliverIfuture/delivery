@@ -180,6 +180,6 @@ module.exports = (app, upload) => {
       app.get(
         '/api/products/findById/:id', 
         passport.authenticate('jwt', { session: false }), 
-        productsController.findById
+        productsControllers.findById
     );
 }
