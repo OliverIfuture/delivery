@@ -1556,5 +1556,30 @@ User.updateTrainer = (id_user, id_trainer) => {
     return db.none(sql, [id_trainer, new Date(), id_user]);
 };
 
+// En models/user.js
+
+/**
+ * --- NUEVA FUNCIÓN DE GAMIFICACIÓN ---
+ * Actualiza la racha del usuario basándose en la fecha actual.
+ */
+User.updateStreak = (id_user) => {
+    const sql = `
+        UPDATE users
+        SET 
+            current_streak = CASE
+                -- Si entrenó ayer, aumenta la racha
+                WHEN last_workout_date = CURRENT_DATE - INTERVAL '1 day' THEN current_streak + 1
+                -- Si ya entrenó hoy, mantiene la racha igual
+                WHEN last_workout_date = CURRENT_DATE THEN current_streak
+                -- Si falló un día (o es el primero), reinicia a 1
+                ELSE 1
+            END,
+            last_workout_date = CURRENT_DATE
+        WHERE id = $1
+        RETURNING current_streak;
+    `;
+    return db.one(sql, id_user);
+};
+
 
 module.exports = User;
