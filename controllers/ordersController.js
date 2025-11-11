@@ -240,22 +240,21 @@ module.exports = {
     },
 
 
-      async updateToDelivered(req, res, next) {
+async updateToDelivered(req, res, next) {
         try {
-            let order = req.body; // Asumimos que 'order' tiene {id, paymethod, affiliate_referral_id, id_company, total}
+            let order = req.body; // Asumimos que 'order' tiene {id, paymethod, affiliate_referral_id, id_order_company, total}
             order.status = 'ENTREGADO';
             
-            // 1. Actualizar el estado del pedido
-            // (Usamos updateStatus, que es más limpio que 'update')
-            await Order.update(order);            
+            await Order.updateStatus(order.id, order.status); 
 
-            // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO)** ---
+            // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO) - CORREGIDA** ---
             try {
-                // Si ES efectivo Y tiene referido
-                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
+                // **CAMBIO: Usar 'order.id_order_company'**
+                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) {
                     console.log(`[Afiliado] Orden (Efectivo) ${order.id} detectada como ENTREGADA.`);
                     
-                    const vendorCompany = await User.findCompanyById(order.id_company);
+                    // **CAMBIO: Usar 'order.id_order_company'**
+                    const vendorCompany = await User.findCompanyById(order.id_order_company);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
                         console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}. Calculando...`);
                         await Affiliate.createCommission(order, vendorCompany);
@@ -284,7 +283,6 @@ module.exports = {
             });
         }
     },
-
     async cancelOrder(req, res, next) {
         try {
 
@@ -315,42 +313,45 @@ module.exports = {
         
         try {
             let order = req.body;
-            order.status = 'PAGADO'; // Confirmamos que está pagado
-
+            order.status = 'PAGADO'; 
             console.log(`orden creada: ${JSON.stringify(order)}`);
 
-
-            // 1. Guardar la orden (incluyendo affiliate_referral_id)
+            // 1. Guardar la orden
             const data = await Order.create(order);
-            order.id = data.id; // Asignamos el ID devuelto a nuestro objeto
+            order.id = data.id; 
 
-            // 2. Guardar los productos de la orden
+            // 2. Guardar los productos
             let products = order.products;
             for (const product of products) {
-                // ... (Tu lógica de guardar productos) ...
                 if (product.id < 10000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
                 if (product.id > 10000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
+
             }
 
-            // --- **INICIO LÓGICA DE COMISIÓN (TARJETA)** ---
-                // Si NO es efectivo (es tarjeta, etc.) Y tiene referido
-                if ( order.affiliate_referral_id && order.id_company) {
-                    console.log(`[Afiliado] Orden ${order.id} (Tarjeta) detectada. Calculando comisión...`);
+            // --- **INICIO LÓGICA DE COMISIÓN (CORREGIDA)** ---
+            try {
+                // **CAMBIO: Usar 'order.id_order_company'**
+                if (order.paymethod !== 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) {
+                    console.log(`[Afiliado] Orden ${order.id} (Tarjeta) detectada. Verificando Tienda ${order.id_order_company}...`);
                     
-                    const vendorCompany = await User.findCompanyById(order.id_company);
+                    // **CAMBIO: Usar 'order.id_order_company'**
+                    const vendorCompany = await User.findCompanyById(order.id_order_company);
 
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
+                        console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}. Calculando...`);
                         await Affiliate.createCommission(order, vendorCompany); 
                         console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
                     } else {
-                        console.log(`[Afiliado] Tienda ${vendorCompany ? vendorCompany.name : 'ID ' + order.id_company} no participa. No se genera comisión.`);
+                        console.log(`[Afiliado] Tienda ${vendorCompany ? vendorCompany.name : 'ID ' + order.id_order_company} no participa. No se genera comisión.`);
                     }
                 }
-      
+            } catch (e) {
+                console.log(`[Afiliado] Error al calcular la comisión (La orden SÍ se creó): ${e.message}`);
+            }
             // --- **FIN DE LA LÓGICA DE COMISIÓN** ---
 
             return res.status(201).json({
@@ -373,7 +374,7 @@ module.exports = {
 
     /**
      * Esta función maneja órdenes en EFECTIVO (PENDIENTE DE PAGO)
-     * NO debe calcular comisión aquí.
+     * No calcula comisión aquí.
      */
     async createCashOrder(req, res, next) {
         try {
@@ -382,10 +383,8 @@ module.exports = {
 
             order.status = 'PENDIENTE DE PAGO';
             
-            // 1. Guardar la orden (incluyendo el affiliate_referral_id, si existe)
             const data = await Order.create(order);
 
-            // 2. Guardar productos (Tu lógica de bucle)
             for (const product of order.products) {
                 if (product.id < 1000) { 
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
@@ -410,7 +409,6 @@ module.exports = {
             });
         }
     },
-
      async createSale(req, res, next) {
         try {
             let sales = req.body;
