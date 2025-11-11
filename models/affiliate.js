@@ -42,4 +42,30 @@ Affiliate.createCommission = (order, product, commissionRate = 0.10) => {
     ]);
 };
 
+Affiliate.getCommissionsByAffiliate = (id_company_affiliate) => {
+    const sql = `
+        SELECT
+            ac.id,
+            ac.id_order,
+            ac.order_total,
+            ac.commission_rate,
+            ac.commission_amount,
+            ac.status,
+            ac.created_at,
+            u.name AS client_buyer_name,
+            c.name AS vendor_name
+        FROM
+            affiliate_commissions AS ac
+        INNER JOIN
+            users AS u ON ac.id_client_buyer = u.id
+        INNER JOIN
+            company AS c ON ac.id_company_vendor = c.id
+        WHERE
+            ac.id_company_affiliate = $1
+        ORDER BY
+            ac.created_at DESC
+    `;
+    return db.manyOrNone(sql, id_company_affiliate);
+};
+
 module.exports = Affiliate;
