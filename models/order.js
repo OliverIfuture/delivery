@@ -607,19 +607,21 @@ Order.create = (order) => {
             updated_at,
             paymethod,
             hour_program,
-	    comments,
-	    discounts,
+	        comments,
+	        discounts,
             extra,
-	    total_extra,
+	        total_extra,
             drone_id,
-	    id_order_company,
-	    lat,
-	 	lng
+	        id_order_company,
+	        lat,
+	 	    lng,
+	        affiliate_referral_id
+
 
 
 
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13, $14, $15, $16) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,$13, $14, $15, $16, $17) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -631,15 +633,16 @@ Order.create = (order) => {
         new Date(),
         order.paymethod,
         order.hour_program,
-	order.comments,    
+	    order.comments,    
         order.discounts,
-	order.extra,    
-	order.total_extra,
-	order.drone_id,
+	    order.extra,    
+	    order.total_extra,
+	    order.drone_id,
 	    order.id_order_company,
 		order.lat,
-		order.lng
-    
+		order.lng,
+        order.affiliate_referral_id 
+
     ]);
 }
 
