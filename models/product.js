@@ -2595,7 +2595,7 @@ Product.findById = (id_product) => {
         SELECT
             p.id, p.name, p.description, p.price, p.price_special,
             p.image1, p.image2, p.image3,
-            p.id_category, p.id_company, p.state,
+            p.id_category, p.id_company, p.state, p.stock,
             c.name AS company_name,
             c."affiliateCommissionRate" AS commission_rate
         FROM
