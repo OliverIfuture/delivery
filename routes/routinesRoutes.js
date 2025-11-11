@@ -30,5 +30,6 @@ module.exports = (app) => {
     // **NUEVA RUTA: Obtener TODAS las rutinas del cliente**
     app.get('/api/routines/findAllByClient', passport.authenticate('jwt', { session: false }), routinesController.findAllByClient);
     // ...
+    app.get('/api/routines/findAllByClient', passport.authenticate('jwt', { session: false }), routinesController.findAllByClient);
 
 }
