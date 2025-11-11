@@ -25,7 +25,7 @@ WorkoutLog.create = (log) => {
     `;
     return db.one(sql, [
         log.id_client,
-        log.id_company,
+        log.id_company, // Puede ser NULL ahora
         log.id_routine,
         log.exercise_name,
         log.set_number,
@@ -38,6 +38,7 @@ WorkoutLog.create = (log) => {
         new Date()
     ]);
 };
+
 
 /**
  * Obtiene el historial de un cliente para un ejercicio específico
