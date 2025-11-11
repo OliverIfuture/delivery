@@ -2558,4 +2558,28 @@ return db.manyOrNone(sql, id);
 
 }
 
+Product.getAllForAffiliates = () => {
+    const sql = `
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.image1,
+            p.id_company,
+            c.name AS company_name,
+            c."affiliateCommissionRate" AS commission_rate
+        FROM
+            products AS p
+        INNER JOIN
+            company AS c ON p.id_company = c.id
+        WHERE
+            c."acceptsAffiliates" = true
+            AND p.stock > 0 -- (Opcional: solo mostrar productos en stock)
+        ORDER BY
+            c.name, p.name
+    `;
+    return db.manyOrNone(sql);
+}
+
 module.exports = Product;
