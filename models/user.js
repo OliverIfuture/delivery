@@ -1426,7 +1426,9 @@ User.findCompanyById = (id_company) => {
             "stripeSecretKey",
             "stripePublishableKey",
             "stripeAccountId", -- <-- NUEVO
-            "chargesEnabled"   -- <-- NUEVO
+            "chargesEnabled",   -- <-- NUEVO
+			"acceptsAffiliates",
+			"affiliateCommissionRate"
         FROM
             company 
         WHERE
