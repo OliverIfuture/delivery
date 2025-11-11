@@ -238,26 +238,49 @@ module.exports = {
             });
         }
     },
-    async updateToDelivered(req, res, next) {
+
+
+      async updateToDelivered(req, res, next) {
         try {
-
-            let order = req.body;
+            let order = req.body; // Asumimos que 'order' tiene {id, paymethod, affiliate_referral_id, id_company, total}
             order.status = 'ENTREGADO';
-            await Order.update(order);
+            
+            // 1. Actualizar el estado del pedido
+            // (Usamos updateStatus, que es más limpio que 'update')
+            await Order.updateStatus(order.id, order.status); 
 
+            // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO)** ---
+            try {
+                // Si ES efectivo Y tiene referido
+                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
+                    console.log(`[Afiliado] Orden (Efectivo) ${order.id} detectada como ENTREGADA.`);
+                    
+                    const vendorCompany = await User.findCompanyById(order.id_company);
+                    if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
+                        console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}. Calculando...`);
+                        await Affiliate.createCommission(order, vendorCompany);
+                        console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
+                    } else {
+                        console.log(`[Afiliado] Tienda no participa. No se genera comisión.`);
+                    }
+                }
+            } catch (e) {
+                console.log(`[Afiliado] Error al calcular comisión (La orden SÍ se entregó): ${e.message}`);
+            }
+            // --- **FIN LÓGICA DE COMISIÓN** ---
 
             return res.status(201).json({
                 success: true,
                 message: 'La orden se entrego correctamente',
             });
 
-        }
+        } 
         catch (error) {
             console.log(`Error ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Hubo un error al actualizar la orden',
-                error: error
+                error: error.message
             });
         }
     },
@@ -288,64 +311,48 @@ module.exports = {
      * Esta función maneja órdenes que YA ESTÁN PAGADAS (ej. con tarjeta)
      * Por lo tanto, debe calcular la comisión.
      */
-       async create(req, res, next) {
+    async create(req, res, next) {
         
         try {
-            // Ya no leemos params, solo el body
             let order = req.body;
             order.status = 'PAGADO'; // Confirmamos que está pagado
 
-            // 1. Guardar la orden (esto ahora incluye el affiliate_referral_id)
+            // 1. Guardar la orden (incluyendo affiliate_referral_id)
             const data = await Order.create(order);
             order.id = data.id; // Asignamos el ID devuelto a nuestro objeto
 
-            // 2. Guardar los productos de la orden (Tu lógica de bucle)
+            // 2. Guardar los productos de la orden
             let products = order.products;
             for (const product of products) {
-                console.log(`Procesando producto ID: ${product.id}`);
-                
-                // Tu lógica de IDs
+                // ... (Tu lógica de guardar productos) ...
                 if (product.id < 10000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
                 if (product.id > 10000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
-                
-                // Actualizar Stock (Si la función existe en el modelo Product)
                 if (Product.updateStock) {
                      await Product.updateStock(product.id, product.quantity);
                 }
             }
 
-            // --- **INICIO LÓGICA DE COMISIÓN (V2) - CON OPT-IN** ---
+            // --- **INICIO LÓGICA DE COMISIÓN (TARJETA)** ---
             try {
-                // 1. Verificar si la orden tiene un referido Y una tienda
-                if (order.affiliate_referral_id && order.id_company) {
-                    console.log(`[Afiliado] Orden ${order.id} tiene referido. Verificando Tienda ${order.id_company}...`);
+                // Si NO es efectivo (es tarjeta, etc.) Y tiene referido
+                if (order.paymethod !== 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
+                    console.log(`[Afiliado] Orden ${order.id} (Tarjeta) detectada. Calculando comisión...`);
                     
-                    // 2. Obtener los datos de la Tienda (Vendedor)
                     const vendorCompany = await User.findCompanyById(order.id_company);
 
-                    // 3. Verificar si la tienda (Vendedor) acepta afiliados
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
-                        
-                        console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}`);
-                        
-                        // 4. Calcular y guardar comisión
-                        // Pasamos el objeto 'order' completo y el objeto 'vendorCompany'
                         await Affiliate.createCommission(order, vendorCompany); 
                         console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
-
                     } else {
-                        console.log(`[Afiliado] La tienda ${vendorCompany ? vendorCompany.name : 'ID ' + order.id_company} no participa en el programa. No se genera comisión.`);
+                        console.log(`[Afiliado] Tienda ${vendorCompany ? vendorCompany.name : 'ID ' + order.id_company} no participa. No se genera comisión.`);
                     }
-                } else {
-                     console.log(`[Afiliado] Orden ${order.id} sin referido o sin ID de tienda.`);
                 }
             } catch (e) {
-                console.log(`[Afiliado] Error al calcular la comisión (La orden SÍ se guardó): ${e.message}`);
-                // No detenemos la orden si la comisión falla, solo lo registramos.
+                console.log(`[Afiliado] Error al calcular comisión (La orden SÍ se creó): ${e.message}`);
             }
             // --- **FIN DE LA LÓGICA DE COMISIÓN** ---
 
@@ -361,7 +368,7 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Hubo un error creado la orden',
-                error: error.message // Enviar solo el mensaje de error
+                error: error.message
             });
         }
     },
@@ -383,10 +390,10 @@ module.exports = {
 
             // 2. Guardar productos (Tu lógica de bucle)
             for (const product of order.products) {
-                if (product.id < 1000) { // (Tu lógica original era < 1000)
+                if (product.id < 1000) { 
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
-                if (product.id > 1000) { // (Tu lógica original era > 1000)
+                if (product.id > 1000) { 
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
             }
