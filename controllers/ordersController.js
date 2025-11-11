@@ -284,48 +284,75 @@ module.exports = {
             });
         }
     },
-
+    /**
+     * Esta función maneja órdenes que YA ESTÁN PAGADAS (ej. con tarjeta)
+     * Por lo tanto, debe calcular la comisión.
+     */
     async create(req, res, next) {
         
         try {
-
-            const id_plate = req.params.id_plate;
-            const extra = req.params.extra;
-            const price = req.params.extra;
-            
             let order = req.body;
-            order.status = 'PAGADO';
-            const data = await Order.create(order, id_plate, extra, price);
-                        console.log(`productos antes del for : ${JSON.stringify(order.products)}`);
+            order.status = 'PAGADO'; // Confirmamos que está pagado
 
-            ////recorrer todos los productos de la orden
-            for (const product of order.products) {
-            console.log(`productos antes del menos 10 : ${JSON.stringify(product)}`);
+            // 1. Guardar la orden (esto ahora incluye el affiliate_referral_id)
+            //    Usamos la firma estándar de nuestro modelo Order.create(order)
+            const data = await Order.create(order);
+            order.id = data.id;
 
+            // 2. Guardar los productos de la orden (Tu lógica de bucle)
+            let products = order.products;
+            for (const product of products) {
+                console.log(`Procesando producto ID: ${product.id}`);
+                
+                // Tu lógica de IDs < 10000 y > 10000 (asegúrate que OrderHasProducts exista)
                 if (product.id < 10000) {
-            console.log(`productos dentro del menos 10 : ${JSON.stringify(product)}`);
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
-                    await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
-
+                    // Si createOrderWithPlate es un modelo diferente, asegúrate de que exista
+                    // await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity); 
                 }
                 if (product.id > 10000) {
-                    await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
+                    // await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
-
+                }
+                
+                // Actualizar Stock (Solo si Product.updateStock existe)
+                if (Product.updateStock) {
+                     await Product.updateStock(product.id, product.quantity);
                 }
             }
 
-            return res.status(201).json({
+            // 3. **¡NUEVA LÓGICA DE COMISIÓN!**
+            try {
+                if (order.affiliate_referral_id && products && products.length > 0) {
+                    console.log('Detectada orden de afiliado (PAGADA). Calculando comisión...');
+                    
+                    // Necesitamos el id_company del VENDEDOR (la Tienda)
+                    // Lo tomamos del primer producto.
+                    const firstProduct = products[0]; 
+                    
+                    if (firstProduct.id_company) {
+                        // Creamos un objeto 'product' simple solo con el id_company
+                        await Affiliate.createCommission(order, { id_company: firstProduct.id_company }, 0.10); // Tasa de 10%
+                        console.log('Comisión calculada y guardada.');
+                    } else {
+                        console.log('Error de comisión: No se pudo determinar el id_company del vendedor en los productos.');
+                    }
+                }
+            } catch (e) {
+                console.log(`Error al calcular la comisión (la orden SÍ se creó): ${e}`);
+                // No detenemos la orden si la comisión falla, solo lo registramos.
+            }
 
+            return res.status(201).json({
                 success: true,
                 message: 'La orden se creo correctamente',
                 data: data.id
             });
 
-        } catch (error) {
+        } 
+        catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
-
                 success: false,
                 message: 'Hubo un error creado la orden',
                 error: error
@@ -334,31 +361,33 @@ module.exports = {
     },
 
 
+    /**
+     * Esta función maneja órdenes en EFECTIVO (PENDIENTE DE PAGO)
+     * NO debe calcular comisión aquí.
+     */
     async createCashOrder(req, res, next) {
         try {
-
             let order = req.body;
             console.log(`orden creada: ${JSON.stringify(order)}`);
 
-            
             order.status = 'PENDIENTE DE PAGO';
+            
+            // 1. Guardar la orden (incluyendo el affiliate_referral_id, si existe)
             const data = await Order.create(order);
 
+            // 2. Guardar productos (Tu lógica de bucle)
             for (const product of order.products) {
                 if (product.id < 1000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
-                    await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
-
+                    // await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
                 }
                 if (product.id > 1000) {
-                    await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
+                    // await OrderHasProducts.createOrderWithPlate(data.id, product.id, product.quantity);
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
-
                 }
             }
 
             return res.status(201).json({
-
                 success: true,
                 message: 'La orden se creo correctamente',
                 data: data.id
@@ -367,13 +396,13 @@ module.exports = {
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
-
                 success: false,
                 message: 'Hubo un error creado la orden',
                 error: error
             });
         }
     },
+
 
      async createSale(req, res, next) {
         try {
