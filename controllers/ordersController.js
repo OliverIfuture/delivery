@@ -4,6 +4,7 @@ import('conekta').then((conekta) => console.log(conekta.default.Customer.post));
 const apikey = "key_pt4c0MM2XKF8HXGytMz2OFJ";
 const { findByDeliveryAndStatus } = require('../models/order');
 const Order = require('../models/order');
+const User = require('../models/user');
 const OrderHasProducts = require('../models/order_has_products');
 
 module.exports = {
