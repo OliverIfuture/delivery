@@ -247,7 +247,7 @@ module.exports = {
             
             // 1. Actualizar el estado del pedido
             // (Usamos updateStatus, que es más limpio que 'update')
-            await Order.updateStatus(order.id, order.status); 
+            await Order.update(order);            
 
             // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO)** ---
             try {
