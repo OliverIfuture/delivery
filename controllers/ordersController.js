@@ -337,7 +337,6 @@ module.exports = {
             }
 
             // --- **INICIO LÓGICA DE COMISIÓN (TARJETA)** ---
-            try {
                 // Si NO es efectivo (es tarjeta, etc.) Y tiene referido
                 if ( order.affiliate_referral_id && order.id_company) {
                     console.log(`[Afiliado] Orden ${order.id} (Tarjeta) detectada. Calculando comisión...`);
@@ -351,9 +350,7 @@ module.exports = {
                         console.log(`[Afiliado] Tienda ${vendorCompany ? vendorCompany.name : 'ID ' + order.id_company} no participa. No se genera comisión.`);
                     }
                 }
-            } catch (e) {
-                console.log(`[Afiliado] Error al calcular comisión (La orden SÍ se creó): ${e.message}`);
-            }
+      
             // --- **FIN DE LA LÓGICA DE COMISIÓN** ---
 
             return res.status(201).json({
