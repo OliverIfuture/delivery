@@ -317,6 +317,9 @@ module.exports = {
             let order = req.body;
             order.status = 'PAGADO'; // Confirmamos que está pagado
 
+            console.log(`orden creada: ${JSON.stringify(order)}`);
+
+
             // 1. Guardar la orden (incluyendo affiliate_referral_id)
             const data = await Order.create(order);
             order.id = data.id; // Asignamos el ID devuelto a nuestro objeto
@@ -336,7 +339,7 @@ module.exports = {
             // --- **INICIO LÓGICA DE COMISIÓN (TARJETA)** ---
             try {
                 // Si NO es efectivo (es tarjeta, etc.) Y tiene referido
-                if (order.paymethod !== 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
+                if ( order.affiliate_referral_id && order.id_company) {
                     console.log(`[Afiliado] Orden ${order.id} (Tarjeta) detectada. Calculando comisión...`);
                     
                     const vendorCompany = await User.findCompanyById(order.id_company);
