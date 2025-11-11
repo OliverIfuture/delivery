@@ -2590,4 +2590,22 @@ Product.getAllForAffiliates = () => {
     return db.manyOrNone(sql);
 };
 
+Product.findById = (id_product) => {
+    const sql = `
+        SELECT
+            p.id, p.name, p.description, p.price, p.price_special,
+            p.image1, p.image2, p.image3,
+            p.id_category, p.id_company, p.state,
+            c.name AS company_name,
+            c."affiliateCommissionRate" AS commission_rate
+        FROM
+            products AS p
+        INNER JOIN
+            company AS c ON p.id_company = c.id
+        WHERE
+            p.id = $1
+    `;
+    return db.oneOrNone(sql, id_product);
+};
+
 module.exports = Product;
