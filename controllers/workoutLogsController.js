@@ -17,6 +17,11 @@ module.exports = {
             // ---------------------------
 
             const data = await WorkoutLog.create(log);
+            // 2. **NUEVO: Actualizar la Racha**
+            // No necesitamos esperar el resultado para responder al cliente,
+            // pero es bueno saber si funcionó.
+            const streakData = await User.updateStreak(log.id_client);
+            console.log(`🔥 Racha actualizada para usuario ${log.id_client}: ${streakData.current_streak} días`);
             
             return res.status(201).json({
                 success: true,
