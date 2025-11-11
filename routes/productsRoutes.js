@@ -171,5 +171,9 @@ module.exports = (app, upload) => {
 
       app.get('/api/products/getByCompany/:id', productsControllers.getByCompany);     
 
-
+    app.get(
+        '/api/products/getAllForAffiliates', 
+        passport.authenticate('jwt', { session: false }), 
+        productsController.getAllForAffiliates
+    );
 }
