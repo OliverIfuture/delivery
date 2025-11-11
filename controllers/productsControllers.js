@@ -3099,5 +3099,20 @@ async createServiceWithSchedule(req, res, next) {
             });
         }
     },
+
+    async getAllForAffiliates(req, res, next) {
+        try {
+            const data = await Product.getAllForAffiliates();
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en productsController.getAllForAffiliates: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener los productos del marketplace de afiliados',
+                error: error.message
+            });
+        }
+    },
  
 }
