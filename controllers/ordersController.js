@@ -244,54 +244,33 @@ module.exports = {
 
     async updateToDelivered(req, res, next) {
         try {
-            let orderUpdateData = req.body; // Esto solo tiene el ID y el status
+            let orderUpdateData = req.body; 
+            orderUpdateData.status = 'ENTREGADO';
             
-            // 1. Actualizar el estado del pedido
-            await Order.updateStatus(orderUpdateData.id, 'ENTREGADO'); 
+            // 1. Actualizar el estado
+            await Order.updateStatus(orderUpdateData); 
 
-            // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO)** ---
+            // --- LÓGICA DE COMISIÓN (EFECTIVO) ---
             try {
-                // 2. Obtener el objeto COMPLETO de la orden desde la BD
+                // 2. Obtener la orden completa de la BD (incluyendo el TOTAL guardado)
                 const order = await Order.findById(orderUpdateData.id);
 
-                if (!order) {
-                    throw new Error(`Orden ${orderUpdateData.id} no encontrada.`);
-                }
-
-                // 3. Si ES efectivo Y tiene referido
-                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
-                    console.log(`[Afiliado] Orden (Efectivo) ${order.id} detectada como ENTREGADA.`);
+                if (order && order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
+                    console.log(`[Afiliado] Orden (Efectivo) ${order.id} ENTREGADA. Procesando comisión...`);
                     
-                    // 4. **RE-CALCULAR EL TOTAL** (¡Ahora esta función existe!)
-                    const products = await Order.getProducts(order.id);
-                    const buyerUser = await User.findById(order.id_client, () => {});
-                    const isTrainer = buyerUser && buyerUser.is_trainer === 'true';
+                    // 3. Ya no recalculamos nada. Usamos order.total directamente.
+                    // Aseguramos que sea int/float si viene como string de la BD
+                    // (Aunque affiliate.js hace parseFloat, es bueno saber que el dato ya está ahí)
                     
-                    let calculatedTotal = 0;
-                    for (const product of products) {
-                        let pricePerItem = isTrainer ? (product.price_special || product.price) : product.price;
-                        calculatedTotal += (pricePerItem * product.quantity);
-                    }
-                    calculatedTotal -= (order.discounts || 0);
-                    calculatedTotal += (order.total_extra || 0);
-                    
-                    // Asignamos el total RE-CALCULADO a la orden
-                    order.total = calculatedTotal;
-                    
-                    // 5. Buscar la tienda y calcular comisión
                     const vendorCompany = await User.findCompanyById(order.id_company);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
-                        console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}.`);
                         await Affiliate.createCommission(order, vendorCompany);
-                        console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
-                    } else {
-                        console.log(`[Afiliado] Tienda no participa.`);
+                        console.log(`[Afiliado] Comisión guardada.`);
                     }
                 }
             } catch (e) {
-                console.log(`[Afiliado] Error al calcular comisión (La orden SÍ se entregó): ${e.message}`);
+                console.log(`[Afiliado] Error comisión: ${e.message}`);
             }
-            // --- **FIN LÓGICA DE COMISIÓN** ---
 
             return res.status(201).json({
                 success: true,
@@ -301,14 +280,9 @@ module.exports = {
         } 
         catch (error) {
             console.log(`Error ${error}`);
-            return res.status(501).json({
-                success: false,
-                message: 'Hubo un error al actualizar la orden',
-                error: error.message
-            });
+            return res.status(501).json({ success: false, message: 'Error al actualizar', error: error.message });
         }
     },
-    
     
     async cancelOrder(req, res, next) {
         try {
