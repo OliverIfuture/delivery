@@ -241,37 +241,28 @@ module.exports = {
         }
     },
 
-   async updateToDelivered(req, res, next) {
+
+    async updateToDelivered(req, res, next) {
         try {
             let orderUpdateData = req.body; // Esto solo tiene el ID y el status
-            orderUpdateData.status = 'ENTREGADO';
-
-             console.log(`orden en actualizacion : ${JSON.stringify(orderUpdateData)}`);
-
-
-
             
             // 1. Actualizar el estado del pedido
-            await Order.update(orderUpdateData); 
+            await Order.updateStatus(orderUpdateData.id, 'ENTREGADO'); 
 
             // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO)** ---
-                console.log(`id de orden a actualizar-------- : ${orderUpdateData.id}`);
-
             try {
                 // 2. Obtener el objeto COMPLETO de la orden desde la BD
                 const order = await Order.findById(orderUpdateData.id);
-                console.log(`resultado del orden encontrado : ${JSON.stringify(order)}`);
 
                 if (!order) {
                     throw new Error(`Orden ${orderUpdateData.id} no encontrada.`);
                 }
 
                 // 3. Si ES efectivo Y tiene referido
-                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) {
+                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
                     console.log(`[Afiliado] Orden (Efectivo) ${order.id} detectada como ENTREGADA.`);
                     
-                    // 4. **RE-CALCULAR EL TOTAL** (porque no confiamos en el 'total' de la BD si no se guardó)
-                    // (Asumimos que Order.getProducts existe en tu modelo)
+                    // 4. **RE-CALCULAR EL TOTAL** (¡Ahora esta función existe!)
                     const products = await Order.getProducts(order.id);
                     const buyerUser = await User.findById(order.id_client, () => {});
                     const isTrainer = buyerUser && buyerUser.is_trainer === 'true';
@@ -290,11 +281,11 @@ module.exports = {
                     // 5. Buscar la tienda y calcular comisión
                     const vendorCompany = await User.findCompanyById(order.id_company);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
-                        console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}. Calculando...`);
+                        console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}.`);
                         await Affiliate.createCommission(order, vendorCompany);
                         console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
                     } else {
-                        console.log(`[Afiliado] Tienda no participa. No se genera comisión.`);
+                        console.log(`[Afiliado] Tienda no participa.`);
                     }
                 }
             } catch (e) {
@@ -317,6 +308,8 @@ module.exports = {
             });
         }
     },
+    
+    
     async cancelOrder(req, res, next) {
         try {
 
