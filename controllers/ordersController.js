@@ -264,6 +264,8 @@ module.exports = {
                     // (Aunque affiliate.js hace parseFloat, es bueno saber que el dato ya está ahí)
                     
                     const vendorCompany = await User.findCompanyById(order.id_company);
+                    console.log(`aun no entra  a calcular: ${JSON.stringify(vendorCompany)}`);
+
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
                         console.log(`entro a calcular: ${JSON.stringify(vendorCompany)}`);
 
