@@ -265,6 +265,8 @@ module.exports = {
                     
                     const vendorCompany = await User.findCompanyById(order.id_company);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
+                        console.log(`entro a calcular: ${JSON.stringify(vendorCompany)}`);
+
                         await Affiliate.createCommission(order, vendorCompany);
                         console.log(`[Afiliado] Comisión guardada.`);
                     }
