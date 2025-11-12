@@ -256,7 +256,7 @@ module.exports = {
                 // 2. Obtener la orden completa de la BD (incluyendo el TOTAL guardado)
                 const order = await Order.findById(orderUpdateData.id);
 
-                if (order && order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
+                if (order && order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) {
                     console.log(`[Afiliado] Orden (Efectivo) ${order.id} ENTREGADA. Procesando comisión...`);
                     
                     // 3. Ya no recalculamos nada. Usamos order.total directamente.
