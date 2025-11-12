@@ -3,14 +3,18 @@ const db = require('../config/config.js');
 const Affiliate = {};
 
 /**
+ * **FUNCIÓN CORREGIDA (Paso 15.2)**
  * Crea un nuevo registro de comisión después de una venta exitosa.
  * @param {object} order - El objeto completo de la orden pagada.
- * @param {object} product - El primer producto (para obtener el id_company_vendor).
- * @param {number} commissionRate - Ej: 0.10 para 10%
+ * @param {object} vendorCompany - El objeto 'company' de la Tienda que vendió.
  */
-Affiliate.createCommission = (order, product, commissionRate = 0.10) => {
+Affiliate.createCommission = (order, vendorCompany) => {
     
-    // Calcular la comisión (Ej: 10% del total de la orden)
+    // **CORRECCIÓN 1: La tasa de comisión viene de la tienda (vendorCompany)**
+    // (Usamos 0.10 como un fallback de seguridad, pero NUNCA debería usarse)
+    const commissionRate = parseFloat(vendorCompany.affiliateCommissionRate) || 0.10;
+    
+    // **CORRECCIÓN 2: El total viene de la orden (que ya calculamos en el controller)**
     const commission_amount = parseFloat(order.total) * commissionRate;
 
     const sql = `
@@ -33,15 +37,18 @@ Affiliate.createCommission = (order, product, commissionRate = 0.10) => {
     return db.one(sql, [
         order.id,
         order.affiliate_referral_id, // El Entrenador que refirió
-        order.id_order_company,          // La Tienda que vendió
+        vendorCompany.id,            // **CORRECCIÓN 3: El ID de la Tienda que vendió**
         order.id_client,             // El Cliente que compró
-        order.total,
-        commissionRate,
-        commission_amount,
+        order.total,                 // El total calculado
+        commissionRate,              // La tasa dinámica de la tienda
+        commission_amount,           // El monto de comisión calculado
         new Date()
     ]);
 };
 
+/**
+ * Obtiene todas las comisiones ganadas por un afiliado (Entrenador)
+ */
 Affiliate.getCommissionsByAffiliate = (id_company_affiliate) => {
     const sql = `
         SELECT
