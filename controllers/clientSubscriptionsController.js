@@ -1,5 +1,6 @@
 const ClientSubscription = require('../models/clientSubscription.js');
 const User = require('../models/user.js'); 
+const Affiliate  = require('../models/affiliate.js'); 
 const keys = require('../config/keys.js'); 
 
 const endpointSecret = keys.stripeWebhookSecret; 
