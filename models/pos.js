@@ -87,7 +87,7 @@ POS.createSale = (sale) => {
             id_shift,
             id_company,
             id_user_staff,
-            id_client,
+            id_client, 
             sale_details,
             subtotal,
             total,
@@ -102,7 +102,7 @@ POS.createSale = (sale) => {
         sale.id_company,
         sale.id_user_staff,
         sale.id_client, // Puede ser null
-        sale.sale_details, // El JSON de productos
+        sale.sale_details, 
         sale.subtotal,
         sale.total,
         sale.payment_method,
