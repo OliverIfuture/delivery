@@ -33,7 +33,7 @@ Affiliate.createCommission = (order, product, commissionRate = 0.10) => {
     return db.one(sql, [
         order.id,
         order.affiliate_referral_id, // El Entrenador que refirió
-        product.id_company,          // La Tienda que vendió
+        order.id_order_company,          // La Tienda que vendió
         order.id_client,             // El Cliente que compró
         order.total,
         commissionRate,
