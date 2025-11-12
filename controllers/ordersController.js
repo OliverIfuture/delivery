@@ -248,7 +248,7 @@ module.exports = {
             orderUpdateData.status = 'ENTREGADO';
             
             // 1. Actualizar el estado
-            await Order.updateStatus(orderUpdateData); 
+            await Order.update(orderUpdateData); 
 
             // --- LÓGICA DE COMISIÓN (EFECTIVO) ---
             try {
