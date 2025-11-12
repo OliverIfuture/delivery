@@ -75,4 +75,47 @@ Affiliate.getCommissionsByAffiliate = (id_company_affiliate) => {
     return db.manyOrNone(sql, id_company_affiliate);
 };
 
+/**
+ * **NUEVA FUNCIÓN: (Paso 15.8a)**
+ * Obtiene un resumen de cuánto debe la Tienda (Vendedor) a cada Entrenador (Afiliado).
+ * Agrupa todas las comisiones 'pending' por Entrenador.
+ */
+Affiliate.getPendingPayoutsByVendor = (id_company_vendor) => {
+    const sql = `
+        SELECT
+            id_company_affiliate,
+            c.name AS affiliate_name,
+            c.logo AS affiliate_logo,
+            SUM(commission_amount) AS total_pending_amount
+        FROM
+            affiliate_commissions AS ac
+        INNER JOIN
+            company AS c ON ac.id_company_affiliate = c.id
+        WHERE
+            ac.id_company_vendor = $1 AND ac.status = 'pending'
+        GROUP BY
+            id_company_affiliate, c.name, c.logo
+        ORDER BY
+            total_pending_amount DESC
+    `;
+    return db.manyOrNone(sql, id_company_vendor);
+};
+
+/**
+ * **NUEVA FUNCIÓN: (Paso 15.8a)**
+ * Marca todas las comisiones 'pending' de un afiliado específico
+ * como 'paid' (pagadas).
+ */
+Affiliate.markAsPaid = (id_company_vendor, id_company_affiliate) => {
+    const sql = `
+        UPDATE affiliate_commissions
+        SET status = 'paid', updated_at = $1
+        WHERE
+            id_company_vendor = $2
+            AND id_company_affiliate = $3
+            AND status = 'pending'
+    `;
+    return db.none(sql, [new Date(), id_company_vendor, id_company_affiliate]);
+};
+
 module.exports = Affiliate;
