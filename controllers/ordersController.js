@@ -244,7 +244,7 @@ module.exports = {
    async updateToDelivered(req, res, next) {
         try {
             let orderUpdateData = req.body; // Esto solo tiene el ID y el status
-            order.orderUpdateData = 'EN CAMINO';
+            orderUpdateData.orderUpdateData = 'EN CAMINO';
 
             
             // 1. Actualizar el estado del pedido
