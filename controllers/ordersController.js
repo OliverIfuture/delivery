@@ -249,6 +249,7 @@ module.exports = {
             
             // 1. Actualizar el estado
             await Order.update(orderUpdateData); 
+            console.log(`orden creada para actualizar: ${JSON.stringify(orderUpdateData)}`);
 
             // --- LÓGICA DE COMISIÓN (EFECTIVO) ---
             try {
