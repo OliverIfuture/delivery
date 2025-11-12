@@ -6,12 +6,21 @@ module.exports = (app) => {
     // PREFIJO: /api/gym
 
     /**
-     * POST: /api/gym/check-in
-     * Esta es la ruta CRÍTICA que usará la App de Kiosco (Tablet).
-     * Recibe un QR (token), valida al usuario y su membresía, y devuelve si puede entrar o no.
-     * El Kiosco debe estar logueado como un 'staff' del gimnasio.
+     * **NUEVA RUTA (G2.1a)**
+     * GET: /api/gym/generate-access-token
+     * La app del CLIENTE llama a esto cada 25 segundos para obtener un
+     * nuevo token de QR dinámico.
      */
-    app.post('/api/gym/check-in', passport.authenticate('jwt', { session: false }), gymController.checkIn);
+    app.get('/api/gym/generate-access-token', passport.authenticate('jwt', { session: false }), gymController.generateAccessToken);
+
+
+    /**
+     * **RUTA MODIFICADA (G2.1b)**
+     * POST: /api/gym/check-in
+     * El KIOSCO (Tablet) llama a esto con el token del QR escaneado.
+     */
+    app.post('/api/gym/check-in', passport.authenticate('jwt', { session: false }), gymController.checkInWithToken);
+
 
     /**
      * POST: /api/gym/create-membership
@@ -25,5 +34,4 @@ module.exports = (app) => {
      */
     app.get('/api/gym/get-membership-status/:id_client', passport.authenticate('jwt', { session: false }), gymController.getMembershipStatus);
 
-    // (Más rutas vendrán aquí después, como Apertura Manual, etc.)
 }
