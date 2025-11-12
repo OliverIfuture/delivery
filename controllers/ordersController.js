@@ -246,6 +246,9 @@ module.exports = {
             let orderUpdateData = req.body; // Esto solo tiene el ID y el status
             orderUpdateData.orderUpdateData = 'EN CAMINO';
 
+             console.log(`orden en actualizacion : ${JSON.stringify(orderUpdateData)}`);
+
+
             
             // 1. Actualizar el estado del pedido
             await Order.update(orderUpdateData); 
