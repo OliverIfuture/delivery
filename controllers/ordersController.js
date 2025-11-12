@@ -249,14 +249,18 @@ module.exports = {
              console.log(`orden en actualizacion : ${JSON.stringify(orderUpdateData)}`);
 
 
+
             
             // 1. Actualizar el estado del pedido
             await Order.update(orderUpdateData); 
 
             // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO)** ---
+                console.log(`id de orden a actualizar-------- : ${orderUpdateData.id}`);
+
             try {
                 // 2. Obtener el objeto COMPLETO de la orden desde la BD
                 const order = await Order.findById(orderUpdateData.id);
+                console.log(`resultado del orden encontrado : ${JSON.stringify(order)}`);
 
                 if (!order) {
                     throw new Error(`Orden ${orderUpdateData.id} no encontrada.`);
