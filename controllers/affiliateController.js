@@ -1,4 +1,5 @@
 const Affiliate = require('../models/affiliate.js');
+const User = require('../models/user.js'); 
 
 module.exports = {
 
