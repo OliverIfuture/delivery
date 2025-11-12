@@ -1,0 +1,155 @@
+const POS = require('../models/pos.js');
+
+module.exports = {
+
+    // --- PRODUCTOS (CRUD) ---
+
+    async getProducts(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const data = await POS.getProductsByCompany(id_company);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en posController.getProducts: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener productos', error: error.message });
+        }
+    },
+
+    async createProduct(req, res, next) {
+        try {
+            let product = req.body;
+            product.id_company = req.user.mi_store;
+            const data = await POS.createProduct(product);
+            return res.status(201).json({ success: true, message: 'Producto creado', data: { id: data.id } });
+        } catch (error) {
+            console.log(`Error en posController.createProduct: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al crear producto', error: error.message });
+        }
+    },
+
+    async updateProduct(req, res, next) {
+        try {
+            let product = req.body;
+            product.id_company = req.user.mi_store;
+            await POS.updateProduct(product);
+            return res.status(200).json({ success: true, message: 'Producto actualizado' });
+        } catch (error) {
+            console.log(`Error en posController.updateProduct: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al actualizar producto', error: error.message });
+        }
+    },
+
+    // --- VENTAS (SALES) ---
+
+    async processSale(req, res, next) {
+        try {
+            let sale = req.body;
+            sale.id_company = req.user.mi_store;
+            sale.id_user_staff = req.user.id;
+
+            // 1. Encontrar el turno activo
+            const activeShift = await POS.findActiveShift(sale.id_company, sale.id_user_staff);
+            if (!activeShift) {
+                return res.status(400).json({ success: false, message: 'No hay un turno de caja abierto. Inicia un turno primero.' });
+            }
+            sale.id_shift = activeShift.id;
+
+            // 2. Guardar la venta
+            const data = await POS.createSale(sale);
+
+            // 3. Actualizar el stock de cada producto vendido
+            const productsSold = sale.sale_details; // Asumimos que sale_details es un Array de {id, qty}
+            for (const product of productsSold) {
+                await POS.updateProductStock(product.id, product.qty);
+            }
+
+            return res.status(201).json({ success: true, message: 'Venta registrada', data: { id: data.id } });
+        } catch (error) {
+            console.log(`Error en posController.processSale: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al procesar la venta', error: error.message });
+        }
+    },
+
+    // --- TURNOS (SHIFTS) ---
+
+    async startShift(req, res, next) {
+        try {
+            const { starting_cash } = req.body;
+            const id_company = req.user.mi_store;
+            const id_user_staff = req.user.id;
+
+            // 1. Verificar si ya hay un turno abierto
+            const existingShift = await POS.findActiveShift(id_company, id_user_staff);
+            if (existingShift) {
+                return res.status(409).json({ success: false, message: 'Ya tienes un turno abierto.' });
+            }
+            
+            // 2. Crear el nuevo turno
+            const data = await POS.startShift(id_company, id_user_staff, starting_cash);
+            return res.status(201).json({ success: true, message: 'Turno iniciado', data: { id_shift: data.id } });
+        } catch (error) {
+            console.log(`Error en posController.startShift: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al iniciar turno', error: error.message });
+        }
+    },
+
+    async getActiveShift(req, res, next) {
+        try {
+            const data = await POS.findActiveShift(req.user.mi_store, req.user.id);
+            if (!data) {
+                return res.status(404).json({ success: false, message: 'No se encontró un turno abierto.' });
+            }
+            return res.status(200).json({ success: true, data: data });
+        } catch (error) {
+            console.log(`Error en posController.getActiveShift: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al buscar turno', error: error.message });
+        }
+    },
+
+    async getSalesByShift(req, res, next) {
+        try {
+            const id_shift = req.query.id_shift;
+            if (!id_shift) return res.status(400).json({ success: false, message: 'Falta id_shift' });
+            
+            // (TODO: Añadir validación de seguridad: ¿pertenece este turno a mi compañía?)
+            
+            const data = await POS.getSalesByShift(id_shift);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en posController.getSalesByShift: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener ventas', error: error.message });
+        }
+    },
+
+    async closeShift(req, res, next) {
+        try {
+            const { id_shift, ending_cash, notes } = req.body;
+            
+            // 1. Obtener todas las ventas de este turno
+            const sales = await POS.getSalesByShift(id_shift);
+
+            // 2. Calcular totales
+            let total_cash_sales = 0;
+            let total_card_sales = 0;
+            let total_sales = 0;
+            
+            for (const sale of sales) {
+                const total = parseFloat(sale.total);
+                if (sale.payment_method === 'EFECTIVO') {
+                    total_cash_sales += total;
+                } else if (sale.payment_method === 'TARJETA') {
+                    total_card_sales += total;
+                }
+                total_sales += total;
+            }
+
+            // 3. Cerrar el turno en la BD
+            await POS.closeShift(id_shift, ending_cash, total_cash_sales, total_card_sales, total_sales, notes);
+
+            return res.status(200).json({ success: true, message: 'Turno cerrado exitosamente' });
+        } catch (error) {
+            console.log(`Error en posController.closeShift: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al cerrar el turno', error: error.message });
+        }
+    }
+};
