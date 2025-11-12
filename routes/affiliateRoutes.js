@@ -37,4 +37,15 @@ module.exports = (app) => {
         affiliateController.markCommissionsAsPaid
     );
 
+        /**
+     * **RUTA MODIFICADA: (Paso 15.8c)**
+     * La Tienda (Vendedor) inicia el pago de comisiones.
+     * Esto crea un PaymentIntent para cobrar a la *Tienda*.
+     */
+    app.post(
+        '/api/affiliates/create-payout-intent',
+        passport.authenticate('jwt', { session: false }),
+        affiliateController.createPayoutIntent
+    );
+
 }
