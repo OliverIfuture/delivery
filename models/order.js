@@ -2086,4 +2086,10 @@ Order.cancel = (id) => {
     }); // Fin de la transacción db.tx
 }
 
+Order.findById = (id) => {
+    const sql = `SELECT * FROM orders WHERE id = $1`;
+    return db.oneOrNone(sql, id);
+}
+
+
 module.exports = Order;
