@@ -1215,7 +1215,7 @@ async createWithImageUserAndCompany(req, res, next) {
 
             // 7. Respuesta exitosa
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'El registro se realizó correctamente, ahora inicia sesión',
                 data: data.id
             });
@@ -1243,7 +1243,7 @@ async createWithImageUserAndCompany(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener'
             });
         }
@@ -1261,7 +1261,7 @@ async createWithImageUserAndCompany(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener'
             });
         }
@@ -1285,7 +1285,7 @@ async createWithImageUserAndCompany(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: false,
+                success: false,
                 message: 'Hubo un error con la actualizacion de la membresia',
                 error: error
 
@@ -1338,7 +1338,7 @@ async createWithImageUserAndCompany(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: false,
+                success: false,
                 message: 'Hubo un error con la actualizacion de los medios de pago',
                 error: error
 
@@ -1381,7 +1381,7 @@ async createWithImageUserAndCompany(req, res, next) {
             await User.updateCompanyDetails(company);
 
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'empresa actualizada correctamente',
             });
 
@@ -1447,7 +1447,7 @@ async createWithImageDelivery(req, res, next) {
             await Rol.create(data.id, 1);//ROL POR DEFECTO CLIENE
             await Rol.create(data.id, 3);//ROL POR DEFECTO DELIVERY
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'Delivery creado correctamente',
                 data: data.id
             });
@@ -1458,7 +1458,7 @@ async createWithImageDelivery(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: true,
+                success: true,
                 message: 'error con el registro del ususario',
                 error: error
 
@@ -1500,7 +1500,7 @@ async createWithImageDelivery(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener los getAgoraConfig'
             });
         }
@@ -1535,7 +1535,7 @@ async createWithImageDelivery(req, res, next) {
             await User.updateAgoraConfig(agoraConfig);
 
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'live actualizado correctamente',
             });
 
