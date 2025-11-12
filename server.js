@@ -61,6 +61,8 @@ const chat = require('./routes/chatRoutes.js');
 const trainerDashboard = require('./routes/trainerDashboardRoutes.js');
 const superAdmin = require('./routes/superAdminRoutes.js');
 const affiliateRoutes = require('./routes/affiliateRoutes.js');
+const gymRoutes = require('./routes/gymRoutes.js');
+
 const PORT = process.env.PORT || 4000
 
 
@@ -110,6 +112,7 @@ chat(app);
 trainerDashboard(app);
 superAdmin(app);
 affiliateRoutes(app);
+gymRoutes(app);
 server.listen(PORT, function () {
     console.log('Aplicacion de NodeJs ' + process.pid + ' iniciada... : puerto asignado ' + PORT);
 });
