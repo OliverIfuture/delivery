@@ -244,7 +244,7 @@ module.exports = {
    async updateToDelivered(req, res, next) {
         try {
             let orderUpdateData = req.body; // Esto solo tiene el ID y el status
-            orderUpdateData.orderUpdateData = 'EN CAMINO';
+            orderUpdateData.orderUpdateData = 'ENTREGADO';
 
              console.log(`orden en actualizacion : ${JSON.stringify(orderUpdateData)}`);
 
