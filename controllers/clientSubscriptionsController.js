@@ -96,7 +96,7 @@ module.exports = {
                 console.log('❌ Error en Webhook: Faltan claves STRIPE_ADMIN_SECRET_KEY o STRIPE_WEBHOOK_SECRET.');
                 return res.status(500).send('Error de configuración del webhook.');
             }
-            const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
+            // Ya usamos 'adminStripe' definido al inicio del archivo
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
         
         } catch (err) {
@@ -107,57 +107,85 @@ module.exports = {
         // Manejar el evento
         switch (event.type) {
             
+            // --- Caso 1: Suscripción de Cliente Creada/Pagada ---
             case 'invoice.payment_succeeded':
                 const invoice = event.data.object;
                 
-                if (invoice.billing_reason === 'subscription_create') {
+                if (invoice.billing_reason === 'subscription_create' || invoice.billing_reason === 'subscription_cycle') {
                     const subscriptionId = invoice.subscription;
                     const customerId = invoice.customer;
                     
-                    const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
                     const subscription = await adminStripe.subscriptions.retrieve(subscriptionId);
                     const metadata = subscription.metadata;
 
-                    // 1. Crear el registro de suscripción
-                    const subscriptionData = {
-                        id_client: metadata.id_client,
-                        id_company: metadata.id_company,
-                        id_plan: metadata.id_plan,
-                        stripe_subscription_id: subscriptionId,
-                        stripe_customer_id: customerId,
-                        status: 'active', 
-                        current_period_end: new Date(subscription.current_period_end * 1000)
-                    };
-                    await ClientSubscription.create(subscriptionData);
-                    console.log('✅ Suscripción creada para el cliente:', metadata.id_client);
+                    // Asegurarnos que es una suscripción de cliente y no un payout
+                    if (metadata.type === 'client_subscription') {
+                        // 1. Crear el registro de suscripción
+                        const subscriptionData = {
+                            id_client: metadata.id_client,
+                            id_company: metadata.id_company,
+                            id_plan: metadata.id_plan,
+                            stripe_subscription_id: subscriptionId,
+                            stripe_customer_id: customerId,
+                            status: 'active', 
+                            current_period_end: new Date(subscription.current_period_end * 1000)
+                        };
+                        await ClientSubscription.create(subscriptionData);
+                        console.log('✅ Webhook: Suscripción creada para el cliente:', metadata.id_client);
 
-                    // **2. NUEVO: VINCULAR AL ENTRENADOR EN LA TABLA USERS**
-                    if (metadata.id_client && metadata.id_company) {
-                         await User.updateTrainer(metadata.id_client, metadata.id_company);
-                         console.log(`✅ Usuario ${metadata.id_client} vinculado automáticamente al entrenador ${metadata.id_company}`);
+                        // 2. Vincular al entrenador en la tabla 'users'
+                        if (metadata.id_client && metadata.id_company) {
+                             await User.updateTrainer(metadata.id_client, metadata.id_company);
+                             console.log(`✅ Webhook: Usuario ${metadata.id_client} vinculado al entrenador ${metadata.id_company}`);
+                        }
                     }
                 }
                 break;
-                
+            
+            // --- Casos de Falla/Cancelación de Suscripción ---
             case 'invoice.payment_failed':
                 const subscriptionId_failed = event.data.object.subscription;
                 await ClientSubscription.updateStatus(subscriptionId_failed, 'past_due');
-                console.log('⚠️ Pago fallido para suscripción:', subscriptionId_failed);
+                console.log('⚠️ Webhook: Pago fallido para suscripción:', subscriptionId_failed);
                 break;
-                
             case 'customer.subscription.deleted':
                 const canceledSubId = event.data.object.id;
                 await ClientSubscription.updateStatus(canceledSubId, 'canceled');
-                console.log('❌ Suscripción cancelada:', canceledSubId);
-                
-                // Opcional: ¿Desvincular al entrenador si cancela?
-                // Por ahora lo dejamos vinculado para que pueda resuscribirse fácilmente.
+                console.log('❌ Webhook: Suscripción cancelada:', canceledSubId);
                 break;
 
-            // ... (tu caso account.updated para entrenadores sigue aquí) ...
+            // --- Caso 2: Onboarding de Entrenador (Stripe Connect) ---
             case 'account.updated':
-                 // ... (lógica existente) ...
+                 const account = event.data.object;
+                 const accountId = account.id;
+                 const chargesEnabled = account.charges_enabled;
+                 console.log(`Webhook 'account.updated': ${accountId}, charges_enabled: ${chargesEnabled}`);
+                 // (Aquí iría tu lógica para actualizar 'chargesEnabled' en la tabla 'company')
                  break;
+
+            // --- **NUEVO CASO: PAGO DE COMISIÓN (TIENDA -> ENTRENADOR)** ---
+            case 'payment_intent.succeeded':
+                const paymentIntent = event.data.object;
+                const metadata = paymentIntent.metadata;
+
+                // Verificamos si es un pago de comisión
+                if (metadata.type === 'commission_payout') {
+                    console.log('✅ Webhook: Detectado pago de comisión (Directo Tienda->Entrenador).');
+                    const id_vendor = metadata.id_vendor;
+                    const id_affiliate = metadata.id_affiliate;
+
+                    try {
+                        // **LÓGICA: Marcar como pagado en nuestra BD**
+                        // El dinero ya se movió automáticamente a la cuenta del Entrenador
+                        // porque el 'paymentIntent' se creó usando la clave del Entrenador.
+                        await Affiliate.markAsPaid(id_vendor, id_affiliate);
+                        console.log(`✅ Comisiones marcadas como 'paid' para afiliado ${id_affiliate} de tienda ${id_vendor}`);
+                        
+                    } catch (e) {
+                        console.log(`❌ Error al procesar Payout de Comisión: ${e.message}`);
+                    }
+                }
+                break;
             
             default:
                 console.log(`Evento de Webhook no manejado: ${event.type}`);
@@ -165,7 +193,6 @@ module.exports = {
 
         res.status(200).json({ received: true });
     },
-
 
     /**
      * Verifica el estado de la suscripción de un cliente
