@@ -269,7 +269,7 @@ async updateToDelivered(req, res, next) {
                         console.log(`[Afiliado] Comisión guardada.`);
                     }
                 }
-            } catch (e) {
+             catch (e) {
                 console.log(`[Afiliado] Error comisión: ${e.message}`);
             }
             return res.status(201).json({
