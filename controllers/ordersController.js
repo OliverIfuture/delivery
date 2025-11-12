@@ -362,9 +362,6 @@ module.exports = {
                 if (product.id > 10000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
-                if (Product.updateStock) {
-                     await Product.updateStock(product.id, product.quantity);
-                }
             }
 
             // --- **INICIO LÓGICA DE COMISIÓN (TARJETA)** ---
