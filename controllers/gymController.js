@@ -206,6 +206,93 @@ module.exports = {
                 error: error.message
             });
         }
-    }
+    },
+
+    
+    // --- **NUEVAS FUNCIONES: CRUD DE PLANES (Paso G4.1)** ---
+
+    /**
+     * POST /api/gym/plans/create
+     * (Admin Gym) Crea un nuevo plan de membresía
+     */
+    async createMembershipPlan(req, res, next) {
+        try {
+            const plan = req.body;
+            plan.id_company = req.user.mi_store; // Asignar al gimnasio del admin logueado
+
+            if (!plan.name || !plan.price || !plan.duration_days) {
+                return res.status(400).json({ success: false, message: 'Faltan datos (nombre, precio, días).' });
+            }
+
+            const data = await Gym.createPlan(plan);
+            return res.status(201).json({
+                success: true,
+                message: 'Plan creado exitosamente.',
+                data: { id: data.id }
+            });
+        } catch (error) {
+            console.log(`Error en gymController.createMembershipPlan: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al crear el plan', error: error.message });
+        }
+    },
+
+    /**
+     * PUT /api/gym/plans/update
+     * (Admin Gym) Actualiza un plan
+     */
+    async updateMembershipPlan(req, res, next) {
+        try {
+            const plan = req.body;
+            plan.id_company = req.user.mi_store;
+
+            if (!plan.id) {
+                return res.status(400).json({ success: false, message: 'Falta el ID del plan.' });
+            }
+
+            await Gym.updatePlan(plan);
+            return res.status(200).json({
+                success: true,
+                message: 'Plan actualizado exitosamente.'
+            });
+        } catch (error) {
+            console.log(`Error en gymController.updateMembershipPlan: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al actualizar el plan', error: error.message });
+        }
+    },
+
+    /**
+     * DELETE /api/gym/plans/delete/:id
+     * (Admin Gym) Elimina un plan
+     */
+    async deleteMembershipPlan(req, res, next) {
+        try {
+            const id_plan = req.params.id;
+            const id_company = req.user.mi_store;
+
+            await Gym.deletePlan(id_plan, id_company);
+            return res.status(200).json({
+                success: true,
+                message: 'Plan eliminado exitosamente.'
+            });
+        } catch (error) {
+            console.log(`Error en gymController.deleteMembershipPlan: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al eliminar el plan', error: error.message });
+        }
+    },
+
+    /**
+     * GET /api/gym/plans
+     * (Kiosco/POS) Obtiene todos los planes activos de este gimnasio
+     */
+    async getMembershipPlans(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const data = await Gym.findPlansByCompany(id_company);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en gymController.getMembershipPlans: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener los planes', error: error.message });
+        }
+    },
 
 };
