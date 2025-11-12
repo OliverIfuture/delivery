@@ -242,75 +242,43 @@ module.exports = {
     },
 
 
-  async updateToDelivered(req, res, next) {
+async updateToDelivered(req, res, next) {
+
         try {
-            let orderUpdateData = req.body; // Esto solo tiene el ID y el status
-            
-            // 1. Actualizar el estado del pedido
-            // **CAMBIO: Usar updateStatus en lugar de update genérico**
+            let orderUpdateData = req.body; 
             orderUpdateData.status = 'ENTREGADO';
+    
+            // 1. Actualizar el estado
             await Order.update(orderUpdateData); 
-            
-            // (Tu log está aquí, aunque el objeto es 'orderUpdateData')
-            console.log(`orden marcada como entregada: ${JSON.stringify(orderUpdateData)}`);
+            console.log(`orden creada para actualizar: ${JSON.stringify(orderUpdateData)}`);
 
-
-            // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO)** ---
+            // --- LÓGICA DE COMISIÓN (EFECTIVO) ---
             try {
-                // 2. Obtener el objeto COMPLETO de la orden desde la BD
+                // 2. Obtener la orden completa de la BD (incluyendo el TOTAL guardado)
                 const order = await Order.findById(orderUpdateData.id);
-
-                if (!order) {
-                    throw new Error(`Orden ${orderUpdateData.id} no encontrada.`);
-                }
-
-                // 3. **CORRECCIÓN: Usar 'order.id_company' (de la BD)**
-                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
+                if (order && order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) 
                     console.log(`[Afiliado] Orden (Efectivo) ${order.id} ENTREGADA. Procesando comisión...`);
-                    
-                    // 4. **RE-CALCULAR EL TOTAL** (Para asegurar)
-                    const products = await Order.getProducts(order.id);
-                    const buyerUser = await User.findById(order.id_client, () => {});
-                    const isTrainer = buyerUser && buyerUser.is_trainer === 'true';
-                    
-                    let calculatedTotal = 0;
-                    for (const product of products) {
-                        let pricePerItem = isTrainer ? (product.price_special || product.price) : product.price;
-                        calculatedTotal += (pricePerItem * product.quantity);
-                    }
-                    calculatedTotal -= (order.discounts || 0);
-                    calculatedTotal += (order.total_extra || 0);
-                    order.total = calculatedTotal; // Asignamos el total RE-CALCULADO
-                    
-                    // 5. **CORRECCIÓN: Usar 'order.id_company'**
-                    const vendorCompany = await User.findCompanyById(order.id_company);
-                    console.log(`[Afiliado] Buscando compañía ${order.id_company}`);
-
+                    // 3. Ya no recalculamos nada. Usamos order.total directamente.
+                    // Aseguramos que sea int/float si viene como string de la BD
+                    // (Aunque affiliate.js hace parseFloat, es bueno saber que el dato ya está ahí)
+                    const vendorCompany = await User.findCompanyById(order.id_order_company);
+                    console.log(`aun no entra  a calcular: ${JSON.stringify(vendorCompany)}`);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
-                        console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}.`);
+                        console.log(`entro a calcular: ${JSON.stringify(vendorCompany)}`);
                         await Affiliate.createCommission(order, vendorCompany);
                         console.log(`[Afiliado] Comisión guardada.`);
                     }
-                    else {
-                        console.log(`[Afiliado] Tienda no participa o no encontrada.`);
-                    }
-                }
-                else {
-                    console.log('[Afiliado] No se cumplen condiciones para comisión en efectivo.');
                 }
             } catch (e) {
-                console.log(`[Afiliado] Error al calcular comisión (La orden SÍ se entregó): ${e.message}`);
+                console.log(`[Afiliado] Error comisión: ${e.message}`);
             }
-            // --- **FIN LÓGICA DE COMISIÓN** ---
-
             return res.status(201).json({
                 success: true,
                 message: 'La orden se entrego correctamente',
             });
-
         } 
         catch (error) {
-            console.log(`Error ${error}`);
+            console.log(`Error ${error}`)
             return res.status(501).json({ success: false, message: 'Error al actualizar', error: error.message });
         }
     },
