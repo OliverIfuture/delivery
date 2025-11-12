@@ -23,6 +23,9 @@ Order.findByStatus = (status, id_order_company) => {
  	O.drone_id,
     O.lat,
 	O.lng,
+		O.total,
+	O.affiliate_referral_id,
+	O.id_order_company,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
 				
@@ -268,6 +271,9 @@ Order.findByClient = (id_client) => {
    	O.drone_id,
 	    O.lat,
 	O.lng,
+		O.total,
+	O.affiliate_referral_id,
+	O.id_order_company,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -386,6 +392,9 @@ Order.getByClientAndStatusWeb = (id_client) => {
    	O.drone_id,
 	    O.lat,
 	O.lng,
+		O.total,
+	O.affiliate_referral_id,
+	O.id_order_company,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -502,6 +511,9 @@ Order.findByClientAndStatus = (id_client, status) => {
    	O.drone_id,
 	    O.lat,
 	O.lng,
+		O.total,
+	O.affiliate_referral_id,
+	O.id_order_company,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
