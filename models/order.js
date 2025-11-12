@@ -144,6 +144,9 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
    	O.drone_id,
 	    O.lat,
 	O.lng,
+	O.total,
+	O.affiliate_referral_id,
+	O.id_order_company,
        COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
