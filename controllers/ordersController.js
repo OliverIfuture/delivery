@@ -248,7 +248,7 @@ module.exports = {
             
             // 1. Actualizar el estado del pedido
             // **CAMBIO: Usar updateStatus en lugar de update genérico**
-            orderUpdateData.status = 'ENTREGADO);
+            orderUpdateData.status = 'ENTREGADO';
             await Order.update(orderUpdateData); 
             
             // (Tu log está aquí, aunque el objeto es 'orderUpdateData')
