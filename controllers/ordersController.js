@@ -267,7 +267,7 @@ module.exports = {
                 }
 
                 // 3. Si ES efectivo Y tiene referido
-                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
+                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) {
                     console.log(`[Afiliado] Orden (Efectivo) ${order.id} detectada como ENTREGADA.`);
                     
                     // 4. **RE-CALCULAR EL TOTAL** (porque no confiamos en el 'total' de la BD si no se guardó)
