@@ -15,4 +15,26 @@ module.exports = (app) => {
         affiliateController.getMyCommissions
     );
 
+        /**
+     * **NUEVA RUTA (Paso 15.8a)**
+     * GET: /api/affiliates/my-vendor-dashboard
+     * Para la Tienda (Vendedor): Ver cuánto debe y a quién.
+     */
+    app.get(
+        '/api/affiliates/my-vendor-dashboard',
+        passport.authenticate('jwt', { session: false }),
+        affiliateController.getMyVendorDashboard
+    );
+
+    /**
+     * **NUEVA RUTA (Paso 15.8a)**
+     * PUT: /api/affiliates/mark-as-paid
+     * Para la Tienda (Vendedor): Marcar un lote de comisiones como pagado.
+     */
+    app.put(
+        '/api/affiliates/mark-as-paid',
+        passport.authenticate('jwt', { session: false }),
+        affiliateController.markCommissionsAsPaid
+    );
+
 }
