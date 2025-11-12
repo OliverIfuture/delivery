@@ -242,24 +242,33 @@ module.exports = {
     },
 
 
-async updateToDelivered(req, res, next) {
+    async updateToDelivered(req, res, next) {
         try {
-            let order = req.body; // Asumimos que 'order' tiene {id, paymethod, affiliate_referral_id, id_order_company, total}
-            order.status = 'ENTREGADO';
+            let orderUpdateData = req.body; // Esto solo tiene el ID y el status
             
-            await Order.updateStatus(order.id, order.status); 
+            // 1. Actualizar el estado del pedido
+            await Order.updateStatus(orderUpdateData.id, 'ENTREGADO'); 
 
-            // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO) - CORREGIDA** ---
+            // --- **INICIO LÓGICA DE COMISIÓN (EFECTIVO)** ---
             try {
-                // **CAMBIO: Usar 'order.id_order_company'**
-                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) {
+                // 2. Obtener el objeto COMPLETO de la orden desde la BD
+                const order = await Order.findById(orderUpdateData.id);
+
+                if (!order) {
+                    throw new Error(`Orden ${orderUpdateData.id} no encontrada.`);
+                }
+
+                // 3. Si ES efectivo Y tiene referido
+                if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
                     console.log(`[Afiliado] Orden (Efectivo) ${order.id} detectada como ENTREGADA.`);
                     
-                    // **CAMBIO: Usar 'order.id_order_company'**
-                    const vendorCompany = await User.findCompanyById(order.id_order_company);
+                    const vendorCompany = await User.findCompanyById(order.id_company);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
                         console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}. Calculando...`);
+                        
+                        // 4. Pasamos el objeto 'order' (que SÍ tiene el total)
                         await Affiliate.createCommission(order, vendorCompany);
+                        
                         console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
                     } else {
                         console.log(`[Afiliado] Tienda no participa. No se genera comisión.`);
@@ -285,6 +294,7 @@ async updateToDelivered(req, res, next) {
             });
         }
     },
+    
     async cancelOrder(req, res, next) {
         try {
 
@@ -311,19 +321,40 @@ async updateToDelivered(req, res, next) {
      * Esta función maneja órdenes que YA ESTÁN PAGADAS (ej. con tarjeta)
      * Por lo tanto, debe calcular la comisión.
      */
-    async create(req, res, next) {
+   async create(req, res, next) {
         
         try {
             let order = req.body;
             order.status = 'PAGADO'; 
             console.log(`orden creada: ${JSON.stringify(order)}`);
-
-            // 1. Guardar la orden
-            const data = await Order.create(order);
-            order.id = data.id; 
-
-            // 2. Guardar los productos
             let products = order.products;
+
+            // --- **INICIO CÁLCULO DE TOTAL (Lógica de Afiliados)** ---
+            let calculatedTotal = 0;
+            // Necesitamos saber si el *comprador* es un entrenador para el precio especial
+            const buyerUser = await User.findById(order.id_client, () => {}); // Usamos findById simple
+            const isTrainer = buyerUser && buyerUser.is_trainer === 'true';
+
+            for (const product of products) {
+                let pricePerItem = isTrainer 
+                    ? (product.price_special || product.price) 
+                    : product.price;
+                calculatedTotal += (pricePerItem * product.quantity);
+            }
+            // Aplicar descuentos y extras (basado en tu lógica de Flutter)
+            calculatedTotal -= (order.discounts || 0);
+            calculatedTotal += (order.total_extra || 0);
+            
+            // Asignar el total calculado al objeto order
+            order.total = calculatedTotal;
+            // --- **FIN CÁLCULO DE TOTAL** ---
+
+
+            // 1. Guardar la orden (ahora SÍ lleva el 'total' correcto)
+            const data = await Order.create(order);
+            order.id = data.id; // Asignamos el ID devuelto a nuestro objeto
+
+            // 2. Guardar los productos de la orden
             for (const product of products) {
                 if (product.id < 10000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
@@ -331,24 +362,27 @@ async updateToDelivered(req, res, next) {
                 if (product.id > 10000) {
                     await OrderHasProducts.create(data.id, product.id, product.quantity);
                 }
-
+                if (Product.updateStock) {
+                     await Product.updateStock(product.id, product.quantity);
+                }
             }
 
-            // --- **INICIO LÓGICA DE COMISIÓN (CORREGIDA)** ---
+            // --- **INICIO LÓGICA DE COMISIÓN (TARJETA)** ---
             try {
-                // **CAMBIO: Usar 'order.id_order_company'**
                 if (order.paymethod !== 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) {
                     console.log(`[Afiliado] Orden ${order.id} (Tarjeta) detectada. Verificando Tienda ${order.id_order_company}...`);
                     
-                    // **CAMBIO: Usar 'order.id_order_company'**
                     const vendorCompany = await User.findCompanyById(order.id_order_company);
 
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
                         console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}. Calculando...`);
+                        
+                        // Pasamos el objeto 'order' que AHORA SÍ TIENE EL TOTAL
                         await Affiliate.createCommission(order, vendorCompany); 
+                        
                         console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
                     } else {
-                        console.log(`[Afiliado] Tienda ${vendorCompany ? vendorCompany.name : 'ID ' + order.id_order_company} no participa. No se genera comisión.`);
+                        console.log(`[Afiliado] Tienda ${vendorCompany ? vendorCompany.name : 'ID ' + order.id_order_company} no participa.`);
                     }
                 }
             } catch (e) {
@@ -381,10 +415,21 @@ async updateToDelivered(req, res, next) {
     async createCashOrder(req, res, next) {
         try {
             let order = req.body;
-            console.log(`orden creada: ${JSON.stringify(order)}`);
-
             order.status = 'PENDIENTE DE PAGO';
             
+            // --- **CÁLCULO DE TOTAL (Para que se guarde en la BD)** ---
+            let calculatedTotal = 0;
+            const buyerUser = await User.findById(order.id_client, () => {});
+            const isTrainer = buyerUser && buyerUser.is_trainer === 'true';
+            for (const product of order.products) {
+                let pricePerItem = isTrainer ? (product.price_special || product.price) : product.price;
+                calculatedTotal += (pricePerItem * product.quantity);
+            }
+            calculatedTotal -= (order.discounts || 0);
+            calculatedTotal += (order.total_extra || 0);
+            order.total = calculatedTotal;
+            // --- **FIN CÁLCULO DE TOTAL** ---
+
             const data = await Order.create(order);
 
             for (const product of order.products) {
@@ -411,6 +456,7 @@ async updateToDelivered(req, res, next) {
             });
         }
     },
+    
      async createSale(req, res, next) {
         try {
             let sales = req.body;
