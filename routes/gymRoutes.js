@@ -5,33 +5,59 @@ module.exports = (app) => {
 
     // PREFIJO: /api/gym
 
-    /**
-     * **NUEVA RUTA (G2.1a)**
-     * GET: /api/gym/generate-access-token
-     * La app del CLIENTE llama a esto cada 25 segundos para obtener un
-     * nuevo token de QR dinámico.
-     */
+    // --- RUTAS DE ACCESO (G1 - G3) ---
     app.get('/api/gym/generate-access-token', passport.authenticate('jwt', { session: false }), gymController.generateAccessToken);
-
-
-    /**
-     * **RUTA MODIFICADA (G2.1b)**
-     * POST: /api/gym/check-in
-     * El KIOSCO (Tablet) llama a esto con el token del QR escaneado.
-     */
     app.post('/api/gym/check-in', passport.authenticate('jwt', { session: false }), gymController.checkInWithToken);
-
-
-    /**
-     * POST: /api/gym/create-membership
-     * Usado por el Admin del Gimnasio (POS) para vender una membresía (ej. en efectivo).
-     */
+    app.get('/api/gym/get-membership-status/:id_client', passport.authenticate('jwt', { session: false }), gymController.getMembershipStatus);
+    
+    // --- RUTAS DE GESTIÓN DE MEMBRESÍAS (G4 - POS) ---
+    
+    // Venta de membresía (la usará el POS)
     app.post('/api/gym/create-membership', passport.authenticate('jwt', { session: false }), gymController.createMembership);
 
-    /**
-     * GET: /api/gym/get-membership-status/:id_client
-     * Usado por la App del Cliente para saber si debe mostrar el QR.
-     */
+    // --- **NUEVAS RUTAS: CRUD PARA DEFINIR LOS PLANES** ---
+    
+    // (Admin) Obtener la lista de planes (para el POS)
+    app.get('/api/gym/plans', passport.authenticate('jwt', { session: false }), gymController.getMembershipPlans);
+
+    // (Admin) Crear un nuevo plan
+    app.post('/api/gym/plans/create', passport.authenticate('jwt', { session: false }), gymController.createMembershipPlan);
+
+    // (Admin) Actualizar un plan
+    app.put('/api/gym/plans/update', passport.authenticate('jwt', { session: false }), gymController.updateMembershipPlan);
+    
+    // (Admin) Eliminar un plan
+    app.delete('/api/gym/plans/delete/:id', passport.authenticate('jwt', { session: false }), gymController.deleteMembershipPlan);
+
+}const gymController = require('../controllers/gymController.js');
+const passport = require('passport');
+
+module.exports = (app) => {
+
+    // PREFIJO: /api/gym
+
+    // --- RUTAS DE ACCESO (G1 - G3) ---
+    app.get('/api/gym/generate-access-token', passport.authenticate('jwt', { session: false }), gymController.generateAccessToken);
+    app.post('/api/gym/check-in', passport.authenticate('jwt', { session: false }), gymController.checkInWithToken);
     app.get('/api/gym/get-membership-status/:id_client', passport.authenticate('jwt', { session: false }), gymController.getMembershipStatus);
+    
+    // --- RUTAS DE GESTIÓN DE MEMBRESÍAS (G4 - POS) ---
+    
+    // Venta de membresía (la usará el POS)
+    app.post('/api/gym/create-membership', passport.authenticate('jwt', { session: false }), gymController.createMembership);
+
+    // --- **NUEVAS RUTAS: CRUD PARA DEFINIR LOS PLANES** ---
+    
+    // (Admin) Obtener la lista de planes (para el POS)
+    app.get('/api/gym/plans', passport.authenticate('jwt', { session: false }), gymController.getMembershipPlans);
+
+    // (Admin) Crear un nuevo plan
+    app.post('/api/gym/plans/create', passport.authenticate('jwt', { session: false }), gymController.createMembershipPlan);
+
+    // (Admin) Actualizar un plan
+    app.put('/api/gym/plans/update', passport.authenticate('jwt', { session: false }), gymController.updateMembershipPlan);
+    
+    // (Admin) Eliminar un plan
+    app.delete('/api/gym/plans/delete/:id', passport.authenticate('jwt', { session: false }), gymController.deleteMembershipPlan);
 
 }
