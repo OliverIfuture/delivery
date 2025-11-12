@@ -336,71 +336,43 @@ module.exports = {
      * Esta función maneja órdenes que YA ESTÁN PAGADAS (ej. con tarjeta)
      * Por lo tanto, debe calcular la comisión.
      */
-   async create(req, res, next) {
+    async create(req, res, next) {
         
         try {
             let order = req.body;
             order.status = 'PAGADO'; 
             console.log(`orden creada: ${JSON.stringify(order)}`);
-            let products = order.products;
-
-            // --- **INICIO CÁLCULO DE TOTAL (Lógica de Afiliados)** ---
-            let calculatedTotal = 0;
-            // Necesitamos saber si el *comprador* es un entrenador para el precio especial
-            const buyerUser = await User.findById(order.id_client, () => {}); // Usamos findById simple
-            const isTrainer = buyerUser && buyerUser.is_trainer === 'true';
-
-            for (const product of products) {
-                let pricePerItem = isTrainer 
-                    ? (product.price_special || product.price) 
-                    : product.price;
-                calculatedTotal += (pricePerItem * product.quantity);
-            }
-            // Aplicar descuentos y extras (basado en tu lógica de Flutter)
-            calculatedTotal -= (order.discounts || 0);
-            calculatedTotal += (order.total_extra || 0);
             
-            // Asignar el total calculado al objeto order
-            order.total = calculatedTotal;
-            // --- **FIN CÁLCULO DE TOTAL** ---
+            // --- LIMPIEZA: ELIMINADO CÁLCULO MANUAL DE TOTAL ---
+            // Confiamos en order.total que viene del frontend
+            // ---------------------------------------------------
 
-
-            // 1. Guardar la orden (ahora SÍ lleva el 'total' correcto)
+            // 1. Guardar la orden
             const data = await Order.create(order);
-            order.id = data.id; // Asignamos el ID devuelto a nuestro objeto
+            order.id = data.id; 
 
-            // 2. Guardar los productos de la orden
+            // 2. Guardar los productos
+            let products = order.products;
             for (const product of products) {
-                if (product.id < 10000) {
-                    await OrderHasProducts.create(data.id, product.id, product.quantity);
-                }
-                if (product.id > 10000) {
-                    await OrderHasProducts.create(data.id, product.id, product.quantity);
-                }
+                if (product.id < 10000) { await OrderHasProducts.create(data.id, product.id, product.quantity); }
+                if (product.id > 10000) { await OrderHasProducts.create(data.id, product.id, product.quantity); }
             }
 
-            // --- **INICIO LÓGICA DE COMISIÓN (TARJETA)** ---
+            // --- LÓGICA DE COMISIÓN (TARJETA) ---
             try {
                 if (order.paymethod !== 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) {
-                    console.log(`[Afiliado] Orden ${order.id} (Tarjeta) detectada. Verificando Tienda ${order.id_order_company}...`);
-                    
+                    console.log(`[Afiliado] Orden ${order.id} (Tarjeta). Verificando Tienda ${order.id_order_company}...`);
                     const vendorCompany = await User.findCompanyById(order.id_order_company);
 
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
-                        console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}. Calculando...`);
-                        
-                        // Pasamos el objeto 'order' que AHORA SÍ TIENE EL TOTAL
+                        // Pasamos el objeto 'order' que ya tiene el 'total' correcto
                         await Affiliate.createCommission(order, vendorCompany); 
-                        
-                        console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
-                    } else {
-                        console.log(`[Afiliado] Tienda ${vendorCompany ? vendorCompany.name : 'ID ' + order.id_order_company} no participa.`);
+                        console.log(`[Afiliado] Comisión guardada.`);
                     }
                 }
             } catch (e) {
-                console.log(`[Afiliado] Error al calcular la comisión (La orden SÍ se creó): ${e.message}`);
+                console.log(`[Afiliado] Error comisión: ${e.message}`);
             }
-            // --- **FIN DE LA LÓGICA DE COMISIÓN** ---
 
             return res.status(201).json({
                 success: true,
@@ -411,46 +383,27 @@ module.exports = {
         } 
         catch (error) {
             console.log(`Error: ${error}`);
-            return res.status(501).json({
-                success: false,
-                message: 'Hubo un error creado la orden',
-                error: error.message
-            });
+            return res.status(501).json({ success: false, message: 'Error al crear orden', error: error.message });
         }
     },
 
 
     /**
-     * Esta función maneja órdenes en EFECTIVO (PENDIENTE DE PAGO)
-     * No calcula comisión aquí.
+     * PAGO EN EFECTIVO: Usa el total recibido.
      */
     async createCashOrder(req, res, next) {
         try {
             let order = req.body;
             order.status = 'PENDIENTE DE PAGO';
             
-            // --- **CÁLCULO DE TOTAL (Para que se guarde en la BD)** ---
-            let calculatedTotal = 0;
-            const buyerUser = await User.findById(order.id_client, () => {});
-            const isTrainer = buyerUser && buyerUser.is_trainer === 'true';
-            for (const product of order.products) {
-                let pricePerItem = isTrainer ? (product.price_special || product.price) : product.price;
-                calculatedTotal += (pricePerItem * product.quantity);
-            }
-            calculatedTotal -= (order.discounts || 0);
-            calculatedTotal += (order.total_extra || 0);
-            order.total = calculatedTotal;
-            // --- **FIN CÁLCULO DE TOTAL** ---
-
+            // --- LIMPIEZA: ELIMINADO CÁLCULO MANUAL ---
+            // Usamos order.total directamente
+            
             const data = await Order.create(order);
 
             for (const product of order.products) {
-                if (product.id < 1000) { 
-                    await OrderHasProducts.create(data.id, product.id, product.quantity);
-                }
-                if (product.id > 1000) { 
-                    await OrderHasProducts.create(data.id, product.id, product.quantity);
-                }
+                if (product.id < 1000) { await OrderHasProducts.create(data.id, product.id, product.quantity); }
+                if (product.id > 1000) { await OrderHasProducts.create(data.id, product.id, product.quantity); }
             }
 
             return res.status(201).json({
@@ -461,14 +414,9 @@ module.exports = {
 
         } catch (error) {
             console.log(`Error: ${error}`);
-            return res.status(501).json({
-                success: false,
-                message: 'Hubo un error creado la orden',
-                error: error.message
-            });
+            return res.status(501).json({ success: false, message: 'Error al crear orden', error: error.message });
         }
     },
-    
      async createSale(req, res, next) {
         try {
             let sales = req.body;
