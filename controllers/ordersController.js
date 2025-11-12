@@ -241,8 +241,7 @@ module.exports = {
         }
     },
 
-
-    async updateToDelivered(req, res, next) {
+   async updateToDelivered(req, res, next) {
         try {
             let orderUpdateData = req.body; // Esto solo tiene el ID y el status
             
@@ -262,13 +261,28 @@ module.exports = {
                 if (order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_company) {
                     console.log(`[Afiliado] Orden (Efectivo) ${order.id} detectada como ENTREGADA.`);
                     
+                    // 4. **RE-CALCULAR EL TOTAL** (porque no confiamos en el 'total' de la BD si no se guardó)
+                    // (Asumimos que Order.getProducts existe en tu modelo)
+                    const products = await Order.getProducts(order.id);
+                    const buyerUser = await User.findById(order.id_client, () => {});
+                    const isTrainer = buyerUser && buyerUser.is_trainer === 'true';
+                    
+                    let calculatedTotal = 0;
+                    for (const product of products) {
+                        let pricePerItem = isTrainer ? (product.price_special || product.price) : product.price;
+                        calculatedTotal += (pricePerItem * product.quantity);
+                    }
+                    calculatedTotal -= (order.discounts || 0);
+                    calculatedTotal += (order.total_extra || 0);
+                    
+                    // Asignamos el total RE-CALCULADO a la orden
+                    order.total = calculatedTotal;
+                    
+                    // 5. Buscar la tienda y calcular comisión
                     const vendorCompany = await User.findCompanyById(order.id_company);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
                         console.log(`[Afiliado] Tienda ${vendorCompany.name} acepta. Tasa: ${vendorCompany.affiliateCommissionRate}. Calculando...`);
-                        
-                        // 4. Pasamos el objeto 'order' (que SÍ tiene el total)
                         await Affiliate.createCommission(order, vendorCompany);
-                        
                         console.log(`[Afiliado] Comisión guardada para Entrenador ${order.affiliate_referral_id}.`);
                     } else {
                         console.log(`[Afiliado] Tienda no participa. No se genera comisión.`);
@@ -294,7 +308,6 @@ module.exports = {
             });
         }
     },
-    
     async cancelOrder(req, res, next) {
         try {
 
