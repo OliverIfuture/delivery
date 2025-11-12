@@ -1,43 +1,91 @@
 const Gym = require('../models/gym.js');
-const User = require('../models/user.js'); // Para obtener datos del usuario
-const jwt = require('jsonwebtoken'); // Para decodificar el QR (si es un JWT)
+const User = require('../models/user.js'); 
+const jwt = require('jsonwebtoken'); // **IMPORTANTE: Para crear/validar tokens**
 const keys = require('../config/keys.js');
 
 module.exports = {
 
     /**
-     * POST /api/gym/check-in
-     * Maneja el escaneo de un QR en la entrada del gimnasio.
-     * Esta es la lógica del Kiosco/Torniquete.
+     * **NUEVA FUNCIÓN (G2.1a)**
+     * Crea un token de acceso QR de corta duración (30 segundos)
      */
-    async checkIn(req, res, next) {
+    async generateAccessToken(req, res, next) {
         try {
-            // El Kiosco/Tablet envía el ID del usuario que escaneó
-            const { id_client_scanned } = req.body; 
+            const id_client = req.user.id; // ID del cliente (desde el token de sesión)
+            
+            // 1. Crear el payload del QR
+            const payload = {
+                id_client: id_client,
+                type: 'gym_access_qr' // Identificador
+            };
+
+            // 2. Firmar el token con una expiración CORTA
+            const qrToken = jwt.sign(
+                payload, 
+                keys.secretOrKey, 
+                { expiresIn: '30s' } // <-- ¡Caduca en 30 segundos!
+            );
+            
+            // 3. Devolver el token a la app de Flutter
+            return res.status(200).json({
+                success: true,
+                qr_token: qrToken
+            });
+
+        } catch (error) {
+            console.log(`Error en gymController.generateAccessToken: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al generar el token de acceso',
+                error: error.message
+            });
+        }
+    },
+
+
+    /**
+     * **FUNCIÓN MODIFICADA (G2.1b) - (Reemplaza a 'checkIn')**
+     * Maneja el escaneo del QR (ahora un JWT) en la entrada del gimnasio.
+     */
+    async checkInWithToken(req, res, next) {
+        try {
+            // El Kiosco/Tablet envía el token que escaneó
+            const { qr_token } = req.body; 
             // El Kiosco/Tablet está logueado, así que sabemos a qué gimnasio pertenece
             const id_company_gym = req.user.mi_store; 
 
             if (!id_company_gym) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Permiso denegado: Este dispositivo no es un Kiosco autorizado.'
+                return res.status(403).json({ success: false, message: 'Dispositivo no autorizado.' });
+            }
+            if (!qr_token) {
+                 return res.status(400).json({ success: false, message: 'QR inválido.' });
+            }
+            
+            let payload;
+            
+            // 1. Verificar el QR (JWT)
+            try {
+                payload = jwt.verify(qr_token, keys.secretOrKey);
+            } catch (e) {
+                // Si el token es inválido o expiró
+                console.log(`Intento de acceso fallido: ${e.message}`);
+                await Gym.logAccess(id_company_gym, null, false, 'QR Inválido o Expirado');
+                return res.status(401).json({ 
+                    success: false, 
+                    access_granted: false,
+                    message: 'QR Inválido o Expirado. Vuelve a cargar el QR en tu app.' 
                 });
             }
 
-            if (!id_client_scanned) {
-                 return res.status(400).json({ success: false, message: 'QR inválido o ilegible.' });
-            }
+            // 2. Extraer el ID del cliente del payload del token
+            const id_client_scanned = payload.id_client;
 
-            // 1. Verificar si el cliente tiene una membresía activa
+            // 3. Verificar Membresía Activa (Lógica que ya teníamos)
             const activeMembership = await Gym.findActiveMembership(id_client_scanned, id_company_gym);
 
             if (activeMembership) {
                 // --- ACCESO CONCEDIDO ---
-                
-                // 2. Registrar el acceso exitoso en el log
                 await Gym.logAccess(id_company_gym, id_client_scanned, true, 'Membresía Activa');
-                
-                // 3. (Opcional) Obtener datos del cliente para mostrar en pantalla
                 const client = await User.findById(id_client_scanned, () => {}); 
 
                 return res.status(200).json({
@@ -53,11 +101,9 @@ module.exports = {
 
             } else {
                 // --- ACCESO DENEGADO ---
-                
-                // 2. Registrar el acceso fallido en el log
                 await Gym.logAccess(id_company_gym, id_client_scanned, false, 'Membresía Expirada o Inexistente');
                 
-                return res.status(401).json({ // 401 No Autorizado
+                return res.status(401).json({
                     success: false,
                     access_granted: false,
                     message: 'Acceso Denegado: Membresía expirada o no encontrada.',
@@ -65,7 +111,7 @@ module.exports = {
             }
 
         } catch (error) {
-            console.log(`Error en gymController.checkIn: ${error}`);
+            console.log(`Error en gymController.checkInWithToken: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error interno al procesar el acceso',
@@ -76,18 +122,17 @@ module.exports = {
 
     /**
      * POST /api/gym/create-membership
-     * Usado por el Admin del Gimnasio (POS) para crear una membresía (ej. pago en efectivo)
+     * (Esta función no necesita cambios)
      */
     async createMembership(req, res, next) {
         try {
             const { id_client, plan_name, price, duration_days, payment_method, payment_id } = req.body;
-            const id_company_gym = req.user.mi_store; // El ID del gimnasio (del staff logueado)
+            const id_company_gym = req.user.mi_store; 
 
             if (!id_client || !plan_name || !price || !duration_days) {
                 return res.status(400).json({ success: false, message: 'Faltan datos para crear la membresía.' });
             }
 
-            // Calcular la fecha de vencimiento
             let endDate = new Date();
             endDate.setDate(endDate.getDate() + parseInt(duration_days));
 
@@ -121,22 +166,16 @@ module.exports = {
 
     /**
      * GET /api/gym/get-membership-status/:id_client
-     * Usado por la App del Cliente para saber si debe mostrar el QR
+     * (Esta función no necesita cambios)
      */
     async getMembershipStatus(req, res, next) {
         try {
             const id_client = req.params.id_client;
             
-            // Seguridad: Asegurarse de que el cliente solo pueda ver su propio estado
             if (req.user.id != id_client) {
                  return res.status(403).json({ success: false, message: 'No tienes permiso.' });
             }
             
-            // Buscar membresía activa en CUALQUIER gimnasio (para mostrar el QR)
-            // (Esta lógica asume que el QR es genérico y el kiosco sabe a qué gym pertenece)
-            // Una mejor lógica es buscar por el gimnasio específico si el cliente ya está "casado" con uno.
-            
-            // Por ahora, buscamos la membresía más próxima a vencer en cualquier gym
             const sql = `
                 SELECT id_company, plan_name, end_date 
                 FROM gym_memberships 
