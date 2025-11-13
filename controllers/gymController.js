@@ -321,5 +321,23 @@ module.exports = {
             });
         }
     },
+
+async getMembershipHistoryByShift(req, res, next) {
+        try {
+            const id_shift = req.params.id_shift;
+            
+            // (Opcional) Seguridad: Verificar que el staff pertenece al mismo gimnasio
+            // const id_company = req.user.mi_store; 
+            // ... (lógica de verificación) ...
+
+            const data = await Gym.findMembershipHistoryByShift(id_shift);
+            
+            return res.status(200).json(data);
+
+        } catch (error) {
+            console.log(`Error en gymController.getMembershipHistoryByShift: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener historial del turno', error: error.message });
+        }
+    },
     
 };
