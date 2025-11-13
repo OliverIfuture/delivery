@@ -19,7 +19,8 @@ module.exports = (app) => {
     
     // (Admin) Obtener la lista de planes (para el POS)
     app.get('/api/gym/plans', passport.authenticate('jwt', { session: false }), gymController.getMembershipPlans);
-
+    app.get('/api/gym/my-history', passport.authenticate('jwt', { session: false }), gymController.getMembershipHistory);
+    
     // (Admin) Crear un nuevo plan
     app.post('/api/gym/plans/create', passport.authenticate('jwt', { session: false }), gymController.createMembershipPlan);
 
