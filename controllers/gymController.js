@@ -83,6 +83,8 @@ module.exports = {
 
             // 3. Verificar Membresía Activa (Lógica que ya teníamos)
             const activeMembership = await Gym.findActiveMembership(id_client_scanned, id_company_gym);
+            console.log(`Datos del clietnte: ${id_client_scanned} : ${id_company_gym}`);
+
 
             if (activeMembership) {
                 // --- ACCESO CONCEDIDO ---
