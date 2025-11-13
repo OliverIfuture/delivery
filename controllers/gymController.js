@@ -24,7 +24,7 @@ module.exports = {
             const qrToken = jwt.sign(
                 payload, 
                 keys.secretOrKey, 
-                { expiresIn: '30s' } // <-- ¡Caduca en 30 segundos!
+                { expiresIn: '60s' } // <-- ¡Caduca en 30 segundos!
             );
             
             // 3. Devolver el token a la app de Flutter
