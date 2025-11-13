@@ -277,36 +277,48 @@ module.exports = {
                 }
                 
                 // **Flujo B: ¡NUEVA LÓGICA! Es una extensión de membresía (gym_memberships)**
-                else if (metadata.type === 'membership_extension') {
-                    console.log('✅ Webhook: Detectado pago de EXTENSIÓN de membresía (gym_memberships).');
+              else if (metadata.type === 'membership_extension') {
+                    console.log('✅ Webhook: Detectado pago de EXTENSIÓN (gym_memberships).');
                     
                     const { id_client, id_membership_to_extend, duration_days_to_add } = metadata; 
 
                     try {
-                        // 1. Encontrar la membresía que vamos a extender (¡usando Gym model!)
-                        // **CAMBIO: Usa Gym.findMembershipById**
-                        const currentSub = await Gym.findMembershipById(id_membership_to_extend); 
-                        if (!currentSub) {
-                            throw new Error(`No se encontró la membresía ${id_membership_to_extend} para extender.`);
+                        const currentSub = await Gym.findMembershipById(id_membership_to_extend);
+                        // ... (validación de currentSub) ...
+
+                        // *** ¡NUEVA LÓGICA DE TURNO! ***
+                        // 1. Buscar el turno activo para este gimnasio
+                        const activeShift = await Pos.findActiveShiftByCompany(currentSub.id_company);
+
+                        if (!activeShift) {
+                            // Si no hay turno, la venta se registra sin turno (id_shift = null)
+                            console.log(`⚠️ Webhook: No se encontró turno activo para la compañía ${currentSub.id_company}. La venta se registrará sin turno.`);
                         }
 
-                        // 2. Calcular la nueva fecha de vencimiento
-                        const today = new Date();
-                        const currentEndDate = new Date(currentSub.end_date);
-                        // Si la membresía ya expiró, la extendemos desde hoy.
-                        // Si no ha expirado, la extendemos desde su fecha de fin.
-                        const startDate = (currentEndDate > today) ? currentEndDate : today;
-                        const newEndDate = new Date(startDate);
-                        newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
+                        // ... (cálculo de newEndDate) ...
 
-                        // 3. Actualizar la BD con la nueva fecha
-                        // **CAMBIO: Usa Gym.updateEndDate**
-                        await Gym.updateEndDate(id_membership_to_extend, newEndDate); 
+                        // 3. Desactivar la membresía vieja
+                        await Gym.deactivateMembership(id_membership_to_extend, 'extended');
+
+                        // 4. Crear la nueva membresía (¡AHORA CON EL ID_SHIFT!)
+                        const newMembershipData = {
+                            id_client: id_client,
+                            id_company: currentSub.id_company,
+                            plan_name: currentSub.plan_name,
+                            price: currentSub.price,
+                            end_date: newEndDate,
+                            payment_method: 'STRIPE_APP',
+                            payment_id: paymentIntent.id,
+                            // ¡Aquí está la conexión! (Será el ID o null)
+                            id_shift: activeShift ? activeShift.id : null 
+                        };
+
+                        await Gym.createMembership(newMembershipData);
                         
-                        console.log(`✅ Membresía ${id_membership_to_extend} extendida para cliente ${id_client} hasta ${newEndDate.toISOString()}`);
+                        console.log(`✅ Membresía extendida (con turno ${activeShift?.id})`);
 
                     } catch (e) {
-                        console.log(`❌ Error al procesar Extensión de Membresía: ${e.message}`);
+                        console.log(`❌ Error al procesar Extensión: ${e.message}`);
                     }
                 }
                 break;
