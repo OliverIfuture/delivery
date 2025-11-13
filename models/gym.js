@@ -245,4 +245,28 @@ Gym.findMembershipHistory = (id_client) => {
     return db.manyOrNone(sql, [id_client]);
 };
 
+Gym.findMembershipHistoryByShift = (id_shift) => {
+    const sql = `
+        SELECT 
+            m.id,
+            m.plan_name,
+            m.price,
+            m.start_date,
+            m.end_date,
+            m.payment_method,
+            m.created_at,
+            u.name AS client_name,
+            u.lastname AS client_lastname
+        FROM 
+            gym_memberships AS m
+        LEFT JOIN 
+            users AS u ON m.id_client = u.id
+        WHERE 
+            m.id_shift = $1
+        ORDER BY 
+            m.created_at DESC
+    `;
+    return db.manyOrNone(sql, id_shift);
+};
+
 module.exports = Gym;
