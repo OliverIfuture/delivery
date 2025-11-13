@@ -25,7 +25,7 @@ module.exports = {
             }
 
             // 2. Obtener los detalles del plan (precio, duración)
-            const plan = await GymPlan.findById(activeSub.id_plan);
+            const plan = await Gym.findById(activeSub.id_plan);
             if (!plan || !plan.price || !plan.duration_days) {
                 return res.status(400).json({
                     success: false,
