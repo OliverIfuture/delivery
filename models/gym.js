@@ -167,7 +167,7 @@ Gym.findPlanByName = (plan_name, id_company) => {
  */
 Gym.findMembershipById = (id_membership) => {
     const sql = `
-        SELECT id, id_client, end_date 
+        SELECT id, id_client, end_date, id_compay
         FROM gym_memberships
         WHERE id = $1
     `;
