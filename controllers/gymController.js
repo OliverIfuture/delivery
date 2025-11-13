@@ -298,4 +298,28 @@ module.exports = {
         }
     },
 
+    // *** ¡NUEVA FUNCIÓN PARA EL HISTORIAL DEL CLIENTE! ***
+    /**
+     * GET /api/gym/my-history
+     * Busca el historial de membresías del cliente logueado
+     */
+    async getMembershipHistory(req, res, next) {
+        try {
+            const id_client = req.user.id; // Cliente autenticado
+            
+            const data = await Gym.findMembershipHistory(id_client);
+            
+            // Devuelve la lista (puede estar vacía)
+            return res.status(200).json(data);
+
+        } catch (error) {
+            console.log(`Error en gymController.getMembershipHistory: ${error}`);
+            return res.status(501).json({ 
+                success: false, 
+                message: 'Error al obtener el historial de membresías', 
+                error: error.message 
+            });
+        }
+    },
+    
 };
