@@ -187,6 +187,60 @@ module.exports = {
                     }
                 }
                 break;
+
+             case 'payment_intent.succeeded':
+                const paymentIntent = event.data.object;
+                const metadata = paymentIntent.metadata;
+
+                // **Flujo A: Es un pago de comisión de Afiliado**
+                if (metadata.type === 'commission_payout') {
+                    console.log('✅ Webhook: Detectado pago de comisión (Directo Tienda->Entrenador).');
+                    // ... (Tu lógica existente de 'Affiliate.markAsPaid' no cambia)
+                    
+                    try {
+                        await Affiliate.markAsPaid(metadata.id_vendor, metadata.id_affiliate);
+                        console.log(`✅ Comisiones marcadas como 'paid' para afiliado ${metadata.id_affiliate}`);
+                    } catch (e) {
+                        console.log(`❌ Error al procesar Payout de Comisión: ${e.message}`);
+                    }
+                }
+                
+                // **Flujo B: ¡NUEVA LÓGICA! Es una extensión de membresía**
+                else if (metadata.type === 'membership_extension') {
+                    console.log('✅ Webhook: Detectado pago de EXTENSIÓN de membresía.');
+                    
+                    const { id_client, id_subscription_to_extend, duration_days_to_add } = metadata;
+
+                    try {
+                        // 1. Encontrar la suscripción que vamos a extender
+                        const currentSub = await ClientSubscription.findById(id_subscription_to_extend);
+                        if (!currentSub) {
+                            throw new Error(`No se encontró la suscripción ${id_subscription_to_extend} para extender.`);
+                        }
+
+                        // 2. Calcular la nueva fecha de vencimiento
+                        // Lógica: Usar la fecha de fin actual, o HOY (la que sea más tarde)
+                        // y sumarle los días del plan.
+                        const today = new Date();
+                        const currentEndDate = new Date(currentSub.current_period_end);
+                        
+                        // Determinar la fecha de inicio para la extensión
+                        const startDate = (currentEndDate > today) ? currentEndDate : today;
+
+                        // Calcular la nueva fecha de fin
+                        const newEndDate = new Date(startDate);
+                        newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
+
+                        // 3. Actualizar la BD con la nueva fecha
+                        await ClientSubscription.updateEndDate(id_subscription_to_extend, newEndDate);
+                        
+                        console.log(`✅ Membresía ${id_subscription_to_extend} extendida para cliente ${id_client} hasta ${newEndDate.toISOString()}`);
+
+                    } catch (e) {
+                        console.log(`❌ Error al procesar Extensión de Membresía: ${e.message}`);
+                    }
+                }
+                break;   
             
             default:
                 console.log(`Evento de Webhook no manejado: ${event.type}`);
