@@ -1,4 +1,5 @@
 const POS = require('../models/pos.js');
+const Gym = require('../models/gym.js');
 
 module.exports = {
 
