@@ -194,5 +194,28 @@ module.exports = {
             console.log(`Error en posController.closeShift: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al cerrar el turno', error: error.message });
         }
-    }
+    },
+
+    async generateDayPass(req, res, next) {
+        try {
+            const { id_shift, duration_hours, price, payment_id } = req.body;
+            const id_company = req.user.mi_store;
+
+            const data = await POS.createDayPass(
+                id_company, id_shift, duration_hours, price, payment_id
+            );
+
+            return res.status(201).json({
+                success: true,
+                message: 'Pase de día generado.',
+                data: {
+                    day_pass_token: data.token
+                }
+            });
+
+        } catch (error) {
+            console.log(`Error en posController.generateDayPass: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al generar el pase de día', error: error.message });
+        }
+    },
 };
