@@ -151,7 +151,7 @@ module.exports = {
 
     async getSalesByShift(req, res, next) {
         try {
-            const id_shift = req.query.id_shift;
+            const id_shift = req.params.id_shift;
             console.log(`el id_shift: ${id_shift}`);
             if (!id_shift) return res.status(400).json({ success: false, message: 'Falta id_shift' });
             
