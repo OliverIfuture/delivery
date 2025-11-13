@@ -137,4 +137,23 @@ POS.findActiveShiftByCompany = (id_company) => {
 };
 
 
+POS.createDayPass = (id_company, id_shift, duration_hours, price, payment_id) => {
+    const token = require('crypto').randomBytes(16).toString('hex'); // Token único
+    const expires_at = new Date();
+    expires_at.setHours(expires_at.getHours() + duration_hours);
+
+    const sql = `
+        INSERT INTO gym_day_passes(
+            id_company, id_shift, token, duration_hours, price, 
+            status, expires_at, created_at
+        )
+        VALUES($1, $2, $3, $4, $5, 'active', $6, $7)
+        RETURNING token
+    `;
+    return db.one(sql, [
+        id_company, id_shift, token, duration_hours, price, 
+        expires_at, new Date()
+    ]);
+};
+
 module.exports = POS;
