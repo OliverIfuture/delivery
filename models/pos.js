@@ -116,9 +116,24 @@ POS.createSale = (sale) => {
 // Obtiene todas las ventas de un turno (para el corte de caja)
 POS.getSalesByShift = (id_shift) => {
     const sql = `
-        SELECT * FROM pos_sales
-        WHERE id_shift = $1
-        ORDER BY created_at ASC
+        SELECT 
+            s.id,
+            s.id_shift,
+            s.id_client,
+            s.sale_details,
+            s.total,
+            s.payment_method,
+            s.created_at,
+            u.name AS client_name,
+            u.lastname AS client_lastname
+        FROM 
+            pos_sales AS s
+        LEFT JOIN 
+            users AS u ON s.id_client = u.id
+        WHERE 
+            s.id_shift = $1
+        ORDER BY 
+            s.created_at DESC
     `;
     return db.manyOrNone(sql, id_shift);
 };
