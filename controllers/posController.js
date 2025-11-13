@@ -41,14 +41,11 @@ module.exports = {
 
     // --- VENTAS (SALES) ---
 
-   async processSale(req, res, next) {
+    async processSale(req, res, next) {
         try {
-            let sale = req.body; // El objeto de venta desde Flutter
+            let sale = req.body; 
             sale.id_company = req.user.mi_store;
             sale.id_user_staff = req.user.id;
-            
-            // (El 'id_client' debe venir en 'sale' si hay membresías)
-            // (El 'total' y 'sale_details' vienen de Flutter)
 
             // 1. Encontrar el turno activo
             const activeShift = await POS.findActiveShift(sale.id_company, sale.id_user_staff);
@@ -58,27 +55,25 @@ module.exports = {
             sale.id_shift = activeShift.id;
 
             // 2. Guardar la venta principal en 'pos_sales' (para el corte de caja)
+            // (Gracias a la corrección en models/pos.js, esto ahora funciona)
             const saleData = await POS.createSale(sale);
-            sale.id = saleData.id; // Obtenemos el ID de la venta
+            sale.id = saleData.id; 
             console.log(`POS: Venta registrada ${sale.id} en el turno ${sale.id_shift}`);
 
-            // 3. **LÓGICA INTELIGENTE:** Iterar el carrito y procesar cada item
+            // 3. Iterar el carrito y procesar cada item
             const productsSold = sale.sale_details; // El carrito
             
             for (const item of productsSold) {
                 
-                // **Usamos el prefijo 'plan-' para identificar membresías**
-                // (El frontend G4.4b se encargará de añadir este prefijo)
                 if (item.id.toString().startsWith('plan-')) {
                     
                     // --- ES UNA MEMBRESÍA ---
                     if (!sale.id_client) {
-                        // No podemos vender una membresía sin un cliente
                         console.log(`Error Venta ${sale.id}: Membresía ${item.name} sin id_client.`);
-                        continue; // Saltar este item, pero la venta de productos sigue
+                        continue;
                     }
                     
-                    // Calcular la fecha de vencimiento
+                    // **CORRECCIÓN: Usar 'item.duration_days' (del toSaleDetailJson)**
                     let endDate = new Date();
                     endDate.setDate(endDate.getDate() + parseInt(item.duration_days || 1));
 
@@ -89,7 +84,7 @@ module.exports = {
                         price: item.price,
                         end_date: endDate,
                         payment_method: sale.payment_method,
-                        payment_id: `pos-sale-${sale.id}` // Referencia a esta venta
+                        payment_id: `pos-sale-${sale.id}` 
                     };
                     
                     await Gym.createMembership(membership);
@@ -97,7 +92,9 @@ module.exports = {
 
                 } else {
                     // --- ES UN PRODUCTO FÍSICO ---
-                    await POS.updateProductStock(item.id, item.quantity || 1);
+                    
+                    // **CORRECCIÓN: Usar 'item.qty' (del toSaleDetailJson)**
+                    await POS.updateProductStock(item.id, item.qty || 1);
                     console.log(`POS: Stock de producto ${item.id} actualizado.`);
                 }
             }
