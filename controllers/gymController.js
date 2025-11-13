@@ -79,7 +79,7 @@ module.exports = {
             }
 
             // 2. Extraer el ID del cliente del payload del token
-            const id_client_scanned = payload.id_client;
+            const id_client_scanned = payload.id;
 
             // 3. Verificar Membresía Activa (Lógica que ya teníamos)
             const activeMembership = await Gym.findActiveMembership(id_client_scanned, id_company_gym);
