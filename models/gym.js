@@ -123,14 +123,48 @@ Gym.findPlansByCompany = (id_company) => {
     return db.manyOrNone(sql, id_company);
 };
 
-Gym.findById = (id_plan) => {
+/**
+ * Encuentra los detalles de un PLAN por su NOMBRE y compañía
+ * (Necesario porque 'gym_memberships' solo guarda plan_name)
+ */
+Gym.findPlanByName = (plan_name, id_company) => {
     const sql = `
-        SELECT id, name, price, duration_days, is_active
+        SELECT id, price, duration_days
         FROM gym_membership_plans
+        WHERE name = $1 AND id_company = $2
+        LIMIT 1
+    `;
+    return db.oneOrNone(sql, [plan_name, id_company]);
+};
+
+/**
+ * Encuentra una membresía específica por su ID (usado por el Webhook)
+ * (Busca en la tabla 'gym_memberships')
+ */
+Gym.findMembershipById = (id_membership) => {
+    const sql = `
+        SELECT id, id_client, end_date 
+        FROM gym_memberships
         WHERE id = $1
     `;
-    // Usamos oneOrNone por si el plan fue eliminado pero la suscripción aún existe
-    return db.oneOrNone(sql, [id_plan]); 
+    return db.oneOrNone(sql, [id_membership]);
+};
+
+/**
+ * Actualiza la fecha de vencimiento de una membresía (usado por el Webhook)
+ * (Actualiza la tabla 'gym_memberships')
+ */
+Gym.updateEndDate = (id_membership, new_end_date) => {
+    const sql = `
+        UPDATE gym_memberships
+        SET 
+            end_date = $1,
+            status = 'active', -- Asegurarnos de que esté activa
+            updated_at = NOW()
+        WHERE
+            id = $2
+    `;
+    return db.none(sql, [new_end_date, id_membership]);
 };
 
 module.exports = Gym;
