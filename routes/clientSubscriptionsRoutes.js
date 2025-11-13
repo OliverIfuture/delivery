@@ -18,6 +18,8 @@ module.exports = (app) => {
      * Esta ruta sigue siendo vital.
      */
     app.post('/api/subscriptions/webhook', clientSubscriptionsController.stripeWebhook);
+    app.post('/api/subscriptions/create-extension-intent', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createExtensionIntent);
+
 
     // --- GET ---
     
