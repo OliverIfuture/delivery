@@ -123,4 +123,18 @@ POS.getSalesByShift = (id_shift) => {
     return db.manyOrNone(sql, id_shift);
 };
 
+// *** ¡NUEVA FUNCIÓN AÑADIDA! ***
+// Busca un turno abierto usando SOLO la compañía.
+// Es para el webhook, que no sabe qué staff está logueado.
+POS.findActiveShiftByCompany = (id_company) => {
+    const sql = `
+        SELECT * FROM pos_shifts
+        WHERE id_company = $1 AND status = 'OPEN'
+        ORDER BY start_time DESC -- (En caso de que haya más de uno, toma el más nuevo)
+        LIMIT 1
+    `;
+    return db.oneOrNone(sql, [id_company]);
+};
+
+
 module.exports = POS;
