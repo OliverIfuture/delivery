@@ -102,7 +102,10 @@ POS.createSale = (sale) => {
         sale.id_company,
         sale.id_user_staff,
         sale.id_client, // Puede ser null
-        sale.sale_details, 
+        
+        // **LA CORRECCIÓN:**
+        JSON.stringify(sale.sale_details), // Convertir el Array de JS en un string JSON
+        
         sale.subtotal,
         sale.total,
         sale.payment_method,
