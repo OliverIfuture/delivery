@@ -1851,4 +1851,50 @@ async filesupload(req, res, next) {
             });
         }
     },
+
+        async generateAccessQr(req, res, next) {
+        try {
+            // 1. Passport (middleware) ya validó el token de sesión.
+            //    El usuario autenticado está en 'req.user'.
+            //    'req.user' contiene el payload del token de sesión (ej. {id: '...', email: '...'})
+            const idClient = req.user.id;
+
+            if (!idClient) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Error de autenticación, no se encontró ID'
+                });
+            }
+
+            // 2. Crear el PAYLOAD para el token de CORTA DURACIÓN.
+            //    Solo necesitamos el ID para que el Kiosco lo verifique.
+            const payload = {
+                id: idClient
+                // Podemos añadir un 'type' si queremos diferenciarlo
+                // type: 'qr_access_token' 
+            };
+
+            // 3. Firmar el nuevo token con una expiración CORTA (ej. 60 segundos)
+            const token = jwt.sign(payload, keys.secretOrKey, {
+                expiresIn: '60s' // 60 segundos
+            });
+
+            // 4. Enviar el nuevo token de corta duración a la app del cliente
+            //    (Este es el formato que espera el ClientAccessQrController en Flutter)
+            return res.status(200).json({
+                success: true,
+                token: token,
+                message: 'Token de acceso generado'
+            });
+
+        } catch (error) {
+            console.log(`Error en generateAccessQr: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al generar el token de acceso',
+                error: error
+            });
+        }
+    }
+
 };
