@@ -83,5 +83,12 @@ module.exports = (app, upload) => {
 app.post('/api/users/createWithImageUserAndCompany', upload.fields([
     { name: 'image', maxCount: 1 }, 
     { name: 'imageLogo', maxCount: 1 } 
-]), UsersController.createWithImageUserAndCompany);}   
+]), UsersController.createWithImageUserAndCompany);
+
+    app.get(
+        '/api/users/generateAccessQr', 
+        passport.authenticate('jwt', { session: false }), 
+        UsersController.generateAccessQr
+    );
+}   
 
