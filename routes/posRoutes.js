@@ -13,7 +13,7 @@ module.exports = (app) => {
     // --- Ventas (Sales) ---
     app.post('/api/pos/sale', passport.authenticate('jwt', { session: false }), posController.processSale);
     app.get('/api/pos/shifts/sales', passport.authenticate('jwt', { session: false }), posController.getSalesByShift); // Requiere ?id_shift=X
-
+    app.get('/api/pos/sales/by-shift/:id_shift', passport.authenticate('jwt', { session: false }), posController.getSalesByShift);
     // --- Productos (Products) ---
     app.get('/api/pos/products', passport.authenticate('jwt', { session: false }), posController.getProducts);
     app.post('/api/pos/products/create', passport.authenticate('jwt', { session: false }), posController.createProduct);
