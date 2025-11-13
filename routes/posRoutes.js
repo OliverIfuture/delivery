@@ -20,4 +20,20 @@ module.exports = (app) => {
     app.put('/api/pos/products/update', passport.authenticate('jwt', { session: false }), posController.updateProduct);
     app.post('/api/pos/generate-day-pass', passport.authenticate('jwt', { session: false }), posController.generateDayPass);
     // (Opcional: delete product, etc.)
+
+    app.get('/api/pos/shifts/totals/:id_shift', passport.authenticate('jwt', { session: false }), posController.getShiftTotals);
+
+    /**
+     * POST /api/pos/shifts/income
+     * Registra un nuevo ingreso de efectivo
+     */
+    app.post('/api/pos/shifts/income', passport.authenticate('jwt', { session: false }), posController.createIncome);
+
+    /**
+     * POST /api/pos/shifts/expense
+     * Registra un nuevo gasto (salida) de efectivo
+     */
+    app.post('/api/pos/shifts/expense', passport.authenticate('jwt', { session: false }), posController.createExpense);
+
+    // ... (otras rutas que puedas tener, como /api/pos/products, /api/pos/generate-day-pass, etc.) ...
 }
