@@ -150,6 +150,27 @@ Gym.findMembershipById = (id_membership) => {
     return db.oneOrNone(sql, [id_membership]);
 };
 
+Gym.findActiveByClientId = (id_client) => {
+    const sql = `
+        SELECT 
+            id, 
+            id_company, 
+            plan_name, 
+            end_date, 
+            status
+        FROM 
+            gym_memberships
+        WHERE 
+            id_client = $1
+        AND 
+            status = 'active'
+        ORDER BY 
+            end_date DESC 
+        LIMIT 1
+    `;
+    return db.oneOrNone(sql, [id_client]);
+};
+
 /**
  * Actualiza la fecha de vencimiento de una membresía (usado por el Webhook)
  * (Actualiza la tabla 'gym_memberships')
