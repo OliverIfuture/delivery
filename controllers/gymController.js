@@ -129,16 +129,30 @@ module.exports = {
      */
     async createMembership(req, res, next) {
         try {
-            const { id_client, plan_name, price, duration_days, payment_method, payment_id } = req.body;
+            // **PASO 1: Leer TODOS los datos del body (incluyendo id_shift)**
+            const { 
+                id_client, 
+                plan_name, 
+                price, 
+                duration_days, 
+                payment_method, 
+                payment_id,
+                id_shift  // <-- ¡EL DATO QUE FALTABA!
+            } = req.body;
+            
             const id_company_gym = req.user.mi_store; 
 
-            if (!id_client || !plan_name || !price || !duration_days) {
-                return res.status(400).json({ success: false, message: 'Faltan datos para crear la membresía.' });
+            if (!id_client || !plan_name || !price || !duration_days || !id_shift) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Faltan datos para crear la membresía (client, plan, price, duration, shift).' 
+                });
             }
 
             let endDate = new Date();
             endDate.setDate(endDate.getDate() + parseInt(duration_days));
 
+            // **PASO 2: Construir el objeto COMPLETO para el modelo**
             const membership = {
                 id_client: id_client,
                 id_company: id_company_gym,
@@ -146,7 +160,8 @@ module.exports = {
                 price: price,
                 end_date: endDate,
                 payment_method: payment_method || 'cash',
-                payment_id: payment_id || null
+                payment_id: payment_id || null,
+                id_shift: id_shift // <-- ¡PASANDO EL ID DEL TURNO AL MODELO!
             };
 
             const data = await Gym.createMembership(membership);
