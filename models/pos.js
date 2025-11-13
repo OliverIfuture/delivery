@@ -171,4 +171,55 @@ POS.createDayPass = (id_company, id_shift, duration_hours, price, payment_id) =>
     ]);
 };
 
+// ... (Tu código existente: startShift, findActiveShift, createSale, etc.) ...
+
+// --- NUEVAS FUNCIONES PARA INGRESOS Y GASTOS ---
+
+/**
+ * Registra un nuevo ingreso de efectivo en el turno
+ */
+POS.createIncome = (id_company, id_shift, id_user_staff, amount, description) => {
+    const sql = `
+        INSERT INTO pos_cash_incomes(id_company, id_shift, id_user_staff, amount, description, created_at)
+        VALUES($1, $2, $3, $4, $5, $6)
+        RETURNING id
+    `;
+    return db.one(sql, [id_company, id_shift, id_user_staff, amount, description, new Date()]);
+};
+
+/**
+ * Registra un nuevo gasto (salida) de efectivo en el turno
+ */
+POS.createExpense = (id_company, id_shift, id_user_staff, amount, description) => {
+    const sql = `
+        INSERT INTO pos_cash_expenses(id_company, id_shift, id_user_staff, amount, description, created_at)
+        VALUES($1, $2, $3, $4, $5, $6)
+        RETURNING id
+    `;
+    return db.one(sql, [id_company, id_shift, id_user_staff, amount, description, new Date()]);
+};
+
+/**
+ * Suma todos los ingresos de un turno (para el resumen)
+ */
+POS.getSumOfIncomesByShift = (id_shift) => {
+    const sql = `
+        SELECT COALESCE(SUM(amount), 0) AS total_incomes
+        FROM pos_cash_incomes
+        WHERE id_shift = $1
+    `;
+    return db.one(sql, id_shift);
+};
+
+/**
+ * Suma todos los gastos de un turno (para el resumen)
+ */
+POS.getSumOfExpensesByShift = (id_shift) => {
+    const sql = `
+        SELECT COALESCE(SUM(amount), 0) AS total_expenses
+        FROM pos_cash_expenses
+        WHERE id_shift = $1
+    `;
+    return db.one(sql, id_shift);
+};
 module.exports = POS;
