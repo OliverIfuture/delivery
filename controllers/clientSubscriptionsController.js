@@ -1,4 +1,3 @@
-// **CAMBIO: Ya no importamos ClientSubscription para la lógica de extensión**1841851861871881891901161171181191201801811821831819201131141151314151617111210987654231$0
 const ClientSubscription = require('../models/clientSubscription.js');
 const User = require('../models/user.js'); 
 const Affiliate  = require('../models/affiliate.js'); 
@@ -287,6 +286,7 @@ module.exports = {
 
                         // **¡NUEVA LÓGICA DE TURNO!**
                         // 2. Buscar el turno activo para este gimnasio
+                        // ¡AQUÍ ESTÁ EL CAMBIO!
                         const activeShift = await Pos.findActiveShiftByCompany(currentSub.id_company);
 
                         if (!activeShift) {
@@ -312,7 +312,7 @@ module.exports = {
                             end_date: newEndDate,
                             payment_method: 'STRIPE_APP', // Identificador de pago
                             payment_id: paymentIntent.id,
-                            id_shift: activeShift ? activeShift.id : null // ¡CONEXIÓN!
+                            id_shift: activeShift ? activeShift.id : null // ¡AQUÍ ESTÁ LA CONEXIÓN!
                         };
 
                         await Gym.createMembership(newMembershipData);
