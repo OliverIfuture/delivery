@@ -10,6 +10,99 @@ const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 
 module.exports = {
 
+        async createExtensionIntent(req, res, next) {
+        try {
+            const id_client = req.user.id;
+
+            // 1. Buscar la suscripción activa del cliente
+            const activeSub = await ClientSubscription.findActiveByClient(id_client);
+            if (!activeSub || !activeSub.id_plan || !activeSub.id_company) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se encontró una membresía activa para extender.'
+                });
+            }
+
+            // 2. Obtener los detalles del plan (precio, duración)
+            const plan = await GymPlan.findById(activeSub.id_plan);
+            if (!plan || !plan.price || !plan.duration_days) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se pudieron encontrar los detalles del plan de membresía.'
+                });
+            }
+            // Asumimos que el precio está guardado en centavos (ej. 10000 para $100.00)
+            const amountInCents = Math.round(plan.price * 100); 
+
+            // 3. Obtener la compañía (Gimnasio) para usar su clave secreta y su ID de Stripe
+            const company = await User.findCompanyById(activeSub.id_company);
+            if (!company || !company.stripeSecretKey || !company.stripePublishableKey) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El gimnasio no tiene una clave de Stripe configurada.'
+                });
+            }
+
+            const stripe = require('stripe')(company.stripeSecretKey);
+
+            // 4. Crear/Obtener un Cliente en Stripe (en la cuenta del Gimnasio)
+            let customer;
+            const existingCustomers = await stripe.customers.list({
+                email: req.user.email,
+                limit: 1
+            });
+
+            if (existingCustomers.data.length > 0) {
+                customer = existingCustomers.data[0];
+            } else {
+                customer = await stripe.customers.create({
+                    email: req.user.email,
+                    name: `${req.user.name} ${req.user.lastname}`,
+                });
+            }
+            
+            // 5. Crear una Clave Efímera (para que el SDK de Flutter pueda usar el customer)
+            const ephemeralKey = await stripe.ephemeralKeys.create(
+                { customer: customer.id },
+                { apiVersion: '2020-08-27' } // Usa una versión de API estable
+            );
+
+            // 6. Crear el Payment Intent (el pago único)
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amountInCents,
+                currency: 'mxn', // o la moneda que uses
+                customer: customer.id,
+                // **CRUCIAL: La metadata para el webhook**
+                metadata: {
+                    type: 'membership_extension', // Identificador
+                    id_client: id_client,
+                    id_subscription_to_extend: activeSub.id, // ID de la fila en nuestra BD
+                    id_plan: activeSub.id_plan,
+                    duration_days_to_add: plan.duration_days
+                }
+            });
+
+            // 7. Devolver todos los secretos al SDK de Flutter
+            return res.status(200).json({
+                success: true,
+                clientSecret: paymentIntent.client_secret,
+                ephemeralKey: ephemeralKey.secret,
+                customerId: customer.id,
+                publishableKey: company.stripePublishableKey,
+                gymName: company.name // Bonus: el nombre del gym para el PaymentSheet
+            });
+
+        } catch (error) {
+            console.log(`Error en createExtensionIntent: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al crear la intención de extensión',
+                error: error.message
+            });
+        }
+    },
+
+
     /**
      * NUEVA FUNCIÓN: Crea una suscripción y devuelve el PaymentIntent
      * para el SDK nativo de Flutter.
