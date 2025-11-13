@@ -18,6 +18,6 @@ module.exports = (app) => {
     app.get('/api/pos/products', passport.authenticate('jwt', { session: false }), posController.getProducts);
     app.post('/api/pos/products/create', passport.authenticate('jwt', { session: false }), posController.createProduct);
     app.put('/api/pos/products/update', passport.authenticate('jwt', { session: false }), posController.updateProduct);
-
+    app.post('/api/pos/generate-day-pass', passport.authenticate('jwt', { session: false }), posController.generateDayPass);
     // (Opcional: delete product, etc.)
 }
