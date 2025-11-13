@@ -219,4 +219,88 @@ module.exports = {
             return res.status(501).json({ success: false, message: 'Error al generar el pase de día', error: error.message });
         }
     },
+
+    // ... (Tu código existente: processSale, generateDayPass, etc.) ...
+
+    /**
+     * GET /api/pos/shifts/totals/:id_shift
+     * Obtiene la suma de ingresos y gastos de un turno
+     */
+    async getShiftTotals(req, res, next) {
+        try {
+            const id_shift = req.params.id_shift;
+            
+            // Llama a ambas funciones del modelo en paralelo
+            const [incomesData, expensesData] = await Promise.all([
+                POS.getSumOfIncomesByShift(id_shift),
+                POS.getSumOfExpensesByShift(id_shift)
+            ]);
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    total_incomes: parseFloat(incomesData.total_incomes) || 0,
+                    total_expenses: parseFloat(expensesData.total_expenses) || 0
+                }
+            });
+
+        } catch (error) {
+            console.log(`Error en posController.getShiftTotals: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener totales del turno', error: error.message });
+        }
+    },
+
+    /**
+     * POST /api/pos/shifts/income
+     * Registra un nuevo ingreso de efectivo
+     */
+    async createIncome(req, res, next) {
+        try {
+            const { id_shift, amount, description } = req.body;
+            const id_company = req.user.mi_store;
+            const id_user_staff = req.user.id;
+
+            if (!id_shift || !amount || !description) {
+                return res.status(400).json({ success: false, message: 'Faltan datos (shift, amount, description).' });
+            }
+
+            await POS.createIncome(id_company, id_shift, id_user_staff, amount, description);
+            
+            return res.status(201).json({
+                success: true,
+                message: 'Ingreso registrado exitosamente.'
+            });
+
+        } catch (error) {
+            console.log(`Error en posController.createIncome: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al registrar ingreso', error: error.message });
+        }
+    },
+
+    /**
+     * POST /api/pos/shifts/expense
+     * Registra un nuevo gasto de efectivo
+     */
+    async createExpense(req, res, next) {
+        try {
+            const { id_shift, amount, description } = req.body;
+            const id_company = req.user.mi_store;
+            const id_user_staff = req.user.id;
+
+            if (!id_shift || !amount || !description) {
+                return res.status(400).json({ success: false, message: 'Faltan datos (shift, amount, description).' });
+            }
+
+            await POS.createExpense(id_company, id_shift, id_user_staff, amount, description);
+            
+            return res.status(201).json({
+                success: true,
+                message: 'Gasto registrado exitosamente.'
+            });
+
+        } catch (error) {
+            console.log(`Error en posController.createExpense: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al registrar gasto', error: error.message });
+        }
+    },
 };
