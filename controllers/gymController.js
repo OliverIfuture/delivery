@@ -2,6 +2,7 @@ const Gym = require('../models/gym.js');
 const User = require('../models/user.js'); 
 const jwt = require('jsonwebtoken'); // **IMPORTANTE: Para crear/validar tokens**
 const keys = require('../config/keys.js');
+const db = require('../config/config.js');
 
 module.exports = {
 
