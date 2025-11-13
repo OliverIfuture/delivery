@@ -223,4 +223,26 @@ Gym.findActiveByClientId = (id_client) => {
     return db.oneOrNone(sql, [id_client]);
 };
 
+// *** ¡NUEVA FUNCIÓN PARA EL HISTORIAL DEL CLIENTE! ***
+/**
+ * Busca todo el historial de membresías de un cliente
+ */
+Gym.findMembershipHistory = (id_client) => {
+    const sql = `
+        SELECT 
+            id, 
+            plan_name, 
+            price, 
+            start_date, 
+            end_date, 
+            status, 
+            payment_method, 
+            payment_id
+        FROM gym_memberships
+        WHERE id_client = $1
+        ORDER BY start_date DESC -- Mostrar las más nuevas primero
+    `;
+    return db.manyOrNone(sql, [id_client]);
+};
+
 module.exports = Gym;
