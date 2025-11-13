@@ -123,4 +123,14 @@ Gym.findPlansByCompany = (id_company) => {
     return db.manyOrNone(sql, id_company);
 };
 
+Gym.findById = (id_plan) => {
+    const sql = `
+        SELECT id, name, price, duration_days, is_active
+        FROM gym_membership_plans
+        WHERE id = $1
+    `;
+    // Usamos oneOrNone por si el plan fue eliminado pero la suscripción aún existe
+    return db.oneOrNone(sql, [id_plan]); 
+};
+
 module.exports = Gym;
