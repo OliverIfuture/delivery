@@ -27,9 +27,10 @@ Gym.createMembership = (membership) => {
     const sql = `
         INSERT INTO gym_memberships(
             id_client, id_company, plan_name, price, start_date, 
-            end_date, status, payment_method, payment_id, created_at, updated_at
+            end_date, status, payment_method, payment_id, created_at, updated_at,
+            id_shift -- <-- NUEVA COLUMNA
         )
-        VALUES($1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $9)
+        VALUES($1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $9, $10) -- <-- NUEVO VALOR $10
         RETURNING id
     `;
     return db.one(sql, [
@@ -38,10 +39,11 @@ Gym.createMembership = (membership) => {
         membership.plan_name,
         membership.price,
         new Date(), // start_date (hoy)
-        membership.end_date, // La fecha de fin (calculada en el controller)
+        membership.end_date, 
         membership.payment_method,
         membership.payment_id,
-        new Date()
+        new Date(),
+        membership.id_shift // <-- NUEVO DATO
     ]);
 };
 
