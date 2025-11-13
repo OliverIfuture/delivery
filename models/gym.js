@@ -23,14 +23,15 @@ Gym.logAccess = (id_company, id_user, access_granted, denial_reason) => {
     return db.none(sql, [id_company, id_user, access_granted, denial_reason, new Date()]);
 };
 
+// **CAMBIO: Añadida la columna 'id_shift' ($10)**
 Gym.createMembership = (membership) => {
     const sql = `
         INSERT INTO gym_memberships(
             id_client, id_company, plan_name, price, start_date, 
             end_date, status, payment_method, payment_id, created_at, updated_at,
-            id_shift -- <-- NUEVA COLUMNA
+            id_shift 
         )
-        VALUES($1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $9, $10) -- <-- NUEVO VALOR $10
+        VALUES($1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $9, $10)
         RETURNING id
     `;
     return db.one(sql, [
@@ -39,13 +40,34 @@ Gym.createMembership = (membership) => {
         membership.plan_name,
         membership.price,
         new Date(), // start_date (hoy)
-        membership.end_date, 
+        membership.end_date, // La fecha de fin (calculada en el controller)
         membership.payment_method,
         membership.payment_id,
         new Date(),
-        membership.id_shift // <-- NUEVO DATO
+        membership.id_shift // **NUEVO DATO**
     ]);
 };
+
+// **NUEVA FUNCIÓN: (Para la lógica de extensión del webhook)**
+// Desactiva una membresía vieja (la marca como 'extended')
+Gym.deactivateMembership = (id_membership, new_status = 'extended') => {
+    const sql = `
+        UPDATE gym_memberships
+        SET status = $1, updated_at = $2
+        WHERE id = $3
+    `;
+    return db.none(sql, [new_status, new Date(), id_membership]);
+};
+
+// **NUEVA FUNCIÓN: (Para la lógica de extensión del webhook)**
+// Busca un plan por su ID
+Gym.findById = (id_plan) => {
+    const sql = `
+        SELECT * FROM gym_membership_plans WHERE id = $1
+    `;
+    return db.oneOrNone(sql, [id_plan]);
+};
+
 
 // --- **NUEVAS FUNCIONES: CRUD DE PLANES DE MEMBRESÍA (Paso G4.1)** ---
 
@@ -188,6 +210,17 @@ Gym.updateEndDate = (id_membership, new_end_date) => {
             id = $2
     `;
     return db.none(sql, [new_end_date, id_membership]);
+};
+// **CAMBIO: Nueva función (basada en la anterior) que busca por ID de cliente**
+Gym.findActiveByClientId = (id_client) => {
+    const sql = `
+        SELECT *
+        FROM gym_memberships
+        WHERE id_client = $1
+        AND status = 'active' AND end_date > NOW()
+        ORDER BY end_date DESC LIMIT 1
+    `;
+    return db.oneOrNone(sql, [id_client]);
 };
 
 module.exports = Gym;
