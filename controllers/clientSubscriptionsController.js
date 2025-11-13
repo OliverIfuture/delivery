@@ -17,10 +17,14 @@ module.exports = {
     async createExtensionIntent(req, res, next) {
         try {
             const id_client = req.user.id;
+            console.log(`[ExtIntent] Iniciando para cliente: ${id_client}`);
 
-            // 1. Buscar la suscripción activa del cliente
-            const activeSub = await ClientSubscription.findActiveByClient(id_client);
-            if (!activeSub || !activeSub.id_plan || !activeSub.id_company) {
+            // 1. Buscar la suscripción activa del cliente (Usando Gym model)
+            // **CAMBIO: Usa Gym.findActiveByClientId**
+            const activeSub = await Gym.findActiveByClientId(id_client); 
+            
+            if (!activeSub || !activeSub.plan_name || !activeSub.id_company) {
+                console.log(`[ExtIntent] ERROR: No se encontró suscripción activa para el cliente ${id_client}.`);
                 return res.status(400).json({
                     success: false,
                     message: 'No se encontró una membresía activa para extender.'
@@ -28,9 +32,11 @@ module.exports = {
             }
 
             // 2. Obtener los detalles del plan (precio, duración)
-            // **CORRECCIÓN 2: Usar Gym.findById (del modelo gym.js)**
-            const plan = await Gym.findById(activeSub.id_plan); 
+            // **CAMBIO: Usa Gym.findPlanByName**
+            const plan = await Gym.findPlanByName(activeSub.plan_name, activeSub.id_company); 
+            
             if (!plan || !plan.price || !plan.duration_days) {
+                console.log(`[ExtIntent] ERROR: No se encontró el plan con nombre ${activeSub.plan_name}.`);
                 return res.status(400).json({
                     success: false,
                     message: 'No se pudieron encontrar los detalles del plan de membresía.'
@@ -41,6 +47,7 @@ module.exports = {
             // 3. Obtener la compañía (Gimnasio)
             const company = await User.findCompanyById(activeSub.id_company);
             if (!company || !company.stripeSecretKey || !company.stripePublishableKey) {
+                console.log(`[ExtIntent] ERROR: El gimnasio ${activeSub.id_company} no tiene claves de Stripe.`);
                 return res.status(400).json({
                     success: false,
                     message: 'El gimnasio no tiene una clave de Stripe configurada.'
@@ -72,7 +79,6 @@ module.exports = {
             );
 
             // 6. Crear el Payment Intent
-            // **CORRECCIÓN 3: Renombrar variable para evitar conflicto**
             const extensionIntent = await stripe.paymentIntents.create({
                 amount: amountInCents,
                 currency: 'mxn', // o la moneda que uses
@@ -80,8 +86,8 @@ module.exports = {
                 metadata: {
                     type: 'membership_extension', // Identificador
                     id_client: id_client,
-                    id_subscription_to_extend: activeSub.id, 
-                    id_plan: activeSub.id_plan,
+                    // **CAMBIO: ID de la fila en 'gym_memberships'**
+                    id_membership_to_extend: activeSub.id, 
                     duration_days_to_add: plan.duration_days
                 }
             });
@@ -89,7 +95,6 @@ module.exports = {
             // 7. Devolver todos los secretos al SDK de Flutter
             return res.status(200).json({
                 success: true,
-                // **CORRECCIÓN 4: Usar el nuevo nombre de variable**
                 clientSecret: extensionIntent.client_secret,
                 ephemeralKey: ephemeralKey.secret,
                 customerId: customer.id,
@@ -106,7 +111,6 @@ module.exports = {
             });
         }
     },
-
 
     /**
      * (Esta es tu función original para NUEVAS suscripciones)
@@ -202,7 +206,7 @@ module.exports = {
         // Manejar el evento
         switch (event.type) {
             
-            // --- Caso 1: Suscripción de Cliente Creada/Pagada ---
+            // --- Caso 1: Suscripción de Cliente Creada/Pagada (client_subscriptions) ---
             case 'invoice.payment_succeeded':
                 const invoice = event.data.object;
                 
@@ -213,10 +217,7 @@ module.exports = {
                     const subscription = await adminStripe.subscriptions.retrieve(subscriptionId);
                     const metadata = subscription.metadata;
 
-                    // Asegurarnos que es una suscripción de cliente
-                    // (Tu código original tenía 'client_subscription', lo respetamos)
                     if (metadata.type === 'client_subscription') { 
-                        // 1. Crear el registro de suscripción
                         const subscriptionData = {
                             id_client: metadata.id_client,
                             id_company: metadata.id_company,
@@ -226,10 +227,10 @@ module.exports = {
                             status: 'active', 
                             current_period_end: new Date(subscription.current_period_end * 1000)
                         };
+                        // Esta lógica usa tu modelo ClientSubscription
                         await ClientSubscription.create(subscriptionData);
-                        console.log('✅ Webhook: Suscripción creada para el cliente:', metadata.id_client);
+                        console.log('✅ Webhook: Suscripción (ClientSubscription) creada para el cliente:', metadata.id_client);
 
-                        // 2. Vincular al entrenador en la tabla 'users'
                         if (metadata.id_client && metadata.id_company) {
                              await User.updateTrainer(metadata.id_client, metadata.id_company);
                              console.log(`✅ Webhook: Usuario ${metadata.id_client} vinculado al entrenador ${metadata.id_company}`);
@@ -238,7 +239,7 @@ module.exports = {
                 }
                 break;
             
-            // --- Casos de Falla/Cancelación de Suscripción ---
+            // --- Casos de Falla/Cancelación (client_subscriptions) ---
             case 'invoice.payment_failed':
                 const subscriptionId_failed = event.data.object.subscription;
                 await ClientSubscription.updateStatus(subscriptionId_failed, 'past_due');
@@ -260,49 +261,49 @@ module.exports = {
 
             // --- Caso 3: Pago de Comisión O Extensión de Membresía ---
             case 'payment_intent.succeeded':
-                // (Esta variable solo existe en este 'case', por lo que no hay conflicto)
                 const paymentIntent = event.data.object; 
                 const metadata = paymentIntent.metadata;
 
                 // **Flujo A: Es un pago de comisión de Afiliado**
                 if (metadata.type === 'commission_payout') {
-                    console.log('✅ Webhook: Detectado pago de comisión (Directo Tienda->Entrenador).');
-                    const id_vendor = metadata.id_vendor;
-                    const id_affiliate = metadata.id_affiliate;
-
+                    console.log('✅ Webhook: Detectado pago de comisión.');
+                    const { id_vendor, id_affiliate } = metadata;
                     try {
                         await Affiliate.markAsPaid(id_vendor, id_affiliate);
                         console.log(`✅ Comisiones marcadas como 'paid' para afiliado ${id_affiliate} de tienda ${id_vendor}`);
-                        
                     } catch (e) {
                         console.log(`❌ Error al procesar Payout de Comisión: ${e.message}`);
                     }
                 }
                 
-                // **Flujo B: ¡NUEVA LÓGICA! Es una extensión de membresía**
+                // **Flujo B: ¡NUEVA LÓGICA! Es una extensión de membresía (gym_memberships)**
                 else if (metadata.type === 'membership_extension') {
-                    console.log('✅ Webhook: Detectado pago de EXTENSIÓN de membresía.');
+                    console.log('✅ Webhook: Detectado pago de EXTENSIÓN de membresía (gym_memberships).');
                     
-                    const { id_client, id_subscription_to_extend, duration_days_to_add } = metadata;
+                    const { id_client, id_membership_to_extend, duration_days_to_add } = metadata; 
 
                     try {
-                        // 1. Encontrar la suscripción que vamos a extender
-                        const currentSub = await ClientSubscription.findById(id_subscription_to_extend);
+                        // 1. Encontrar la membresía que vamos a extender (¡usando Gym model!)
+                        // **CAMBIO: Usa Gym.findMembershipById**
+                        const currentSub = await Gym.findMembershipById(id_membership_to_extend); 
                         if (!currentSub) {
-                            throw new Error(`No se encontró la suscripción ${id_subscription_to_extend} para extender.`);
+                            throw new Error(`No se encontró la membresía ${id_membership_to_extend} para extender.`);
                         }
 
                         // 2. Calcular la nueva fecha de vencimiento
                         const today = new Date();
-                        const currentEndDate = new Date(currentSub.current_period_end);
+                        const currentEndDate = new Date(currentSub.end_date);
+                        // Si la membresía ya expiró, la extendemos desde hoy.
+                        // Si no ha expirado, la extendemos desde su fecha de fin.
                         const startDate = (currentEndDate > today) ? currentEndDate : today;
                         const newEndDate = new Date(startDate);
                         newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
 
                         // 3. Actualizar la BD con la nueva fecha
-                        await ClientSubscription.updateEndDate(id_subscription_to_extend, newEndDate);
+                        // **CAMBIO: Usa Gym.updateEndDate**
+                        await Gym.updateEndDate(id_membership_to_extend, newEndDate); 
                         
-                        console.log(`✅ Membresía ${id_subscription_to_extend} extendida para cliente ${id_client} hasta ${newEndDate.toISOString()}`);
+                        console.log(`✅ Membresía ${id_membership_to_extend} extendida para cliente ${id_client} hasta ${newEndDate.toISOString()}`);
 
                     } catch (e) {
                         console.log(`❌ Error al procesar Extensión de Membresía: ${e.message}`);
@@ -316,6 +317,7 @@ module.exports = {
 
         res.status(200).json({ received: true });
     },
+
 
     /**
      * (Esta es tu función original para obtener el estado)
