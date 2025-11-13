@@ -2,6 +2,7 @@ const ClientSubscription = require('../models/clientSubscription.js');
 const User = require('../models/user.js'); 
 const Affiliate  = require('../models/affiliate.js'); 
 const keys = require('../config/keys.js'); 
+const Gym = require('../models/gym.js');
 
 const endpointSecret = keys.stripeWebhookSecret; 
 // Clave secreta del Admin (o una clave de plataforma) para verificar el webhook
