@@ -283,6 +283,8 @@ module.exports = {
                         if (!currentSub) {
                             throw new Error(`No se encontró la membresía ${id_membership_to_extend} para extender.`);
                         }
+                        console.log(`✅ Membresia: ${JSON.stringify(currentSub)}`);
+
 
                         // **¡NUEVA LÓGICA DE TURNO!**
                         // 2. Buscar el turno activo para este gimnasio
