@@ -2,16 +2,19 @@ const ClientSubscription = require('../models/clientSubscription.js');
 const User = require('../models/user.js'); 
 const Affiliate  = require('../models/affiliate.js'); 
 const keys = require('../config/keys.js'); 
+// **CORRECCIÓN 1: Importar el modelo Gym (que tiene Gym.findById)**
 const Gym = require('../models/gym.js');
 
 const endpointSecret = keys.stripeWebhookSecret; 
-// Clave secreta del Admin (o una clave de plataforma) para verificar el webhook
-// Es más seguro usar la clave de la cuenta que *recibe* el webhook
 const adminStripe = require('stripe')(keys.stripeAdminSecretKey); 
 
 module.exports = {
 
-        async createExtensionIntent(req, res, next) {
+    /**
+     * ¡NUEVA FUNCIÓN!
+     * Crea un PaymentIntent (pago único) para extender una membresía existente.
+     */
+    async createExtensionIntent(req, res, next) {
         try {
             const id_client = req.user.id;
 
@@ -25,17 +28,17 @@ module.exports = {
             }
 
             // 2. Obtener los detalles del plan (precio, duración)
-            const plan = await Gym.findById(activeSub.id_plan);
+            // **CORRECCIÓN 2: Usar Gym.findById (del modelo gym.js)**
+            const plan = await Gym.findById(activeSub.id_plan); 
             if (!plan || !plan.price || !plan.duration_days) {
                 return res.status(400).json({
                     success: false,
                     message: 'No se pudieron encontrar los detalles del plan de membresía.'
                 });
             }
-            // Asumimos que el precio está guardado en centavos (ej. 10000 para $100.00)
             const amountInCents = Math.round(plan.price * 100); 
 
-            // 3. Obtener la compañía (Gimnasio) para usar su clave secreta y su ID de Stripe
+            // 3. Obtener la compañía (Gimnasio)
             const company = await User.findCompanyById(activeSub.id_company);
             if (!company || !company.stripeSecretKey || !company.stripePublishableKey) {
                 return res.status(400).json({
@@ -62,22 +65,22 @@ module.exports = {
                 });
             }
             
-            // 5. Crear una Clave Efímera (para que el SDK de Flutter pueda usar el customer)
+            // 5. Crear una Clave Efímera
             const ephemeralKey = await stripe.ephemeralKeys.create(
                 { customer: customer.id },
-                { apiVersion: '2020-08-27' } // Usa una versión de API estable
+                { apiVersion: '2020-08-27' }
             );
 
-            // 6. Crear el Payment Intent (el pago único)
-            const paymentIntent = await stripe.paymentIntents.create({
+            // 6. Crear el Payment Intent
+            // **CORRECCIÓN 3: Renombrar variable para evitar conflicto**
+            const extensionIntent = await stripe.paymentIntents.create({
                 amount: amountInCents,
                 currency: 'mxn', // o la moneda que uses
                 customer: customer.id,
-                // **CRUCIAL: La metadata para el webhook**
                 metadata: {
                     type: 'membership_extension', // Identificador
                     id_client: id_client,
-                    id_subscription_to_extend: activeSub.id, // ID de la fila en nuestra BD
+                    id_subscription_to_extend: activeSub.id, 
                     id_plan: activeSub.id_plan,
                     duration_days_to_add: plan.duration_days
                 }
@@ -86,11 +89,12 @@ module.exports = {
             // 7. Devolver todos los secretos al SDK de Flutter
             return res.status(200).json({
                 success: true,
-                clientSecret: paymentIntent.client_secret,
+                // **CORRECCIÓN 4: Usar el nuevo nombre de variable**
+                clientSecret: extensionIntent.client_secret,
                 ephemeralKey: ephemeralKey.secret,
                 customerId: customer.id,
                 publishableKey: company.stripePublishableKey,
-                gymName: company.name // Bonus: el nombre del gym para el PaymentSheet
+                gymName: company.name
             });
 
         } catch (error) {
@@ -105,8 +109,7 @@ module.exports = {
 
 
     /**
-     * NUEVA FUNCIÓN: Crea una suscripción y devuelve el PaymentIntent
-     * para el SDK nativo de Flutter.
+     * (Esta es tu función original para NUEVAS suscripciones)
      */
     async createSubscriptionIntent(req, res, next) {
         try {
@@ -141,15 +144,15 @@ module.exports = {
             }
 
             // 3. Crear la Suscripción
-            // La "magia" está en 'payment_behavior: 'default_incomplete''
-            // y 'expand: ['latest_invoice.payment_intent']'
             const subscription = await stripe.subscriptions.create({
                 customer: customer.id,
                 items: [{ price: price_id }], // El ID del precio (ej. price_1P...)
-                payment_behavior: 'default_incomplete', // No la cobra, solo la prepara
+                payment_behavior: 'default_incomplete', 
                 payment_settings: { save_default_payment_method: 'on_subscription' },
-                expand: ['latest_invoice.payment_intent'], // Pide que se genere la 1ra factura
+                expand: ['latest_invoice.payment_intent'], 
                 metadata: {
+                    // **Añadido type para diferenciar en el webhook**
+                    type: 'client_subscription', 
                     id_client: id_client,
                     id_company: id_company,
                     id_plan: id_plan
@@ -160,10 +163,8 @@ module.exports = {
             return res.status(200).json({
                 success: true,
                 subscriptionId: subscription.id,
-                // El secreto del cliente para la hoja de pago nativa
                 clientSecret: subscription.latest_invoice.payment_intent.client_secret, 
                 customerId: customer.id,
-                // La clave pública del entrenador (NO LA SECRETA)
                 publishableKey: company.stripePublishableKey 
             });
 
@@ -179,7 +180,7 @@ module.exports = {
 
     /**
      * WEBHOOK DE STRIPE - ACTUALIZADO
-     * Escucha eventos de facturas (invoice) en lugar de checkout
+     * (Con la lógica de extensión que añadimos)
      */
     async stripeWebhook(req, res, next) {
         
@@ -191,7 +192,6 @@ module.exports = {
                 console.log('❌ Error en Webhook: Faltan claves STRIPE_ADMIN_SECRET_KEY o STRIPE_WEBHOOK_SECRET.');
                 return res.status(500).send('Error de configuración del webhook.');
             }
-            // Ya usamos 'adminStripe' definido al inicio del archivo
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
         
         } catch (err) {
@@ -213,8 +213,9 @@ module.exports = {
                     const subscription = await adminStripe.subscriptions.retrieve(subscriptionId);
                     const metadata = subscription.metadata;
 
-                    // Asegurarnos que es una suscripción de cliente y no un payout
-                    if (metadata.type === 'client_subscription') {
+                    // Asegurarnos que es una suscripción de cliente
+                    // (Tu código original tenía 'client_subscription', lo respetamos)
+                    if (metadata.type === 'client_subscription') { 
                         // 1. Crear el registro de suscripción
                         const subscriptionData = {
                             id_client: metadata.id_client,
@@ -255,45 +256,24 @@ module.exports = {
                  const accountId = account.id;
                  const chargesEnabled = account.charges_enabled;
                  console.log(`Webhook 'account.updated': ${accountId}, charges_enabled: ${chargesEnabled}`);
-                 // (Aquí iría tu lógica para actualizar 'chargesEnabled' en la tabla 'company')
                  break;
 
-            // --- **NUEVO CASO: PAGO DE COMISIÓN (TIENDA -> ENTRENADOR)** ---
+            // --- Caso 3: Pago de Comisión O Extensión de Membresía ---
             case 'payment_intent.succeeded':
-                const paymentIntent = event.data.object;
+                // (Esta variable solo existe en este 'case', por lo que no hay conflicto)
+                const paymentIntent = event.data.object; 
                 const metadata = paymentIntent.metadata;
 
-                // Verificamos si es un pago de comisión
+                // **Flujo A: Es un pago de comisión de Afiliado**
                 if (metadata.type === 'commission_payout') {
                     console.log('✅ Webhook: Detectado pago de comisión (Directo Tienda->Entrenador).');
                     const id_vendor = metadata.id_vendor;
                     const id_affiliate = metadata.id_affiliate;
 
                     try {
-                        // **LÓGICA: Marcar como pagado en nuestra BD**
-                        // El dinero ya se movió automáticamente a la cuenta del Entrenador
-                        // porque el 'paymentIntent' se creó usando la clave del Entrenador.
                         await Affiliate.markAsPaid(id_vendor, id_affiliate);
                         console.log(`✅ Comisiones marcadas como 'paid' para afiliado ${id_affiliate} de tienda ${id_vendor}`);
                         
-                    } catch (e) {
-                        console.log(`❌ Error al procesar Payout de Comisión: ${e.message}`);
-                    }
-                }
-                break;
-
-             case 'payment_intent.succeeded':
-                const paymentIntent = event.data.object;
-                const metadata = paymentIntent.metadata;
-
-                // **Flujo A: Es un pago de comisión de Afiliado**
-                if (metadata.type === 'commission_payout') {
-                    console.log('✅ Webhook: Detectado pago de comisión (Directo Tienda->Entrenador).');
-                    // ... (Tu lógica existente de 'Affiliate.markAsPaid' no cambia)
-                    
-                    try {
-                        await Affiliate.markAsPaid(metadata.id_vendor, metadata.id_affiliate);
-                        console.log(`✅ Comisiones marcadas como 'paid' para afiliado ${metadata.id_affiliate}`);
                     } catch (e) {
                         console.log(`❌ Error al procesar Payout de Comisión: ${e.message}`);
                     }
@@ -313,15 +293,9 @@ module.exports = {
                         }
 
                         // 2. Calcular la nueva fecha de vencimiento
-                        // Lógica: Usar la fecha de fin actual, o HOY (la que sea más tarde)
-                        // y sumarle los días del plan.
                         const today = new Date();
                         const currentEndDate = new Date(currentSub.current_period_end);
-                        
-                        // Determinar la fecha de inicio para la extensión
                         const startDate = (currentEndDate > today) ? currentEndDate : today;
-
-                        // Calcular la nueva fecha de fin
                         const newEndDate = new Date(startDate);
                         newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
 
@@ -334,7 +308,7 @@ module.exports = {
                         console.log(`❌ Error al procesar Extensión de Membresía: ${e.message}`);
                     }
                 }
-                break;   
+                break;
             
             default:
                 console.log(`Evento de Webhook no manejado: ${event.type}`);
@@ -344,10 +318,9 @@ module.exports = {
     },
 
     /**
-     * Verifica el estado de la suscripción de un cliente
+     * (Esta es tu función original para obtener el estado)
      */
     async getSubscriptionStatus(req, res, next) {
-        // (Esta función sigue igual y es correcta)
         try {
             const id_client = req.user.id; // El ID del cliente logueado
             const data = await ClientSubscription.findActiveByClient(id_client);
