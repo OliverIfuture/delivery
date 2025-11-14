@@ -225,4 +225,30 @@ POS.getSumOfExpensesByShift = (id_shift) => {
     `;
     return db.one(sql, id_shift);
 };
+
+POS.findSalesByDateRange = (id_company, startDate, endDate) => {
+    const sql = `
+        SELECT 
+            s.id,
+            s.id_shift,
+            s.id_client,
+            s.sale_details,
+            s.total,
+            s.payment_method,
+            s.created_at,
+            s.day_pass_token,
+            u.name AS client_name,
+            u.lastname AS client_lastname
+        FROM 
+            pos_sales AS s
+        LEFT JOIN 
+            users AS u ON s.id_client = u.id
+        WHERE 
+            s.id_company = $1 
+            AND s.created_at BETWEEN $2 AND $3
+        ORDER BY 
+            s.created_at DESC
+    `;
+    return db.manyOrNone(sql, [id_company, startDate, endDate]);
+};
 module.exports = POS;
