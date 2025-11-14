@@ -84,36 +84,37 @@ POS.updateProductStock = (id_product, quantity_sold) => {
 // (En models/pos.js)
 
 POS.createSale = (sale) => {
-    const sql = `
-        INSERT INTO pos_sales(
-            id_shift,
-            id_company,
-            id_user_staff,
-            id_client, 
-            sale_details,
-            subtotal,
-            total,
-            payment_method,
-            created_at,
-            day_pass_token -- <-- ¡CAMBIO! Columna añadida
-        )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) -- <-- ¡CAMBIO! ($9 a $10)
-        RETURNING id
-    `;
-    return db.one(sql, [
-        sale.id_shift,
-        sale.id_company,
-        sale.id_user_staff,
-        sale.id_client, // Puede ser null
-        JSON.stringify(sale.sale_details),
-        sale.subtotal,
-        sale.total,
-        sale.payment_method,
-        new Date(),
-        sale.day_pass_token // <-- ¡CAMBIO! Parámetro añadido
-    ]);
+    // Consulta SQL "limpiada" sin caracteres invisibles
+    const sql = `
+        INSERT INTO pos_sales(
+            id_shift,
+            id_company,
+            id_user_staff,
+            id_client,
+            sale_details,
+            subtotal,
+            total,
+            payment_method,
+            created_at,
+            day_pass_token
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
+    `;
+    
+    return db.one(sql, [
+        sale.id_shift,
+        sale.id_company,
+        sale.id_user_staff,
+        sale.id_client,
+        JSON.stringify(sale.sale_details), // Asegurarse de que los detalles sean JSON
+        sale.subtotal,
+        sale.total,
+        sale.payment_method,
+        new Date(),
+        sale.day_pass_token
+    ]);
 };
-
 // Obtiene todas las ventas de un turno (para el corte de caja)
 POS.getSalesByShift = (id_shift) => {
     const sql = `
