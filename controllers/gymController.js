@@ -48,16 +48,14 @@ module.exports = {
      * **FUNCIÓN MODIFICADA (G2.1b) - (Reemplaza a 'checkIn')**
      * Maneja el escaneo del QR (ahora un JWT) en la entrada del gimnasio.
      */
+/**
+     * **FUNCIÓN ACTUALIZADA (Maneja JWT y Pases de Día)**
+     * Maneja el escaneo del QR en la entrada del gimnasio.
+     */
     async checkInWithToken(req, res, next) {
         try {
-            // El Kiosco/Tablet envía el token que escaneó
             const { qr_token } = req.body; 
-            // El Kiosco/Tablet está logueado, así que sabemos a qué gimnasio pertenece
             const id_company_gym = req.user.mi_store; 
-            console.log(`id_company_gym: ${id_company_gym}`);
-                        console.log(`qr_token: ${qr_token}`);
-
-
 
             if (!id_company_gym) {
                 return res.status(403).json({ success: false, message: 'Dispositivo no autorizado.' });
@@ -66,61 +64,90 @@ module.exports = {
                  return res.status(400).json({ success: false, message: 'QR inválido.' });
             }
             
-            let payload;
-            
-            // 1. Verificar el QR (JWT)
+            let id_client_scanned = null;
+            let denial_reason = 'QR Inválido';
+
+            // --- INICIO DE LA NUEVA LÓGICA ---
+
             try {
-                payload = jwt.verify(qr_token, keys.secretOrKey);
-                console.log(`payload: ${payload}`);
+                // --- INTENTO 1: ¿Es un QR de Miembro (JWT)? ---
+                const payload = jwt.verify(qr_token, keys.secretOrKey);
+                
+                // Si llegamos aquí, ES un JWT
+                id_client_scanned = payload.id_client; // Obtenemos el ID del cliente
+                console.log(`[CheckIn] Token JWT detectado. Cliente ID: ${id_client_scanned}`);
+                denial_reason = 'Membresía Expirada o Inexistente'; // Razón por defecto si falla el siguiente paso
+
+                const activeMembership = await Gym.findActiveMembership(id_client_scanned, id_company_gym);
+
+                if (activeMembership) {
+                    // --- ACCESO CONCEDIDO (MIEMBRO) ---
+                    await Gym.logAccess(id_company_gym, id_client_scanned, true, 'Membresía Activa');
+                    const client = await User.findById(id_client_scanned, () => {}); 
+
+                    return res.status(200).json({
+                        success: true,
+                        access_granted: true,
+                        message: `¡Bienvenido, ${client ? client.name : ''}!`,
+                        data: {
+                            client_name: client ? `${client.name} ${client.lastname}` : 'Miembro',
+                            plan_name: activeMembership.plan_name,
+                            expires: activeMembership.end_date
+                        }
+                    });
+                }
+                
+                // Si no hay membresía activa, el 'catch' de abajo lo manejará (denegado)
 
             } catch (e) {
-                // Si el token es inválido o expiró
-                console.log(`Intento de acceso fallido: ${e.message}`);
-                await Gym.logAccess(id_company_gym, null, false, 'QR Inválido o Expirado');
-                return res.status(401).json({ 
-                    success: false, 
-                    access_granted: false,
-                    message: 'QR Inválido o Expirado. Vuelve a cargar el QR en tu app.' 
-                });
-            }
+                // --- INTENTO 2: ¿Es un QR de Pase de Día (Token Crudo)? ---
+                // (El 'catch' se activa si jwt.verify() falla, lo cual es esperado para Pases de Día)
+                console.log(`[CheckIn] No es un JWT (${e.message}). Buscando como Pase de Día...`);
 
-            // 2. Extraer el ID del cliente del payload del token
-            const id_client_scanned = payload.id;
+                const activeDayPass = await Gym.findActiveDayPass(qr_token, id_company_gym);
 
-            // 3. Verificar Membresía Activa (Lógica que ya teníamos)
-            const activeMembership = await Gym.findActiveMembership(id_client_scanned, id_company_gym);
-            console.log(`Datos del clietnte: ${id_client_scanned} : ${id_company_gym}`);
+                if (activeDayPass) {
+                    // --- ACCESO CONCEDIDO (PASE DE DÍA) ---
+                    
+                    // ¡Importante! Marcamos el pase como 'usado' para que no se pueda volver a escanear
+                    await Gym.useDayPass(qr_token);
+                    
+                    // Registramos el acceso (sin ID de cliente, ya que es un visitante)
+                    await Gym.logAccess(id_company_gym, null, true, 'Pase de Día Válido');
 
-
-            if (activeMembership) {
-                // --- ACCESO CONCEDIDO ---
-                await Gym.logAccess(id_company_gym, id_client_scanned, true, 'Membresía Activa');
-                const client = await User.findById(id_client_scanned, () => {}); 
-
-                return res.status(200).json({
-                    success: true,
-                    access_granted: true,
-                    message: `¡Bienvenido, ${client ? client.name : ''}!`,
-                    data: {
-                        client_name: client ? `${client.name} ${client.lastname}` : 'Miembro',
-                        plan_name: activeMembership.plan_name,
-                        expires: activeMembership.end_date
-                    }
-                });
-
-            } else {
-                // --- ACCESO DENEGADO ---
-                await Gym.logAccess(id_company_gym, id_client_scanned, false, 'Membresía Expirada o Inexistente');
+                    return res.status(200).json({
+                        success: true,
+                        access_granted: true,
+                        message: '¡Bienvenido! (Pase de Día)',
+                        data: {
+                            client_name: 'VISITANTE',
+                            plan_name: `Pase de ${activeDayPass.duration_hours} horas`,
+                            expires: activeDayPass.expires_at
+                        }
+                    });
+                }
                 
-                return res.status(401).json({
-                    success: false,
-                    access_granted: false,
-                    message: 'Acceso Denegado: Membresía expirada o no encontrada.',
-                });
+                // Si no es un JWT y tampoco es un Pase de Día activo,
+                // la variable 'denial_reason' se queda como 'QR Inválido'
+                // o 'Membresía Expirada' (si el JWT fue válido pero la membresía no).
             }
+
+            // --- FIN DE LA NUEVA LÓGICA ---
+
+
+            // --- ACCESO DENEGADO (General) ---
+            // Si llegamos aquí, es porque ambas verificaciones fallaron
+            console.log(`[CheckIn] ACCESO DENEGADO. Razón: ${denial_reason}`);
+            await Gym.logAccess(id_company_gym, id_client_scanned, false, denial_reason);
+            
+            return res.status(401).json({
+                success: false,
+                access_granted: false,
+                message: `Acceso Denegado: ${denial_reason}.`,
+            });
 
         } catch (error) {
-            console.log(`Error en gymController.checkInWithToken: ${error}`);
+            console.log(`Error fatal en gymController.checkInWithToken: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error interno al procesar el acceso',
