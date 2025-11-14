@@ -22,6 +22,7 @@ module.exports = (app) => {
     app.get('/api/gym/my-history', passport.authenticate('jwt', { session: false }), gymController.getMembershipHistory);
     app.get('/api/gym/history-by-shift/:id_shift', passport.authenticate('jwt', { session: false }), gymController.getMembershipHistoryByShift);
     // (Admin) Crear un nuevo plan
+    app.get('/api/gym/memberships/by-range', passport.authenticate('jwt', { session: false }), gymController.getMembershipsByDateRange);
     app.post('/api/gym/plans/create', passport.authenticate('jwt', { session: false }), gymController.createMembershipPlan);
 
     // (Admin) Actualizar un plan
