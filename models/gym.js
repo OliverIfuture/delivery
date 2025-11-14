@@ -269,4 +269,34 @@ Gym.findMembershipHistoryByShift = (id_shift) => {
     return db.manyOrNone(sql, id_shift);
 };
 
+// ... (tu código existente: createMembership, findById, etc.) ...
+
+/**
+ * (Kiosco) Busca un Pase de Día (token crudo) que esté activo
+ * y no haya sido usado.
+ */
+Gym.findActiveDayPass = (token, id_company) => {
+    const sql = `
+        SELECT id, duration_hours, expires_at
+        FROM gym_day_passes
+        WHERE token = $1 
+          AND id_company = $2
+          AND status = 'active'
+          AND expires_at > NOW()
+    `;
+    return db.oneOrNone(sql, [token, id_company]);
+};
+
+/**
+ * (Kiosco) Marca un Pase de Día como 'usado' después de escanearlo.
+ */
+Gym.useDayPass = (token) => {
+    const sql = `
+        UPDATE gym_day_passes
+        SET status = 'used', scanned_at = $1
+        WHERE token = $2
+    `;
+    return db.none(sql, [new Date(), token]);
+};
+
 module.exports = Gym;
