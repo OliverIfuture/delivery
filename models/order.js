@@ -1787,21 +1787,21 @@ SELECT
     s.client_name,
     s.client_id,
     
-    -- COALESCE previene que el valor sea NULL si una venta no tiene productos,
-    -- devolviendo un array JSON vacío '[]' en su lugar.
-    -- FILTER (WHERE ohp.id IS NOT NULL) evita que se agregue un objeto [null]
-    -- si la venta existe pero no tiene productos en la tabla de detalles.
     COALESCE(
         json_agg(
             json_build_object(
-                'id', ohp.id,
-                'product_name', ohp.product_name,
-                'product_price', ohp.product_price,
-                'image_product', ohp.image_product,
-                'product_coast', ohp.product_coast,
-                'reference', ohp.reference,
-                'quantity', ohp.quantity,
-                'id_product', ohp.id_product -- Asumiendo que este campo existe en 'order_has_products'
+                -- **INICIO DE LA CORRECCIÓN (COALESCE)**
+                -- Reemplazamos todos los campos 'ohp.campo'
+                -- con COALESCE(ohp.campo, valor_por_defecto)
+                'id', COALESCE(ohp.id, 0),
+                'product_name', COALESCE(ohp.product_name, 'Producto no disponible'),
+                'product_price', COALESCE(ohp.product_price, 0),
+                'image_product', COALESCE(ohp.image_product, ''),
+                'product_coast', COALESCE(ohp.product_coast, 0),
+                'reference', COALESCE(ohp.reference, s.reference),
+                'quantity', COALESCE(ohp.quantity, 0),
+                'id_product', COALESCE(ohp.id_product, 0)
+                -- **FIN DE LA CORRECCIÓN**
             )
         ) FILTER (WHERE ohp.id IS NOT NULL),
         '[]'::json
@@ -1809,26 +1809,23 @@ SELECT
     
 FROM
     public.sales AS s
-    
--- Usamos LEFT JOIN para asegurar que la venta se muestre
--- incluso si, por alguna razón, no tuviera productos asociados.
 LEFT JOIN
     public.order_sales AS ohp ON s.reference = ohp.reference
         
 WHERE
- s.date BETWEEN $2 AND $3
+    -- **¡CORRECCIÓN AÑADIDA!**
+    -- Filtrar por la compañía (tienda) del usuario
+    s.name_store = $1
     
-    -- Opcional: Nos aseguramos de traer solo ventas completadas
-    AND s.status = 'SUCCES' 
+    AND s.date BETWEEN $2 AND $3
+	    AND s.status = 'SUCCES' OR s.status = 'success'
+
     
 GROUP BY
-    -- Agrupamos por el ID de la venta para que json_agg funcione correctamente
     s.id
     
 ORDER BY
-    -- Mostramos las ventas más recientes primero
     s.date DESC, s.hour DESC;
-
     `;
     return db.manyOrNone(sql, [id, startDate, endDate]);
 }
