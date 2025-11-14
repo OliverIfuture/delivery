@@ -3135,5 +3135,25 @@ async createServiceWithSchedule(req, res, next) {
             });
         }
     },
+
+  async getAllServicesGym(req, res, next) {
+        try {
+            
+            const id = req.params.id;
+            const data = await Product.getAllServicesGym(id);
+             console.log(`Planes de gym recibidos: ${JSON.stringify(data)}`);
+              return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+            
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'error al obtener los planes'
+            });
+        }
+    },
  
 }
