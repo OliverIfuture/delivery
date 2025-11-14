@@ -182,4 +182,6 @@ module.exports = (app, upload) => {
         passport.authenticate('jwt', { session: false }), 
         productsControllers.findById
     );
+      app.get('/api/products/getAllServicesGym/:id', productsControllers.getAllServicesGym);
+      
 }
