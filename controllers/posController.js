@@ -42,73 +42,66 @@ module.exports = {
 
     // --- VENTAS (SALES) ---
 
+// (En controllers/posController.js)
+
+    /**
+     * POST /api/pos/sale
+     * Registra una venta de productos Y/O pases de día
+     */
     async processSale(req, res, next) {
         try {
-            let sale = req.body; 
-            sale.id_company = req.user.mi_store;
-            sale.id_user_staff = req.user.id;
-
-            // 1. Encontrar el turno activo
-            const activeShift = await POS.findActiveShift(sale.id_company, sale.id_user_staff);
-            if (!activeShift) {
-                return res.status(400).json({ success: false, message: 'No hay un turno de caja abierto. Inicia un turno primero.' });
+            // 1. Leer TODOS los datos del body, incluyendo el nuevo token
+            const { 
+                id_shift, 
+                id_client, 
+                sale_details, 
+                subtotal, 
+                total, 
+                payment_method,
+                day_pass_token // <-- ¡CAMBIO! Leer el token
+            } = req.body;
+    
+            const id_company = req.user.mi_store;
+            const id_user_staff = req.user.id;
+    
+            if (!id_shift || !sale_details || !payment_method) {
+                return res.status(400).json({ success: false, message: 'Faltan datos (shift, details, payment).' });
             }
-            sale.id_shift = activeShift.id;
-
-            // 2. Guardar la venta principal en 'pos_sales' (para el corte de caja)
-            // (Gracias a la corrección en models/pos.js, esto ahora funciona)
-            const saleData = await POS.createSale(sale);
-            sale.id = saleData.id; 
-            console.log(`POS: Venta registrada ${sale.id} en el turno ${sale.id_shift}`);
-
-            // 3. Iterar el carrito y procesar cada item
-            const productsSold = sale.sale_details; // El carrito
-            
-            for (const item of productsSold) {
-                
-                if (item.id.toString().startsWith('plan-')) {
-                    
-                    // --- ES UNA MEMBRESÍA ---
-                    if (!sale.id_client) {
-                        console.log(`Error Venta ${sale.id}: Membresía ${item.name} sin id_client.`);
-                        continue;
-                    }
-                    
-                    // **CORRECCIÓN: Usar 'item.duration_days' (del toSaleDetailJson)**
-                    let endDate = new Date();
-                    endDate.setDate(endDate.getDate() + parseInt(item.duration_days || 1));
-
-                    const membership = {
-                        id_client: sale.id_client,
-                        id_company: sale.id_company,
-                        plan_name: item.name,
-                        price: item.price,
-                        end_date: endDate,
-                        payment_method: sale.payment_method,
-                        payment_id: `pos-sale-${sale.id}` 
-                    };
-                    
-                    await Gym.createMembership(membership);
-                    console.log(`POS: Membresía ${item.name} creada para cliente ${sale.id_client}`);
-
-                } else {
-                    // --- ES UN PRODUCTO FÍSICO ---
-                    
-                    // **CORRECCIÓN: Usar 'item.qty' (del toSaleDetailJson)**
-                    await POS.updateProductStock(item.id, item.qty || 1);
-                    console.log(`POS: Stock de producto ${item.id} actualizado.`);
+    
+            // 2. Construir el objeto 'sale' COMPLETO
+            const sale = {
+                id_shift: id_shift,
+                id_company: id_company,
+                id_user_staff: id_user_staff,
+                id_client: id_client || null, // Permitir nulo
+                sale_details: sale_details,
+                subtotal: subtotal,
+                total: total,
+                payment_method: payment_method,
+                day_pass_token: day_pass_token || null // <-- ¡CAMBIO! Añadirlo al objeto
+            };
+    
+            // 3. Crear el registro de Venta (ahora 'sale' contiene el token)
+            const data = await POS.createSale(sale);
+            const saleId = data.id;
+    
+            // 4. Bucle para actualizar el stock (esta lógica es importante y ya debería estar allí)
+            for (const product of sale_details) {
+                // No actualizar stock de membresías o pases de día (que están en pos_products)
+                if (product.isMembership === false && product.name?.toUpperCase() !== 'VISITA') { 
+                    await POS.updateProductStock(product.id, product.quantity);
                 }
             }
-
-            return res.status(201).json({ 
-                success: true, 
-                message: 'Venta registrada exitosamente', 
-                data: { id: sale.id } 
+    
+            return res.status(201).json({
+                success: true,
+                message: 'Venta registrada exitosamente.',
+                data: { id: saleId }
             });
 
         } catch (error) {
             console.log(`Error en posController.processSale: ${error}`);
-            return res.status(501).json({ success: false, message: 'Error al procesar la venta', error: error.message });
+            return res.status(501).json({ success: false, message: 'Error al registrar la venta', error: error.message });
         }
     },
 
