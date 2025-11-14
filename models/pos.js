@@ -125,6 +125,7 @@ POS.getSalesByShift = (id_shift) => {
             s.total,
             s.payment_method,
             s.created_at,
+            s.day_pass_token, -- <-- ¡ESTA ES LA LÍNEA QUE FALTABA!
             u.name AS client_name,
             u.lastname AS client_lastname
         FROM 
