@@ -299,4 +299,31 @@ Gym.useDayPass = (token) => {
     return db.none(sql, [new Date(), token]);
 };
 
+Gym.findMembershipsByDateRange = (id_company, startDate, endDate) => {
+    const sql = `
+        SELECT 
+            m.id,
+            m.id_client,
+            m.plan_name,
+            m.price,
+            m.start_date,
+            m.end_date,
+            m.payment_method,
+            m.created_at,
+            m.id_shift,
+            u.name AS client_name,
+            u.lastname AS client_lastname
+        FROM 
+            gym_memberships AS m
+        LEFT JOIN 
+            users AS u ON m.id_client = u.id
+        WHERE 
+            m.id_company = $1 
+            AND m.created_at BETWEEN $2 AND $3
+        ORDER BY 
+            m.created_at DESC
+    `;
+    return db.manyOrNone(sql, [id_company, startDate, endDate]);
+};
+
 module.exports = Gym;
