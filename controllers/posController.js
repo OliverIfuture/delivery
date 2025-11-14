@@ -40,14 +40,6 @@ module.exports = {
         }
     },
 
-    // --- VENTAS (SALES) ---
-
-// (En controllers/posController.js)
-
-    /**
-     * POST /api/pos/sale
-     * Registra una venta de productos Y/O pases de día
-     */
     async processSale(req, res, next) {
         try {
             // 1. Leer TODOS los datos del body, incluyendo el nuevo token
