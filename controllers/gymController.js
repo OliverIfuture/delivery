@@ -54,6 +54,10 @@ module.exports = {
             const { qr_token } = req.body; 
             // El Kiosco/Tablet está logueado, así que sabemos a qué gimnasio pertenece
             const id_company_gym = req.user.mi_store; 
+            console.log(`id_company_gym: ${id_company_gym}`);
+                        console.log(`qr_token: ${qr_token}`);
+
+
 
             if (!id_company_gym) {
                 return res.status(403).json({ success: false, message: 'Dispositivo no autorizado.' });
@@ -67,6 +71,8 @@ module.exports = {
             // 1. Verificar el QR (JWT)
             try {
                 payload = jwt.verify(qr_token, keys.secretOrKey);
+                console.log(`payload: ${payload}`);
+
             } catch (e) {
                 // Si el token es inválido o expiró
                 console.log(`Intento de acceso fallido: ${e.message}`);
