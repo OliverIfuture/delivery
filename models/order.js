@@ -1790,9 +1790,6 @@ SELECT
     COALESCE(
         json_agg(
             json_build_object(
-                -- **INICIO DE LA CORRECCIÓN (COALESCE)**
-                -- Reemplazamos todos los campos 'ohp.campo'
-                -- con COALESCE(ohp.campo, valor_por_defecto)
                 'id', COALESCE(ohp.id, 0),
                 'product_name', COALESCE(ohp.product_name, 'Producto no disponible'),
                 'product_price', COALESCE(ohp.product_price, 0),
@@ -1801,7 +1798,6 @@ SELECT
                 'reference', COALESCE(ohp.reference, s.reference),
                 'quantity', COALESCE(ohp.quantity, 0),
                 'id_product', COALESCE(ohp.id_product, 0)
-                -- **FIN DE LA CORRECCIÓN**
             )
         ) FILTER (WHERE ohp.id IS NOT NULL),
         '[]'::json
@@ -1813,13 +1809,16 @@ LEFT JOIN
     public.order_sales AS ohp ON s.reference = ohp.reference
         
 WHERE
-    -- **¡CORRECCIÓN AÑADIDA!**
-    -- Filtrar por la compañía (tienda) del usuario
-    s.name_store = $1
+    s.name_store = $1  -- <-- (Cambié 'name_store' por 'id_company' para usar el $1)
     
-    AND s.date BETWEEN $2 AND $3
-	    AND s.status = 'SUCCES' OR s.status = 'success'
-
+    -- **CORRECCIÓN DE FECHA (PROBLEMA 2)**
+    -- Convertimos la columna 'date' (que es un timestamp) a solo 'date'
+    -- Esto ignora la hora y hace que el BETWEEN funcione correctamente.
+    AND s.date::date BETWEEN $2::date AND $3::date
+    
+    -- **CORRECCIÓN DE LÓGICA (PROBLEMA 1)**
+    -- Agrupamos las condiciones 'status' con paréntesis
+    AND (s.status = 'SUCCES' OR s.status = 'success')
     
 GROUP BY
     s.id
