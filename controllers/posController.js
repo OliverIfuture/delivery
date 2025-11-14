@@ -288,4 +288,25 @@ module.exports = {
             return res.status(501).json({ success: false, message: 'Error al registrar gasto', error: error.message });
         }
     },
+
+    async getSalesByDateRange(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const { start, end } = req.query; // Llegan como ?start=...&end=...
+
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Usuario no autorizado.' });
+            }
+            if (!start || !end) {
+                return res.status(400).json({ success: false, message: 'Faltan las fechas de inicio o fin.' });
+            }
+
+            const data = await POS.findSalesByDateRange(id_company, start, end);
+            return res.status(200).json(data);
+
+        } catch (error) {
+            console.log(`Error en posController.getSalesByDateRange: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener ventas por rango', error: error.message });
+        }
+    },
 };
