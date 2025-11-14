@@ -93,5 +93,54 @@ GymAdmin.getTodayAccessLogs = (id_company) => {
     return db.manyOrNone(sql, [id_company]);
 };
 
+GymAdmin.getWeeklySalesChart = (id_company) => {
+    const sql = `
+        -- 1. Crear una serie de los últimos 7 días (Hoy, Ayer, etc.)
+        WITH days_series AS (
+            SELECT generate_series(
+                NOW()::date - interval '6 days',
+                NOW()::date,
+                '1 day'
+            )::date AS day
+        ),
+        
+        -- 2. Obtener todas las ventas (Membresías + Productos)
+        all_sales AS (
+            SELECT 
+                created_at::date AS sale_date, 
+                price AS total 
+            FROM gym_memberships 
+            WHERE id_company = $1 AND created_at >= NOW()::date - interval '6 days'
+            
+            UNION ALL
+            
+            SELECT 
+                created_at::date AS sale_date, 
+                total 
+            FROM pos_sales 
+            WHERE id_company = $1 AND created_at >= NOW()::date - interval '6 days'
+        ),
+
+        -- 3. Agrupar las ventas por día
+        daily_sales AS (
+            SELECT 
+                sale_date,
+                SUM(total) as total_sales
+            FROM all_sales
+            GROUP BY sale_date
+        )
+
+        -- 4. Unir la serie de días con las ventas agrupadas
+        SELECT 
+            TO_CHAR(d.day, 'YYYY-MM-DD') AS sale_day, -- Formato ISO
+            COALESCE(ds.total_sales, 0) AS total_sales
+        FROM days_series d
+        LEFT JOIN daily_sales ds ON d.day = ds.sale_date
+        ORDER BY
+            d.day ASC;
+    `;
+    return db.manyOrNone(sql, [id_company]);
+};
+
 
 module.exports = GymAdmin;
