@@ -387,5 +387,26 @@ async getMembershipHistoryByShift(req, res, next) {
             return res.status(501).json({ success: false, message: 'Error al obtener historial del turno', error: error.message });
         }
     },
+
+    async getMembershipsByDateRange(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const { start, end } = req.query;
+
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Usuario no autorizado.' });
+            }
+            if (!start || !end) {
+                return res.status(400).json({ success: false, message: 'Faltan las fechas de inicio o fin.' });
+            }
+
+            const data = await Gym.findMembershipsByDateRange(id_company, start, end);
+            return res.status(200).json(data);
+
+        } catch (error) {
+            console.log(`Error en gymController.getMembershipsByDateRange: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener membresías por rango', error: error.message });
+        }
+    },
     
 };
