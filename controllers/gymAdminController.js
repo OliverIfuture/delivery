@@ -56,4 +56,21 @@ module.exports = {
         }
     },
 
+        async getWeeklySalesChart(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Usuario no autorizado.' });
+            }
+            const data = await GymAdmin.getWeeklySalesChart(id_company);
+            return res.status(200).json(data); // Devuelve la lista directamente
+        } catch (error) {
+            console.log(`Error en gymAdminController.getWeeklySalesChart: ${error}`);
+            return res.status(501).json({
+                success: false, message: 'Error al obtener datos del gráfico',
+                error: error.message
+            });
+        }
+    }
+
 };
