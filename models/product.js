@@ -2608,4 +2608,14 @@ Product.findById = (id_product) => {
     return db.oneOrNone(sql, id_product);
 };
 
+Product.getAllServicesGym = (id) =>{
+	const sql = `
+	SELECT * FROM  gym_membership_plans  where id_company = $1
+ORDER BY id ASC 
+ 
+ `;
+return db.manyOrNone(sql, id);
+
+}
+
 module.exports = Product;
