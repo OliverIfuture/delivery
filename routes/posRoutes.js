@@ -20,7 +20,7 @@ module.exports = (app) => {
     app.put('/api/pos/products/update', passport.authenticate('jwt', { session: false }), posController.updateProduct);
     app.post('/api/pos/generate-day-pass', passport.authenticate('jwt', { session: false }), posController.generateDayPass);
     // (Opcional: delete product, etc.)
-
+   app.get('/api/pos/sales/by-range', passport.authenticate('jwt', { session: false }), posController.getSalesByDateRange);
     app.get('/api/pos/shifts/totals/:id_shift', passport.authenticate('jwt', { session: false }), posController.getShiftTotals);
 
     /**
