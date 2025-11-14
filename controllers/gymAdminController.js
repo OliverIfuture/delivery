@@ -1,4 +1,4 @@
-const GymAdmin = require('../models/gym_admin.js');
+const GymAdmin = require('../models/gymAdmin.js');
 
 module.exports = {
 
