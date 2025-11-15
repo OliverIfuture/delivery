@@ -1,10 +1,10 @@
+// (Asegúrate de que estos 'imports' estén al inicio)
 const ClientSubscription = require('../models/clientSubscription.js');
 const User = require('../models/user.js'); 
 const Affiliate  = require('../models/affiliate.js'); 
 const keys = require('../config/keys.js'); 
-// **CAMBIO: Importamos Gym y POS**
-const Gym = require('../models/gym.js');
-const Pos = require('../models/pos.js'); // <-- ¡NUEVO IMPORT!
+const Gym = require('../models/gym.js'); // <-- Modelo clave para Gimnasios
+const Pos = require('../models/pos.js'); // <-- Modelo clave para el Webhook
 
 const endpointSecret = keys.stripeWebhookSecret; 
 const adminStripe = require('stripe')(keys.stripeAdminSecretKey); 
@@ -12,42 +12,67 @@ const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 module.exports = {
 
     /**
-     * ¡NUEVA FUNCIÓN!
-     * Crea un PaymentIntent (pago único) para extender una membresía existente.
-     * (Usa la tabla 'gym_memberships')
+     * --- ¡FUNCIÓN MODIFICADA! ---
+     * POST /api/subscriptions/create-extension-intent
+     * * Esta función ahora maneja AMBOS casos:
+     * 1. Si el cliente NO tiene membresía, usa el 'id_plan' del body (Nueva Compra).
+     * 2. Si el cliente SÍ tiene membresía, ignora el 'id_plan' y usa los datos
+     * de su membresía activa (Extensión).
      */
     async createExtensionIntent(req, res, next) {
         try {
             const id_client = req.user.id;
-            console.log(`[ExtIntent] Iniciando para cliente: ${id_client}`);
+            
+            // --- ¡CAMBIO! Leemos el 'id_plan' que viene de la app (tabProduct)
+            // Si viene de (tab_qr), este valor será 'null'.
+            const { id_plan } = req.body; 
 
-            // 1. Buscar la suscripción activa del cliente (Usando Gym model)
+            console.log(`[Intent] Iniciando para cliente: ${id_client}, Plan (opcional): ${id_plan}`);
+
+            let planToPurchase; // El 'plan' (de gym_membership_plans) que se va a pagar
+            let membershipToExtend; // La 'membresía' (de gym_memberships) que se va a extender
+            let companyId; // El ID de la compañía (gimnasio)
+
+            // 1. Buscar la membresía activa del cliente
             const activeSub = await Gym.findActiveByClientId(id_client); 
             
-            if (!activeSub || !activeSub.plan_name || !activeSub.id_company) {
-                console.log(`[ExtIntent] ERROR: No se encontró suscripción activa para el cliente ${id_client}.`);
-                return res.status(400).json({
-                    success: false,
-                    message: 'No se encontró una membresía activa para extender.'
-                });
+            if (activeSub) {
+                // --- CASO 1: EXTENSIÓN (El usuario ya tiene una membresía) ---
+                // (Esta es la lógica que ya teníamos para la tab_qr)
+                console.log(`[Intent] Usuario tiene membresía activa. Extendiendo...`);
+                membershipToExtend = activeSub;
+                companyId = activeSub.id_company;
+                
+                // Buscamos el plan basado en el nombre de la membresía activa
+                planToPurchase = await Gym.findPlanByName(activeSub.plan_name, activeSub.id_company);
+                
+            } else {
+                // --- CASO 2: NUEVA COMPRA (El usuario no tiene membresía) ---
+                // (Esta es la nueva lógica para la tabProduct)
+                console.log(`[Intent] Usuario nuevo. Comprando plan ID: ${id_plan}`);
+                if (!id_plan) {
+                    return res.status(400).json({ success: false, message: 'Falta el id_plan para una nueva compra.' });
+                }
+                
+                // Buscamos el plan usando el ID que envió la app
+                planToPurchase = await Gym.findById(id_plan);
+                if (planToPurchase) {
+                    companyId = planToPurchase.id_company;
+                }
             }
 
-            // 2. Obtener los detalles del plan (precio, duración)
-            const plan = await Gym.findPlanByName(activeSub.plan_name, activeSub.id_company); 
+            // 2. Validar que encontramos un plan y una compañía
+            if (!planToPurchase || !companyId) {
+                console.log(`[Intent] ERROR: No se pudo determinar el plan o la compañía.`);
+                return res.status(400).json({ success: false, message: 'No se pudieron encontrar los detalles del plan.' });
+            }
             
-            if (!plan || !plan.price || !plan.duration_days) {
-                console.log(`[ExtIntent] ERROR: No se encontró el plan con nombre ${activeSub.plan_name}.`);
-                return res.status(400).json({
-                    success: false,
-                    message: 'No se pudieron encontrar los detalles del plan de membresía.'
-                });
-            }
-            const amountInCents = Math.round(plan.price * 100); 
+            const amountInCents = Math.round(planToPurchase.price * 100); 
 
-            // 3. Obtener la compañía (Gimnasio)
-            const company = await User.findCompanyById(activeSub.id_company);
+            // 3. Obtener la compañía (Gimnasio) para sus claves de Stripe
+            const company = await User.findCompanyById(companyId);
             if (!company || !company.stripeSecretKey || !company.stripePublishableKey) {
-                console.log(`[ExtIntent] ERROR: El gimnasio ${activeSub.id_company} no tiene claves de Stripe.`);
+                console.log(`[Intent] ERROR: El gimnasio ${companyId} no tiene claves de Stripe.`);
                 return res.status(400).json({
                     success: false,
                     message: 'El gimnasio no tiene una clave de Stripe configurada.'
@@ -78,17 +103,26 @@ module.exports = {
                 { apiVersion: '2020-08-27' }
             );
 
-            // 6. Crear el Payment Intent
+            // 6. Crear el Payment Intent (el pago único)
+            // --- ¡CAMBIO! METADATA DINÁMICA ---
+            const metadata = {
+                type: 'membership_extension', // Usamos el MISMO tipo de webhook
+                id_client: id_client,
+                id_plan: planToPurchase.id, // ¡Importante! ID del plan que se está pagando
+                duration_days_to_add: planToPurchase.duration_days
+            };
+
+            // Añadir el ID de la membresía a extender (SOLO si existe)
+            if (membershipToExtend) {
+                metadata.id_membership_to_extend = membershipToExtend.id;
+            }
+            // --- FIN DEL CAMBIO ---
+
             const extensionIntent = await stripe.paymentIntents.create({
                 amount: amountInCents,
-                currency: 'mxn', // o la moneda que uses
+                currency: 'mxn',
                 customer: customer.id,
-                metadata: {
-                    type: 'membership_extension', // Identificador
-                    id_client: id_client,
-                    id_membership_to_extend: activeSub.id, 
-                    duration_days_to_add: plan.duration_days
-                }
+                metadata: metadata // <-- Metadata actualizada
             });
 
             // 7. Devolver todos los secretos al SDK de Flutter
@@ -113,8 +147,8 @@ module.exports = {
 
 
     /**
-     * (Esta es tu función original para NUEVAS suscripciones)
-     * (Utiliza 'ClientSubscription' - La dejamos como estaba)
+     * (Esta es tu función original para NUEVAS suscripciones de Entrenador)
+     * (No hay cambios aquí)
      */
     async createSubscriptionIntent(req, res, next) {
         try {
@@ -179,7 +213,8 @@ module.exports = {
     },
 
     /**
-     * WEBHOOK DE STRIPE - ACTUALIZADO
+     * WEBHOOK DE STRIPE
+     * (Esta función maneja TODAS las confirmaciones de pago)
      */
     async stripeWebhook(req, res, next) {
         
@@ -201,7 +236,7 @@ module.exports = {
         // Manejar el evento
         switch (event.type) {
             
-            // --- Caso 1: Suscripción de Cliente Creada/Pagada (client_subscriptions) ---
+            // --- Caso 1: Suscripción de Entrenador Creada/Pagada (client_subscriptions) ---
             case 'invoice.payment_succeeded':
                 const invoice = event.data.object;
                 
@@ -222,7 +257,6 @@ module.exports = {
                             status: 'active', 
                             current_period_end: new Date(subscription.current_period_end * 1000)
                         };
-                        // Esta lógica usa tu modelo ClientSubscription
                         await ClientSubscription.create(subscriptionData);
                         console.log('✅ Webhook: Suscripción (ClientSubscription) creada para el cliente:', metadata.id_client);
 
@@ -271,55 +305,70 @@ module.exports = {
                     }
                 }
                 
-                // **Flujo B: ¡NUEVA LÓGICA! Es una extensión de membresía (gym_memberships)**
+                // --- ¡CAMBIO! LÓGICA DE WEBHOOK ACTUALIZADA ---
+                // **Flujo B: Es una extensión O COMPRA NUEVA de membresía (gym_memberships)**
                 else if (metadata.type === 'membership_extension') {
-                    console.log('✅ Webhook: Detectado pago de EXTENSIÓN (gym_memberships).');
+                    console.log('✅ Webhook: Detectado pago de GIMNASIO (membership_extension).');
                     
-                    const { id_client, id_membership_to_extend, duration_days_to_add } = metadata; 
+                    const { id_client, id_membership_to_extend, id_plan, duration_days_to_add } = metadata; 
 
                     try {
-                        // 1. Encontrar la membresía que vamos a extender
-                        const currentSub = await Gym.findMembershipById(id_membership_to_extend); 
-                        if (!currentSub) {
-                            throw new Error(`No se encontró la membresía ${id_membership_to_extend} para extender.`);
+                        // 1. Obtener los detalles del plan que se pagó
+                        const plan = await Gym.findById(id_plan);
+                        if (!plan) {
+                            throw new Error(`No se encontró el Plan (id_plan: ${id_plan}) para esta venta.`);
                         }
-                        console.log(`✅ Membresia: ${JSON.stringify(currentSub)}`);
 
-
-                        // **¡NUEVA LÓGICA DE TURNO!**
                         // 2. Buscar el turno activo para este gimnasio
-                        // ¡AQUÍ ESTÁ EL CAMBIO!
-                        const activeShift = await Pos.findActiveShiftByCompany(currentSub.id_company);
-
+                        const activeShift = await Pos.findActiveShiftByCompany(plan.id_company);
                         if (!activeShift) {
-                            console.log(`⚠️ Webhook: No se encontró turno activo para la compañía ${currentSub.id_company}. La venta se registrará sin turno.`);
+                            console.log(`⚠️ Webhook: No se encontró turno activo para la Cía. ${plan.id_company}.`);
                         }
 
                         // 3. Calcular la nueva fecha de vencimiento
-                        const today = new Date();
-                        const currentEndDate = new Date(currentSub.end_date);
-                        const startDate = (currentEndDate > today) ? currentEndDate : today;
-                        const newEndDate = new Date(startDate);
-                        newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
+                        let newEndDate = new Date();
+                        
+                        // **¡NUEVA LÓGICA!**
+                        // ¿Es una extensión o una compra nueva?
+                        // Verificamos si la metadata 'id_membership_to_extend' existe
+                        if (id_membership_to_extend) {
+                            // --- ES UNA EXTENSIÓN ---
+                            const currentSub = await Gym.findMembershipById(id_membership_to_extend);
+                            if (currentSub) {
+                                const today = new Date();
+                                const currentEndDate = new Date(currentSub.end_date);
+                                // Si la membresía actual sigue activa, extender desde el final
+                                const startDate = (currentEndDate > today) ? currentEndDate : today; 
+                                newEndDate = new Date(startDate);
+                                newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
+                                
+                                // Desactivar la membresía vieja
+                                await Gym.deactivateMembership(id_membership_to_extend, 'extended');
+                                console.log(`[Webhook] Membresía ${id_membership_to_extend} extendida.`);
+                            }
+                        } else {
+                            // --- ES UNA COMPRA NUEVA ---
+                            // La membresía empieza hoy y dura los días del plan
+                            newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
+                            console.log(`[Webhook] Creando nueva membresía para cliente ${id_client}.`);
+                        }
+                        // --- FIN DE LA NUEVA LÓGICA ---
 
-                        // 4. Desactivar la membresía vieja
-                        await Gym.deactivateMembership(id_membership_to_extend, 'extended');
-
-                        // 5. Crear la nueva membresía (¡AHORA CON EL ID_SHIFT!)
+                        // 4. Crear la nueva fila de membresía
                         const newMembershipData = {
                             id_client: id_client,
-                            id_company: currentSub.id_company,
-                            plan_name: currentSub.plan_name,
-                            price: currentSub.price,
+                            id_company: plan.id_company,
+                            plan_name: plan.name,
+                            price: plan.price,
                             end_date: newEndDate,
-                            payment_method: 'STRIPE_APP', // Identificador de pago
+                            payment_method: 'STRIPE_APP',
                             payment_id: paymentIntent.id,
-                            id_shift: activeShift ? activeShift.id : null // ¡AQUÍ ESTÁ LA CONEXIÓN!
+                            id_shift: activeShift ? activeShift.id : null // ¡Conectar al turno!
                         };
 
                         await Gym.createMembership(newMembershipData);
                         
-                        console.log(`✅ Membresía extendida (con turno ${activeShift?.id}) para cliente ${id_client}`);
+                        console.log(`✅ Membresía registrada (con turno ${activeShift?.id}) para cliente ${id_client}`);
 
                     } catch (e) {
                         console.log(`❌ Error al procesar Extensión de Membresía: ${e.message}`);
