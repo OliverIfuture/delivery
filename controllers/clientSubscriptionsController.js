@@ -19,42 +19,36 @@ module.exports = {
      * 2. Si el cliente SÍ tiene membresía, ignora el 'id_plan' y usa los datos
      * de su membresía activa (Extensión).
      */
+// (Esta es la función 'createExtensionIntent' en tu backend)
+
     async createExtensionIntent(req, res, next) {
         try {
             const id_client = req.user.id;
-            
-            // --- ¡CAMBIO! Leemos el 'id_plan' que viene de la app (tabProduct)
-            // Si viene de (tab_qr), este valor será 'null'.
             const { id_plan } = req.body; 
 
             console.log(`[Intent] Iniciando para cliente: ${id_client}, Plan (opcional): ${id_plan}`);
 
-            let planToPurchase; // El 'plan' (de gym_membership_plans) que se va a pagar
-            let membershipToExtend; // La 'membresía' (de gym_memberships) que se va a extender
-            let companyId; // El ID de la compañía (gimnasio)
+            let planToPurchase;
+            let membershipToExtend;
+            let companyId;
 
             // 1. Buscar la membresía activa del cliente
             const activeSub = await Gym.findActiveByClientId(id_client); 
             
             if (activeSub) {
                 // --- CASO 1: EXTENSIÓN (El usuario ya tiene una membresía) ---
-                // (Esta es la lógica que ya teníamos para la tab_qr)
                 console.log(`[Intent] Usuario tiene membresía activa. Extendiendo...`);
                 membershipToExtend = activeSub;
                 companyId = activeSub.id_company;
-                
-                // Buscamos el plan basado en el nombre de la membresía activa
                 planToPurchase = await Gym.findPlanByName(activeSub.plan_name, activeSub.id_company);
                 
             } else {
                 // --- CASO 2: NUEVA COMPRA (El usuario no tiene membresía) ---
-                // (Esta es la nueva lógica para la tabProduct)
                 console.log(`[Intent] Usuario nuevo. Comprando plan ID: ${id_plan}`);
                 if (!id_plan) {
                     return res.status(400).json({ success: false, message: 'Falta el id_plan para una nueva compra.' });
                 }
                 
-                // Buscamos el plan usando el ID que envió la app
                 planToPurchase = await Gym.findById(id_plan);
                 if (planToPurchase) {
                     companyId = planToPurchase.id_company;
@@ -81,7 +75,7 @@ module.exports = {
 
             const stripe = require('stripe')(company.stripeSecretKey);
 
-            // 4. Crear/Obtener un Cliente en Stripe (en la cuenta del Gimnasio)
+            // 4. Crear/Obtener un Cliente en Stripe
             let customer;
             const existingCustomers = await stripe.customers.list({
                 email: req.user.email,
@@ -104,36 +98,38 @@ module.exports = {
             );
 
             // 6. Crear el Payment Intent (el pago único)
-            // --- ¡CAMBIO! METADATA DINÁMICA ---
             const metadata = {
-                type: 'membership_extension', // Usamos el MISMO tipo de webhook
+                type: 'membership_extension', 
                 id_client: id_client,
-                id_plan: planToPurchase.id, // ¡Importante! ID del plan que se está pagando
+                id_plan: planToPurchase.id,
                 duration_days_to_add: planToPurchase.duration_days
             };
 
-            // Añadir el ID de la membresía a extender (SOLO si existe)
             if (membershipToExtend) {
                 metadata.id_membership_to_extend = membershipToExtend.id;
             }
-            // --- FIN DEL CAMBIO ---
 
             const extensionIntent = await stripe.paymentIntents.create({
                 amount: amountInCents,
                 currency: 'mxn',
                 customer: customer.id,
-                metadata: metadata // <-- Metadata actualizada
+                metadata: metadata
             });
 
-            // 7. Devolver todos los secretos al SDK de Flutter
+            // --- **¡AQUÍ ESTÁ LA CORRECCIÓN!** ---
+            // 7. Devolver todos los secretos ENVUELTOS en un objeto 'data'
             return res.status(200).json({
                 success: true,
-                clientSecret: extensionIntent.client_secret,
-                ephemeralKey: ephemeralKey.secret,
-                customerId: customer.id,
-                publishableKey: company.stripePublishableKey,
-                gymName: company.name
+                message: 'Intención de pago creada', // Mensaje que tu ResponseApi puede leer
+                data: { // <-- ¡LA ENVOLTURA QUE FALTABA!
+                    clientSecret: extensionIntent.client_secret,
+                    ephemeralKey: ephemeralKey.secret,
+                    customerId: customer.id,
+                    publishableKey: company.stripePublishableKey,
+                    gymName: company.name
+                }
             });
+            // --- **FIN DE LA CORRECCIÓN** ---
 
         } catch (error) {
             console.log(`Error en createExtensionIntent: ${error}`);
