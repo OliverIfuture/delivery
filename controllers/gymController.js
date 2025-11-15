@@ -266,31 +266,60 @@ module.exports = {
      * POST /api/gym/plans/create
      * (Admin Gym) Crea un nuevo plan de membresía
      */
-async createMembershipPlan(req, res, next) {
+  async createMembershipPlan(req, res, next) {
         try {
             const plan = req.body;
-            plan.id_company = req.user.mi_store;
-
-            // ¡Validación actualizada!
+            const id_company = req.user.mi_store; 
+            
             if (!plan.name || !plan.price || !plan.duration_days) {
                 return res.status(400).json({ success: false, message: 'Faltan datos (nombre, precio, días).' });
             }
-            // Si es un plan (no visita) y no tiene ID de Stripe, rechazarlo
-            if (plan.name.toUpperCase() !== 'VISITA' && !plan.stripe_price_id) {
-                 return res.status(400).json({ success: false, message: 'Falta el "Stripe Price ID". Este es necesario para pagos en la app.' });
+            
+            // 1. Obtener la compañía (Gimnasio) para usar su clave secreta
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeSecretKey) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El gimnasio no tiene una clave de Stripe configurada.'
+                });
             }
+            
+            const stripe = require('stripe')(company.stripeSecretKey);
 
-            const data = await Gym.createPlan(plan); // El modelo 'plan' ya tiene el stripe_price_id
+            // 2. Crear el Producto en Stripe
+            const stripeProduct = await stripe.products.create({
+                name: `(GYM) ${plan.name}`, // Añadimos prefijo para diferenciar
+                type: 'service', 
+            });
+
+            // 3. Crear el Precio (¡PAGO ÚNICO!) en Stripe
+            const stripePrice = await stripe.prices.create({
+                product: stripeProduct.id,
+                unit_amount: (plan.price * 100).toFixed(0), 
+                currency: 'mxn',
+                // (¡NO HAY 'recurring' block! Esto lo hace un pago único)
+            });
+
+            // 4. Asignar los IDs de Stripe a nuestro objeto de plan
+            plan.id_company = id_company;
+            plan.stripe_product_id = stripeProduct.id;
+            plan.stripe_price_id = stripePrice.id;
+
+            // 5. Guardar el plan en NUESTRA base de datos
+            const data = await Gym.createPlan(plan);
+            
             return res.status(201).json({
                 success: true,
-                message: 'Plan creado exitosamente.',
-                data: { id: data.id }
+                message: 'El plan se ha creado correctamente en Stripe y en la base de datos.',
+                data: { 'id': data.id }
             });
+
         } catch (error) {
             console.log(`Error en gymController.createMembershipPlan: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al crear el plan', error: error.message });
         }
     },
+
 
     /**
      * PUT /api/gym/plans/update
@@ -298,21 +327,57 @@ async createMembershipPlan(req, res, next) {
      */
     async updateMembershipPlan(req, res, next) {
         try {
-            const plan = req.body;
-            plan.id_company = req.user.mi_store;
+            const plan = req.body; // Viene con 'id', 'name', 'price', 'duration_days'
+            const id_company = req.user.mi_store;
+            plan.id_company = id_company;
 
             if (!plan.id) {
                 return res.status(400).json({ success: false, message: 'Falta el ID del plan.' });
             }
-            // ¡Validación actualizada!
-            if (plan.name.toUpperCase() !== 'VISITA' && !plan.stripe_price_id) {
-                 return res.status(400).json({ success: false, message: 'Falta el "Stripe Price ID".' });
+
+            // 1. Obtener el plan ANTIGUO de nuestra BD (para los IDs de Stripe)
+            const oldPlan = await Gym.findById(plan.id);
+            if (!oldPlan) {
+                return res.status(404).json({ success: false, message: 'Plan no encontrado.' });
             }
 
-            await Gym.updatePlan(plan); // El modelo 'plan' ya tiene el stripe_price_id
+            // 2. Obtener la compañía (Gimnasio) para usar su clave secreta
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeSecretKey) {
+                return res.status(400).json({ success: false, message: 'El gimnasio no tiene clave de Stripe.' });
+            }
+            
+            const stripe = require('stripe')(company.stripeSecretKey);
+
+            // 3. Actualizar el Producto en Stripe (solo el nombre)
+            await stripe.products.update(oldPlan.stripe_product_id, {
+                name: `(GYM) ${plan.name}`
+            });
+
+            // 4. Crear un NUEVO Precio (Stripe no permite editar montos)
+            const stripePrice = await stripe.prices.create({
+                product: oldPlan.stripe_product_id, // Usar el mismo producto
+                unit_amount: (plan.price * 100).toFixed(0), 
+                currency: 'mxn',
+            });
+            
+            // 5. (Opcional) Desactivar el precio ANTIGUO
+            try {
+                 await stripe.prices.update(oldPlan.stripe_price_id, { active: false });
+            } catch(e) {
+                 console.log('Advertencia: No se pudo desactivar el precio antiguo de Stripe. Puede ignorarse.');
+            }
+
+            // 6. Asignar el ID del NUEVO precio a nuestro plan
+            plan.stripe_product_id = oldPlan.stripe_product_id; // El ID del producto no cambia
+            plan.stripe_price_id = stripePrice.id; // ¡Este es el ID del nuevo precio!
+
+            // 7. Actualizar el plan en NUESTRA base de datos
+            await Gym.updatePlan(plan);
+            
             return res.status(200).json({
                 success: true,
-                message: 'Plan actualizado exitosamente.'
+                message: 'Plan actualizado exitosamente en Stripe y en la base de datos.'
             });
         } catch (error) {
             console.log(`Error en gymController.updateMembershipPlan: ${error}`);
