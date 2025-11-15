@@ -84,20 +84,20 @@ Gym.createPlan = (plan) => {
             is_active,
             created_at,
             updated_at,
-            stripe_product_id, -- <-- ¡AÑADIDO!
-            stripe_price_id -- <-- ¡AÑADIDO!
+            stripe_product_id,
+            stripe_price_id
         )
-        VALUES($1, $2, $3, $4, $5, $6, $6, $7, $8) RETURNING id -- <-- ¡CAMBIADO A $8!
+        VALUES($1, $2, $3, $4, $5, $6, $6, $7, $8) RETURNING id 
     `;
     return db.one(sql, [
-        plan.id_company, // $1
-        plan.name, // $2
-        plan.price, // $3
-        plan.duration_days, // $4
-        plan.is_active ?? true, // $5
-        new Date(), // $6
-        plan.stripe_product_id, // $7
-        plan.stripe_price_id // $8
+        plan.id_company,
+        plan.name,
+        plan.price,
+        plan.duration_days,
+        plan.is_active ?? true, 
+        new Date(),
+        plan.stripe_product_id,
+        plan.stripe_price_id 
     ]);
 };
 
