@@ -75,56 +75,60 @@ Gym.findById = (id_plan) => {
  * (Admin Gym) Crea un nuevo plan (producto) de membresía
  */
 Gym.createPlan = (plan) => {
-    const sql = `
-        INSERT INTO gym_membership_plans(
-            id_company,
-            name,
-            price,
-            duration_days,
-            is_active,
-            created_at,
-            updated_at,
-            stripe_price_id -- <-- ¡AÑADIDO!
-        )
-        VALUES($1, $2, $3, $4, $5, $6, $6, $7) RETURNING id -- <-- ¡CAMBIADO A $7!
-    `;
-    return db.one(sql, [
-        plan.id_company,
-        plan.name,
-        plan.price,
-        plan.duration_days,
-        plan.is_active ?? true,
-        new Date(),
-        plan.stripe_price_id // <-- ¡AÑADIDO!
-    ]);
+    const sql = `
+        INSERT INTO gym_membership_plans(
+            id_company,
+            name,
+            price,
+            duration_days,
+            is_active,
+            created_at,
+            updated_at,
+            stripe_product_id, -- <-- ¡AÑADIDO!
+            stripe_price_id -- <-- ¡AÑADIDO!
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $6, $7, $8) RETURNING id -- <-- ¡CAMBIADO A $8!
+    `;
+    return db.one(sql, [
+        plan.id_company, // $1
+        plan.name, // $2
+        plan.price, // $3
+        plan.duration_days, // $4
+        plan.is_active ?? true, // $5
+        new Date(), // $6
+        plan.stripe_product_id, // $7
+        plan.stripe_price_id // $8
+    ]);
 };
 
 /**
- * (Admin Gym) Actualiza un plan de membresía
- */
+ * (Admin Gym) Actualiza un plan de membresía
+ */
 Gym.updatePlan = (plan) => {
-    const sql = `
-        UPDATE gym_membership_plans
-        SET
-            name = $1,
-            price = $2,
-            duration_days = $3,
-            is_active = $4,
-            updated_at = $5,
-            stripe_price_id = $6 -- <-- ¡AÑADIDO!
-        WHERE
-            id = $7 AND id_company = $8
-    `;
-    return db.none(sql, [
-        plan.name,
-        plan.price,
-        plan.duration_days,
-        plan.is_active ?? true,
-        new Date(),
-        plan.stripe_price_id, // <-- ¡AÑADIDO!
-        plan.id,
-        plan.id_company
-    ]);
+    const sql = `
+        UPDATE gym_membership_plans
+        SET
+            name = $1,
+            price = $2,
+            duration_days = $3,
+            is_active = $4,
+            updated_at = $5,
+            stripe_product_id = $6, -- <-- ¡AÑADIDO!
+            stripe_price_id = $7 -- <-- ¡AÑADIDO!
+        WHERE
+            id = $8 AND id_company = $9
+    `;
+    return db.none(sql, [
+        plan.name, // $1
+        plan.price, // $2
+        plan.duration_days, // $3
+        plan.is_active ?? true, // $4
+        new Date(), // $5
+        plan.stripe_product_id, // $6
+        plan.stripe_price_id, // $7
+        plan.id, // $8
+        plan.id_company // $9
+    ]);
 };
 
 /**
