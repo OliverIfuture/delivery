@@ -266,16 +266,21 @@ module.exports = {
      * POST /api/gym/plans/create
      * (Admin Gym) Crea un nuevo plan de membresía
      */
-    async createMembershipPlan(req, res, next) {
+async createMembershipPlan(req, res, next) {
         try {
             const plan = req.body;
-            plan.id_company = req.user.mi_store; // Asignar al gimnasio del admin logueado
+            plan.id_company = req.user.mi_store;
 
+            // ¡Validación actualizada!
             if (!plan.name || !plan.price || !plan.duration_days) {
                 return res.status(400).json({ success: false, message: 'Faltan datos (nombre, precio, días).' });
             }
+            // Si es un plan (no visita) y no tiene ID de Stripe, rechazarlo
+            if (plan.name.toUpperCase() !== 'VISITA' && !plan.stripe_price_id) {
+                 return res.status(400).json({ success: false, message: 'Falta el "Stripe Price ID". Este es necesario para pagos en la app.' });
+            }
 
-            const data = await Gym.createPlan(plan);
+            const data = await Gym.createPlan(plan); // El modelo 'plan' ya tiene el stripe_price_id
             return res.status(201).json({
                 success: true,
                 message: 'Plan creado exitosamente.',
@@ -299,8 +304,12 @@ module.exports = {
             if (!plan.id) {
                 return res.status(400).json({ success: false, message: 'Falta el ID del plan.' });
             }
+            // ¡Validación actualizada!
+            if (plan.name.toUpperCase() !== 'VISITA' && !plan.stripe_price_id) {
+                 return res.status(400).json({ success: false, message: 'Falta el "Stripe Price ID".' });
+            }
 
-            await Gym.updatePlan(plan);
+            await Gym.updatePlan(plan); // El modelo 'plan' ya tiene el stripe_price_id
             return res.status(200).json({
                 success: true,
                 message: 'Plan actualizado exitosamente.'
@@ -310,7 +319,6 @@ module.exports = {
             return res.status(501).json({ success: false, message: 'Error al actualizar el plan', error: error.message });
         }
     },
-
     /**
      * DELETE /api/gym/plans/delete/:id
      * (Admin Gym) Elimina un plan
