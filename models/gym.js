@@ -83,9 +83,10 @@ Gym.createPlan = (plan) => {
             duration_days,
             is_active,
             created_at,
-            updated_at
+            updated_at,
+            stripe_price_id -- <-- ¡AÑADIDO!
         )
-        VALUES($1, $2, $3, $4, $5, $6, $6) RETURNING id
+        VALUES($1, $2, $3, $4, $5, $6, $6, $7) RETURNING id -- <-- ¡CAMBIADO A $7!
     `;
     return db.one(sql, [
         plan.id_company,
@@ -93,7 +94,8 @@ Gym.createPlan = (plan) => {
         plan.price,
         plan.duration_days,
         plan.is_active ?? true,
-        new Date()
+        new Date(),
+        plan.stripe_price_id // <-- ¡AÑADIDO!
     ]);
 };
 
@@ -108,9 +110,10 @@ Gym.updatePlan = (plan) => {
             price = $2,
             duration_days = $3,
             is_active = $4,
-            updated_at = $5
+            updated_at = $5,
+            stripe_price_id = $6 -- <-- ¡AÑADIDO!
         WHERE
-            id = $6 AND id_company = $7
+            id = $7 AND id_company = $8
     `;
     return db.none(sql, [
         plan.name,
@@ -118,6 +121,7 @@ Gym.updatePlan = (plan) => {
         plan.duration_days,
         plan.is_active ?? true,
         new Date(),
+        plan.stripe_price_id, // <-- ¡AÑADIDO!
         plan.id,
         plan.id_company
     ]);
@@ -139,7 +143,7 @@ Gym.deletePlan = (id_plan, id_company) => {
  */
 Gym.findPlansByCompany = (id_company) => {
     const sql = `
-        SELECT id, name, price, duration_days
+        SELECT id, name, price, duration_days, stripe_price_id -- <-- ¡AÑADIDO!
         FROM gym_membership_plans
         WHERE id_company = $1 AND is_active = true
         ORDER BY price ASC
