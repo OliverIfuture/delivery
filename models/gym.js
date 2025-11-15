@@ -75,30 +75,30 @@ Gym.findById = (id_plan) => {
  * (Admin Gym) Crea un nuevo plan (producto) de membresía
  */
 Gym.createPlan = (plan) => {
-    const sql = `
-        INSERT INTO gym_membership_plans(
-            id_company,
-            name,
-            price,
-            duration_days,
-            is_active,
-            created_at,
-            updated_at,
+    const sql = `
+        INSERT INTO gym_membership_plans(
+            id_company,
+            name,
+            price,
+            duration_days,
+            is_active,
+            created_at,
+            updated_at,
             stripe_product_id,
-            stripe_price_id
-        )
-        VALUES($1, $2, $3, $4, $5, $6, $6, $7, $8) RETURNING id 
-    `;
-    return db.one(sql, [
-        plan.id_company,
-        plan.name,
-        plan.price,
-        plan.duration_days,
-        plan.is_active ?? true, 
-        new Date(),
-        plan.stripe_product_id,
-        plan.stripe_price_id 
-    ]);
+            stripe_price_id
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $6, $7, $8) RETURNING id
+    `;
+    return db.one(sql, [
+        plan.id_company,
+        plan.name,
+        plan.price,
+        plan.duration_days,
+        plan.is_active ?? true,
+        new Date(),
+        plan.stripe_product_id,
+        plan.stripe_price_id
+    ]);
 };
 
 /**
