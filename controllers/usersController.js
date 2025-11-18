@@ -1167,8 +1167,7 @@ async deleteAccout(req, res, next) {
         },
 
 
-
-async createWithImageUserAndCompany(req, res, next) {
+    async createWithImageUserAndCompany(req, res, next) {
         try {
             // 1. Parsear los datos JSON
             const user = JSON.parse(req.body.user);
@@ -1195,25 +1194,29 @@ async createWithImageUserAndCompany(req, res, next) {
                 company.logo = urlLogo;
             }
 
-            // 4. Crear usuario y compañía en la base de datos
-            const data = await User.createWithImageUserAndCompany(user, company);
-
-            // 5. **ASIGNACIÓN DE ROLES CONDICIONAL (LÓGICA ACTUALIZADA)**
-            // Se comprueba si la compañía es para agendar citas.
-            if (company.wantsappointments === true) {
-                // Si es de tipo consulta/servicio, se asignan los roles de Cliente y Servicio.
-                console.log('Asignando roles para negocio de SERVICIOS.');
-                await Rol.create(data.id, 1); // ROL: Cliente
-                await Rol.create(data.id, 4); // ROL: Servicio/Consultorio (se asume que el ID es 4)
-            } else {
-                // Si es de tipo tienda, se asignan los roles originales.
-                console.log('Asignando roles para negocio de TIENDA.');
-                await Rol.create(data.id, 1); // ROL: Cliente
-                await Rol.create(data.id, 2); // ROL: Repartidor
-                await Rol.create(data.id, 3); // ROL: Tienda
+            // 4. **¡NUEVO! Procesar la Imagen de Portada (Card)**
+            if (files.imageCard && files.imageCard.length > 0) {
+                const companyCardFile = files.imageCard[0];
+                const pathCard = `company_card_${Date.now()}`;
+                const urlCard = await storage(companyCardFile, pathCard);
+                company.image_card = urlCard; // Asignamos la URL al objeto
             }
 
-            // 7. Respuesta exitosa
+            // 5. Crear usuario y compañía en la base de datos
+            const data = await User.createWithImageUserAndCompany(user, company);
+
+            // 6. Asignación de Roles
+            if (company.wantsappointments === true) {
+                console.log('Asignando roles para negocio de SERVICIOS.');
+                await Rol.create(data.id, 1); // Cliente
+                await Rol.create(data.id, 4); // Servicio/Consultorio
+            } else {
+                console.log('Asignando roles para negocio de TIENDA.');
+                await Rol.create(data.id, 1); // Cliente
+                await Rol.create(data.id, 2); // Repartidor
+                await Rol.create(data.id, 3); // Tienda
+            }
+
             return res.status(201).json({
                 success: true,
                 message: 'El registro se realizó correctamente, ahora inicia sesión',
@@ -1229,8 +1232,7 @@ async createWithImageUserAndCompany(req, res, next) {
                 error: error
             });
         }
-    }  ,
-
+    },
 
             async getAllCompanies(req, res, next) {
         try {
