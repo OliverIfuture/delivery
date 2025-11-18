@@ -19,7 +19,7 @@ module.exports = (app) => {
      */
     app.post('/api/subscriptions/webhook', clientSubscriptionsController.stripeWebhook);
     app.post('/api/subscriptions/create-extension-intent', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createExtensionIntent);
-    app.put('/api/subscriptions/getFree/:id', clientSubscriptionsController.stripeWebhook);
+    app.put('/api/subscriptions/getFree/:id', clientSubscriptionsController.getFree);
 
 
     // --- GET ---
