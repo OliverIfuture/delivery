@@ -80,10 +80,11 @@ module.exports = (app, upload) => {
     app.get('/api/users/getAvailableTrainers', passport.authenticate('jwt', { session: false }), UsersController.getAvailableTrainers);
     
     
-app.post('/api/users/createWithImageUserAndCompany', upload.fields([
-    { name: 'image', maxCount: 1 }, 
-    { name: 'imageLogo', maxCount: 1 } 
-]), UsersController.createWithImageUserAndCompany);
+    app.post('/api/users/createWithImageUserAndCompany', upload.fields([
+        { name: 'image', maxCount: 1 },
+        { name: 'imageLogo', maxCount: 1 },
+        { name: 'imageCard', maxCount: 1 } // <-- ¡NUEVO CAMPO AÑADIDO!
+    ]), UsersController.createWithImageUserAndCompany);
 
     app.get(
         '/api/users/generateAccessQr', 
