@@ -414,4 +414,24 @@ module.exports = {
         }
     },
 
+        async getFree(req, res, next) {
+        try {
+            const id_client = req.params.id; 
+            const data = await User.getFree(id_client); 
+
+            return res.status(200).json({
+                success: true,
+                message:'plan actualizado'
+            });
+
+        } catch (error) {
+            console.log(`Error en getSubscriptionStatus: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener el estado de la suscripción',
+                error: error
+            });
+        }
+    },
+
 };
