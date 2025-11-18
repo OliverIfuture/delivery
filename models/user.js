@@ -1594,5 +1594,17 @@ User.updateStreak = (id_user) => {
     return db.one(sql, id_user);
 };
 
+User.getFree = (id_client ) => {
+    const sql = `
+    UPDATE
+        users
+    SET
+        id_entrenador = true,
+    WHERE
+        id = $1
+    `;
+    return db.none(sql,id_client);
+}
+
 
 module.exports = User;
