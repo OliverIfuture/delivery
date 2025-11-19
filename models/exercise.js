@@ -80,7 +80,7 @@ Exercise.findByCompany = (id_company) => {
     FROM
         exercises
     WHERE
-        id_company = $1
+       id_company IS NULL or id_company = $1
     ORDER BY
         muscle_group, name;
     `;
