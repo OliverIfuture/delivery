@@ -28,5 +28,6 @@ module.exports = (app) => {
      * Obtiene el estado de la suscripción del cliente.
      */
     app.get('/api/subscriptions/getStatus', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getSubscriptionStatus);
+    app.get('/api/subscriptions/getStatusTrainer', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getSubscriptionStatusTrainer);
 
 };
