@@ -117,7 +117,7 @@ Exercise.getByCompany = (id_company) => {
 Exercise.getGlobalExercises = () => {
     const sql = `
         SELECT * FROM exercises
-        WHERE id_company IS NULL
+        WHERE id_company IS NULL or id_company = 4
         ORDER BY name ASC
     `;
     return db.manyOrNone(sql);
