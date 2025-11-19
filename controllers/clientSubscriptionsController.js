@@ -414,6 +414,38 @@ module.exports = {
         }
     },
 
+        async getSubscriptionStatusTrainer(req, res, next) {
+        try {
+            const id_client = req.user.id; 
+            const data = await ClientSubscription.findActiveByClient(id_client); 
+            
+            if (!data) {
+                return res.status(200).json({
+                    success: true,
+                    status: 'inactive',
+                    message: 'No se encontró una membresía activa.'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                status: data.status, 
+                data: {
+                    plan_name: data.plan_name,
+                    end_date: data.end_date
+                }
+            });
+
+        } catch (error) {
+            console.log(`Error en getSubscriptionStatus: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener el estado de la suscripción',
+                error: error
+            });
+        }
+    },
+
         async getFree(req, res, next) {
         try {
             const id_client = req.params.id; 
