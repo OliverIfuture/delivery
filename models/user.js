@@ -61,7 +61,8 @@ User.findById = (id, callback) => {
         keystore,
         balance,
 	mi_store,
-	id_entrenador
+	id_entrenador,
+	current_streak
     FROM
         users
     WHERE
