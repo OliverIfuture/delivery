@@ -171,6 +171,8 @@ User.findByUserId = (id) => {
         U.balance,
 	U.mi_store,
 	U.id_entrenador,
+	U.current_streak,
+	U.last_workout_date,
         json_agg(
             json_build_object(
                 'id', R.id,
