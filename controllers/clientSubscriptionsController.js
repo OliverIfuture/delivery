@@ -431,11 +431,8 @@ module.exports = {
             return res.status(200).json({
                 success: true,
                 status: data.status, 
-                data: {
-                    plan_name: data.id_plan,
-                    status: data.status,
-                    current_period_end: data.end_date
-                }
+                data: data // <--- ¡ASÍ DE SIMPLE!
+
             });
 
         } catch (error) {
