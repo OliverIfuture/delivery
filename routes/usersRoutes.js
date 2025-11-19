@@ -18,7 +18,7 @@ module.exports = (app, upload) => {
     app.get('/api/users/findByCode/:code/:id',UsersController.findByCode);
 
     app.post('/api/users/createWithImageDelivery', upload.array('image', 1), UsersController.createWithImageDelivery);
-    app.post('/api/users/filesupload/:pathName', upload.array('imageFile', 1), UsersController.filesupload);
+    app.post('/api/users/filesupload/:pathName', upload.array('imageFile', 1), UsersController.filesuploadPdf);
 
     app.post('/api/users/create', upload.array('image', 1), UsersController.registerWithImage);
     app.post('/api/users/registerWithOutImage', UsersController.registerWithOutImage);
