@@ -48,9 +48,11 @@ module.exports = (file, pathImage, deletePathImage) => {
             if (pathImage != null || pathImage != undefined) {
 
                 let fileUpload = bucket.file(`${pathImage}`);
+                const mimeType = file.mimetype || 'image/png';
+
                 const blobStream = fileUpload.createWriteStream({
                     metadata: {
-                        contentType: 'image/png', // O el tipo de archivo correcto
+                        contentType: mimeType, // <--- AQUÍ ESTÁ EL CAMBIO (Dinámico)
                         metadata: {
                             firebaseStorageDownloadTokens: uuid, // <-- Usa el UUID generado
                         }
