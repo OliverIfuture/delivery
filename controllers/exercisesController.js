@@ -31,8 +31,11 @@ async create(req, res, next) {
         try {
             // 1. Parsear datos
             const exercise = JSON.parse(req.body.exercise);
-            exercise.idCompany = req.user.mi_store;
-
+            if (req.user.mi_store == 4) {
+                exercise.idCompany = null; 
+            } else {
+                exercise.idCompany = req.user.mi_store;
+            }
             // 2. --- DETECCIÓN DE ARCHIVOS ROBUSTA ---
             let file = null;
             
