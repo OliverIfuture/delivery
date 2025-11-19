@@ -3,6 +3,7 @@ const { format } = require('util');
 const env = require('../config/env')
 const url = require('url');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path'); // IMPORTANTE: Para manejar extensiones
 
 const storage = new Storage({
     projectId: "premium-delivery-app",
@@ -18,9 +19,9 @@ const bucket = storage.bucket("gs://premium-delivery-app.appspot.com/");
 module.exports = (file, pathImage, deletePathImage) => {
     return new Promise((resolve, reject) => {
         
-        const uuid = uuidv4(); // Generar token único
+        const uuid = uuidv4();
 
-        console.log('delete path', deletePathImage)
+        // --- Lógica de Borrado (Sin Cambios) ---
         if (deletePathImage) {
             if (deletePathImage != null || deletePathImage != undefined) {
                 const parseDeletePathImage = url.parse(deletePathImage)
@@ -38,34 +39,28 @@ module.exports = (file, pathImage, deletePathImage) => {
         if (pathImage) {
             if (pathImage != null || pathImage != undefined) {
 
-                let fileUpload = bucket.file(`${pathImage}`);
+                // **CORRECCIÓN 1: Asegurar la extensión en el nombre del archivo**
+                // Si 'pathImage' no tiene extensión, se la agregamos basada en el archivo original.
+                const fileExtension = path.extname(file.originalname); // ej: .jpg
+                let finalPath = pathImage;
                 
-                // **CORRECCIÓN: Detección robusta del tipo MIME**
-                // Intentamos obtener el tipo del archivo de varias formas.
-                // Si falla, y el nombre tiene extensión pdf, forzamos application/pdf.
-                // Si no, fallback a image/png.
-                let mimeType = file.mimetype;
-                
-                if (!mimeType && file.originalname) {
-                    if (file.originalname.toLowerCase().endsWith('.pdf')) {
-                        mimeType = 'application/pdf';
-                    } else if (file.originalname.toLowerCase().endsWith('.jpg') || file.originalname.toLowerCase().endsWith('.jpeg')) {
-                        mimeType = 'image/jpeg';
-                    } else if (file.originalname.toLowerCase().endsWith('.gif')) {
-                        mimeType = 'image/gif';
-                    }
-                }
-                
-                // Fallback final
-                if (!mimeType) {
-                    mimeType = 'image/png';
+                // Si el pathImage que mandaste no termina con la extensión, agrégasela
+                if (!pathImage.endsWith(fileExtension)) {
+                     finalPath = `${pathImage}${fileExtension}`;
                 }
 
-                console.log(`Subiendo archivo: ${pathImage} con tipo: ${mimeType}`);
+                let fileUpload = bucket.file(`${finalPath}`);
+                
+                // **CORRECCIÓN 2: Usar el mimetype real del archivo**
+                // Multer ya nos da el mimetype correcto (ej. 'image/jpeg', 'application/pdf')
+                // No necesitamos adivinarlo.
+                const mimeType = file.mimetype || 'application/octet-stream';
+
+                console.log(`Subiendo a: ${finalPath} | Tipo: ${mimeType}`);
 
                 const blobStream = fileUpload.createWriteStream({
                     metadata: {
-                        contentType: mimeType, // <-- Usamos el tipo detectado
+                        contentType: mimeType, // <--- ESTO ES CLAVE para que el navegador sepa qué es
                         metadata: {
                             firebaseStorageDownloadTokens: uuid,
                         }
@@ -79,12 +74,13 @@ module.exports = (file, pathImage, deletePathImage) => {
                 });
 
                 blobStream.on('finish', () => {
-                    // Codificamos el nombre para la URL
-                    const encodedFileName = encodeURIComponent(fileUpload.name);
+                    // Codificar el nombre del archivo para la URL (maneja espacios y caracteres raros)
+                    const encodedFileName = encodeURIComponent(fileUpload.name); // fileUpload.name incluye la carpeta
 
+                    // Construir la URL pública
                     const url = format(`https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedFileName}?alt=media&token=${uuid}`);
                     
-                    console.log('URL DE CLOUD STORAGE ', url);
+                    console.log('URL GENERADA:', url);
                     resolve(url);
                 });
 
