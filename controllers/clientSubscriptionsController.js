@@ -432,8 +432,9 @@ module.exports = {
                 success: true,
                 status: data.status, 
                 data: {
-                    plan_name: data.plan_name,
-                    end_date: data.end_date
+                    plan_name: data.id_plan,
+                    status: data.status,
+                    current_period_end: data.end_date
                 }
             });
 
