@@ -1899,51 +1899,47 @@ async filesupload(req, res, next) {
         }
     },
 
+// (Dentro de module.exports)
+
     async filesuploadPdf(req, res, next) {
         try {
+            // Con upload.array('imageFile'), req.files es un ARRAY: [ fileObject ]
             const files = req.files;
-            console.log('Archivos recibidos:', Object.keys(files));
 
-            if (!files || Object.keys(files).length === 0) {
+            console.log('Archivos procesando:', files ? files.length : 0);
+
+            if (!files || files.length === 0) {
                 return res.status(400).json({
                     success: false,
-                    message: 'No se envió ningún archivo',
+                    message: 'Error: No se recibió ningún archivo o el nombre del campo no es "imageFile".',
                 });
             }
 
-            const path = req.params.pathName;
+            // CAMBIO CLAVE: Accedemos directamente al índice 0 del array
+            const file = files[0]; 
 
-            // **CORRECCIÓN:** Buscar el archivo en cualquiera de las claves posibles
-            // El provider envía 'imageFile', pero dejamos las otras por compatibilidad
-            let file;
-            if (files.imageFile) file = files.imageFile[0];
-            else if (files.image) file = files.image[0];
-            else if (files.imageLogo) file = files.imageLogo[0];
-
-            if (!file) {
-                 return res.status(400).json({ success: false, message: 'Campo de archivo no reconocido.' });
-            }
-
+            // Crear ruta de guardado
+            const path = req.params.pathName; // ej: 'diet_files'
             const pathImage = `${path}/${Date.now()}_${file.originalname}`;
             
-            // Subir a storage
+            // Subir a storage (Firebase/AWS/Cloudinary)
             const url = await storage(file, pathImage);
 
             if (url != undefined && url != null) {
                 return res.status(201).json({
                     success: true,
-                    message: 'Imagen/Archivo subido correctamente',
-                    data: url
+                    message: 'Archivo PDF/Imagen subido correctamente',
+                    data: url // Devolvemos la URL para que Flutter la guarde
                 });
             } else {
                 return res.status(501).json({
                     success: false,
-                    message: 'Error al subir el archivo al storage',
+                    message: 'Error interno al guardar el archivo en la nube',
                 });
             }
 
         } catch (error) {
-            console.log(`Error en filesupload: ${error}`);
+            console.log(`Error en filesuploadPdf: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error interno del servidor',
