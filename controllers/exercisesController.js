@@ -29,43 +29,44 @@ module.exports = {
      */
 async create(req, res, next) {
         try {
-            // 1. Parsear los datos
+            // 1. Parsear datos
             const exercise = JSON.parse(req.body.exercise);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(exercise)}`);
+            exercise.idCompany = req.user.mi_store;
 
-            // Asignar ID de la compañía del usuario logueado
-            exercise.idCompany = req.user.mi_store; 
-
-            // 2. Manejo del Archivo (Validación Segura)
-            const files = req.files;
-
-            // --- CORRECCIÓN AQUÍ: Validar que 'files' exista antes de leer 'length' ---
-            if (files && files.length > 0) {
-                
-                const pathImage = `exercises/${Date.now()}`; 
-                const url = await storage(files[0], pathImage);
-
-                if (url != undefined && url != null) {
-                    exercise.media_url = url; 
-                }
-                
-                // Guardar el tipo de medio
-                const mimeType = files[0].mimetype;
-                if (mimeType.startsWith('image/')) {
-                    exercise.media_type = 'image';
-                } else if (mimeType.startsWith('video/')) {
-                    exercise.media_type = 'video';
-                } else if (mimeType === 'application/pdf') {
-                    exercise.media_type = 'pdf';
-                }
+            // 2. --- DETECCIÓN DE ARCHIVOS ROBUSTA ---
+            let file = null;
+            
+            if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+                // Caso A: upload.array('image')
+                file = req.files[0];
+            } else if (req.file) {
+                // Caso B: upload.single('image')
+                file = req.file;
+            } else if (req.files && req.files['image']) {
+                 // Caso C: upload.fields(...)
+                 file = req.files['image'][0];
             }
-            // -----------------------------------------------------------------------
+
+            console.log('Archivo detectado:', file ? file.originalname : 'NINGUNO'); // Log de depuración
+            // -----------------------------------------
+
+            if (file) {
+                const pathImage = `exercises/${Date.now()}`;
+                const url = await storage(file, pathImage);
+
+                if (url) {
+                    exercise.media_url = url;
+                }
+                
+                // Detectar tipo
+                const mimeType = file.mimetype;
+                if (mimeType.startsWith('image/')) exercise.media_type = 'image';
+                else if (mimeType.startsWith('video/')) exercise.media_type = 'video';
+                else if (mimeType === 'application/pdf') exercise.media_type = 'pdf';
+            }
 
             if (!exercise.idCompany) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'No se pudo identificar la compañía.'
-                });
+                return res.status(400).json({ success: false, message: 'Compañía no identificada.' });
             }
 
             const data = await Exercise.create(exercise);
@@ -77,7 +78,7 @@ async create(req, res, next) {
             });
 
         } catch (error) {
-            console.log(`Error: ${error}`);
+            console.log(`Error en exercisesController.create: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error al crear el ejercicio',
