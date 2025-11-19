@@ -68,9 +68,6 @@ async create(req, res, next) {
                 else if (mimeType === 'application/pdf') exercise.media_type = 'pdf';
             }
 
-            if (!exercise.idCompany) {
-                return res.status(400).json({ success: false, message: 'Compañía no identificada.' });
-            }
 
             const data = await Exercise.create(exercise);
 
