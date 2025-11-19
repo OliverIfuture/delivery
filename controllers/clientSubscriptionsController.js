@@ -418,7 +418,8 @@ module.exports = {
         try {
             const id_client = req.user.id; 
             const data = await ClientSubscription.findActiveByClient(id_client); 
-            
+            console.log(`data de membresia: ${JSON.stringify(data)}`);
+
             if (!data) {
                 return res.status(200).json({
                     success: true,
