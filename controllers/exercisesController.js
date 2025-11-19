@@ -33,6 +33,8 @@ module.exports = {
         try {
             // El objeto 'exercise' viene como un string JSON en el body
             exercise = JSON.parse(req.body.exercise);
+            console.log(`Ejercicio a crear: ${exercise}`);
+       
         } catch (e) {
             console.log(`Error parseando ejercicio: ${e}`);
             return res.status(400).json({
