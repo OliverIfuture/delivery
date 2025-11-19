@@ -19,11 +19,17 @@ module.exports = (app, upload) => {
     // --- RUTAS POST ---
     // Usada para crear un nuevo ejercicio con imagen
     // (Coincide con ExerciseProvider.create)
-    app.post(
-        '/api/exercises/create', 
+app.post('/api/exercises/create', 
         passport.authenticate('jwt', { session: false }), 
-        upload.single('image'), // 'image' debe coincidir con el key en el provider
+        upload.array('image', 1), // <--- 'image' debe coincidir con Flutter
         exercisesController.create
+    );
+    
+    // Si tienes update, haz lo mismo:
+    app.put('/api/exercises/updateWithImage', 
+        passport.authenticate('jwt', { session: false }), 
+        upload.array('image', 1), 
+        exercisesController.updateWithImage
     );
 
     // --- RUTAS PUT ---
