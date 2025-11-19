@@ -29,28 +29,27 @@ module.exports = {
      */
 async create(req, res, next) {
         try {
-            // 1. Parsear los datos del ejercicio que vienen como String JSON
+            // 1. Parsear los datos
             const exercise = JSON.parse(req.body.exercise);
-            
-            // --- CORRECCIÓN 1: ASIGNAR ID_COMPANY ---
-            // El ID viene del usuario logueado (token), no del formulario
+            console.log(`Datos enviados del usuario: ${JSON.stringify(exercise)}`);
+
+            // Asignar ID de la compañía del usuario logueado
             exercise.idCompany = req.user.mi_store; 
 
-            // 2. Manejo del Archivo (Imagen/Video/PDF)
+            // 2. Manejo del Archivo (Validación Segura)
             const files = req.files;
 
-            if (files.length > 0) {
-                const pathImage = `exercises/${Date.now()}`; // Nombre del archivo en Firebase
+            // --- CORRECCIÓN AQUÍ: Validar que 'files' exista antes de leer 'length' ---
+            if (files && files.length > 0) {
                 
-                // Subir a Firebase
+                const pathImage = `exercises/${Date.now()}`; 
                 const url = await storage(files[0], pathImage);
 
-                // --- CORRECCIÓN 2: ASIGNAR URL AL OBJETO ---
                 if (url != undefined && url != null) {
-                    exercise.media_url = url; // Asignamos la URL generada
+                    exercise.media_url = url; 
                 }
                 
-                // Opcional: Guardar el tipo de medio automáticamente
+                // Guardar el tipo de medio
                 const mimeType = files[0].mimetype;
                 if (mimeType.startsWith('image/')) {
                     exercise.media_type = 'image';
@@ -60,16 +59,15 @@ async create(req, res, next) {
                     exercise.media_type = 'pdf';
                 }
             }
+            // -----------------------------------------------------------------------
 
-            // 3. Validar datos mínimos antes de guardar
             if (!exercise.idCompany) {
                 return res.status(400).json({
                     success: false,
-                    message: 'No se pudo identificar la compañía (Gimnasio) del usuario.'
+                    message: 'No se pudo identificar la compañía.'
                 });
             }
 
-            // 4. Guardar en BD
             const data = await Exercise.create(exercise);
 
             return res.status(201).json({
