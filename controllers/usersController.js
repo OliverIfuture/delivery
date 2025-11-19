@@ -1897,6 +1897,59 @@ async filesupload(req, res, next) {
                 error: error
             });
         }
-    }
+    },
+
+    async filesuploadPdf(req, res, next) {
+        try {
+            const files = req.files;
+            console.log('Archivos recibidos:', Object.keys(files));
+
+            if (!files || Object.keys(files).length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se envió ningún archivo',
+                });
+            }
+
+            const path = req.params.pathName;
+
+            // **CORRECCIÓN:** Buscar el archivo en cualquiera de las claves posibles
+            // El provider envía 'imageFile', pero dejamos las otras por compatibilidad
+            let file;
+            if (files.imageFile) file = files.imageFile[0];
+            else if (files.image) file = files.image[0];
+            else if (files.imageLogo) file = files.imageLogo[0];
+
+            if (!file) {
+                 return res.status(400).json({ success: false, message: 'Campo de archivo no reconocido.' });
+            }
+
+            const pathImage = `${path}/${Date.now()}_${file.originalname}`;
+            
+            // Subir a storage
+            const url = await storage(file, pathImage);
+
+            if (url != undefined && url != null) {
+                return res.status(201).json({
+                    success: true,
+                    message: 'Imagen/Archivo subido correctamente',
+                    data: url
+                });
+            } else {
+                return res.status(501).json({
+                    success: false,
+                    message: 'Error al subir el archivo al storage',
+                });
+            }
+
+        } catch (error) {
+            console.log(`Error en filesupload: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error interno del servidor',
+                error: error
+            });
+        }
+    },
 
 };
