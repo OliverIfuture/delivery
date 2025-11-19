@@ -34,8 +34,8 @@ WorkoutLog.create = (log) => {
         log.completed_reps,
         log.completed_weight,
         log.notes,
-        new Date(),
-        new Date()
+        log.created_at, // $11: ¡Esta es la fecha que viene de Flutter!
+        log.created_at  // $12: Usamos la misma para updated_at
     ]);
 };
 
