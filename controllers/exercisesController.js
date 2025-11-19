@@ -27,50 +27,59 @@ module.exports = {
     /**
      * Crea un nuevo ejercicio, subiendo una imagen si existe.
      */
-    async create(req, res, next) {
-        
-        let exercise;
+async create(req, res, next) {
         try {
-            // El objeto 'exercise' viene como un string JSON en el body
-            exercise = JSON.parse(req.body.exercise);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(exercise)}`);
-       
-        } catch (e) {
-            console.log(`Error parseando ejercicio: ${e}`);
-            return res.status(400).json({
-                success: false,
-                message: 'El JSON del ejercicio no es válido',
-                error: e
-            });
-        }
+            // 1. Parsear los datos del ejercicio que vienen como String JSON
+            const exercise = JSON.parse(req.body.exercise);
+            
+            // --- CORRECCIÓN 1: ASIGNAR ID_COMPANY ---
+            // El ID viene del usuario logueado (token), no del formulario
+            exercise.idCompany = req.user.mi_store; 
 
-        const files = req.files;
+            // 2. Manejo del Archivo (Imagen/Video/PDF)
+            const files = req.files;
 
-        try {
-            // Manejo de la imagen
-            if (req.file) {
-                console.log('Archivo de imagen recibido, subiendo a Firebase...');
-                // Sube el archivo a Firebase Storage
-                const data = await storage(req.file, 'exercise_images');
-                if (data && data.url) {
-                    exercise.media_url = data.url; // Asigna la URL de la imagen
+            if (files.length > 0) {
+                const pathImage = `exercises/${Date.now()}`; // Nombre del archivo en Firebase
+                
+                // Subir a Firebase
+                const url = await storage(files[0], pathImage);
+
+                // --- CORRECCIÓN 2: ASIGNAR URL AL OBJETO ---
+                if (url != undefined && url != null) {
+                    exercise.media_url = url; // Asignamos la URL generada
+                }
+                
+                // Opcional: Guardar el tipo de medio automáticamente
+                const mimeType = files[0].mimetype;
+                if (mimeType.startsWith('image/')) {
                     exercise.media_type = 'image';
+                } else if (mimeType.startsWith('video/')) {
+                    exercise.media_type = 'video';
+                } else if (mimeType === 'application/pdf') {
+                    exercise.media_type = 'pdf';
                 }
             }
-            
-            // Llama al modelo para insertar en la BD
-            const exerciseId = await Exercise.create(exercise);
-            exercise.id = exerciseId; // Asigna el ID devuelto por la BD
+
+            // 3. Validar datos mínimos antes de guardar
+            if (!exercise.idCompany) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se pudo identificar la compañía (Gimnasio) del usuario.'
+                });
+            }
+
+            // 4. Guardar en BD
+            const data = await Exercise.create(exercise);
 
             return res.status(201).json({
                 success: true,
                 message: 'Ejercicio creado correctamente',
-                data: exercise // Devuelve el ejercicio completo con su nuevo ID y URL
+                data: data.id
             });
 
-        } 
-        catch (error) {
-            console.log(`Error en exercisesController.create: ${error}`);
+        } catch (error) {
+            console.log(`Error: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error al crear el ejercicio',
@@ -78,7 +87,6 @@ module.exports = {
             });
         }
     },
-
         async delete(req, res, next) {
         try {
             const id = req.params.id;
