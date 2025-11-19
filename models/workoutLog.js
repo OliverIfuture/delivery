@@ -107,7 +107,8 @@ SELECT
         users AS u ON w.id_client = u.id
     WHERE
         w.id_company = $1
-        AND w.created_at >= CURRENT_DATE -- Filtra registros desde el inicio del día de hoy
+        -- CORRECCIÓN: Usar zona horaria de Tijuana para definir "Hoy"
+        AND (w.created_at AT TIME ZONE 'America/Mexico_City')::date = (NOW() AT TIME ZONE 'America/Tijuana')::date
     ORDER BY
         w.created_at DESC
     `;
