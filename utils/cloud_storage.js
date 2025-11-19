@@ -2,16 +2,14 @@ const { Storage } = require('@google-cloud/storage');
 const { format } = require('util');
 const env = require('../config/env')
 const url = require('url');
-const { v4: uuidv4 } = require('uuid'); // <-- Mantenemos el import aquí
-
-// const uuid = uuidv4(); // <-- ¡ELIMINADO DE AQUÍ!
+const { v4: uuidv4 } = require('uuid');
 
 const storage = new Storage({
     projectId: "premium-delivery-app",
     keyFilename: './serviceAccountKey.json'
 });
 
-const bucket = storage.bucket("gs://premium-delivery-app.appspot.com//");
+const bucket = storage.bucket("gs://premium-delivery-app.appspot.com/");
 
 /**
  * Subir el archivo a Firebase Storage
@@ -20,45 +18,59 @@ const bucket = storage.bucket("gs://premium-delivery-app.appspot.com//");
 module.exports = (file, pathImage, deletePathImage) => {
     return new Promise((resolve, reject) => {
         
-        // --- ¡NUEVO! ---
-        // Genera un UUID único PARA ESTA subida
-        const uuid = uuidv4(); 
-        // --- FIN DEL CAMBIO ---
+        const uuid = uuidv4(); // Generar token único
 
         console.log('delete path', deletePathImage)
         if (deletePathImage) {
-
             if (deletePathImage != null || deletePathImage != undefined) {
                 const parseDeletePathImage = url.parse(deletePathImage)
                 var ulrDelete = parseDeletePathImage.pathname.slice(23);
                 const fileDelete = bucket.file(`${ulrDelete}`)
 
                 fileDelete.delete().then((imageDelete) => {
-
                     console.log('se borro la imagen con exito')
                 }).catch(err => {
                     console.log('Failed to remove photo, error:', err)
                 });
-
             }
         }
-
 
         if (pathImage) {
             if (pathImage != null || pathImage != undefined) {
 
                 let fileUpload = bucket.file(`${pathImage}`);
-                const mimeType = file.mimetype || 'image/png';
+                
+                // **CORRECCIÓN: Detección robusta del tipo MIME**
+                // Intentamos obtener el tipo del archivo de varias formas.
+                // Si falla, y el nombre tiene extensión pdf, forzamos application/pdf.
+                // Si no, fallback a image/png.
+                let mimeType = file.mimetype;
+                
+                if (!mimeType && file.originalname) {
+                    if (file.originalname.toLowerCase().endsWith('.pdf')) {
+                        mimeType = 'application/pdf';
+                    } else if (file.originalname.toLowerCase().endsWith('.jpg') || file.originalname.toLowerCase().endsWith('.jpeg')) {
+                        mimeType = 'image/jpeg';
+                    } else if (file.originalname.toLowerCase().endsWith('.gif')) {
+                        mimeType = 'image/gif';
+                    }
+                }
+                
+                // Fallback final
+                if (!mimeType) {
+                    mimeType = 'image/png';
+                }
+
+                console.log(`Subiendo archivo: ${pathImage} con tipo: ${mimeType}`);
 
                 const blobStream = fileUpload.createWriteStream({
                     metadata: {
-                        contentType: mimeType, // <--- AQUÍ ESTÁ EL CAMBIO (Dinámico)
+                        contentType: mimeType, // <-- Usamos el tipo detectado
                         metadata: {
-                            firebaseStorageDownloadTokens: uuid, // <-- Usa el UUID generado
+                            firebaseStorageDownloadTokens: uuid,
                         }
                     },
                     resumable: false
-
                 });
 
                 blobStream.on('error', (error) => {
@@ -67,13 +79,9 @@ module.exports = (file, pathImage, deletePathImage) => {
                 });
 
                 blobStream.on('finish', () => {
-                    // --- ¡CAMBIO CRÍTICO AQUÍ! ---
-                    // Debemos codificar el nombre del archivo para la URL.
-                    // Esto convierte 'ad_banners/file.jpg' en 'ad_banners%2Ffile.jpg'
+                    // Codificamos el nombre para la URL
                     const encodedFileName = encodeURIComponent(fileUpload.name);
 
-                    // The public URL can be used to directly access the file via HTTP.
-                    // <-- Usa el nombre codificado
                     const url = format(`https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedFileName}?alt=media&token=${uuid}`);
                     
                     console.log('URL DE CLOUD STORAGE ', url);
@@ -85,4 +93,3 @@ module.exports = (file, pathImage, deletePathImage) => {
         }
     });
 }
-
