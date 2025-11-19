@@ -25,12 +25,6 @@ app.post('/api/exercises/create',
         exercisesController.create
     );
     
-    // Si tienes update, haz lo mismo:
-    app.put('/api/exercises/updateWithImage', 
-        passport.authenticate('jwt', { session: false }), 
-        upload.array('image', 1), 
-        exercisesController.updateWithImage
-    );
 
     // --- RUTAS PUT ---
     // (Aquí irán las rutas para actualizar, ej: updateWithImage, update)
