@@ -185,7 +185,8 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
             'lastname', U.lastname,
             'phone', U.phone,
      	    'is_trainer', U.is_trainer,
-            'image', U.image
+            'image', U.image,
+			'affiliate_referral_id', U.affiliate_referral_id
         ) AS client,
 		JSON_BUILD_OBJECT(
             'id', U2.id,
