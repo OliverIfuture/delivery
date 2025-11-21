@@ -86,7 +86,7 @@ module.exports = {
             const chargesEnabled = account.charges_enabled; // boolean
 
             // Actualizar nuestro DB
-            await User.updateChargesEnabled(id_company, chargesEnabled);
+            await User.updateStripeDataFromAdmin(id_company, chargesEnabled);
 
             return res.status(200).json({
                 success: true,
