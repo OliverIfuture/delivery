@@ -219,34 +219,44 @@ module.exports = {
      * GET /api/gym/get-membership-status/:id_client
      * (Esta función no necesita cambios)
      */
-    async getMembershipStatus(req, res, next) {
+async getMembershipStatus(req, res, next) {
         try {
             const id_client = req.params.id_client;
             
+            // Validación de seguridad básica
             if (req.user.id != id_client) {
                  return res.status(403).json({ success: false, message: 'No tienes permiso.' });
             }
             
+            // CONSULTA SQL OPTIMIZADA:
+            // 1. Obtenemos datos de la membresía (m) y de la empresa/gym (c).
+            // 2. 'DISTINCT ON (m.id_company)' asegura que solo devolvamos UNA fila por cada gimnasio distinto.
+            // 3. 'ORDER BY m.id_company, m.end_date DESC' asegura que esa fila sea la MÁS RECIENTE.
             const sql = `
-                SELECT id_company, plan_name, end_date 
-                FROM gym_memberships 
-                WHERE id_client = $1 AND status = 'active' AND end_date > NOW() 
-                ORDER BY end_date ASC 
-                LIMIT 1
+                SELECT DISTINCT ON (m.id_company) 
+                    m.id AS id_membership,
+                    m.id_company,
+                    c.name AS gym_name,
+                    c."stripeAccountId",
+                    m.plan_name,
+                    m.end_date,
+                    m.status,
+                    m.price
+                FROM gym_memberships m
+                INNER JOIN company c ON m.id_company = c.id
+                WHERE m.id_client = $1
+                ORDER BY m.id_company, m.end_date DESC
+				
             `;
-            const activeMembership = await db.oneOrNone(sql, [id_client]);
 
-            if (activeMembership) {
-                return res.status(200).json({
-                    success: true,
-                    status: 'active',
-                    data: activeMembership
-                });
-            }
+            // Usamos manyOrNone porque el usuario puede estar inscrito en varios gimnasios
+            const memberships = await db.manyOrNone(sql, [id_client]);
 
+            // Siempre devolvemos success: true, incluso si la lista está vacía.
+            // El frontend se encargará de mostrar "Sin membresías" si el array está vacío.
             return res.status(200).json({
                 success: true,
-                status: 'inactive'
+                memberships: memberships 
             });
 
         } catch (error) {
@@ -258,8 +268,6 @@ module.exports = {
             });
         }
     },
-
-    
     // --- **NUEVAS FUNCIONES: CRUD DE PLANES (Paso G4.1)** ---
 
     /**
