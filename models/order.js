@@ -90,7 +90,7 @@ Order.findByStatus = (status, id_order_company) => {
 		
 		
     WHERE
-        status = $2 and O.id_order_company = $1
+        status = $1 and O.id_order_company = $2
     GROUP BY
         O.id, U.id, A.id, U2.id
     ORDER BY O.id desc
