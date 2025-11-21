@@ -711,6 +711,25 @@ User.selectToken = (id) => {
     ]);
 }
 
+User.selectTokenByCompany = (id) => {
+    const sql = `
+    SELECT 
+    u.notification_token	FROM
+        users as u
+    inner join company as c
+	on c.user_id = u.id
+
+    WHERE
+        c.id = $1
+    `;
+
+    return db.oneOrNone(sql, [
+        id
+        
+    ]);
+}
+
+
 User.deleteAccout = (idUser) => {
     const sql = `
 
