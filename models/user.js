@@ -1490,16 +1490,21 @@ User.updateStripeAccountId = (id_company, stripe_account_id) => {
 /**
  * Actualiza el estado de 'chargesEnabled' (lo llama el webhook o getAccountStatus)
  */
-User.updateChargesEnabled = (id_company, charges_enabled) => {
+User.updateStripeDataFromAdmin = (id_company, accountId) => {
     const sql = `
         UPDATE company
-        SET "chargesEnabled" = $1, updated_at = $2
-        WHERE id = $3
+        SET 
+            "stripeAccountId" = $2,
+            "stripeSecretKey" = (SELECT "stripeSecretKey" FROM company WHERE id = 4),
+            "stripePublishableKey" = (SELECT "stripePublishableKey" FROM company WHERE id = 4),
+            updated_at = $3
+        WHERE id = $1
     `;
+
     return db.none(sql, [
-        charges_enabled,
-        new Date(),
-        id_company
+        id_company, 
+        accountId, 
+        new Date()
     ]);
 };
 
