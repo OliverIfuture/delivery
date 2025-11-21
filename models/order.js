@@ -373,7 +373,7 @@ Order.findByClient = (id_client) => {
 Order.getByClientAndStatusWeb = (id_client) => {
 
     const sql = `
-        SELECT 
+       SELECT 
         O.id,
         O.id_client,
         O.id_address,
@@ -408,22 +408,6 @@ Order.getByClientAndStatusWeb = (id_client) => {
                 'quantity', OHP.quantity
             )
         ) FILTER (where P.name != ''), '[]') AS products,
-       COALESCE( JSON_AGG(
-            DISTINCT jsonb_build_object(
-                'id', M.id,
-                'name', M.name,
-                'description', M.description,
-                'price', M.price,
-		'price_special', M.price_special,
-                'image1', M.image1,
-                'image2', M.image2,
-                'image3', M.image3,
-				'carbs', M.carbs,
-				'protein', M.protein,
-				'calorias', M.calorias,
-                'quantity', OHPP.quantity
-            )
-        ) FILTER (where M.name != ''), '[]') AS plates,
         JSON_BUILD_OBJECT(
             'id', U.id,
             'name', U.name,
@@ -468,17 +452,7 @@ Order.getByClientAndStatusWeb = (id_client) => {
         products AS P
     ON
         P.id = OHP.id_product
-	INNER JOIN 	
-		order_has_products_plates as OHPP
-	ON
-	
-		OHPP.id_order = O.id		
-	
-	left JOIN 
-		plates AS M
-	ON 	
-	  OHPP.id_plate = M.id
-	  
+
     WHERE
         O.id_client = $1
     GROUP BY
