@@ -239,6 +239,7 @@ Gym.findMembershipHistory = (id_client) => {
     const sql = `
         SELECT 
             id, 
+			id_company,
             plan_name, 
             price, 
             start_date, 
