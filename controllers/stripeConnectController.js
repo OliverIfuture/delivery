@@ -11,9 +11,9 @@ module.exports = {
     /**
      * Crea una Cuenta Conectada (Express) y un Link de Onboarding
      */
-    async createConnectAccount(req, res, next) {
+   async createConnectAccount(req, res, next) {
         try {
-            const id_company = req.user.mi_store; // ID del entrenador
+            const id_company = req.user.mi_store;
             
             // 1. Cargar datos del entrenador (compañía)
             const company = await User.findCompanyById(id_company);
@@ -21,13 +21,19 @@ module.exports = {
                 return res.status(404).json({ success: false, message: 'No se encontró la compañía del entrenador.'});
             }
 
-            let accountId = company.stripeAccountId; // (Tu columna "stripeAccountId")
+            let accountId = company.stripeAccountId; 
+            
+            // --- CORRECCIÓN CRÍTICA: ROBUSTEZ DEL ID DE STRIPE ---
+            // Solo consideramos el ID válido si es una cadena y empieza con 'acct_'
+            const isValidStripeId = accountId && String(accountId).startsWith('acct_');
 
-            // 2. Si el entrenador AÚN NO tiene un ID de Stripe, creamos uno
-            if (!accountId) {
+            // 2. Si el entrenador AÚN NO tiene un ID de Stripe VÁLIDO, creamos uno
+            if (!isValidStripeId) {
+                console.log(`[Connect] Creando nueva cuenta Express para ${company.name}. ID actual: ${accountId}`);
+
                 const account = await stripe.accounts.create({
                     type: 'express',
-                    email: req.user.email, // Email del entrenador
+                    email: req.user.email,
                     business_type: 'individual',
                     company: {
                         name: company.name,
@@ -41,14 +47,19 @@ module.exports = {
                 accountId = account.id;
 
                 // 3. Guardar el nuevo ID (acct_...) en nuestra BD
-                await User.updateStripeAccountId(id_company, accountId);
+                // Usamos la función de modelo que incluye copiar las llaves del Admin (que definimos antes)
+                await User.updateStripeDataFromAdmin(id_company, accountId);
+            } else {
+                console.log(`[Connect] Usando cuenta existente: ${accountId}`);
             }
+            // -------------------------------------------------------
+
 
             // 4. Crear el Link de Onboarding (para un usuario existente o nuevo)
             const accountLink = await stripe.accountLinks.create({
-                account: accountId,
-                refresh_url: 'https://tu-app.com/stripe/reauth', // URL de re-autenticación (fallback)
-                return_url: 'https://tu-app.com/stripe/success',  // URL de éxito
+                account: accountId, // Aquí accountId ya está garantizado ser 'acct_...'
+                refresh_url: 'https://tu-app.com/stripe/reauth', 
+                return_url: 'https://tu-app.com/stripe/success',
                 type: 'account_onboarding',
             });
 
@@ -60,14 +71,20 @@ module.exports = {
 
         } catch (error) {
             console.log(`Error en stripeConnectController.createConnectAccount: ${error}`);
+            
+            // Si el error es la cadena 'false' que persiste (Aún con la corrección), devolvemos un mensaje útil.
+            const errorMessage = error.message.includes("'false'") 
+                ? "Error de configuración: El ID de Stripe de la compañía es inválido." 
+                : error.message;
+
             return res.status(501).json({
                 success: false,
                 message: 'Error al crear la cuenta de Stripe Connect',
-                error: error.message
+                error: errorMessage
             });
         }
     },
-
+    
     /**
      * Verifica el estado de la cuenta después del onboarding
      */
