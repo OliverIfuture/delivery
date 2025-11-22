@@ -43,7 +43,8 @@ module.exports = {
                         transfers: { requested: true },
                     },
                 });
-                
+                console.log(`account creada : ${JSON.stringify(account)}`);
+
                 accountId = account.id;
 
                 // 3. Guardar el nuevo ID (acct_...) en nuestra BD
