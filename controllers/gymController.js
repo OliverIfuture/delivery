@@ -78,6 +78,11 @@ module.exports = {
                 console.log(`[CheckIn] Token JWT detectado. Cliente ID: ${id_client_scanned}`);
                 denial_reason = 'Membresía Expirada o Inexistente'; // Razón por defecto si falla el siguiente paso
 
+
+				
+console.log('--- DEBUG CHECKIN ---');
+console.log('1. ID Cliente escaneado:', id_client_scanned);
+console.log('2. ID Gimnasio del Kiosco (mi_store):', id_company_gym);
                 const activeMembership = await Gym.findActiveMembership(id_client_scanned, id_company_gym);
 
                 if (activeMembership) {
