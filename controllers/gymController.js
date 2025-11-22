@@ -165,17 +165,16 @@ console.log('2. ID Gimnasio del Kiosco (mi_store):', id_company_gym);
      * POST /api/gym/create-membership
      * (Esta función no necesita cambios)
      */
-    async createMembership(req, res, next) {
+async createMembership(req, res, next) {
         try {
-            // **PASO 1: Leer TODOS los datos del body (incluyendo id_shift)**
             const { 
                 id_client, 
                 plan_name, 
                 price, 
-                duration_days, 
+                duration_days, // Pasamos esto al modelo en lugar de calcular fecha aquí
                 payment_method, 
                 payment_id,
-                id_shift  // <-- ¡EL DATO QUE FALTABA!
+                id_shift 
             } = req.body;
             
             const id_company_gym = req.user.mi_store; 
@@ -183,30 +182,28 @@ console.log('2. ID Gimnasio del Kiosco (mi_store):', id_company_gym);
             if (!id_client || !plan_name || !price || !duration_days || !id_shift) {
                 return res.status(400).json({ 
                     success: false, 
-                    message: 'Faltan datos para crear la membresía (client, plan, price, duration, shift).' 
+                    message: 'Faltan datos (client, plan, price, duration, shift).' 
                 });
             }
 
-            let endDate = new Date();
-            endDate.setDate(endDate.getDate() + parseInt(duration_days));
-
-            // **PASO 2: Construir el objeto COMPLETO para el modelo**
-            const membership = {
+            // Construimos el objeto
+            const membershipData = {
                 id_client: id_client,
                 id_company: id_company_gym,
                 plan_name: plan_name,
                 price: price,
-                end_date: endDate,
+                duration_days: parseInt(duration_days), // Enviamos días, no fecha
                 payment_method: payment_method || 'cash',
                 payment_id: payment_id || null,
-                id_shift: id_shift // <-- ¡PASANDO EL ID DEL TURNO AL MODELO!
+                id_shift: id_shift
             };
 
-            const data = await Gym.createMembership(membership);
+            // LLAMAMOS A LA NUEVA FUNCIÓN INTELIGENTE DEL MODELO
+            const data = await Gym.createOrUpdateMembership(membershipData);
 
             return res.status(201).json({
                 success: true,
-                message: 'Membresía creada exitosamente.',
+                message: 'Membresía procesada correctamente (Actualizada o Creada).',
                 data: { id: data.id }
             });
 
@@ -214,7 +211,7 @@ console.log('2. ID Gimnasio del Kiosco (mi_store):', id_company_gym);
             console.log(`Error en gymController.createMembership: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al crear la membresía',
+                message: 'Error al procesar la membresía',
                 error: error.message
             });
         }
