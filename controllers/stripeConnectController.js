@@ -49,7 +49,7 @@ module.exports = {
 
                 // 3. Guardar el nuevo ID (acct_...) en nuestra BD
                 // Usamos la función de modelo que incluye copiar las llaves del Admin (que definimos antes)
-                await User.updateStripeDataFromAdmin(id_company, accountId);
+                await User.updateStripeDataFromAdminId(id_company, accountId);
             } else {
                 console.log(`[Connect] Usando cuenta existente: ${accountId}`);
             }
