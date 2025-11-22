@@ -74,7 +74,7 @@ module.exports = {
                 const payload = jwt.verify(qr_token, keys.secretOrKey);
                 
                 // Si llegamos aquí, ES un JWT
-                id_client_scanned = payload.id_client; // Obtenemos el ID del cliente
+                id_client_scanned = payload.id; // Obtenemos el ID del cliente
                 console.log(`[CheckIn] Token JWT detectado. Cliente ID: ${id_client_scanned}`);
                 denial_reason = 'Membresía Expirada o Inexistente'; // Razón por defecto si falla el siguiente paso
 
