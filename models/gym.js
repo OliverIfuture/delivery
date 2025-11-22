@@ -23,6 +23,118 @@ Gym.logAccess = (id_company, id_user, access_granted, denial_reason) => {
     return db.none(sql, [id_company, id_user, access_granted, denial_reason, new Date()]);
 };
 
+Gym.createOrUpdateMembership = async (membership) => {
+    
+    // 1. BUSCAR SI YA EXISTE UNA FILA PARA ESTE CLIENTE EN ESTE GIMNASIO
+    //    (Buscamos la última registrada, activa o inactiva)
+    const sqlCheck = `
+        SELECT id, end_date 
+        FROM gym_memberships 
+        WHERE id_client = $1 AND id_company = $2 
+        ORDER BY end_date DESC LIMIT 1
+    `;
+    const existing = await db.oneOrNone(sqlCheck, [
+        membership.id_client, 
+        membership.id_company
+    ]);
+
+    const now = new Date();
+    let newStartDate = now; // Por defecto empieza hoy
+    let newEndDate = new Date();
+    let isUpdate = false;
+    let targetId = null;
+
+    // 2. CALCULAR FECHAS INTELIGENTES
+    if (existing) {
+        // ¡Ya existe una fila! Vamos a reciclarla (UPDATE) para no crear basura
+        isUpdate = true;
+        targetId = existing.id;
+        const currentEndDate = new Date(existing.end_date);
+
+        if (currentEndDate > now) {
+            // CASO A: VIGENTE (Extensión)
+            // Si vence en el futuro (ej. 20 Ene), sumamos días a ESA fecha.
+            // Nueva fecha = 20 Ene + 30 días = 19 Feb.
+            // La fecha de inicio NO se toca (sigue siendo la original).
+            newStartDate = null; // Indicador para no tocar start_date en SQL
+            
+            // Clonamos la fecha para no mutar la original por referencia
+            let extendedDate = new Date(currentEndDate); 
+            extendedDate.setDate(extendedDate.getDate() + membership.duration_days);
+            newEndDate = extendedDate;
+            
+        } else {
+            // CASO B: VENCIDA (Renovación)
+            // Si venció ayer, la nueva vigencia arranca HOY.
+            newStartDate = now;
+            
+            let renewalDate = new Date(now);
+            renewalDate.setDate(renewalDate.getDate() + membership.duration_days);
+            newEndDate = renewalDate;
+        }
+    } else {
+        // CASO C: NUEVO CLIENTE (INSERT)
+        isUpdate = false;
+        let initialDate = new Date(now);
+        initialDate.setDate(initialDate.getDate() + membership.duration_days);
+        newEndDate = initialDate;
+    }
+
+    // 3. EJECUTAR LA CONSULTA CORRECTA
+    if (isUpdate) {
+        // ACTUALIZAR FILA EXISTENTE
+        // Usamos COALESCE para start_date: si newStartDate es null (extensión), deja la que estaba.
+        const sqlUpdate = `
+            UPDATE gym_memberships
+            SET
+                plan_name = $1,
+                price = $2,
+                start_date = COALESCE($3, start_date), 
+                end_date = $4,
+                status = 'active',
+                payment_method = $5,
+                payment_id = $6,
+                id_shift = $7,
+                updated_at = NOW()
+            WHERE id = $8
+            RETURNING id
+        `;
+        return db.one(sqlUpdate, [
+            membership.plan_name,
+            membership.price,
+            newStartDate, // Puede ser null si es extensión pura
+            newEndDate,
+            membership.payment_method,
+            membership.payment_id,
+            membership.id_shift,
+            targetId
+        ]);
+    } else {
+        // CREAR NUEVA FILA (Solo pasa la primera vez)
+        const sqlInsert = `
+            INSERT INTO gym_memberships(
+                id_client, id_company, plan_name, price, 
+                start_date, end_date, status, 
+                payment_method, payment_id, id_shift, 
+                created_at, updated_at
+            )
+            VALUES($1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, NOW(), NOW())
+            RETURNING id
+        `;
+        return db.one(sqlInsert, [
+            membership.id_client,
+            membership.id_company,
+            membership.plan_name,
+            membership.price,
+            newStartDate,
+            newEndDate,
+            membership.payment_method,
+            membership.payment_id,
+            membership.id_shift
+        ]);
+    }
+};
+
 // **CAMBIO: Añadida la columna 'id_shift' ($10)**
 Gym.createMembership = (membership) => {
     const sql = `
