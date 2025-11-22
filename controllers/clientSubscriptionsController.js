@@ -109,11 +109,18 @@ module.exports = {
                 metadata.id_membership_to_extend = membershipToExtend.id;
             }
 
-            const extensionIntent = await stripe.paymentIntents.create({
+            const extensionIntent = await stripeInstance.paymentIntents.create({
                 amount: amountInCents,
                 currency: 'mxn',
                 customer: customer.id,
-                metadata: metadata
+                metadata: metadata,
+                
+                // === CONFIGURACIÓN CRÍTICA DE STRIPE CONNECT ===
+                transfer_data: {
+                    // **DIRIGE EL DINERO:** Usamos el Account ID del gimnasio como destino
+                    destination: company.stripeAccountId, 
+                },
+                // ===============================================
             });
 
             // --- **¡AQUÍ ESTÁ LA CORRECCIÓN!** ---
