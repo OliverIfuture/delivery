@@ -153,39 +153,50 @@ module.exports = {
      * (Esta es tu función original para NUEVAS suscripciones de Entrenador)
      * (No hay cambios aquí)
      */
-    async createSubscriptionIntent(req, res, next) {
+  async createSubscriptionIntent(req, res, next) {
         try {
             const { id_plan, id_company, price_id } = req.body;
             const id_client = req.user.id;
             
+            // 1. Obtener datos de la compañía (Incluye stripeAccountId)
             const company = await User.findCompanyById(id_company);
-            if (!company || !company.stripeSecretKey) {
+            if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El entrenador no tiene una clave de Stripe configurada.'
+                    message: 'El entrenador/gimnasio no tiene la cuenta de Stripe configurada o activada.'
                 });
             }
             
-            const stripe = require('stripe')(company.stripeSecretKey);
+            // La clave de tu plataforma (o la que copiaste)
+            const stripeInstance = require('stripe')(company.stripeSecretKey);
 
+            // 2. Cliente de Stripe (Customer)
             let customer;
-            const existingCustomers = await stripe.customers.list({
-                email: req.user.email,
-                limit: 1
-            });
+            const existingCustomers = await stripeInstance.customers.list({ email: req.user.email, limit: 1 });
 
             if (existingCustomers.data.length > 0) {
                 customer = existingCustomers.data[0];
             } else {
-                customer = await stripe.customers.create({
+                customer = await stripeInstance.customers.create({
                     email: req.user.email,
                     name: `${req.user.name} ${req.user.lastname}`,
                 });
             }
 
-            const subscription = await stripe.subscriptions.create({
+            // 3. Crear la Suscripción con Transferencia
+            const subscription = await stripeInstance.subscriptions.create({
                 customer: customer.id,
                 items: [{ price: price_id }],
+                
+                // === CONFIGURACIÓN CRÍTICA DE STRIPE CONNECT ===
+                // Esto dirige el pago recurrente a la cuenta del vendedor
+                transfer_data: {
+                    destination: company.stripeAccountId,
+                },
+                // Al omitir 'application_fee_percent' o 'application_fee_amount' 
+                // se asume que la comisión es 0, y el 100% va al destino.
+                // ===============================================
+
                 payment_behavior: 'default_incomplete', 
                 payment_settings: { save_default_payment_method: 'on_subscription' },
                 expand: ['latest_invoice.payment_intent'], 
@@ -197,9 +208,11 @@ module.exports = {
                 }
             });
 
+            // 4. Devolver secretos
             return res.status(200).json({
                 success: true,
                 subscriptionId: subscription.id,
+                // Obtenemos el client_secret de la primera factura/payment_intent
                 clientSecret: subscription.latest_invoice.payment_intent.client_secret, 
                 customerId: customer.id,
                 publishableKey: company.stripePublishableKey 
