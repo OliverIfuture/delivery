@@ -109,8 +109,8 @@ module.exports = {
                 metadata.id_membership_to_extend = membershipToExtend.id;
             }
 
-            const extensionIntent = await stripeInstance.paymentIntents.create({
-                amount: amountInCents,
+             const extensionIntent = await stripe.paymentIntents.create({
+               amount: amountInCents,
                 currency: 'mxn',
                 customer: customer.id,
                 metadata: metadata,
