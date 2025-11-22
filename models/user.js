@@ -1494,7 +1494,7 @@ User.updateStripeDataFromAdmin = (id_company, chargesEnabled) => {
     const sql = `
         UPDATE company
         SET 
-            chargesEnabled = $2,
+            "chargesEnabled" = $2,
             updated_at = $3
         WHERE id = $1
     `;
