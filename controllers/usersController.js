@@ -113,7 +113,8 @@ module.exports = {
     
 async getAdminsNotificationTokens(req, res, next) {
         try {
-            const data = await User.getAdminsNotificationTokens();    
+            const id = req.params.id;
+            const data = await User.getAdminsNotificationTokens(id);    
             let tokens = [];
 
 
