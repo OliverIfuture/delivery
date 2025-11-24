@@ -105,6 +105,34 @@ module.exports = {
         }
     },
 
+
+    async findByClient(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            // CRÍTICO: Obtenemos el ID de la rutina de los query parameters
+            const id_routine = req.query.id_routine; 
+
+            if (!id_routine) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Falta el parámetro id_routine.'
+                });
+            }
+            
+            // Llama a la función del modelo filtrada por la fecha de hoy
+            const data = await WorkoutLog.findByClientAndRoutineToday(id_client, id_routine);
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en workoutLogsController.findByClient: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al buscar el historial del cliente',
+                error: error.message
+            });
+        }
+    },
+
     async getTrainerFeed(req, res, next) {
         try {
             // Seguridad: Asegura que el entrenador solo pueda ver su propio feed
