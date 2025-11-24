@@ -21,5 +21,11 @@ module.exports = (app) => {
 
     // **NUEVA RUTA: Obtener el feed para el dashboard del entrenador**
     app.get('/api/workoutlogs/feed/:id_company', passport.authenticate('jwt', { session: false }), workoutLogsController.getTrainerFeed);
+
+    app.get(
+        '/api/workoutlogs/findByClient/:id_client', 
+        passport.authenticate('jwt', { session: false }), 
+        workoutLogsController.findByClient
+    );
     
 };
