@@ -115,5 +115,25 @@ SELECT
     return db.manyOrNone(sql, id_company);
 };
 
+WorkoutLog.findByClientAndRoutineToday = (id_client, id_routine) => {
+    // Definimos el inicio de hoy en UTC. 
+    // PostgreSQL puede usar DATE_TRUNC para obtener el inicio del día en la zona horaria del servidor.
+    const sql = `
+        SELECT 
+            id, id_client, id_company, id_routine, exercise_name, set_number, 
+            planned_reps, planned_weight, completed_reps, completed_weight, created_at
+        FROM 
+            workout_logs
+        WHERE 
+            id_client = $1 AND 
+            id_routine = $2 AND 
+            -- Filtramos los logs que se hicieron hoy (asumiendo que created_at es TIMESTAMP WITH TIME ZONE)
+            created_at >= DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC')
+        ORDER BY 
+            created_at ASC
+    `;
+    return db.manyOrNone(sql, [id_client, id_routine]);
+};
+
 
 module.exports = WorkoutLog;
