@@ -402,7 +402,7 @@ User.getAdminsNotificationTokens = (id) => {
     WHERE
         U.id = $1
     `
-    return db.manyOrNone(sql);
+    return db.manyOrNone(sql, id);
 }
 
 User.getAdminsNotificationTokensDealer = () => {
