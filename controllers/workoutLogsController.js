@@ -121,7 +121,7 @@ module.exports = {
             
             // Llama a la función del modelo filtrada por la fecha de hoy
             const data = await WorkoutLog.findByClientAndRoutineToday(id_client, id_routine);
-            console.log(`logs del dia: ${JSON.stringify(data)}`);
+           // console.log(`logs del dia: ${JSON.stringify(data)}`);
 
             return res.status(200).json(data);
         }
