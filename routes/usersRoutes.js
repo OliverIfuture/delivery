@@ -10,7 +10,7 @@ module.exports = (app, upload) => {
     app.get('/api/users/findDeliveryMen/:id',passport.authenticate('jwt', {session: false}) ,UsersController.findDeliveryMan);
     app.get('/api/users/selectToken/:id',UsersController.selectToken);
     app.get('/api/users/selectTokenByCompany/:id',UsersController.selectTokenByCompany);
-    app.get('/api/users/getAdminsNotificationTokens', passport.authenticate('jwt', {session: false}), UsersController.getAdminsNotificationTokens);
+    app.get('/api/users/getAdminsNotificationTokens/:id', passport.authenticate('jwt', {session: false}), UsersController.getAdminsNotificationTokens);
     app.get('/api/users/getUsersMultiNotificationTokens', passport.authenticate('jwt', {session: false}), UsersController.getUsersMultiNotificationTokens);
 
     app.get('/api/users/getShops/:employed',passport.authenticate('jwt', {session: false}) ,UsersController.getShops);
