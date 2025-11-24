@@ -1053,7 +1053,10 @@ User.getCompanyByUser = (id) => {
 User.getCompanyById = (id) => {
 
     const sql = `
-    select * from company where id = $1
+    select * from company as c
+	
+		inner join users as U on U.id = c.user_id
+	where c.id = $1
 		`;
     
     return db.oneOrNone(sql, id)
