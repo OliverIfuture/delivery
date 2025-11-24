@@ -86,15 +86,17 @@ Affiliate.getPendingPayoutsByVendor = (id_company_vendor) => {
             id_company_affiliate,
             c.name AS affiliate_name,
             c.logo AS affiliate_logo,
-            SUM(commission_amount) AS total_pending_amount
+            SUM(commission_amount) AS total_pending_amount,
+			U.notification_token
         FROM
             affiliate_commissions AS ac
         INNER JOIN
             company AS c ON ac.id_company_affiliate = c.id
+	    INNER JOIN users as U on U.id = c.user_id	
         WHERE
             ac.id_company_vendor = $1 AND ac.status = 'pending'
         GROUP BY
-            id_company_affiliate, c.name, c.logo
+            id_company_affiliate, c.name, c.logo, U.notification_token
         ORDER BY
             total_pending_amount DESC
     `;
