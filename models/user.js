@@ -392,7 +392,7 @@ User.updateStateFail = (user) => {
     ]);
 }
 
-User.getAdminsNotificationTokens = () => {
+User.getAdminsNotificationTokens = (id) => {
     const sql = `
  SELECT
         U.notification_token
@@ -400,7 +400,7 @@ User.getAdminsNotificationTokens = () => {
         users AS U
    
     WHERE
-        U.id = 4
+        U.id = $1
     `
     return db.manyOrNone(sql);
 }
