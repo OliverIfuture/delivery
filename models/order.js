@@ -931,6 +931,7 @@ SELECT
         C.total_cash,	
 	     C.total_card,
 		 C.id_company,
+		 U.notification_token,
 		 SUM(P.amount) as amount_income,
 
         JSON_AGG(
@@ -952,12 +953,13 @@ SELECT
     ON
         C.id_close_shift = P.id_close_shift 
 		
+     inner join users as U
+	 ON U.id = C.id_user
 		
-	   where C.state = 'ABIERTA' and C.id_company = $1	
+		
+	   where C.state = 'ABIERTA' and C.id_company = $1
        GROUP BY
-        C.id
-
-
+        C.id, U.notification_token
 
     `;
     return db.manyOrNone(sql,id_company);
