@@ -106,6 +106,9 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Este entrenador no tiene claves de Stripe configuradas para recibir pagos.'});
             }
 
+            console.log(`Datos enviados del affiliateCompany: ${JSON.stringify(affiliateCompany)}`);
+
+
             // 2. Inicializar Stripe CON LA CLAVE SECRETA DEL ENTRENADOR
             const stripe = require('stripe')(affiliateCompany.stripeSecretKey);
 
@@ -137,7 +140,12 @@ module.exports = {
                     id_vendor: id_vendor,       // Quién pagó
                     id_affiliate: id_affiliate, // Quién recibió
                     amount_paid: amount
-                }
+                },
+                                // === CONFIGURACIÓN CRÍTICA DE STRIPE CONNECT ===
+                transfer_data: {
+                    // **DIRIGE EL DINERO:** Usamos el Account ID del gimnasio como destino
+                    destination: affiliateCompany.stripeAccountId, 
+                },
             });
 
             // 5. Devolver los secretos al SDK de Flutter de la Tienda
