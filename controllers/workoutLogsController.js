@@ -110,7 +110,7 @@ module.exports = {
         try {
             const id_client = req.params.id_client;
             // CRÍTICO: Obtenemos el ID de la rutina de los query parameters
-            const id_routine = req.params.id_routine; 
+            const id_routine = req.params.idRoutine; 
 
             if (!id_routine) {
                 return res.status(400).json({
