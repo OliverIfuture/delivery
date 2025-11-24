@@ -106,11 +106,11 @@ module.exports = {
     },
 
 
-    async findByClient(req, res, next) {
+    async findLogsForCurrentRoutine(req, res, next) {
         try {
             const id_client = req.params.id_client;
             // CRÍTICO: Obtenemos el ID de la rutina de los query parameters
-            const id_routine = req.query.id_routine; 
+            const id_routine = req.params.id_routine; 
 
             if (!id_routine) {
                 return res.status(400).json({
