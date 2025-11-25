@@ -54,7 +54,8 @@ SubscriptionPlan.findByCompany = (id_company) => {
             price,
             currency,
             stripe_product_id,
-            stripe_price_id
+            stripe_price_id,
+            description
         FROM
             subscription_plans
         WHERE
