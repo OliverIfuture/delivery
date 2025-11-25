@@ -1988,11 +1988,42 @@ Product.findMyProduct = (name) => {
 
 Product.getAllCompany = () =>{
 	const sql = `
-		 select * from company
-        where available = 'true'
-		 order by id 
- 
- 
+  select 
+	c.id,
+	c.name,
+	c.addres,
+	c.telephone,
+	c.user_id,
+	c.state,
+	c.available,
+	c.type,
+	c.lat,
+	c.lng,
+	c.wantsappointments,
+	c.cashaccept,
+	c.creditcardaccepted,
+	c."stripeSecretKey",
+	c."stripePublishableKey",
+	c.membership_plan,
+	c.membership_expires_at,
+	c.membership_status,
+	c.pos,
+	c.code,
+	c.points,
+	c."stripeAccountId",
+	c."chargesEnabled",
+	c.updated_at,
+	c."acceptsAffiliates",
+	c."affiliateCommissionRate",
+	c.image_card,
+	U.notification_token,
+	C.description
+		
+	from company as c
+	
+		inner join users as U on U.id = c.user_id
+        where c.available = 'true'
+
  `;
 return db.manyOrNone(sql);
 
