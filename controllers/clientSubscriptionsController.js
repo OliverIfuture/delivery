@@ -278,7 +278,8 @@ module.exports = {
 
                         if (metadata.id_client && metadata.id_company) {
                              await User.updateTrainer(metadata.id_client, metadata.id_company);
-                             console.log(`✅ Webhook: Usuario ${metadata.id_client} vinculado al entrenador ${metadata.id_company}`);
+                              await User.transferClientData(metadata.id_client, metadata.id_company);
+                            console.log(`✅ Webhook: Usuario ${metadata.id_client} vinculado al entrenador ${metadata.id_company}`);
                         }
                     }
                 }
