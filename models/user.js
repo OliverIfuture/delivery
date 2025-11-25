@@ -320,7 +320,8 @@ SELECT
                     'available', C.available,
                     'type', C.type,
                     'lat', C.lat,
-                    'lng', C.lng
+                    'lng', C.lng,
+					'description', C.description
                 )
             ) FILTER (WHERE C.id IS NOT NULL) -- Solo agregamos si la compañía existe
         ) -> 0, -- Extrae el primer (y único) objeto JSON del array resultante
@@ -1083,7 +1084,8 @@ User.getCompanyById = (id) => {
 	c."acceptsAffiliates",
 	c."affiliateCommissionRate",
 	c.image_card,
-	U.notification_token
+	U.notification_token,
+	C.description
 		
 	from company as c
 	
@@ -1626,7 +1628,8 @@ User.getAvailableTrainers = () => {
             id,
             name,
             logo,
-            telephone
+            telephone,
+			description
         FROM
             company
         WHERE
