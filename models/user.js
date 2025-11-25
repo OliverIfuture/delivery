@@ -584,7 +584,7 @@ User.updateNoImage = (user) => {
     ]);
 }
 
-User.updateTrainer = (user) => {
+User.updateTrainerxx = (user) => {
     const sql = `
     UPDATE
         users
@@ -1644,6 +1644,27 @@ User.updateTrainer = (id_user, id_trainer) => {
         WHERE id = $3
     `;
     return db.none(sql, [id_trainer, new Date(), id_user]);
+};
+
+User.transferClientData = (id_client, id_company) => {
+    // Usamos una transacción para garantizar que ambas actualizaciones se ejecuten correctamente
+    const sqlTransaction = `
+        BEGIN;
+
+        -- 1. Actualizar Client Progress Photos
+        UPDATE client_progress_photos
+        SET id_company = $2
+        WHERE id_client = $1;
+
+        -- 2. Actualizar Client Metrics Log
+        UPDATE client_metrics_log
+        SET id_company = $2
+        WHERE id_client = $1;
+
+        COMMIT;
+    `;
+
+    return db.none(sqlTransaction, [id_client, id_company]);
 };
 
 // En models/user.js
