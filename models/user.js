@@ -1712,7 +1712,7 @@ User.getFree = (id_client ) => {
         SET
         id_entrenador = NULL
         WHERE
-        id = $1
+        id = $1;
 
         COMMIT;
     `;
