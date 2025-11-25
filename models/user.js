@@ -990,9 +990,10 @@ User.createWithImageUserAndCompany = (user, company) => {
                 creditcardaccepted, 
                 code, 
                 points,
-                image_card  -- <--- NUEVA COLUMNA
+                image_card,  -- <--- NUEVA COLUMNA
+				description
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) -- <--- NUEVO VALOR $16
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) -- <--- NUEVO VALOR $16
             RETURNING id
         `;
         
@@ -1012,7 +1013,8 @@ User.createWithImageUserAndCompany = (user, company) => {
             company.creditcardaccepted,
             company.code,
             company.points,
-            company.image_card // <--- NUEVO DATO (URL de la imagen)
+            company.image_card, // <--- NUEVO DATO (URL de la imagen)
+			company.description
         ])
         .then(companyData => {
             const newCompanyId = companyData.id;
