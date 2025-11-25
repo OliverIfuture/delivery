@@ -1992,6 +1992,7 @@ Product.getAllCompany = () =>{
 	c.id,
 	c.name,
 	c.addres,
+	c.logo,
 	c.telephone,
 	c.user_id,
 	c.state,
