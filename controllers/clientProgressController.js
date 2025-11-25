@@ -5,16 +5,19 @@ module.exports = {
     /**
      * Guarda un registro de métricas (peso, grasa, etc.)
      */
-    async logMetric(req, res, next) {
+async logMetric(req, res, next) {
         try {
             const metricLog = req.body;
             
             // Asignar IDs desde el token (más seguro)
             metricLog.id_client = req.user.id;
-            metricLog.id_company = req.user.id_entrenador; // Asumimos que el cliente está logueado
+            
+            // Asignamos el valor, que podría ser un ID, null, o una cadena "null"
+            metricLog.id_company = req.user.id_entrenador;
 
-            if (!metricLog.id_company) {
-                return res.status(400).json({ success: false, message: 'Este usuario no está asignado a un entrenador.' });
+            // 💡 VERIFICACIÓN ROBUSTA: Si es falsy (null, undefined, '') O la cadena "null"
+            if (!metricLog.id_company || metricLog.id_company === 'null') {
+                metricLog.id_company = null; // Asignar el valor JavaScript/SQL NULL
             }
 
             const data = await ClientProgress.logMetric(metricLog);
@@ -42,7 +45,6 @@ module.exports = {
             });
         }
     },
-
     /**
      * Guarda la URL de una foto de progreso
      */
