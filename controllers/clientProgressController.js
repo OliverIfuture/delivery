@@ -56,8 +56,9 @@ async logMetric(req, res, next) {
             photoLog.id_client = req.user.id;
             photoLog.id_company = req.user.id_entrenador;
             
-            if (!photoLog.id_company) {
-                return res.status(400).json({ success: false, message: 'Este usuario no está asignado a un entrenador.' });
+            // 💡 VERIFICACIÓN ROBUSTA: Si es falsy (null, undefined, '') O la cadena "null"
+            if (!photoLog.id_company || metricLog.id_company === 'null') {
+                photoLog.id_company = null; // Asignar el valor JavaScript/SQL NULL
             }
             if (!photoLog.image_url) {
                 return res.status(400).json({ success: false, message: 'No se recibió la URL de la imagen.' });
