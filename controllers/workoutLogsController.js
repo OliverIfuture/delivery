@@ -139,6 +139,7 @@ module.exports = {
         try {
             // Seguridad: Asegura que el entrenador solo pueda ver su propio feed
             const id_company = req.user.mi_store; 
+            console.log(`id del entrenador: id_company= ${id_company} `);
             
             if (req.params.id_company != id_company) {
                  return res.status(403).json({
