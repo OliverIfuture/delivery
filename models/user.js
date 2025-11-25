@@ -1694,12 +1694,27 @@ User.updateStreak = (id_user) => {
 
 User.getFree = (id_client ) => {
     const sql = `
+
+	        BEGIN;
+
+        -- 1. Actualizar Client Progress Photos
+        UPDATE client_progress_photos
+        SET id_company = NULL
+        WHERE id_client = $1;
+
+        -- 2. Actualizar Client Metrics Log
+        UPDATE client_metrics_log
+        SET id_company = NULL
+        WHERE id_client = $1;
+
 		UPDATE
-            users
+        users
         SET
-            id_entrenador = NULL
+        id_entrenador = NULL
         WHERE
-            id = $1
+        id = $1
+
+        COMMIT;
     `;
     return db.none(sql,id_client);
 }
