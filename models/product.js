@@ -2018,7 +2018,8 @@ Product.getAllCompany = () =>{
 	c."affiliateCommissionRate",
 	c.image_card,
 	U.notification_token,
-	C.description
+	c.description,
+	c.ispromo
 		
 	from company as c
 	
