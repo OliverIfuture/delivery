@@ -1657,6 +1657,7 @@ SELECT
     s.status,
     s.client_name,
     s.client_id,
+	s.code,
     
     COALESCE(
         json_agg(
