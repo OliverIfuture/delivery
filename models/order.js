@@ -622,9 +622,10 @@ sales(
     shift_ref,
 	client_name,
 	client_id,
-	status
+	status,
+	code
         )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11,$12, $13, $14, $15) RETURNING id
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11,$12, $13, $14, $15, $16) RETURNING id
     `;
 
     return db.oneOrNone(sql, [
@@ -642,7 +643,8 @@ sales(
     sales.shift_ref,
 	sales.client_name,
 	sales.client_id	,
-	sales.status	
+	sales.status,
+	sales.code	
     ]);
 }
 
