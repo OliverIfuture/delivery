@@ -940,18 +940,20 @@ User.createWithImageUserAndCompany = (user, company) => {
     const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
     user.password = myPasswordHashed;
 
-    // Consulta para insertar el usuario
+    // --- LÓGICA DE TRIAL GRATUITO ---
+    // Calcular la fecha de expiración: Hoy + 7 días
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    
+    // Asignamos el estado de activación
+    company.state = 'ACTIVE'; // Se asume que el estado de la compañía debe ser activo para el trial.
+    // ---------------------------------
+
+    // Consulta para insertar el usuario (sin cambios)
     const sqlUser = `
         INSERT INTO
             users(
-                email,
-                name,
-                lastname,
-                phone,
-                image,
-                password,
-                created_at,
-                updated_at
+                email, name, lastname, phone, image, password, created_at, updated_at
             )
         VALUES($1, $2, $3, $4, $5, $6, $7, $8) 
         RETURNING id
@@ -973,61 +975,59 @@ User.createWithImageUserAndCompany = (user, company) => {
         // 2. Asignar el ID del usuario a la compañía
         company.user_id = newUserId;
         
-        // 3. Consulta para insertar la compañía (¡ACTUALIZADA!)
+        // 3. Consulta para insertar la compañía (¡ACTUALIZADA CON TRIAL!)
         const sqlCompany = `
             INSERT INTO public.company(
-                name, 
-                addres, 
-                telephone, 
-                user_id, 
-                logo, 
-                state, 
-                available, 
-                type, 
-                lat, 
-                lng, 
-                wantsappointments, 
-                cashaccept, 
-                creditcardaccepted, 
-                code, 
-                points,
-                image_card,  -- <--- NUEVA COLUMNA
-				description
+                name, addres, telephone, user_id, logo, 
+                state, available, type, lat, lng, wantsappointments, 
+                cashaccept, creditcardaccepted, code, points, 
+                image_card, description, -- Nuevos campos de imagen y descripción
+                
+                -- COLUMNAS DEL TRIAL
+                membership_plan,
+                membership_status,
+                membership_expires_at
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) -- <--- NUEVO VALOR $16
+            VALUES(
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
+                
+                -- VALORES DEL TRIAL
+                'fundador', -- Valor de membership_plan (Free Trial)
+                'active',   -- Valor de membership_status
+                $18         -- Valor de membership_expires_at (La fecha calculada)
+            )
             RETURNING id
         `;
         
+        // Contamos los 17 parámetros estándar + el nuevo parámetro de fecha ($18)
         return db.one(sqlCompany, [
-            company.name,
-            company.addres,
-            company.telephone,
-            company.user_id,
-            company.logo,
-            company.state,
-            company.available,
-            company.type,
-            company.lat,
-            company.lng,
-            company.wantsappointments,
-            company.cashaccept,
-            company.creditcardaccepted,
-            company.code,
-            company.points,
-            company.image_card, // <--- NUEVO DATO (URL de la imagen)
-			company.description
+            company.name, // 1
+            company.addres, // 2
+            company.telephone, // 3
+            company.user_id, // 4
+            company.logo, // 5
+            company.state, // 6 (Será 'ACTIVE' desde la lógica de Trial)
+            company.available, // 7
+            company.type, // 8
+            company.lat, // 9
+            company.lng, // 10
+            company.wantsappointments, // 11
+            company.cashaccept, // 12
+            company.creditcardaccepted, // 13
+            company.code, // 14
+            company.points, // 15
+            company.image_card, // 16
+            company.description, // 17
+            sevenDaysFromNow // 18: La fecha de expiración calculada
         ])
         .then(companyData => {
             const newCompanyId = companyData.id;
 
-            // 4. Actualizar mi_store en el usuario
+            // 4. Actualizar mi_store en el usuario (sin cambios)
             const sqlUpdateUser = `
-                UPDATE 
-                    users
-                SET
-                    mi_store = $1
-                WHERE
-                    id = $2
+                UPDATE users
+                SET mi_store = $1
+                WHERE id = $2
             `;
             
             return db.none(sqlUpdateUser, [
