@@ -278,12 +278,12 @@ async updateNacionalStatus(req, res, next) {
                // console.log(`orden con id de entrenador actualizada : ${JSON.stringify(order)}`);
 
                 if (order && order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) 
-                    //console.log(`[Afiliado] Orden (Efectivo) ${order.id} ENTREGADA. Procesando comisión...`);
+                    console.log(`[Afiliado] Orden (Efectivo) ${order.id} ENTREGADA. Procesando comisión...`);
                     // 3. Ya no recalculamos nada. Usamos order.total directamente.
                     // Aseguramos que sea int/float si viene como string de la BD
                     // (Aunque affiliate.js hace parseFloat, es bueno saber que el dato ya está ahí)
                     const vendorCompany = await User.findCompanyById(order.id_order_company);
-                   //console.log(`aun no entra  a calcular: ${JSON.stringify(vendorCompany)}`);
+                   console.log(`aun no entra  a calcular: ${JSON.stringify(vendorCompany)}`);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
                         console.log(`entro a calcular: ${JSON.stringify(vendorCompany)}`);
                         await Affiliate.createCommission(order, vendorCompany);
