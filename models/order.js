@@ -25,6 +25,8 @@ Order.findByStatus = (status, id_order_company) => {
 	O.lng,
 		O.total,
 		O.nacional,
+		O.delivery_name,
+		O.track_code,
 	O.affiliate_referral_id,
 	O.id_order_company,
        COALESCE( JSON_AGG(
@@ -122,7 +124,8 @@ Order.findByDeliveryAndStatus = (id_delivery, status) => {
 	    O.lat,
 	O.lng,
 			O.nacional,
-
+		O.delivery_name,
+		O.track_code,
 	O.total,
 	O.affiliate_referral_id,
 	O.id_order_company,
@@ -219,7 +222,8 @@ Order.findByClient = (id_client) => {
   	O.total_extra,
    	O.drone_id,
 			O.nacional,
-
+		O.delivery_name,
+		O.track_code,
 	    O.lat,
 	O.lng,
 		O.total,
@@ -316,7 +320,8 @@ Order.getByClientAndStatusWeb = (id_client) => {
    	O.drone_id,
 	    O.lat,
 				O.nacional,
-
+		O.delivery_name,
+		O.track_code,
 	O.lng,
 		O.total,
 	O.affiliate_referral_id,
@@ -412,7 +417,8 @@ Order.findByClientAndStatus = (id_client, status) => {
 	    O.lat,
 	O.lng,
 			O.nacional,
-
+		O.delivery_name,
+		O.track_code,
 		O.total,
 	O.affiliate_referral_id,
 	O.id_order_company,
