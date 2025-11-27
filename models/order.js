@@ -546,7 +546,7 @@ Order.updateCode = (id, code) => {
     UPDATE
         orders
     SET
-        code = $2
+        track_code = $2
     WHERE
         id = $1
     `;
