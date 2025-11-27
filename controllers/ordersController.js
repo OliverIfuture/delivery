@@ -242,11 +242,30 @@ module.exports = {
     },
 
 
-async updateToDelivered(req, res, next) {
+async updateNacionalStatus(req, res, next) {
 
         try {
-            let orderUpdateData = req.body; 
-            orderUpdateData.status = 'ENTREGADO';
+            let order = req.body; 
+            await Order.updateNacionalStatus(order); 
+            return res.status(201).json({
+                success: true,
+                message: 'La orden se actualizo correctamente',
+            });
+        } 
+        catch (error) {
+            console.log(`Error ${error}`)
+            return res.status(501).json({ success: false, message: 'Error al actualizar', error: error.message });
+        }
+    },
+
+
+
+
+   async updateNacionalStatus(req, res, next) {
+
+        try {
+            let order = req.body; 
+            order.status = 'ENTREGADO';
     
             // 1. Actualizar el estado
             await Order.update(orderUpdateData); 
@@ -283,7 +302,7 @@ async updateToDelivered(req, res, next) {
             console.log(`Error ${error}`)
             return res.status(501).json({ success: false, message: 'Error al actualizar', error: error.message });
         }
-    },
+    }, 
     
     async cancelOrder(req, res, next) {
         try {
