@@ -49,7 +49,7 @@ module.exports = {
             const status = req.params.status;
 
             const data = await Order.findByDeliveryAndStatus(id_delivery, status);
-            console.log(`Delivery status: ${JSON.stringify(data)}`);
+           // console.log(`Delivery status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
         } catch (error) {
@@ -71,7 +71,7 @@ module.exports = {
             const id_order_company = req.params.id_order_company ?? 1; // <= valor por defecto
 
             const data = await Order.findByStatus(status, id_order_company);
-            console.log(`Status: ${JSON.stringify(data)}`);
+            //console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
         } catch (error) {
@@ -92,7 +92,7 @@ module.exports = {
             const id_client = req.params.id_client;
 
             const data = await Order.findByClient(id_client);
-            console.log(`Datos enviados del order: ${JSON.stringify(data)}`);
+            //console.log(`Datos enviados del order: ${JSON.stringify(data)}`);
 
             return res.status(201).json(data);
         }
@@ -113,7 +113,7 @@ module.exports = {
             const id_client = req.params.id_client;
 
             const data = await Order.getByClientAndStatusWeb(id_client);
-                        console.log(`orden creada: ${JSON.stringify(data)}`);
+                       // console.log(`orden creada: ${JSON.stringify(data)}`);
 
             return res.status(201).json(data);
         }
@@ -275,15 +275,15 @@ async updateNacionalStatus(req, res, next) {
             try {
                 // 2. Obtener la orden completa de la BD (incluyendo el TOTAL guardado)
                 const order = await Order.findById(orderUpdateData.id);
-                console.log(`orden con id de entrenador actualizada : ${JSON.stringify(order)}`);
+               // console.log(`orden con id de entrenador actualizada : ${JSON.stringify(order)}`);
 
                 if (order && order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) 
-                    console.log(`[Afiliado] Orden (Efectivo) ${order.id} ENTREGADA. Procesando comisión...`);
+                    //console.log(`[Afiliado] Orden (Efectivo) ${order.id} ENTREGADA. Procesando comisión...`);
                     // 3. Ya no recalculamos nada. Usamos order.total directamente.
                     // Aseguramos que sea int/float si viene como string de la BD
                     // (Aunque affiliate.js hace parseFloat, es bueno saber que el dato ya está ahí)
                     const vendorCompany = await User.findCompanyById(order.id_order_company);
-                    console.log(`aun no entra  a calcular: ${JSON.stringify(vendorCompany)}`);
+                   //console.log(`aun no entra  a calcular: ${JSON.stringify(vendorCompany)}`);
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
                         console.log(`entro a calcular: ${JSON.stringify(vendorCompany)}`);
                         await Affiliate.createCommission(order, vendorCompany);
