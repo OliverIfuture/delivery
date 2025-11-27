@@ -579,6 +579,24 @@ Order.update = (order) => {
     ]);
 }
 
+Order.updateNacionalStatus = (order) => {
+    const sql = `
+    UPDATE
+        orders
+    SET
+	 nacional = $2
+	 updated_at = $3
+
+    WHERE
+        id = $1
+    `;
+    return db.none(sql, [
+        order.id,
+        order.nacional,
+        new Date()
+    ]);
+}
+
 Order.updateLatLng = (order) => {
     const sql = `
     UPDATE
