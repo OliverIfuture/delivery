@@ -56,7 +56,7 @@ module.exports = (app) => {
     /* 
  *put ROUTES actualizar
 */
-    app.put('/api/orders/updateCode/:id/:code', passport.authenticate('jwt', { session: false }), ordersController.updateCode);
+    app.put('/api/orders/updateCode/:id/:code/:delivery_name', passport.authenticate('jwt', { session: false }), ordersController.updateCode);
     app.put('/api/orders/updateToDespatched', passport.authenticate('jwt', { session: false }), ordersController.updateToDespatched);
     app.put('/api/orders/updateToOnTheWay', passport.authenticate('jwt', { session: false }), ordersController.updateToOnTheWay);
     app.put('/api/orders/updateToDelivered', passport.authenticate('jwt', { session: false }), ordersController.updateToDelivered);
