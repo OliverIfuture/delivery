@@ -986,7 +986,8 @@ User.createWithImageUserAndCompany = (user, company) => {
                 -- COLUMNAS DEL TRIAL
                 membership_plan,
                 membership_status,
-                membership_expires_at
+                membership_expires_at,
+				deliveryCost
             )
             VALUES(
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
@@ -994,8 +995,9 @@ User.createWithImageUserAndCompany = (user, company) => {
                 -- VALORES DEL TRIAL
                 'fundador', -- Valor de membership_plan (Free Trial)
                 'active',   -- Valor de membership_status
-                $18         -- Valor de membership_expires_at (La fecha calculada)
-            )
+                $18,         -- Valor de membership_expires_at (La fecha calculada)
+                $19
+			)
             RETURNING id
         `;
         
@@ -1018,7 +1020,8 @@ User.createWithImageUserAndCompany = (user, company) => {
             company.points, // 15
             company.image_card, // 16
             company.description, // 17
-            sevenDaysFromNow // 18: La fecha de expiración calculada
+            sevenDaysFromNow, // 18: La fecha de expiración calculada
+			company.deliveryCost
         ])
         .then(companyData => {
             const newCompanyId = companyData.id;
