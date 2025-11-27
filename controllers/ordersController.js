@@ -153,7 +153,8 @@ module.exports = {
 
             const id = req.params.id;
             const code = req.params.code;
-            await Order.updateCode(id, code);
+            const delivery_name  = req.params.delivery_name;
+            await Order.updateCode(id, code, delivery_name );
 
             return res.status(201).json({
                 success: true,
