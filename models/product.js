@@ -2019,7 +2019,8 @@ Product.getAllCompany = () =>{
 	c.image_card,
 	U.notification_token,
 	c.description,
-	c.ispromo
+	c.ispromo,
+	c.deliveryCost
 		
 	from company as c
 	
