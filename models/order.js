@@ -541,18 +541,20 @@ Order.create = (order) => {
 }
 
 
-Order.updateCode = (id, code) => {
+Order.updateCode = (id, code, delivery_name) => {
     const sql = `
     UPDATE
         orders
     SET
-        track_code = $2
+        track_code = $2,
+		delivery_name = $3
     WHERE
         id = $1
     `;
     return db.none(sql, [
         id,
-        code
+        code,
+		delivery_name
     ]);
 }
 
