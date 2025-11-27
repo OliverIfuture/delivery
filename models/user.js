@@ -8,7 +8,7 @@ User.getAll = () => {
     const sql = `
     SELECT 
         *
-    FROM
+    FROMgetCompanyById
         users
     `;
 
@@ -1089,7 +1089,8 @@ User.getCompanyById = (id) => {
 	c.image_card,
 	U.notification_token,
 	c.description,
-	c.ispromo
+	c.ispromo,
+	c.deliveryCost
 		
 	from company as c
 	
