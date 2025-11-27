@@ -584,7 +584,7 @@ Order.updateNacionalStatus = (order) => {
     UPDATE
         orders
     SET
-	 nacional = $2
+	 nacional = $2,
 	 updated_at = $3
 
     WHERE
