@@ -987,7 +987,7 @@ User.createWithImageUserAndCompany = (user, company) => {
                 membership_plan,
                 membership_status,
                 membership_expires_at,
-				deliveryCost
+				"deliveryCost"
             )
             VALUES(
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
