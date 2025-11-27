@@ -261,11 +261,11 @@ async updateNacionalStatus(req, res, next) {
 
 
 
-   async updateNacionalStatus(req, res, next) {
+   async updateToDelivered(req, res, next) {
 
         try {
-            let order = req.body; 
-            order.status = 'ENTREGADO';
+            let orderUpdateData = req.body; 
+            orderUpdateData.status = 'ENTREGADO';
     
             // 1. Actualizar el estado
             await Order.update(orderUpdateData); 
