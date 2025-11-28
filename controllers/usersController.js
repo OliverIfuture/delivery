@@ -22,7 +22,7 @@ module.exports = {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener los repartidores'
             });
         }
@@ -43,7 +43,7 @@ module.exports = {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener el usuario por ID'
             });
         }
@@ -63,7 +63,7 @@ module.exports = {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener el usuario por ID'
             });
         }
@@ -83,7 +83,7 @@ module.exports = {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener el usuario por ID'
             });
         }
@@ -104,7 +104,7 @@ module.exports = {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener el usuario por ID'
             });
         }
@@ -189,7 +189,7 @@ async getAdminsNotificationTokens(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener'
             });
         }
@@ -206,7 +206,7 @@ async getAdminsNotificationTokens(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener'
             });
         }
@@ -354,7 +354,7 @@ async getAdminsNotificationTokens(req, res, next) {
             await Rol.create(data.id, 1);//ROL POR DEFECTO CLIENE
             await User.createticket(data.id);
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'El registro se ralizo correctamente, ahora inicia sesion',
                 data: data.id
             });
@@ -365,7 +365,7 @@ async getAdminsNotificationTokens(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: true,
+                success: true,
                 message: 'error con el registro del ususario',
                 error: error
 
@@ -384,7 +384,7 @@ async getAdminsNotificationTokens(req, res, next) {
             await User.update(user);
 
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'Los datos del usuario se actualizaron correctamente',
             });
 
@@ -394,7 +394,7 @@ async getAdminsNotificationTokens(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: false,
+                success: false,
                 message: 'Hubo un error con la actualizacion de datos del ususario',
                 error: error
 
@@ -422,7 +422,7 @@ async getAdminsNotificationTokens(req, res, next) {
             await User.update(user);
 
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'Los datos del usuario se actualizaron correctamente',
             });
 
@@ -432,7 +432,7 @@ async getAdminsNotificationTokens(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: false,
+                success: false,
                 message: 'Hubo un error con la actualizacion de datos del ususario',
                 error: error
 
@@ -460,7 +460,7 @@ async getAdminsNotificationTokens(req, res, next) {
             await User.updateTrainer(user);
 
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'Los datos del usuario se actualizaron correctamente',
             });
 
@@ -470,7 +470,7 @@ async getAdminsNotificationTokens(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: false,
+                success: false,
                 message: 'Hubo un error con la actualizacion de datos del ususario',
                 error: error
 
@@ -498,7 +498,7 @@ async getAdminsNotificationTokens(req, res, next) {
             await User.updateAccountQr(user);
 
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'Los datos del usuario se actualizaron correctamente',
             });
 
@@ -508,7 +508,7 @@ async getAdminsNotificationTokens(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: false,
+                success: false,
                 message: 'Hubo un error con la actualizacion de datos del ususario',
                 error: error
 
@@ -896,7 +896,7 @@ async deleteAccout(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener el usuario por ID'
             });
         }
@@ -918,7 +918,7 @@ async deleteAccout(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener el usuario por ID'
             });
         }
@@ -1113,7 +1113,7 @@ async deleteAccout(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener el usuario por ID'
             });
         }
@@ -1135,7 +1135,7 @@ async deleteAccout(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener el usuario por ID'
             });
         }
@@ -1148,7 +1148,7 @@ async deleteAccout(req, res, next) {
             const user = req.body;
             const data = await User.create_dealer(user);
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'El registro se ralizo correctamente, ahora inicia sesion',
                 data: data.id
             });
@@ -1159,7 +1159,7 @@ async deleteAccout(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: true,
+                success: true,
                 message: 'error con el registro del ususario',
                 error: error
 
@@ -1249,7 +1249,7 @@ async deleteAccout(req, res, next) {
         catch (error) {
             console.log(`Error en createWithImageUserAndCompany: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'Error con el registro del usuario y la compañía',
                 error: error
             });
@@ -1299,7 +1299,7 @@ async deleteAccout(req, res, next) {
             await User.renewMembership(company);
 
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'membresia actualizada correctamente',
             });
 
@@ -1352,7 +1352,7 @@ async deleteAccout(req, res, next) {
             await User.updateCompanyPaymentMethods(company);
 
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'medios de pago actualizados correctamente',
             });
 
@@ -1415,7 +1415,7 @@ async deleteAccout(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: false,
+                success: false,
                 message: 'Hubo un error con la actualizacion de la empresa',
                 error: error
 
@@ -1505,7 +1505,7 @@ async createWithImageDelivery(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener los delivery por ID'
             });
         }
@@ -1544,7 +1544,7 @@ async createWithImageDelivery(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener los getAgoraConfig'
             });
         }
@@ -1569,7 +1569,7 @@ async createWithImageDelivery(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: false,
+                success: false,
                 message: 'Hubo un error con la actualizacion del live',
                 error: error
 
@@ -1589,7 +1589,7 @@ async createWithImageDelivery(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener'
             });
         }
@@ -1638,7 +1638,7 @@ async createWithImageDelivery(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: true,
+                success: true,
                 message: 'error con el registro del codigo',
                 error: error
 
@@ -1660,7 +1660,7 @@ async createWithImageDelivery(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener los codigos'
             });
         }
@@ -1697,7 +1697,7 @@ async filesupload(req, res, next) {
         // 2. Validar que se envió un archivo
         if (!files || files.length == 0) {
             return res.status(400).json({
-                succes: false,
+                success: false,
                 message: 'No se envió ningún archivo',
             });
         }
@@ -1734,7 +1734,7 @@ async filesupload(req, res, next) {
     } catch (error) {
         console.log(`Error en filesupload: ${error}`); // 'filesupload' en lugar de 'uploadImage'
         return res.status(501).json({
-            succes: false,
+            success: false,
             message: 'Error interno del servidor al subir la imagen',
             error: error
         });
@@ -1749,7 +1749,7 @@ async filesupload(req, res, next) {
 
             const data = await User.createWholesaleUser(user);
             return res.status(201).json({
-                succes: true,
+                success: true,
                 message: 'Usuario de mayoreo registrado',
                 data: data.id
             });
@@ -1760,7 +1760,7 @@ async filesupload(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
 
-                succes: true,
+                success: false,
                 message: 'error con el registro del ususario',
                 error: error
 
@@ -1785,7 +1785,7 @@ async filesupload(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener los delivery por ID'
             });
         }
@@ -1807,7 +1807,7 @@ async filesupload(req, res, next) {
             
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener los repartidores'
             });
         }
