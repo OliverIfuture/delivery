@@ -185,7 +185,7 @@ module.exports = {
             // 5. Guardar en BD
             const sqlUpdate = `
                 UPDATE diets
-                SET ai_analysis = $1, updated_at = NOW()
+                SET ai_analysis = $1
                 WHERE id = $2
                 RETURNING id
             `;
