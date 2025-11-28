@@ -1,5 +1,6 @@
 const dietsController = require('../controllers/dietsController.js');
 const passport = require('passport');
+const multer = require('multer');
 
 module.exports = (app) => {
 
@@ -8,7 +9,7 @@ module.exports = (app) => {
     // --- GET ---
     // Obtener todas las dietas asignadas por un entrenador
     app.get('/api/diets/findByTrainer/:id_company', passport.authenticate('jwt', { session: false }), dietsController.findByTrainer);
-    
+
     // Obtener la dieta ACTIVA de un cliente específico (para la app del cliente)
     app.get('/api/diets/findActiveByClient/:id_client', passport.authenticate('jwt', { session: false }), dietsController.findActiveByClient);
 
@@ -19,5 +20,13 @@ module.exports = (app) => {
     // --- DELETE ---
     // Eliminar una asignación de dieta
     app.delete('/api/diets/delete/:id', passport.authenticate('jwt', { session: false }), dietsController.delete);
+
+    app.post(
+        '/api/diets/analyze',
+        passport.authenticate('jwt', { session: false }),
+        upload.single('pdf'),
+        dietController.analyzeDietPdf
+    );
+
 
 }
