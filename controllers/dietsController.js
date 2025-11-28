@@ -132,7 +132,7 @@ module.exports = {
             // 3. Llamada a la IA (Nueva Sintaxis)
             // Puedes probar modelos: 'gemini-1.5-flash', 'gemini-2.0-flash-exp'
             const response = await aiClient.models.generateContent({
-                model: 'gemini-3-pro-preview',
+                model: 'gemini-2.5-flash',
                 contents: [
                     {
                         parts: [
