@@ -130,9 +130,9 @@ module.exports = {
             `;
 
             // 3. Llamada a la IA (Nueva Sintaxis)
-            // Puedes probar modelos: 'gemini-1.5-flash', 'gemini-2.0-flash-exp'
+            // CAMBIO CRÍTICO: Usamos el nombre completo del modelo estable 'gemini-1.5-flash-001'
             const response = await aiClient.models.generateContent({
-                model: 'gemini-1.5-flash-8b',
+                model: 'gemini-2.5-flash',
                 contents: [
                     {
                         parts: [
@@ -148,12 +148,26 @@ module.exports = {
                 ]
             });
 
-            // 4. Procesar Respuesta
-            // La nueva librería devuelve la respuesta de forma más directa
-            let text = response.text();
+            // 4. Procesar Respuesta (CORRECCIÓN DE EXTRACCIÓN)
+            // La nueva librería devuelve el objeto crudo, no una función .text()
+            let text;
+
+            // Intentamos extraer el texto de la estructura de candidatos
+            if (response && response.candidates && response.candidates.length > 0) {
+                const firstCandidate = response.candidates[0];
+                if (firstCandidate.content && firstCandidate.content.parts && firstCandidate.content.parts.length > 0) {
+                    text = firstCandidate.content.parts[0].text;
+                }
+            }
+
+            // Fallback: Si por alguna razón el objeto tiene .text (futuras versiones), lo intentamos
+            if (!text && typeof response.text === 'function') {
+                text = response.text();
+            }
 
             if (!text) {
-                throw new Error("La IA no generó respuesta de texto.");
+                console.error("Respuesta completa de IA:", JSON.stringify(response, null, 2));
+                throw new Error("La IA no generó una respuesta de texto legible.");
             }
 
             // Limpieza de JSON (Markdown strip)
@@ -187,6 +201,12 @@ module.exports = {
 
         } catch (error) {
             console.error("Error en analyzeDietPdf:", error);
+
+            // Log detallado del error de la API para depuración
+            if (error.body) {
+                console.error("Detalle error API:", JSON.stringify(error.body, null, 2));
+            }
+
             return res.status(501).json({
                 success: false,
                 message: 'Error al analizar la dieta',
