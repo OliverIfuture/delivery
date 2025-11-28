@@ -359,6 +359,21 @@ GROUP BY
     return db.oneOrNone(sql, email);
 }
 
+User.updateCompanyPromo = (idCompany, status) => {
+    const sql = `
+    UPDATE
+        company
+    SET
+        ispromo = $2
+		WHERE
+        id = $1
+    `;
+    return db.none(sql, [
+        idCompany,
+        status
+    ]);
+}
+
 User.updateState = (user) => {
     const sql = `
     UPDATE
