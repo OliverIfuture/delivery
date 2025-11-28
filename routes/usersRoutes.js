@@ -41,7 +41,7 @@ module.exports = (app, upload) => {
     app.put('/api/users/updateNotificationToken', UsersController.updateNotificationToken);    
     app.put('/api/users/forgotPass/:email/:password', UsersController.forgotPass);
     app.put('/api/users/updatePoints/:id/:puntos', UsersController.updatePoints);
-    app.put('/api/users/updateCompanyPromo/:idCompany/:status', UsersController.updateCompanyPromo);
+    app.put('/api/users/updateCompanyPromo/:idCompany/:status', passport.authenticate('jwt', {session: false}),  UsersController.updateCompanyPromo);
 
     //eliminacion de datos para
     app.delete('/api/users/deleteAccout/:idUser', UsersController.deleteAccout);
