@@ -104,8 +104,7 @@ module.exports = {
             }
 
             // 1. Preparar el Modelo (Gemini 1.5 Flash es ideal para esto)
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
             // 2. Convertir el archivo a formato compatible con Gemini (Base64)
             const pdfData = {
                 inlineData: {
