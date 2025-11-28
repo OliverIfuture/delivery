@@ -26,7 +26,7 @@ module.exports = (app) => {
         '/api/diets/analyze',
         passport.authenticate('jwt', { session: false }),
         upload.single('pdf'),
-        dietController.analyzeDietPdf
+        dietsController.analyzeDietPdf
     );
 
 
