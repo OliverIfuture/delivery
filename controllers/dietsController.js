@@ -1,6 +1,7 @@
 const Diet = require('../models/diet.js');
 const { GoogleGenAI } = require("@google/genai");
 const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const db = require('../config/config');
 
 module.exports = {
 
