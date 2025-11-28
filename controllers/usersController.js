@@ -1423,6 +1423,36 @@ async deleteAccout(req, res, next) {
         }
     },
 
+    
+
+       async updateCompanyPromo(req, res, next) {
+        try {
+            
+            const idCompany = req.params.idCompany;
+            const status = req.params.status;
+            await User.updateCompanyPromo(idCompany ,status);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Precios de promo activados',
+            });
+
+        }
+
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error con la actualizacion',
+                error: error
+
+            });
+        }
+    },
+
+    
+    
        async extendMembership(req, res, next) {
         try {
             
