@@ -1,6 +1,6 @@
 const Diet = require('../models/diet.js');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const { GoogleGenAI } = require("@google/genai");
+const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 module.exports = {
 
@@ -97,64 +97,77 @@ module.exports = {
     async analyzeDietPdf(req, res, next) {
         try {
             const { id_diet } = req.body;
-            const file = req.file; // Multer coloca el archivo aquí
+            const file = req.file;
 
             if (!file || !id_diet) {
                 return res.status(400).json({ success: false, message: 'Falta el archivo PDF o el ID de la dieta.' });
             }
 
-            // 1. Preparar el Modelo (Gemini 1.5 Flash es ideal para esto)
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-            // 2. Convertir el archivo a formato compatible con Gemini (Base64)
-            const pdfData = {
-                inlineData: {
-                    data: file.buffer.toString("base64"),
-                    mimeType: "application/pdf",
-                },
-            };
+            console.log(`[AI] Iniciando análisis con nueva librería @google/genai para dieta ${id_diet}...`);
 
-            // 3. El Prompt Mágico (Ingeniería de Prompts)
-            const prompt = `
-                Actúa como un nutricionista experto y asistente de compras.
-                Analiza este plan alimenticio (PDF) adjunto.
+            // 1. Convertir el buffer a Base64
+            const base64Data = file.buffer.toString("base64");
+
+            // 2. El Prompt de Ingeniería
+            const promptText = `
+                Actúa como un nutricionista experto. Analiza este plan alimenticio (PDF).
                 
-                Tu tarea es:
-                1. Extraer TODOS los ingredientes necesarios para seguir esta dieta durante 1 semana completa.
-                2. Consolidar las cantidades (ej: si lunes pide 100g de pollo y martes 200g, pon "300g de Pechuga de Pollo").
-                3. Extraer instrucciones de preparación muy breves y prácticas para las comidas principales.
+                Tareas:
+                1. Extrae TODOS los ingredientes para 1 semana.
+                2. Consolida cantidades (ej: si lunes pide 100g pollo y martes 200g, pon "300g Pechuga de Pollo").
+                3. Extrae instrucciones breves de preparación.
 
-                IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido sin texto adicional ni bloques de código markdown, con esta estructura exacta:
+                IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta, sin markdown:
                 {
                     "shopping_list": [
-                        {"item": "Nombre del ingrediente", "quantity": "Cantidad total estimada", "category": "Carnes/Verduras/Granos/etc"}
+                        {"item": "Nombre ingrediente", "quantity": "Cantidad total", "category": "Carnes/Verduras/Etc"}
                     ],
                     "prep_guide": [
-                        {"meal": "Nombre comida (ej. Desayuno)", "tips": "Instrucción breve (ej. Cocer avena con agua 5min)"}
+                        {"meal": "Nombre comida", "tips": "Instrucción breve"}
                     ],
-                    "summary": "Un resumen de 1 linea motivacional sobre esta dieta"
+                    "summary": "Resumen motivacional corto"
                 }
             `;
 
-            console.log(`[AI] Analizando dieta ID ${id_diet} con Gemini...`);
+            // 3. Llamada a la IA (Nueva Sintaxis)
+            // Puedes probar modelos: 'gemini-1.5-flash', 'gemini-2.0-flash-exp'
+            const response = await aiClient.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: [
+                    {
+                        parts: [
+                            { text: promptText },
+                            {
+                                inlineData: {
+                                    mimeType: 'application/pdf',
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }
+                ]
+            });
 
-            // 4. Enviar a Gemini
-            const result = await model.generateContent([prompt, pdfData]);
-            const response = await result.response;
+            // 4. Procesar Respuesta
+            // La nueva librería devuelve la respuesta de forma más directa
             let text = response.text();
 
-            // Limpieza de seguridad del JSON (por si la IA responde con ```json ... ```)
+            if (!text) {
+                throw new Error("La IA no generó respuesta de texto.");
+            }
+
+            // Limpieza de JSON (Markdown strip)
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
             let aiAnalysis;
             try {
                 aiAnalysis = JSON.parse(text);
             } catch (e) {
-                console.error("Error parseando JSON de IA:", text);
+                console.error("Error parseando JSON:", text);
                 throw new Error("La IA no devolvió un JSON válido.");
             }
 
-            // 5. Guardar el resultado en la Base de Datos
-            // Asumimos que agregaste la columna 'ai_analysis' tipo JSONB a tu tabla 'diets'
+            // 5. Guardar en BD
             const sqlUpdate = `
                 UPDATE diets
                 SET ai_analysis = $1, updated_at = NOW()
@@ -164,12 +177,11 @@ module.exports = {
 
             await db.none(sqlUpdate, [aiAnalysis, id_diet]);
 
-            console.log(`[AI] Análisis guardado correctamente para dieta ${id_diet}`);
+            console.log(`[AI] Éxito. Análisis guardado.`);
 
-            // 6. Responder al cliente
             return res.status(200).json({
                 success: true,
-                message: 'Dieta analizada con éxito. Lista de compras generada.',
+                message: 'Análisis completado con Gemini (Nuevo SDK).',
                 data: aiAnalysis
             });
 
@@ -177,10 +189,11 @@ module.exports = {
             console.error("Error en analyzeDietPdf:", error);
             return res.status(501).json({
                 success: false,
-                message: 'Error al analizar la dieta con IA',
-                error: error.message
+                message: 'Error al analizar la dieta',
+                error: error.message || error.toString()
             });
         }
     }
+
 
 };
