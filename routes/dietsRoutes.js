@@ -1,7 +1,8 @@
 const dietsController = require('../controllers/dietsController.js');
 const passport = require('passport');
 const multer = require('multer');
-
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 module.exports = (app) => {
 
     // PREFIJO: /api/diets
