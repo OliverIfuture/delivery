@@ -97,67 +97,71 @@ module.exports = {
 
     async analyzeDietPdf(req, res, next) {
         try {
-            const { id_diet } = req.body;
-            const file = req.file;
+            // ... validaciones ...
 
-            if (!file || !id_diet) {
-                return res.status(400).json({ success: false, message: 'Falta el archivo PDF o el ID de la dieta.' });
-            }
+            console.log(`[AI] Iniciando análisis detallado (Plan Semanal) para dieta ${id_diet}...`);
 
-            console.log(`[AI] Iniciando análisis extendido (con precios) para dieta ${id_diet}...`);
-
-            // 1. Convertir el buffer a Base64
             const base64Data = file.buffer.toString("base64");
 
-            // 2. El Prompt de Ingeniería (ACTUALIZADO PARA PRECIOS Y LUGARES)
+            // --- PROMPT MAESTRO ACTUALIZADO ---
             const promptText = `
-                Actúa como un nutricionista experto y economista doméstico en México. Analiza este plan alimenticio (PDF).
+                Actúa como un nutricionista experto. Analiza este plan alimenticio (PDF).
                 
                 Tareas:
-                1. Extrae TODOS los ingredientes para 1 semana.
-                2. Consolida cantidades (ej: "300g Pechuga de Pollo").
-                3. Extrae instrucciones breves de preparación.
-                4. ESTIMA EL COSTO: Calcula un rango de precio aproximado total de la lista de compras en Pesos Mexicanos (MXN) basado en precios promedio de supermercado.
-                5. RECOMIENDA LUGARES: Sugiere 3 tipos de tiendas o supermercados en México ideales para comprar estos insumos (ej. "Mercado de Abastos" para frutas, "Costco" para proteínas a granel).
+                1. Extrae TODOS los ingredientes para la lista de compras y consolida cantidades.
+                2. **EXTRAE EL MENÚ SEMANAL DETALLADO:** Necesito saber exactamente qué comer cada día, desglosado por tiempos de comida (Desayuno, Comida, Cena, Snacks). Incluye los alimentos y una breve instrucción si la hay.
+                3. Calcula costos estimados y recomienda lugares.
 
-                IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta, sin markdown:
+                IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta:
                 {
                     "shopping_list": [
                         {"item": "Nombre ingrediente", "quantity": "Cantidad total", "category": "Carnes/Verduras/Etc"}
                     ],
-                    "prep_guide": [
-                        {"meal": "Nombre comida", "tips": "Instrucción breve"}
+                    "weekly_plan": [
+                        {
+                            "day": "Lunes",
+                            "meals": [
+                                {
+                                    "time": "Desayuno", 
+                                    "food": "Descripción completa de los alimentos (ej. 3 Huevos con 50g de Avena)",
+                                    "instructions": "Instrucción breve de preparación (opcional)"
+                                },
+                                {
+                                    "time": "Almuerzo",
+                                    "food": "...",
+                                    "instructions": "..."
+                                }
+                            ]
+                        },
+                         {
+                            "day": "Martes",
+                            "meals": []
+                        }
+                        // ... resto de los días
                     ],
                     "economics": {
-                        "estimated_total": "$1,200 - $1,500 MXN",
-                        "tips": "Tip breve para ahorrar (ej. Comprar pollo a granel y congelar)",
-                        "supermarkets": [
-                            {"name": "Nombre Tienda 1", "reason": "Razón breve"},
-                            {"name": "Nombre Tienda 2", "reason": "Razón breve"},
-                            {"name": "Nombre Tienda 3", "reason": "Razón breve"}
-                        ]
+                        "estimated_total": "$MXN",
+                        "tips": "Tip ahorro",
+                        "supermarkets": [{"name": "Tienda", "reason": "Razón"}]
                     },
-                    "summary": "Resumen motivacional corto"
+                    "summary": "Resumen corto"
                 }
             `;
 
-            // 3. Llamada a la IA
             const response = await aiClient.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-1.5-flash',
                 contents: [
                     {
                         parts: [
                             { text: promptText },
-                            {
-                                inlineData: {
-                                    mimeType: 'application/pdf',
-                                    data: base64Data
-                                }
-                            }
+                            { inlineData: { mimeType: 'application/pdf', data: base64Data } }
                         ]
                     }
                 ]
             });
+
+            // ... (Procesamiento de respuesta y guardado en BD igual que antes) ...
+            // ... Asegúrate de copiar el resto de la función igual ...
 
             // 4. Procesar Respuesta
             let text;
@@ -168,11 +172,8 @@ module.exports = {
                 }
             }
 
-            if (!text) {
-                throw new Error("La IA no generó respuesta de texto.");
-            }
+            if (!text) throw new Error("La IA no generó respuesta de texto.");
 
-            // Limpieza de JSON
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
             let aiAnalysis;
@@ -183,8 +184,6 @@ module.exports = {
                 throw new Error("La IA no devolvió un JSON válido.");
             }
 
-            // 5. Guardar en BD
-            // Usamos db.one porque usamos RETURNING id
             const sqlUpdate = `
                 UPDATE diets
                 SET ai_analysis = $1
@@ -194,23 +193,17 @@ module.exports = {
 
             await db.one(sqlUpdate, [aiAnalysis, id_diet]);
 
-            console.log(`[AI] Éxito. Análisis guardado.`);
-
             return res.status(200).json({
                 success: true,
-                message: 'Análisis completado con Gemini.',
+                message: 'Análisis completado.',
                 data: aiAnalysis
             });
 
         } catch (error) {
             console.error("Error en analyzeDietPdf:", error);
-            return res.status(501).json({
-                success: false,
-                message: 'Error al analizar la dieta',
-                error: error.message || error.toString()
-            });
+            return res.status(501).json({ success: false, message: 'Error al analizar', error: error.message });
         }
-    },
+    }
 
     async getDietById(req, res, next) {
         try {
