@@ -97,7 +97,12 @@ module.exports = {
 
     async analyzeDietPdf(req, res, next) {
         try {
-            // ... validaciones ...
+            const { id_diet } = req.body;
+            const file = req.file;
+
+            if (!file || !id_diet) {
+                return res.status(400).json({ success: false, message: 'Falta el archivo PDF o el ID de la dieta.' });
+            }
 
             console.log(`[AI] Iniciando análisis detallado (Plan Semanal) para dieta ${id_diet}...`);
 
