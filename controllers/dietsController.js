@@ -143,7 +143,7 @@ module.exports = {
 
             // 3. Llamada a la IA
             const response = await aiClient.models.generateContent({
-                model: 'gemini-1.5-flash-001',
+                model: 'gemini-2.5-flash',
                 contents: [
                     {
                         parts: [
