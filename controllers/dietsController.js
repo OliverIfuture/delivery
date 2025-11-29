@@ -203,7 +203,7 @@ module.exports = {
             console.error("Error en analyzeDietPdf:", error);
             return res.status(501).json({ success: false, message: 'Error al analizar', error: error.message });
         }
-    }
+    },
 
     async getDietById(req, res, next) {
         try {
