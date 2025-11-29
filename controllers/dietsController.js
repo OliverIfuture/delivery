@@ -114,7 +114,7 @@ module.exports = {
                 
                 Tareas:
                 1. Extrae TODOS los ingredientes para la lista de compras y consolida cantidades.
-                2. **EXTRAE EL MENÚ SEMANAL DETALLADO:** Necesito saber exactamente qué comer cada día, desglosado por tiempos de comida (Desayuno, Comida, Cena, Snacks). Incluye los alimentos y una breve instrucción si la hay.
+                2. **EXTRAE EL MENÚ SEMANAL DETALLADO:** Necesito saber exactamente qué comer cada día, desglosado por tiempos de comida (Desayuno, Comida, Cena, Snacks). Incluye los alimentos y una breve instrucción muy importante agregarla.
                 3. Calcula costos estimados y recomienda lugares.
 
                 IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta:
@@ -129,7 +129,7 @@ module.exports = {
                                 {
                                     "time": "Desayuno", 
                                     "food": "Descripción completa de los alimentos (ej. 3 Huevos con 50g de Avena)",
-                                    "instructions": "Instrucción breve de preparación (opcional)"
+                                    "instructions": "Instrucción breve de preparación (importante)"
                                 },
                                 {
                                     "time": "Almuerzo",
