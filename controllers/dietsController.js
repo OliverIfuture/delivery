@@ -210,7 +210,37 @@ module.exports = {
                 error: error.message || error.toString()
             });
         }
-    }
+    },
+
+    async getDietById(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            const diet = await db.oneOrNone(`
+                SELECT * FROM diets WHERE id = $1
+            `, [id]);
+
+            if (!diet) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Dieta no encontrada'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: diet // Regresa la dieta con el campo 'ai_analysis' ya lleno
+            });
+
+        } catch (error) {
+            console.error(`Error en getDietById: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener la dieta',
+                error: error.message
+            });
+        }
+    },
 
 
 };

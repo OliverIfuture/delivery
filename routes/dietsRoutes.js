@@ -29,5 +29,12 @@ module.exports = (app) => {
         dietsController.analyzeDietPdf
     );
 
+    // --- ¡ESTA ES LA RUTA QUE FALTA PARA EL POLLING! ---
+    app.get(
+        '/api/diets/get/:id',
+        passport.authenticate('jwt', { session: false }),
+        dietController.getDietById
+    );
+
 
 }
