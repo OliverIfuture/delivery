@@ -187,7 +187,7 @@ module.exports = {
             // Usamos db.one porque usamos RETURNING id
             const sqlUpdate = `
                 UPDATE diets
-                SET ai_analysis = $1, updated_at = NOW()
+                SET ai_analysis = $1
                 WHERE id = $2
                 RETURNING id
             `;
