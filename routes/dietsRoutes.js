@@ -33,7 +33,7 @@ module.exports = (app) => {
     app.get(
         '/api/diets/get/:id',
         passport.authenticate('jwt', { session: false }),
-        dietController.getDietById
+        dietsController.getDietById
     );
 
 
