@@ -1700,19 +1700,23 @@ User.transferClientData = (id_client, id_company) => {
  */
 User.updateStreak = (id_user) => {
     const sql = `
-        UPDATE users
-        SET 
-            current_streak = CASE
-                -- Si entrenó ayer, aumenta la racha
-                WHEN last_workout_date = CURRENT_DATE - INTERVAL '1 day' THEN current_streak + 1
-                -- Si ya entrenó hoy, mantiene la racha igual
-                WHEN last_workout_date = CURRENT_DATE THEN current_streak
-                -- Si falló un día (o es el primero), reinicia a 1
-                ELSE 1
-            END,
-            last_workout_date = CURRENT_DATE
-        WHERE id = $1
-        RETURNING current_streak;
+    UPDATE users
+    SET 
+        current_streak = CASE
+            -- 1. Si ya entrenó HOY, no hacemos nada (mantiene la racha)
+            WHEN last_workout_date = CURRENT_DATE THEN current_streak
+
+            -- 2. Lógica de Flexibilidad:
+            -- Si el último entreno fue hace 3 días o menos (permite 2 días vacíos en medio), suma +1.
+            -- Ejemplo: Entrenó Lunes -> Hoy es Jueves (Pasaron Martes y Miércoles). Es válido.
+            WHEN last_workout_date >= CURRENT_DATE - INTERVAL '3 days' THEN current_streak + 1
+
+            -- 3. Si pasaron más de 3 días (3 días de descanso consecutivos), reinicia a 1.
+            ELSE 1
+        END,
+        last_workout_date = CURRENT_DATE
+    WHERE id = $1
+    RETURNING current_streak;
     `;
     return db.one(sql, id_user);
 };
