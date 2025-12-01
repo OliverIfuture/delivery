@@ -64,6 +64,7 @@ const affiliateRoutes = require('./routes/affiliateRoutes.js');
 const gymRoutes = require('./routes/gymRoutes.js');
 const posRoutes = require('./routes/posRoutes.js');
 const gymAdminRoutes = require('./routes/gymAdminRoutes.js');
+const nutritionRoutes = require('./routes/nutritionRoutes.js');
 
 const PORT = process.env.PORT || 4000
 
@@ -117,6 +118,7 @@ affiliateRoutes(app);
 gymRoutes(app);
 posRoutes(app);
 gymAdminRoutes(app);
+nutritionRoutes(app);
 server.listen(PORT, function () {
     console.log('Aplicacion de NodeJs ' + process.pid + ' iniciada... : puerto asignado ' + PORT);
 });
