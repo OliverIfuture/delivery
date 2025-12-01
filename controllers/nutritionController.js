@@ -6,7 +6,8 @@ module.exports = {
         try {
             const logData = req.body;
             logData.id_client = req.user.id; // Del token
-            
+            console.log(`el payment intent : ${JSON.stringify(logData)}`);
+
             // Validación básica
             if (!logData.product_name || !logData.calories) {
                  return res.status(400).json({success: false, message: 'Datos incompletos'});
