@@ -82,6 +82,7 @@ module.exports = {
     },
 
     // --- FUNCIÓN ACTUALIZADA CON @google/genai ---
+   // --- FUNCIÓN ANALYZE MEAL AI (CORREGIDA MIME TYPE) ---
     async analyzeMealAI(req, res, next) {
         try {
             console.log('🚀 [START] analyzeMealAI request received');
@@ -93,12 +94,22 @@ module.exports = {
                 weight, 
                 description, 
                 fileRecibido: file ? 'Sí' : 'No',
-                mimetype: file ? file.mimetype : 'N/A'
+                mimetype: file ? file.mimetype : 'N/A' // Aquí veías 'application/octet-stream'
             });
 
             if (!file) {
                 return res.status(400).json({ success: false, message: 'Falta la foto del plato.' });
             }
+
+            // --- CORRECCIÓN CRÍTICA DE MIME TYPE ---
+            // Gemini falla si recibe 'application/octet-stream'.
+            // Como sabemos que es una foto de celular, forzamos a 'image/jpeg' si es genérico.
+            let mimeTypeToSend = file.mimetype;
+            if (mimeTypeToSend === 'application/octet-stream') {
+                console.log('⚠️ MIME type genérico detectado. Forzando a image/jpeg.');
+                mimeTypeToSend = 'image/jpeg';
+            }
+            // ---------------------------------------
 
             // Convertir buffer a base64
             const base64Data = file.buffer.toString("base64");
@@ -125,16 +136,17 @@ module.exports = {
                 }
             `;
 
-            console.log('🤖 [IA] Enviando prompt e imagen a Gemini (SDK Nuevo)...');
+            console.log(`🤖 [IA] Enviando imagen (${mimeTypeToSend}) a Gemini...`);
             
             // --- USO NUEVO DEL SDK (@google/genai) ---
             const response = await aiClient.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-1.5-flash',
                 contents: [
                     {
                         parts: [
                             { text: promptText },
-                            { inlineData: { mimeType: file.mimetype, data: base64Data } }
+                            // Usamos la variable corregida 'mimeTypeToSend'
+                            { inlineData: { mimeType: mimeTypeToSend, data: base64Data } }
                         ]
                     }
                 ]
@@ -156,7 +168,13 @@ module.exports = {
             // Limpieza de JSON
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
             
-            const analysis = JSON.parse(text);
+            let analysis;
+            try {
+                analysis = JSON.parse(text);
+            } catch (e) {
+                console.error("Error parseando JSON de IA:", text);
+                throw new Error("La IA no devolvió un JSON válido.");
+            }
 
             console.log('✅ [SUCCESS] JSON parseado correctamente:', analysis);
 
@@ -167,6 +185,10 @@ module.exports = {
 
         } catch (error) {
             console.error("❌ [CRITICAL ERROR] analyzeMealAI:", error);
+            // Verificar si es error de la API de Google para dar más detalle
+            if (error.response) {
+                console.error("Detalle API Google:", JSON.stringify(error.response, null, 2));
+            }
             return res.status(501).json({ success: false, message: 'Error al analizar el plato', error: error.message });
         }
     },
