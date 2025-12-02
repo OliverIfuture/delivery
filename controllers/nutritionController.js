@@ -129,7 +129,7 @@ module.exports = {
             
             // --- USO NUEVO DEL SDK (@google/genai) ---
             const response = await aiClient.models.generateContent({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-2.5-flash',
                 contents: [
                     {
                         parts: [
