@@ -1105,7 +1105,8 @@ User.getCompanyById = (id) => {
 	U.notification_token,
 	c.description,
 	c.ispromo,
-	c."deliveryCost"
+	c."deliveryCost",
+	c.logo
 		
 	from company as c
 	
