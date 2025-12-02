@@ -1,4 +1,5 @@
 const NutritionLog = require('../models/nutritionLog');
+const NutritionGoals = require('../models/nutritionGoals'); // <-- IMPORTANTE
 
 module.exports = {
 
@@ -42,5 +43,42 @@ async logFood(req, res, next) {
             console.log(`Error: ${error}`);
             return res.status(501).json({success: false, error: error});
         }
-    }
+    },
+
+            async setGoals(req, res, next) {
+        try {
+            const goals = req.body;
+            goals.id_client = req.user.id;
+            const data = await NutritionGoals.setGoals(goals);
+            return res.status(201).json({ success: true, message: 'Metas actualizadas', data: data });
+        } catch (error) {
+            console.error(error);
+            return res.status(501).json({ success: false, message: 'Error al guardar metas', error: error });
+        }
+    },
+
+    async getGoals(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const data = await NutritionGoals.findByClient(id_client);
+            // Si no tiene metas, devolvemos un default
+            const defaultGoals = { calories: 2000, proteins: 150, carbs: 200, fats: 60 };
+            return res.status(200).json({ success: true, data: data || defaultGoals });
+        } catch (error) {
+            console.error(error);
+            return res.status(501).json({ success: false, message: 'Error al obtener metas', error: error });
+        }
+    },
+
+    async deleteLog(req, res, next) {
+        try {
+            const id = req.params.id;
+            // Borrado directo simple
+            await db.none('DELETE FROM client_nutrition_log WHERE id = $1', [id]);
+            return res.status(200).json({ success: true, message: 'Registro eliminado' });
+        } catch (error) {
+            console.error(error);
+            return res.status(501).json({ success: false, message: 'Error al eliminar', error: error });
+        }
+    },
 };
