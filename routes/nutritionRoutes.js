@@ -12,4 +12,5 @@ module.exports = (app) => {
     
     // Borrar Log
     app.delete('/api/nutrition/log/:id', passport.authenticate('jwt', {session: false}), nutritionController.deleteLog);
+    app.post('/api/nutrition/analyze-meal', passport.authenticate('jwt', {session: false}), upload.single('image'), nutritionController.analyzeMealAI);
 }
