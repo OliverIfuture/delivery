@@ -53,6 +53,7 @@ SubscriptionPlan.findByCompany = (id_company) => {
             id,
             id_company,
             name,
+            description,
             price,
             currency,
             stripe_product_id,
