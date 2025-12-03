@@ -61,13 +61,29 @@ NutritionLog.create = (log) => {
 
 // Obtener el historial de hoy de un cliente
 NutritionLog.findByClientToday = (id_client) => {
+    
+    // --- 1. CALCULAR INICIO DEL DÍA EN MÉXICO (CDMX) ---
+    const now = new Date();
+    // Convertimos la hora actual a la zona de México
+    const cdmxDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+
+    // Obtenemos año, mes y día de México
+    const year = cdmxDate.getFullYear();
+    const month = String(cdmxDate.getMonth() + 1).padStart(2, '0');
+    const day = String(cdmxDate.getDate()).padStart(2, '0');
+
+    // Creamos el timestamp de las 00:00:00 horas de HOY en México
+    const mexicoStartOfDay = `${year}-${month}-${day} 00:00:00`;
+    // --------------------------------------
+
     const sql = `
         SELECT * FROM client_nutrition_log
         WHERE id_client = $1 
-        AND created_at >= DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC')
+        AND created_at >= $2 -- Buscamos registros creados DESPUÉS de las 00:00 de hoy (Hora CDMX)
         ORDER BY created_at DESC
     `;
-    return db.manyOrNone(sql, id_client);
+
+    return db.manyOrNone(sql, [id_client, mexicoStartOfDay]);
 };
 
 module.exports = NutritionLog;
