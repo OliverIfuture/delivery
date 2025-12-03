@@ -1658,7 +1658,7 @@ User.getAvailableTrainers = () => {
             AND available = 'true'
             AND "chargesEnabled" = true -- Solo mostrar los que pueden cobrar
         ORDER BY
-            name ASC
+            id asc
     `;
     return db.manyOrNone(sql);
 };
