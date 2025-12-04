@@ -399,8 +399,15 @@ module.exports = {
             let membershipToExtend;
             let companyId;
 
-            // 1. Buscar la membresía activa del cliente
-            const activeSub = await Gym.findActiveByClientId2(id_client, id_plan); 
+            if (id_plan && id_plan !== 'undefined' && id_plan !== null && id_plan !== '') {
+                // Si viene el ID, buscamos específicamente si tiene ESE plan activo
+                console.log(`[Intent] Buscando coincidencia exacta para plan ${id_plan}...`);
+                activeSub = await Gym.findActiveByClientId2(id_client, id_plan); 
+            } else {
+                // Si NO viene el ID, asumimos que quiere renovar lo que sea que tenga activo
+                console.log(`[Intent] id_plan no válido o ausente. Buscando cualquier membresía activa...`);
+                activeSub = await Gym.findActiveByClientId(id_client);
+            }
             
             if (activeSub) {
                 // --- CASO 1: EXTENSIÓN (El usuario ya tiene una membresía) ---
