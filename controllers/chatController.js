@@ -1,5 +1,6 @@
 const User = require('../models/user.js'); 
 const admin = require('firebase-admin'); 
+const storage = require('../utils/cloud_storage.js');
 
 // --- ¡LÓGICA DE INICIALIZACIÓN (LA DEJAREMOS IGUAL)! ---
 let serviceAccountChat;
@@ -124,6 +125,47 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Error al enviar el mensaje',
+                error: error.message
+            });
+        }
+    },
+
+  async uploadImage(req, res, next) {
+        try {
+            const files = req.files;
+
+            if (files.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se ha enviado ninguna imagen.'
+                });
+            }
+
+            // Generar un path único para la imagen del chat
+            // Ej: chat_images/senderId_timestamp
+            const path = `chat_images/user_${req.user.id}_${Date.now()}`;
+            
+            // Usamos tu utilidad 'storage' existente
+            const url = await storage(files[0], path);
+
+            if (url != undefined && url != null) {
+                return res.status(201).json({
+                    success: true,
+                    message: 'Imagen subida correctamente',
+                    data: url // Retornamos la URL pública
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error al obtener la URL de la imagen.'
+                });
+            }
+
+        } catch (error) {
+            console.log(`Error en chatController.uploadImage: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al subir la imagen',
                 error: error.message
             });
         }
