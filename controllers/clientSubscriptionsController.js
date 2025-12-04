@@ -400,7 +400,7 @@ module.exports = {
             let companyId;
 
             // 1. Buscar la membresía activa del cliente
-            const activeSub = await Gym.findActiveByClientId(id_client); 
+            const activeSub = await Gym.findActiveByClientId(id_client, id_plan); 
             
             if (activeSub) {
                 // --- CASO 1: EXTENSIÓN (El usuario ya tiene una membresía) ---
