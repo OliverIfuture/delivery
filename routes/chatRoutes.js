@@ -1,7 +1,7 @@
 const chatController = require('../controllers/chatController.js');
 const passport = require('passport');
 
-module.exports = (app) => {
+module.exports = (app, upload) => {
 
     // PREFIJO: /api/chat
     
