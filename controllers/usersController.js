@@ -2000,4 +2000,99 @@ async filesupload(req, res, next) {
         }
     },
 
+    async sendOtp(req, res, next) {
+        try {
+            const email = req.body.email;
+            const user = await User.findByMail(email);
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'El correo no está registrado.'
+                });
+            }
+
+            // Generar código de 6 dígitos (Lógica de negocio simple, puede ir aquí)
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Guardamos el OTP en la BD (usando session_token temporalmente)
+            await User.updateOtp(user.id, otp);
+
+            // --- SIMULACIÓN EMAIL ---
+            console.log('------------------------------------------------');
+            console.log(`📧 [EMAIL] Para: ${email} | 🔐 OTP: ${otp}`);
+            console.log('------------------------------------------------');
+
+            return res.status(200).json({
+                success: true,
+                message: 'Código enviado a tu correo.'
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al enviar el código.',
+                error: error
+            });
+        }
+    },
+
+    // 2. VERIFICAR CÓDIGO OTP
+    async verifyOtp(req, res, next) {
+        try {
+            const { email, otp } = req.body;
+            const user = await User.findByMail(email);
+
+            if (!user) {
+                return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+            }
+
+            // Validamos si el código coincide con el guardado en session_token
+            if (user.session_token !== otp) { 
+                 return res.status(401).json({
+                    success: false,
+                    message: 'El código es incorrecto.'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Código verificado.'
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al verificar código.',
+                error: error
+            });
+        }
+    },
+
+    // 3. RESTABLECER CONTRASEÑA
+    async resetPassword(req, res, next) {
+        try {
+            const { email, password } = req.body;
+
+            // AQUÍ ESTÁ EL CAMBIO: 
+            // Pasamos la contraseña PLANA ("123456"). El modelo se encargará de hacer el Hash MD5.
+            await User.updatePasswordByEmail(email, password);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Contraseña actualizada correctamente.'
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al actualizar la contraseña.',
+                error: error
+            });
+        }
+    },
+
 };
