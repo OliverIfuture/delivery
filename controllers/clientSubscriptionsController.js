@@ -388,41 +388,65 @@ module.exports = {
 
 
 
-    async createExtensionIntent(req, res, next) {
+   async createExtensionIntent(req, res, next) {
         try {
             const id_client = req.user.id;
-            const companyIdReal = req.body.companyId;
-            const { id_plan } = req.body; 
+            
+            // 1. CORRECCIÓN DE NOMBRES: Leer exactamente lo que envía Flutter
+            // Flutter envía: { 'id_plan': ..., 'id_company': ... }
+            const { id_plan, id_company: companyIdFromFront } = req.body; 
 
-            console.log(`[Intent] Iniciando para cliente: ${id_client}, Plan (opcional): ${id_plan}`);
-            console.log(`[Intent] Iniciando para company companyId: ${companyIdReal}`);
+            console.log(`[Intent] Cliente: ${id_client} | Plan: ${id_plan} | Company (Front): ${companyIdFromFront}`);
 
             let planToPurchase;
             let membershipToExtend;
-            let companyId;
+            let companyId; // El ID final que usaremos
+            let activeSub;
 
-            if (id_plan && id_plan !== 'undefined' && id_plan !== null && id_plan !== '') {
-                // Si viene el ID, buscamos específicamente si tiene ESE plan activo
-                console.log(`[Intent] Buscando coincidencia exacta para plan ${id_plan}...`);
+            // --- 2. LÓGICA DE VALIDACIÓN DE ID_PLAN (LO QUE PEDISTE) ---
+            
+            // Validamos si id_plan es un valor real y útil
+            const isPlanIdValid = (id_plan && id_plan !== 'undefined' && id_plan !== 'null' && id_plan !== '');
+
+            if (isPlanIdValid) {
+                // CASO A: Viene un ID de plan específico. 
+                // Buscamos si ya tiene ESE plan activo para extenderlo.
+                console.log(`[Intent] ID Plan válido. Buscando coincidencia exacta...`);
                 activeSub = await Gym.findActiveByClientId2(id_client, id_plan); 
             } else {
-                // Si NO viene el ID, asumimos que quiere renovar lo que sea que tenga activo
-                console.log(`[Intent] id_plan no válido o ausente. Buscando cualquier membresía activa...`);
+                // CASO B: No viene ID (o es null/undefined).
+                // Asumimos que el usuario dio click en "Renovar" sin contexto de plan nuevo.
+                // Buscamos CUALQUIER membresía activa que tenga.
+                console.log(`[Intent] ID Plan vacío/nulo. Buscando cualquier membresía activa...`);
                 activeSub = await Gym.findActiveByClientId(id_client);
             }
+            // ----------------------------------------------------------
             
             if (activeSub) {
-                // --- CASO 1: EXTENSIÓN (El usuario ya tiene una membresía) ---
-                console.log(`[Intent] Usuario tiene membresía activa. Extendiendo...`);
+                // --- CASO 1: TIENE MEMBRESÍA ACTIVA (RENOVACIÓN) ---
+                console.log(`[Intent] Encontrada suscripción activa ID: ${activeSub.id}. Extendiendo...`);
+                
                 membershipToExtend = activeSub;
-                companyId = activeSub.id_company;
+                companyId = activeSub.id_company; // Usamos la company de la BD
+                
+                // Intentamos buscar el plan original por nombre para saber el precio actual
                 planToPurchase = await Gym.findPlanByName(activeSub.plan_name, activeSub.id_company);
                 
+                // Fallback: Si no lo encuentra por nombre, intentamos por ID si existe en el registro
+                if (!planToPurchase && activeSub.id_plan) {
+                     planToPurchase = await Gym.findById(activeSub.id_plan);
+                }
+                
             } else {
-                // --- CASO 2: NUEVA COMPRA (El usuario no tiene membresía) ---
-                console.log(`[Intent] Usuario nuevo. Comprando plan ID: ${id_plan}`);
-                if (!id_plan) {
-                    return res.status(400).json({ success: false, message: 'Falta el id_plan para una nueva compra.' });
+                // --- CASO 2: COMPRA NUEVA (No tiene membresía activa) ---
+                console.log(`[Intent] No hay suscripción activa. Procesando como compra nueva.`);
+                
+                // Si es compra nueva, ES OBLIGATORIO tener el id_plan
+                if (!isPlanIdValid) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'No tienes una membresía activa para renovar. Por favor selecciona un plan nuevo.' 
+                    });
                 }
                 
                 planToPurchase = await Gym.findById(id_plan);
@@ -431,32 +455,37 @@ module.exports = {
                 }
             }
 
-            // 2. Validar que encontramos un plan y una compañía
-            if (!planToPurchase || !companyId) {
-                console.log(`[Intent] ERROR: No se pudo determinar el plan o la compañía.`);
-                return res.status(400).json({ success: false, message: 'No se pudieron encontrar los detalles del plan.' });
+            // --- 3. VALIDACIÓN FINAL DE DATOS ---
+
+            // Si companyId no salió de la BD, usamos el que vino del Frontend como respaldo
+            if (!companyId && companyIdFromFront) {
+                companyId = companyIdFromFront;
+            }
+
+            if (!planToPurchase) {
+                return res.status(400).json({ success: false, message: 'No se encontró la información del plan a pagar.' });
+            }
+            
+            if (!companyId) {
+                return res.status(400).json({ success: false, message: 'No se pudo identificar al gimnasio/entrenador.' });
             }
             
             const amountInCents = Math.round(planToPurchase.price * 100); 
 
-            // 3. Obtener la compañía (Gimnasio) para sus claves de Stripe
+            // 4. Obtener credenciales de Stripe del Gimnasio
             const company = await User.findCompanyById(companyId);
             if (!company || !company.stripeSecretKey || !company.stripePublishableKey) {
-                console.log(`[Intent] ERROR: El gimnasio ${companyId} no tiene claves de Stripe.`);
                 return res.status(400).json({
                     success: false,
-                    message: 'El gimnasio no tiene una clave de Stripe configurada.'
+                    message: 'El gimnasio no tiene configurados los pagos con Stripe.'
                 });
             }
 
             const stripe = require('stripe')(company.stripeSecretKey);
 
-            // 4. Crear/Obtener un Cliente en Stripe
+            // 5. Gestión de Cliente Stripe
             let customer;
-            const existingCustomers = await stripe.customers.list({
-                email: req.user.email,
-                limit: 1
-            });
+            const existingCustomers = await stripe.customers.list({ email: req.user.email, limit: 1 });
 
             if (existingCustomers.data.length > 0) {
                 customer = existingCustomers.data[0];
@@ -467,13 +496,13 @@ module.exports = {
                 });
             }
             
-            // 5. Crear una Clave Efímera
+            // 6. Ephemeral Key
             const ephemeralKey = await stripe.ephemeralKeys.create(
                 { customer: customer.id },
                 { apiVersion: '2020-08-27' }
             );
 
-            // 6. Crear el Payment Intent (el pago único)
+            // 7. Payment Intent Metadata
             const metadata = {
                 type: 'membership_extension', 
                 id_client: id_client,
@@ -485,26 +514,21 @@ module.exports = {
                 metadata.id_membership_to_extend = membershipToExtend.id;
             }
 
+            // 8. Crear Intento de Pago
              const extensionIntent = await stripe.paymentIntents.create({
-               amount: amountInCents,
+                amount: amountInCents,
                 currency: 'mxn',
                 customer: customer.id,
                 metadata: metadata,
-                
-                // === CONFIGURACIÓN CRÍTICA DE STRIPE CONNECT ===
                 transfer_data: {
-                    // **DIRIGE EL DINERO:** Usamos el Account ID del gimnasio como destino
                     destination: company.stripeAccountId, 
                 },
-                // ===============================================
             });
 
-            // --- **¡AQUÍ ESTÁ LA CORRECCIÓN!** ---
-            // 7. Devolver todos los secretos ENVUELTOS en un objeto 'data'
             return res.status(200).json({
                 success: true,
-                message: 'Intención de pago creada', // Mensaje que tu ResponseApi puede leer
-                data: { // <-- ¡LA ENVOLTURA QUE FALTABA!
+                message: 'Intención de pago creada', 
+                data: { 
                     clientSecret: extensionIntent.client_secret,
                     ephemeralKey: ephemeralKey.secret,
                     customerId: customer.id,
@@ -512,17 +536,15 @@ module.exports = {
                     gymName: company.name
                 }
             });
-            // --- **FIN DE LA CORRECCIÓN** ---
 
         } catch (error) {
             console.log(`Error en createExtensionIntent: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al crear la intención de extensión',
+                message: 'Error interno al procesar el pago',
                 error: error.message
             });
         }
     },
-
     
 };
