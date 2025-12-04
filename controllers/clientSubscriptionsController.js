@@ -395,7 +395,7 @@ module.exports = {
             const { id_plan } = req.body; 
 
             console.log(`[Intent] Iniciando para cliente: ${id_client}, Plan (opcional): ${id_plan}`);
-            console.log(`[Intent] Iniciando para company companyId: ${companyId}`);
+            console.log(`[Intent] Iniciando para company companyId: ${companyIdReal}`);
 
             let planToPurchase;
             let membershipToExtend;
