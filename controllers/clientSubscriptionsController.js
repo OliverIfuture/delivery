@@ -418,7 +418,7 @@ module.exports = {
                 // Asumimos que el usuario dio click en "Renovar" sin contexto de plan nuevo.
                 // Buscamos CUALQUIER membresía activa que tenga.
                 console.log(`[Intent] ID Plan vacío/nulo. Buscando cualquier membresía activa...`);
-                activeSub = await Gym.findActiveByClientId(id_client);
+                activeSub = await Gym.findActiveByClientId(id_client, companyId);
             }
             // ----------------------------------------------------------
             
