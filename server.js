@@ -111,7 +111,7 @@ subscriptionPlans(app);
 clientSubscriptions(app); 
 stripeConnect(app); // <-- AÑADE ESTA LÍNEA
 clientProgress(app);
-chat(app);
+chat(app, upload);
 trainerDashboard(app);
 superAdmin(app);
 affiliateRoutes(app);
