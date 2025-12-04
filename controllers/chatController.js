@@ -170,4 +170,51 @@ module.exports = {
             });
         }
     },
+
+  // ... otras funciones ...
+
+    async deleteMessage(req, res, next) {
+        try {
+            const { chatRoomId, messageId } = req.params;
+            const userId = req.user.id; // ID del usuario que solicita borrar
+
+            const messageRef = firestoreDb.collection('chats')
+                                          .doc(chatRoomId)
+                                          .collection('messages')
+                                          .doc(messageId);
+
+            const doc = await messageRef.get();
+
+            if (!doc.exists) {
+                return res.status(404).json({ success: false, message: 'El mensaje no existe.' });
+            }
+
+            const messageData = doc.data();
+
+            // SEGURIDAD: Solo el remitente puede borrar su propio mensaje
+            // Convertimos a String para asegurar la comparación
+            if (messageData.senderId.toString() !== userId.toString()) {
+                return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar este mensaje.' });
+            }
+
+            // Eliminar de Firestore
+            await messageRef.delete();
+
+            // (Opcional) Si quisieras borrar la imagen de Storage, aquí llamarías a tu utilidad de borrado de archivos
+            // usando messageData.content si es una URL de imagen.
+
+            return res.status(200).json({
+                success: true,
+                message: 'Mensaje eliminado para todos.'
+            });
+
+        } catch (error) {
+            console.log(`Error en deleteMessage: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al eliminar mensaje',
+                error: error.message
+            });
+        }
+    },
 };
