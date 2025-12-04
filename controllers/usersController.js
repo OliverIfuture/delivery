@@ -13,7 +13,7 @@ const nodemailer = require('nodemailer'); // <--- IMPORTANTE
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'oliverjdm22@gmail.com', // PON TU CORREO AQUÍ O process.env.EMAIL_USER
+        user: 'oliverjdm2@gmail.com', // PON TU CORREO AQUÍ O process.env.EMAIL_USER
         pass: 'txofbnvibmptwpim' // LA DE 16 LETRAS. O process.env.EMAIL_PASS
     }
 });
