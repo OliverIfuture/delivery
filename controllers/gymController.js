@@ -237,6 +237,7 @@ async getMembershipStatus(req, res, next) {
             const sql = `
                 SELECT DISTINCT ON (m.id_company) 
                     m.id AS id_membership,
+					p.id as plan_id,
                     m.id_company,
                     c.name AS gym_name,
                     c."stripeAccountId",
@@ -246,6 +247,7 @@ async getMembershipStatus(req, res, next) {
                     m.price
                 FROM gym_memberships m
                 INNER JOIN company c ON m.id_company = c.id
+				left join gym_membership_plans as p on p.id_company = m.id_company
                 WHERE m.id_client = $1
                 ORDER BY m.id_company, m.end_date DESC
 				
