@@ -25,4 +25,10 @@ module.exports = (app, upload) => {
         chatController.uploadImage
     );
 
+    app.delete(
+        '/api/chat/deleteMessage/:chatRoomId/:messageId',
+        passport.authenticate('jwt', { session: false }),
+        chatController.deleteMessage
+    );
+
 }
