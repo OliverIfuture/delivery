@@ -1749,5 +1749,36 @@ User.getFree = (id_client ) => {
     return db.none(sql,id_client);
 }
 
+User.updateOtp = (id, otp) => {
+    const sql = `
+    UPDATE
+        users
+    SET
+        session_token = $2
+    WHERE
+        id = $1
+    `;
+    return db.none(sql, [id, otp]);
+}
+
+// Actualizar Contraseña (CON HASHING MD5 INTERNO)
+User.updatePasswordByEmail = (email, password) => {
+    
+    // 1. ENCRIPTAMOS AQUÍ (Dentro del Modelo)
+    const myPasswordHashed = crypto.createHash('md5').update(password).digest('hex');
+
+    const sql = `
+    UPDATE
+        users
+    SET
+        password = $2
+    WHERE
+        email = $1
+    `;
+    
+    // 2. Enviamos la contraseña ya encriptada a la base de datos
+    return db.none(sql, [email, myPasswordHashed]);
+}
+
 
 module.exports = User;
