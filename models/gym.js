@@ -332,15 +332,15 @@ Gym.updateEndDate = (id_membership, new_end_date) => {
     return db.none(sql, [new_end_date, id_membership]);
 };
 // **CAMBIO: Nueva función (basada en la anterior) que busca por ID de cliente**
-Gym.findActiveByClientId = (id_client) => {
+Gym.findActiveByClientId = (id_client, companyId) => {
     const sql = `
         SELECT *
         FROM gym_memberships
-        WHERE id_client = $1
+        WHERE id_client = $1 and id_company = $2
         AND status = 'active' AND end_date > NOW()
         ORDER BY end_date DESC LIMIT 1
     `;
-    return db.oneOrNone(sql, [id_client]);
+    return db.oneOrNone(sql, [id_client, companyId]);
 };
 
 // *** ¡NUEVA FUNCIÓN PARA EL HISTORIAL DEL CLIENTE! ***
