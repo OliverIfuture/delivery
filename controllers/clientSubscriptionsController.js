@@ -391,7 +391,7 @@ module.exports = {
     async createExtensionIntent(req, res, next) {
         try {
             const id_client = req.user.id;
-            const companyId = req.body.companyId;
+            const companyIdReal = req.body.companyId;
             const { id_plan } = req.body; 
 
             console.log(`[Intent] Iniciando para cliente: ${id_client}, Plan (opcional): ${id_plan}`);
