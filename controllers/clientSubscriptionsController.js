@@ -419,6 +419,8 @@ module.exports = {
                 // Buscamos CUALQUIER membresía activa que tenga.
                 console.log(`[Intent] ID Plan vacío/nulo. Buscando cualquier membresía activa...`);
                 activeSub = await Gym.findActiveByClientId(id_client, companyId);
+                 console.log(`entro en el caso B: ${JSON.stringify(activeSub)}`);
+
             }
             // ----------------------------------------------------------
             
