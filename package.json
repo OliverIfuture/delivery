@@ -33,6 +33,7 @@
     "passport-jwt": "^4.0.1",
     "pg": "^8.10.0",
     "pg-promise": "^11.0.2",
+    "protobufjs": "^7.5.4",
     "socket.io": "^2.1.1",
     "stripe": "^14.21.0"
   }
