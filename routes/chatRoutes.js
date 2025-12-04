@@ -18,4 +18,11 @@ module.exports = (app) => {
         chatController.sendMessage
     );
 
+    app.post(
+        '/api/chat/uploadImage',
+        passport.authenticate('jwt', { session: false }), // Seguridad
+        upload.array('image', 1), // Multer procesa el archivo
+        ChatController.uploadImage
+    );
+
 }
