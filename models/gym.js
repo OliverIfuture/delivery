@@ -294,7 +294,7 @@ Gym.findMembershipById = (id_membership) => {
     return db.oneOrNone(sql, [id_membership]);
 };
 
-Gym.findActiveByClientId = (id_client, id) => {
+Gym.findActiveByClientId2 = (id_client, id) => {
     const sql = `
         SELECT 
             id, 
