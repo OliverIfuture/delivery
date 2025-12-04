@@ -418,8 +418,8 @@ module.exports = {
                 // Asumimos que el usuario dio click en "Renovar" sin contexto de plan nuevo.
                 // Buscamos CUALQUIER membresía activa que tenga.
                 console.log(`[id_client] ${id_client}...`);
-                console.log(`[companyId] ${companyId}...`);
-                activeSub = await Gym.findActiveByClientId(id_client, companyId);
+                console.log(`[companyId] ${companyIdFromFront}...`);
+                activeSub = await Gym.findActiveByClientId(id_client, companyIdFromFront);
                  console.log(`entro en el caso B: ${JSON.stringify(activeSub)}`);
 
             }
