@@ -294,7 +294,7 @@ Gym.findMembershipById = (id_membership) => {
     return db.oneOrNone(sql, [id_membership]);
 };
 
-Gym.findActiveByClientId = (id_client) => {
+Gym.findActiveByClientId = (id_client, id) => {
     const sql = `
         SELECT 
             id, 
@@ -305,14 +305,14 @@ Gym.findActiveByClientId = (id_client) => {
         FROM 
             gym_memberships
         WHERE 
-            id_client = $1
+            id_client = $1 and id = $2
         AND 
             status = 'active'
         ORDER BY 
             end_date DESC 
         LIMIT 1
     `;
-    return db.oneOrNone(sql, [id_client]);
+    return db.oneOrNone(sql, [id_client, id]);
 };
 
 /**
