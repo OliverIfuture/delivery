@@ -5,7 +5,18 @@ const keys = require('../config/keys');
 const storage = require('../utils/cloud_storage.js');
 const { use } = require('passport');
 const { findUserById } = require('../models/user');
+const nodemailer = require('nodemailer'); // <--- IMPORTANTE
 
+// --- CONFIGURACIÓN DEL TRANSPORTE (SMTP) ---
+// Lo ideal es poner esto en un archivo de config, pero aquí funciona.
+// Asegúrate de usar variables de entorno en Heroku para user y pass.
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'oliverjdm22@gmail.com', // PON TU CORREO AQUÍ O process.env.EMAIL_USER
+        pass: 'txofbnvibmptwpim' // LA DE 16 LETRAS. O process.env.EMAIL_PASS
+    }
+});
 
 module.exports = {
 
@@ -19,7 +30,7 @@ module.exports = {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -40,7 +51,7 @@ module.exports = {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -60,7 +71,7 @@ module.exports = {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -68,7 +79,7 @@ module.exports = {
             });
         }
     },
-     async getShops(req, res, next) {
+    async getShops(req, res, next) {
         try {
 
             const employed = req.params.employed;
@@ -80,7 +91,7 @@ module.exports = {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -89,7 +100,7 @@ module.exports = {
         }
     },
 
-        async findByState(req, res, next) {
+    async findByState(req, res, next) {
         try {
 
             const state = req.params.state;
@@ -101,7 +112,7 @@ module.exports = {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -109,12 +120,12 @@ module.exports = {
             });
         }
     },
-    
-    
-async getAdminsNotificationTokens(req, res, next) {
+
+
+    async getAdminsNotificationTokens(req, res, next) {
         try {
             const id = req.params.id;
-            const data = await User.getAdminsNotificationTokens(id);    
+            const data = await User.getAdminsNotificationTokens(id);
             let tokens = [];
 
 
@@ -124,7 +135,7 @@ async getAdminsNotificationTokens(req, res, next) {
 
             console.log('Tokens de admin:', tokens);
             return res.status(201).json(tokens);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -134,9 +145,9 @@ async getAdminsNotificationTokens(req, res, next) {
         }
     },
 
- async getAdminsNotificationTokensDealer(req, res, next) {
+    async getAdminsNotificationTokensDealer(req, res, next) {
         try {
-            const data = await User.getAdminsNotificationTokensDealer();    
+            const data = await User.getAdminsNotificationTokensDealer();
             let tokens = [];
 
 
@@ -146,7 +157,7 @@ async getAdminsNotificationTokens(req, res, next) {
 
             console.log('Tokens de admin:', tokens);
             return res.status(201).json(tokens);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -154,11 +165,11 @@ async getAdminsNotificationTokens(req, res, next) {
                 message: 'Error al obtener los tokens'
             });
         }
-    },   
+    },
 
- async getUsersMultiNotificationTokens(req, res, next) {
+    async getUsersMultiNotificationTokens(req, res, next) {
         try {
-            const data = await User.getUsersMultiNotificationTokens();    
+            const data = await User.getUsersMultiNotificationTokens();
             let tokens = [];
 
 
@@ -168,7 +179,7 @@ async getAdminsNotificationTokens(req, res, next) {
 
             console.log('Tokens de usuarios:', tokens);
             return res.status(201).json(tokens);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -186,7 +197,7 @@ async getAdminsNotificationTokens(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -195,7 +206,7 @@ async getAdminsNotificationTokens(req, res, next) {
         }
     },
 
-        async getAllDealer(req, res, next) {
+    async getAllDealer(req, res, next) {
         try {
             const data = await User.getAllDealer();
             return res.status(201).json(data);
@@ -203,7 +214,7 @@ async getAdminsNotificationTokens(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -211,16 +222,16 @@ async getAdminsNotificationTokens(req, res, next) {
             });
         }
     },
-    
+
 
     async register(req, res, next) {
         try {
             const user = req.body;
-            
+
             // --- LÓGICA DE INVITACIÓN DE ENTRENADOR ---
             let id_entrenador = null;
             const invitation = await User.findInvitationByEmail(user.email);
-            
+
             if (invitation) {
                 // Si se encontró una invitación pendiente, asignamos el ID
                 id_entrenador = invitation.id_company;
@@ -232,7 +243,7 @@ async getAdminsNotificationTokens(req, res, next) {
             const data = await User.create(user, id_entrenador);
 
             // Asignar rol por defecto (asumimos rol 'Cliente' con id '3')
-            await Rol.create(data.id, 3); 
+            await Rol.create(data.id, 3);
 
             // --- LÓGICA DE INVITACIÓN (Actualizar) ---
             if (invitation) {
@@ -262,7 +273,7 @@ async getAdminsNotificationTokens(req, res, next) {
                 data: userData
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error en usersController.register: ${error}`);
             return res.status(501).json({
@@ -280,7 +291,7 @@ async getAdminsNotificationTokens(req, res, next) {
             // --- LÓGICA DE INVITACIÓN DE ENTRENADOR ---
             let id_entrenador = null;
             const invitation = await User.findInvitationByEmail(user.email);
-            
+
             if (invitation) {
                 id_entrenador = invitation.id_company;
                 console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
@@ -300,12 +311,12 @@ async getAdminsNotificationTokens(req, res, next) {
 
             // Pasamos el id_entrenador
             const data = await User.create(user, id_entrenador);
-            
+
             // Asignar rol por defecto (asumimos rol 'Cliente' con id '3')
             await Rol.create(data.id, 3);
 
-             // --- LÓGICA DE INVITACIÓN (Actualizar) ---
-             if (invitation) {
+            // --- LÓGICA DE INVITACIÓN (Actualizar) ---
+            if (invitation) {
                 await User.updateInvitationStatus(user.email);
                 console.log(`Invitación para ${user.email} marcada como 'aceptada'.`);
             }
@@ -331,7 +342,7 @@ async getAdminsNotificationTokens(req, res, next) {
                 data: userData
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error en usersController.registerWithImage: ${error}`);
             return res.status(501).json({
@@ -343,9 +354,9 @@ async getAdminsNotificationTokens(req, res, next) {
     },
 
 
-            async registerWithOutImage(req, res, next) {
+    async registerWithOutImage(req, res, next) {
         try {
-            
+
             const user = req.body;
             console.log(`Datos de usuario: ${user}`);
 
@@ -374,9 +385,9 @@ async getAdminsNotificationTokens(req, res, next) {
     },
 
 
-        async updateNoImage(req, res, next) {
+    async updateNoImage(req, res, next) {
         try {
-            
+
             const user = req.body;
             console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
@@ -401,10 +412,10 @@ async getAdminsNotificationTokens(req, res, next) {
             });
         }
     },
-                
+
     async update(req, res, next) {
         try {
-            
+
             const user = JSON.parse(req.body.user);
             console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
@@ -412,7 +423,7 @@ async getAdminsNotificationTokens(req, res, next) {
             if (files.length > 0) {
                 const pathImage = `image_${Date.now()}`;
                 const url = await storage(files[0], pathImage);
-                
+
                 if (url != undefined && url != null) {
                     user.image = url;
 
@@ -440,9 +451,9 @@ async getAdminsNotificationTokens(req, res, next) {
         }
     },
 
-        async updateTrainer(req, res, next) {
+    async updateTrainer(req, res, next) {
         try {
-            
+
             const user = JSON.parse(req.body.user);
             console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
@@ -450,7 +461,7 @@ async getAdminsNotificationTokens(req, res, next) {
             if (files.length > 0) {
                 const pathImage = `image_${Date.now()}`;
                 const url = await storage(files[0], pathImage);
-                
+
                 if (url != undefined && url != null) {
                     user.document = url;
 
@@ -478,9 +489,9 @@ async getAdminsNotificationTokens(req, res, next) {
         }
     },
 
-           async updateAccountQr(req, res, next) {
+    async updateAccountQr(req, res, next) {
         try {
-            
+
             const user = JSON.parse(req.body.user);
             console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
@@ -488,7 +499,7 @@ async getAdminsNotificationTokens(req, res, next) {
             if (files.length > 0) {
                 const pathImage = `image_${Date.now()}`;
                 const url = await storage(files[0], pathImage);
-                
+
                 if (url != undefined && url != null) {
                     user.credential = url;
 
@@ -517,96 +528,96 @@ async getAdminsNotificationTokens(req, res, next) {
     },
 
 
- async login(req, res, next) {
-    try {
-        const email = req.body.email;
-        const password = req.body.password;
-            
-        console.log(`Email recibido: ${email}`);
-        console.log(`Password recibido: ${password}`);
+    async login(req, res, next) {
+        try {
+            const email = req.body.email;
+            const password = req.body.password;
 
-        const myUser = await User.findByEmail(email);
+            console.log(`Email recibido: ${email}`);
+            console.log(`Password recibido: ${password}`);
 
-        if (!myUser) {
-            return res.status(401).json({
-                success: false,
-                message: 'El email no fue encontrado'
-            });
-        }
+            const myUser = await User.findByEmail(email);
 
-        if (User.isPasswordMatched(password, myUser.password)) {
-            const token = jwt.sign(
-    { 
-        id: myUser.id, 
-        email: myUser.email,
-        id_entrenador: myUser.id_entrenador // <-- ¡AÑADE ESTA LÍNEA!
-    }, keys.secretOrKey, {
-                // expiresIn: (60*60*24) // 1 HORA
-                // expiresIn: (60 * 2) // 2 MINUTOS
-            });
-            const data = {
-                id: myUser.id,
-                name: myUser.name,
-                lastname: myUser.lastname,
-                email: myUser.email,
-                phone: myUser.phone,
-                image: myUser.image,
-                session_token: `JWT ${token}`, // REVISA QUE ESTE LLEGANDO ESTE CAMPO
-                autenticated: myUser.autenticated,
-                is_trainer: myUser.is_trainer,
-                document: myUser.document,
-                id_entrenador: myUser.id_entrenador,
-                roles: myUser.roles,
-                gym: myUser.gym,
-                state: myUser.state,
-                credential: myUser.credential,
-                keystore: myUser.keystore,
-                balance: myUser.balance,
-                mi_store: myUser.mi_store,
-                company: myUser.company
+            if (!myUser) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'El email no fue encontrado'
+                });
             }
 
-            await User.updateToken(myUser.id, `JWT ${token}`);
-            
-            // CORRECCIÓN: Usamos JSON.stringify con indentación (null, 2) para ver arrays legibles
-            console.log(`--- DATOS COMPLETOS DEL USUARIO ENVIADOS AL CLIENTE ---`);
-            console.log(JSON.stringify(data, null, 2));
+            if (User.isPasswordMatched(password, myUser.password)) {
+                const token = jwt.sign(
+                    {
+                        id: myUser.id,
+                        email: myUser.email,
+                        id_entrenador: myUser.id_entrenador // <-- ¡AÑADE ESTA LÍNEA!
+                    }, keys.secretOrKey, {
+                    // expiresIn: (60*60*24) // 1 HORA
+                    // expiresIn: (60 * 2) // 2 MINUTOS
+                });
+                const data = {
+                    id: myUser.id,
+                    name: myUser.name,
+                    lastname: myUser.lastname,
+                    email: myUser.email,
+                    phone: myUser.phone,
+                    image: myUser.image,
+                    session_token: `JWT ${token}`, // REVISA QUE ESTE LLEGANDO ESTE CAMPO
+                    autenticated: myUser.autenticated,
+                    is_trainer: myUser.is_trainer,
+                    document: myUser.document,
+                    id_entrenador: myUser.id_entrenador,
+                    roles: myUser.roles,
+                    gym: myUser.gym,
+                    state: myUser.state,
+                    credential: myUser.credential,
+                    keystore: myUser.keystore,
+                    balance: myUser.balance,
+                    mi_store: myUser.mi_store,
+                    company: myUser.company
+                }
 
-            // La línea anterior ya incluye roles y company.
-            // console.log(`DATA ENVIADA ${data.roles}`); // Comentamos esta línea ya que no es legible
+                await User.updateToken(myUser.id, `JWT ${token}`);
 
-            return res.status(201).json({
-                success: true,
-                data: data,
-                message: '! BIENVENIDO !'
-            });
+                // CORRECCIÓN: Usamos JSON.stringify con indentación (null, 2) para ver arrays legibles
+                console.log(`--- DATOS COMPLETOS DEL USUARIO ENVIADOS AL CLIENTE ---`);
+                console.log(JSON.stringify(data, null, 2));
+
+                // La línea anterior ya incluye roles y company.
+                // console.log(`DATA ENVIADA ${data.roles}`); // Comentamos esta línea ya que no es legible
+
+                return res.status(201).json({
+                    success: true,
+                    data: data,
+                    message: '! BIENVENIDO !'
+                });
+            }
+            else {
+                return res.status(401).json({
+                    success: false,
+                    message: 'La contraseña es incorrecta'
+                });
+            }
+
         }
-        else {
-            return res.status(401).json({
+        catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
                 success: false,
-                message: 'La contraseña es incorrecta'
+                message: 'Error al momento de hacer login',
+                error: error
             });
         }
-
-    } 
-    catch (error) {
-        console.log(`Error: ${error}`);
-        return res.status(501).json({
-            success: false,
-            message: 'Error al momento de hacer login',
-            error: error
-        });
-    }
-},
+    },
 
 
-     async loginQr(req, res, next) {
+    async loginQr(req, res, next) {
         try {
             const id = req.body.id;
             const password = req.body.password;
- 
+
             const myUser = await User.findByQR(id);
- 
+
             if (!myUser) {
                 return res.status(401).json({
                     success: false,
@@ -615,13 +626,13 @@ async getAdminsNotificationTokens(req, res, next) {
                 console.log(`password enviado ${myUser.password}`);
 
             }
-                 console.log(`password enviado ${password}`);
-                console.log(`password enviado ${myUser.password}`);
+            console.log(`password enviado ${password}`);
+            console.log(`password enviado ${myUser.password}`);
 
             if (password === myUser.password) {
-                const token = jwt.sign({id: myUser.id, email: myUser.email}, keys.secretOrKey, {
+                const token = jwt.sign({ id: myUser.id, email: myUser.email }, keys.secretOrKey, {
                     // expiresIn: (60*60*24) // 1 HORA
-                   //  expiresIn: (60 * 2) // 2 MINUTOS
+                    //  expiresIn: (60 * 2) // 2 MINUTOS
                 });
                 const data = {
                     id: myUser.id,
@@ -644,10 +655,10 @@ async getAdminsNotificationTokens(req, res, next) {
                 }
 
                 await User.updateToken(myUser.id, `JWT ${token}`);
-                
- 
+
+
                 console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
- 
+
                 return res.status(201).json({
                     success: true,
                     data: data,
@@ -662,8 +673,8 @@ async getAdminsNotificationTokens(req, res, next) {
 
                 });
             }
- 
-        } 
+
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -673,10 +684,10 @@ async getAdminsNotificationTokens(req, res, next) {
             });
         }
     },
- 
-   async updateNotificationToken(req, res, next) {
+
+    async updateNotificationToken(req, res, next) {
         try {
-            
+
             const body = req.body;
             console.log(`Nuevo balance: ${JSON.stringify(body)}`);
 
@@ -687,7 +698,7 @@ async getAdminsNotificationTokens(req, res, next) {
                 message: 'El token de notificaciones se ha almacenado correctamente'
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -698,14 +709,14 @@ async getAdminsNotificationTokens(req, res, next) {
         }
     },
     async logout(req, res, next) {
-         try {
-        
-             const id = req.body.id;
-             await User.updateToken(id, null);
-                return res.status(201).json({
-                    success: true,
-                    message: '! La sesion del usuario se a cerrado correctamente !'
-                });             
+        try {
+
+            const id = req.body.id;
+            await User.updateToken(id, null);
+            return res.status(201).json({
+                success: true,
+                message: '! La sesion del usuario se a cerrado correctamente !'
+            });
 
         }
 
@@ -721,7 +732,7 @@ async getAdminsNotificationTokens(req, res, next) {
     },
 
 
-async createticket(req, res, next) {
+    async createticket(req, res, next) {
         try {
 
             const name = req.params.name; // CLIENTE
@@ -731,13 +742,13 @@ async createticket(req, res, next) {
             // CLIENTE
             const data = await User.createtickets(name, active, amount, userId);
             console.log(`Cupon creado: ${JSON.stringify(data)}`);
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Cupon creado',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -759,13 +770,13 @@ async createticket(req, res, next) {
             console.log(`Nuevo balance: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Puntos Actualizados',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -776,8 +787,8 @@ async createticket(req, res, next) {
             });
         }
     },
-    
-        async forgotPass(req, res, next) {
+
+    async forgotPass(req, res, next) {
         try {
 
             const email = req.params.email; // CLIENTE
@@ -787,13 +798,13 @@ async createticket(req, res, next) {
             console.log(`Product to delete: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'CONTRASEÑA ACTUALIZADA, INICIA SESION',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -804,8 +815,8 @@ async createticket(req, res, next) {
             });
         }
     },
-    
-async deleteAccout(req, res, next) {
+
+    async deleteAccout(req, res, next) {
         try {
 
             const idUser = req.params.idUser;
@@ -815,13 +826,13 @@ async deleteAccout(req, res, next) {
             console.log(`Address: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'La cuenta se elimino correctamente',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -833,19 +844,19 @@ async deleteAccout(req, res, next) {
         }
     },
 
-        async updateState(req, res, next) {
+    async updateState(req, res, next) {
         try {
 
             let user = req.body;
             user.state = 'AUTORIZADO';
             user.is_trainer = 'true'
-             await User.updateState(user);
+            await User.updateState(user);
 
-                return res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: 'La solicitud se actualizo correctamente',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -863,13 +874,13 @@ async deleteAccout(req, res, next) {
             let user = req.body;
             user.state = 'RECHAZADO';
             user.is_trainer = 'false'
-             await User.updateState(user);
+            await User.updateState(user);
 
-                return res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: 'La solicitud se actualizo correctamente',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -880,7 +891,7 @@ async deleteAccout(req, res, next) {
             });
         }
     },
-    
+
     async selectToken(req, res, next) {
         try {
 
@@ -893,7 +904,7 @@ async deleteAccout(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -915,7 +926,7 @@ async deleteAccout(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -923,13 +934,13 @@ async deleteAccout(req, res, next) {
             });
         }
     },
-    
+
     async findClient(req, res, next) {
         try {
             const name = req.params.name; // CLIENTE
             const data = await User.findClient(name);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -940,12 +951,12 @@ async deleteAccout(req, res, next) {
         }
     },
 
-       async findClientDealer(req, res, next) {
+    async findClientDealer(req, res, next) {
         try {
             const name = req.params.name; // CLIENTE
             const data = await User.findClientDealer(name);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -954,7 +965,7 @@ async deleteAccout(req, res, next) {
                 error: error
             });
         }
-    }, 
+    },
 
     async findByCode(req, res, next) {
         try {
@@ -964,7 +975,7 @@ async deleteAccout(req, res, next) {
 
             console.log(`codigo: ${data}`);
 
- 
+
             if (!code) {
                 return res.status(401).json({
                     success: false,
@@ -972,13 +983,13 @@ async deleteAccout(req, res, next) {
                 });
             }
 
-            else{
+            else {
                 return res.status(201).json(data);
 
             }
 
- 
-        } 
+
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -994,24 +1005,24 @@ async deleteAccout(req, res, next) {
 
 
 
-     async login_dealer(req, res, next) {
+    async login_dealer(req, res, next) {
         try {
             const phone = req.body.phone;
             const password = req.body.password;
- 
+
             const myUser = await User.findByPhone(phone);
- 
+
             if (!myUser) {
                 return res.status(401).json({
                     success: false,
                     message: 'El email no fue encontrado'
                 });
             }
- 
+
             if (User.isPasswordMatched(password, myUser.password)) {
-                const token = jwt.sign({id: myUser.id, email: myUser.email}, keys.secretOrKey, {
+                const token = jwt.sign({ id: myUser.id, email: myUser.email }, keys.secretOrKey, {
                     // expiresIn: (60*60*24) // 1 HORA
-                   //  expiresIn: (60 * 2) // 2 MINUTOS
+                    //  expiresIn: (60 * 2) // 2 MINUTOS
                 });
                 const data = {
                     id: myUser.id,
@@ -1023,10 +1034,10 @@ async deleteAccout(req, res, next) {
                 }
 
                 await User.updateToken_dealer(myUser.id, `JWT ${token}`);
-                
- 
+
+
                 console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
- 
+
                 return res.status(201).json({
                     success: true,
                     data: data,
@@ -1039,8 +1050,8 @@ async deleteAccout(req, res, next) {
                     message: 'La contraseña es incorrecta'
                 });
             }
- 
-        } 
+
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1051,9 +1062,9 @@ async deleteAccout(req, res, next) {
         }
     },
 
-       async updateNotificationToken_dealer(req, res, next) {
+    async updateNotificationToken_dealer(req, res, next) {
         try {
-            
+
             const body = req.body;
             console.log(`updateNotificationToken_dealer: ${JSON.stringify(body)}`);
 
@@ -1064,7 +1075,7 @@ async deleteAccout(req, res, next) {
                 message: 'El token de notificaciones se ha almacenado correctamente'
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1075,30 +1086,30 @@ async deleteAccout(req, res, next) {
         }
     },
 
-        async findById_dealer(req, res, next) {
-            try {
-                const id = req.params.id;
-        
-                const data = await User.findById_dealer(id);
-                console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
-        
-                if (!data) {
-                    return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-                }
-        
-                return res.status(200).json(data); // Cambiar a 200 para respuesta exitosa
-            } catch (error) {
-                console.error(`error: ${error}`); // Usar console.error para errores
-                return res.status(500).json({
-                    success: false,
-                    message: 'Error al obtener el usuario por ID'
-                });
+    async findById_dealer(req, res, next) {
+        try {
+            const id = req.params.id;
+
+            const data = await User.findById_dealer(id);
+            console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+
+            if (!data) {
+                return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
             }
-        },
+
+            return res.status(200).json(data); // Cambiar a 200 para respuesta exitosa
+        } catch (error) {
+            console.error(`error: ${error}`); // Usar console.error para errores
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener el usuario por ID'
+            });
+        }
+    },
 
 
 
-        async selectToken_dealer(req, res, next) {
+    async selectToken_dealer(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1110,7 +1121,7 @@ async deleteAccout(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1120,7 +1131,7 @@ async deleteAccout(req, res, next) {
     },
 
 
-        async findByUserIdPhone(req, res, next) {
+    async findByUserIdPhone(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1132,7 +1143,7 @@ async deleteAccout(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1144,7 +1155,7 @@ async deleteAccout(req, res, next) {
 
     async register_dealer(req, res, next) {
         try {
-            
+
             const user = req.body;
             const data = await User.create_dealer(user);
             return res.status(201).json({
@@ -1168,25 +1179,25 @@ async deleteAccout(req, res, next) {
     },
 
     async getCompanyById(req, res, next) {
-            try {
-                const id = req.params.id;
-        
-                const data = await User.getCompanyById(id);
-                console.log(`Datos enviados del getCompanyById: ${JSON.stringify(data)}`);
-        
-                if (!data) {
-                    return res.status(404).json({ success: false, message: 'company no encontrado' });
-                }
-        
-                return res.status(200).json(data); // Cambiar a 200 para respuesta exitosa
-            } catch (error) {
-                console.error(`error: ${error}`); // Usar console.error para errores
-                return res.status(500).json({
-                    success: false,
-                    message: 'Error al obtener el company por ID'
-                });
+        try {
+            const id = req.params.id;
+
+            const data = await User.getCompanyById(id);
+            console.log(`Datos enviados del getCompanyById: ${JSON.stringify(data)}`);
+
+            if (!data) {
+                return res.status(404).json({ success: false, message: 'company no encontrado' });
             }
-        },
+
+            return res.status(200).json(data); // Cambiar a 200 para respuesta exitosa
+        } catch (error) {
+            console.error(`error: ${error}`); // Usar console.error para errores
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener el company por ID'
+            });
+        }
+    },
 
 
     async createWithImageUserAndCompany(req, res, next) {
@@ -1256,7 +1267,7 @@ async deleteAccout(req, res, next) {
         }
     },
 
-            async getAllCompanies(req, res, next) {
+    async getAllCompanies(req, res, next) {
         try {
             const data = await User.getAllCompanies();
             return res.status(201).json(data);
@@ -1264,7 +1275,7 @@ async deleteAccout(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1274,7 +1285,7 @@ async deleteAccout(req, res, next) {
     },
 
 
-            async getMembershipPlan(req, res, next) {
+    async getMembershipPlan(req, res, next) {
         try {
             const data = await User.getMembershipPlan();
             return res.status(201).json(data);
@@ -1282,7 +1293,7 @@ async deleteAccout(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1290,10 +1301,10 @@ async deleteAccout(req, res, next) {
             });
         }
     },
-    
-          async renewMembership(req, res, next) {
+
+    async renewMembership(req, res, next) {
         try {
-            
+
             const company = req.body;
             console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
             await User.renewMembership(company);
@@ -1318,9 +1329,9 @@ async deleteAccout(req, res, next) {
     },
 
 
-   async updateCompanyStatus(req, res, next) {
+    async updateCompanyStatus(req, res, next) {
         try {
-            
+
             const companyId = req.params.companyId;
             const newStatus = req.params.newStatus;
             console.log(`datos de actualizacion:companyId = $companyId , newStatus: $newStatus`);
@@ -1332,7 +1343,7 @@ async deleteAccout(req, res, next) {
                 message: 'status de empresa actualizado'
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1346,7 +1357,7 @@ async deleteAccout(req, res, next) {
 
     async updateCompanyPaymentMethods(req, res, next) {
         try {
-            
+
             const company = req.body;
             console.log(`Datos enviados del updateCompanyPaymentMethods: ${JSON.stringify(company)}`);
             await User.updateCompanyPaymentMethods(company);
@@ -1370,9 +1381,9 @@ async deleteAccout(req, res, next) {
         }
     },
 
-   async updateStripeKeys(req, res, next) {
+    async updateStripeKeys(req, res, next) {
         try {
-            
+
             const companyId = req.params.companyId;
             const publishableKey = req.params.publishableKey;
             const secretKey = req.params.secretKey;
@@ -1385,7 +1396,7 @@ async deleteAccout(req, res, next) {
                 message: 'ctualizando llaves de Stripe confirmado'
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1397,9 +1408,9 @@ async deleteAccout(req, res, next) {
     },
 
 
-        async updateCompanyDetails(req, res, next) {
+    async updateCompanyDetails(req, res, next) {
         try {
-            
+
             const company = req.body;
             console.log(`Datos enviados del updateCompanyDetails: ${JSON.stringify(company)}`);
             await User.updateCompanyDetails(company);
@@ -1423,14 +1434,14 @@ async deleteAccout(req, res, next) {
         }
     },
 
-    
 
-       async updateCompanyPromo(req, res, next) {
+
+    async updateCompanyPromo(req, res, next) {
         try {
-            
+
             const idCompany = req.params.idCompany;
             const status = req.params.status;
-            await User.updateCompanyPromo(idCompany ,status);
+            await User.updateCompanyPromo(idCompany, status);
 
             return res.status(201).json({
                 success: true,
@@ -1451,11 +1462,11 @@ async deleteAccout(req, res, next) {
         }
     },
 
-    
-    
-       async extendMembership(req, res, next) {
+
+
+    async extendMembership(req, res, next) {
         try {
-            
+
             const companyId = req.params.companyId;
             const monthsToAdd = req.params.monthsToAdd;
             console.log(`datos de actualizacion:companyId = $companyId ,monthsToAdd: monthsToAdd`);
@@ -1467,7 +1478,7 @@ async deleteAccout(req, res, next) {
                 message: 'meses agregados correctamente'
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1479,9 +1490,9 @@ async deleteAccout(req, res, next) {
     },
 
 
-async createWithImageDelivery(req, res, next) {
+    async createWithImageDelivery(req, res, next) {
         try {
-            
+
             const user = JSON.parse(req.body.user);
             console.log(`Datos de usuario: ${user}`);
             const files = req.files;
@@ -1489,7 +1500,7 @@ async createWithImageDelivery(req, res, next) {
             if (files.length > 0) {
                 const pathImage = `image_${Date.now()}`;
                 const url = await storage(files[0], pathImage);
-                
+
                 if (url != undefined && url != null) {
                     user.image = url;
 
@@ -1520,7 +1531,7 @@ async createWithImageDelivery(req, res, next) {
         }
     },
 
-        async getByRole(req, res, next) {
+    async getByRole(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1532,7 +1543,7 @@ async createWithImageDelivery(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1541,7 +1552,7 @@ async createWithImageDelivery(req, res, next) {
         }
     },
 
-            async getAgoraConfig(req, res, next) {
+    async getAgoraConfig(req, res, next) {
         try {
 
             const data = await User.getAgoraConfig();
@@ -1551,7 +1562,7 @@ async createWithImageDelivery(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1561,7 +1572,7 @@ async createWithImageDelivery(req, res, next) {
     },
 
 
-               async getAgoraConfigall(req, res, next) {
+    async getAgoraConfigall(req, res, next) {
         try {
 
             const data = await User.getAgoraConfigall();
@@ -1571,7 +1582,7 @@ async createWithImageDelivery(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1581,9 +1592,9 @@ async createWithImageDelivery(req, res, next) {
     },
 
 
-        async updateAgoraConfig(req, res, next) {
+    async updateAgoraConfig(req, res, next) {
         try {
-            
+
             const agoraConfig = req.body;
             console.log(`Datos enviados del updateAgoraConfig: ${JSON.stringify(agoraConfig)}`);
             await User.updateAgoraConfig(agoraConfig);
@@ -1605,9 +1616,9 @@ async createWithImageDelivery(req, res, next) {
 
             });
         }
-    }, 
+    },
 
-       async getByCompany(req, res, next) {
+    async getByCompany(req, res, next) {
         try {
             const id = req.params.id;
             const data = await User.getByCompany(id);
@@ -1616,7 +1627,7 @@ async createWithImageDelivery(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1626,9 +1637,9 @@ async createWithImageDelivery(req, res, next) {
     },
 
 
-       async chageState(req, res, next) {
+    async chageState(req, res, next) {
         try {
-            
+
             const id = req.params.id;
             console.log(`Nuevo balance: ${id}`);
 
@@ -1639,7 +1650,7 @@ async createWithImageDelivery(req, res, next) {
                 message: 'El token de notificaciones se ha almacenado correctamente'
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1652,7 +1663,7 @@ async createWithImageDelivery(req, res, next) {
 
     async createDiscountCode(req, res, next) {
         try {
-            
+
             const newCode = req.body;
             console.log(`Datos de usuario: ${newCode}`);
 
@@ -1674,9 +1685,9 @@ async createWithImageDelivery(req, res, next) {
 
             });
         }
-    },   
+    },
 
-           async getDiscountCodesByCompany(req, res, next) {
+    async getDiscountCodesByCompany(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1687,7 +1698,7 @@ async createWithImageDelivery(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1701,12 +1712,12 @@ async createWithImageDelivery(req, res, next) {
 
             const id = req.params.id;
             const data = await User.deleteDiscountCode(id);
-                return res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: 'el codigo se elimino correctamente',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1717,63 +1728,63 @@ async createWithImageDelivery(req, res, next) {
             });
         }
     },
-// En tu controlador de Node.js (ej. UsersController.js)
+    // En tu controlador de Node.js (ej. UsersController.js)
 
-async filesupload(req, res, next) {
-    try {
-        // 1. Obtener los archivos (gracias a multer)
-        const files = req.files;
+    async filesupload(req, res, next) {
+        try {
+            // 1. Obtener los archivos (gracias a multer)
+            const files = req.files;
 
-        // 2. Validar que se envió un archivo
-        if (!files || files.length == 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'No se envió ningún archivo',
-            });
-        }
+            // 2. Validar que se envió un archivo
+            if (!files || files.length == 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se envió ningún archivo',
+                });
+            }
 
-        // 3. Obtener el path de los parámetros de la URL
-        const path = req.params.pathName; // ej: 'ad_banners'
-        
-        // **CAMBIO 1: Definir la variable 'file'**
-        const file = files[0]; 
+            // 3. Obtener el path de los parámetros de la URL
+            const path = req.params.pathName; // ej: 'ad_banners'
 
-        // 4. Crear un nombre único para el archivo en el storage
-        const pathImage = `${path}/${Date.now()}_${file.originalname}`;
-        
-        // 5. Llamar a tu función de storage
-        const url = await storage(file, pathImage);
+            // **CAMBIO 1: Definir la variable 'file'**
+            const file = files[0];
 
-        // 6. **CAMBIO 2: Mover la lógica de respuesta DENTRO del try/catch**
-        //    Validar que la subida fue exitosa
-        if (url != undefined && url != null) {
-            // 7. **RESPUESTA EXITOSA**
-            // Devolver la URL en el campo 'data' para que ResponseApi.fromJson() la lea
-            return res.status(201).json({
-                success: true,
-                message: 'Imagen subida correctamente',
-                data: url // <-- ¡AQUÍ ESTÁ LA URL!
-            });
-        } else {
+            // 4. Crear un nombre único para el archivo en el storage
+            const pathImage = `${path}/${Date.now()}_${file.originalname}`;
+
+            // 5. Llamar a tu función de storage
+            const url = await storage(file, pathImage);
+
+            // 6. **CAMBIO 2: Mover la lógica de respuesta DENTRO del try/catch**
+            //    Validar que la subida fue exitosa
+            if (url != undefined && url != null) {
+                // 7. **RESPUESTA EXITOSA**
+                // Devolver la URL en el campo 'data' para que ResponseApi.fromJson() la lea
+                return res.status(201).json({
+                    success: true,
+                    message: 'Imagen subida correctamente',
+                    data: url // <-- ¡AQUÍ ESTÁ LA URL!
+                });
+            } else {
+                return res.status(501).json({
+                    success: false,
+                    message: 'Error al subir la imagen al servidor',
+                });
+            }
+
+        } catch (error) {
+            console.log(`Error en filesupload: ${error}`); // 'filesupload' en lugar de 'uploadImage'
             return res.status(501).json({
                 success: false,
-                message: 'Error al subir la imagen al servidor',
+                message: 'Error interno del servidor al subir la imagen',
+                error: error
             });
         }
+    },
 
-    } catch (error) {
-        console.log(`Error en filesupload: ${error}`); // 'filesupload' en lugar de 'uploadImage'
-        return res.status(501).json({
-            success: false,
-            message: 'Error interno del servidor al subir la imagen',
-            error: error
-        });
-    }
-},
-
-            async createWholesaleUser(req, res, next) {
+    async createWholesaleUser(req, res, next) {
         try {
-            
+
             const user = req.body;
             console.log(`Datos de usuario: ${user}`);
 
@@ -1797,10 +1808,10 @@ async filesupload(req, res, next) {
             });
         }
     },
-    
 
-    
-        async getWholesaleUsersByCompany(req, res, next) {
+
+
+    async getWholesaleUsersByCompany(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1812,7 +1823,7 @@ async filesupload(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1823,7 +1834,7 @@ async filesupload(req, res, next) {
 
 
 
-    
+
     async getClientsByCompany(req, res, next) {
         try {
             const id_company = req.params.id_company;
@@ -1834,7 +1845,7 @@ async filesupload(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -1843,7 +1854,7 @@ async filesupload(req, res, next) {
         }
     },
 
-      async inviteClient(req, res, next) {
+    async inviteClient(req, res, next) {
         try {
             const email = req.body.email;
             const id_company = req.user.mi_store; // ID del entrenador (viene del token JWT)
@@ -1858,7 +1869,7 @@ async filesupload(req, res, next) {
             // (Opcional) Verificar si el usuario ya existe y ya tiene un entrenador
             const existingUser = await User.findByEmail(email);
             if (existingUser && existingUser.id_entrenador) {
-                 return res.status(409).json({ // 409 Conflict
+                return res.status(409).json({ // 409 Conflict
                     success: false,
                     message: 'Este usuario ya está asignado a un entrenador.'
                 });
@@ -1866,19 +1877,19 @@ async filesupload(req, res, next) {
 
             // Crear la invitación en la nueva tabla
             await User.createInvitation(email, id_company);
-            
+
             // (Lógica futura: enviar un email real al cliente)
 
             return res.status(201).json({
                 success: true,
                 message: `Invitación enviada a ${email}. Se registrará cuando el usuario cree su cuenta.`
             });
-        } 
+        }
         catch (error) {
             console.log(`Error en usersController.inviteClient: ${error}`);
             // Manejar error de "ya existe" (UNIQUE constraint)
             if (error.code === '23505') {
-                 return res.status(409).json({
+                return res.status(409).json({
                     success: false,
                     message: 'Ya existe una invitación pendiente para este email.'
                 });
@@ -1895,7 +1906,7 @@ async filesupload(req, res, next) {
         try {
             const data = await User.getAvailableTrainers();
             return res.status(200).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error en getAvailableTrainers: ${error}`);
             return res.status(501).json({
@@ -1906,7 +1917,7 @@ async filesupload(req, res, next) {
         }
     },
 
-        async generateAccessQr(req, res, next) {
+    async generateAccessQr(req, res, next) {
         try {
             // 1. Passport (middleware) ya validó el token de sesión.
             //    El usuario autenticado está en 'req.user'.
@@ -1951,7 +1962,7 @@ async filesupload(req, res, next) {
         }
     },
 
-// (Dentro de module.exports)
+    // (Dentro de module.exports)
 
     async filesuploadPdf(req, res, next) {
         try {
@@ -1968,12 +1979,12 @@ async filesupload(req, res, next) {
             }
 
             // CAMBIO CLAVE: Accedemos directamente al índice 0 del array
-            const file = files[0]; 
+            const file = files[0];
 
             // Crear ruta de guardado
             const path = req.params.pathName; // ej: 'diet_files'
             const pathImage = `${path}/${Date.now()}_${file.originalname}`;
-            
+
             // Subir a storage (Firebase/AWS/Cloudinary)
             const url = await storage(file, pathImage);
 
@@ -2012,16 +2023,35 @@ async filesupload(req, res, next) {
                 });
             }
 
-            // Generar código de 6 dígitos (Lógica de negocio simple, puede ir aquí)
+            // Generar código de 6 dígitos
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-            // Guardamos el OTP en la BD (usando session_token temporalmente)
+            // Guardamos el OTP en la BD
             await User.updateOtp(user.id, otp);
 
-            // --- SIMULACIÓN EMAIL ---
-            console.log('------------------------------------------------');
-            console.log(`📧 [EMAIL] Para: ${email} | 🔐 OTP: ${otp}`);
-            console.log('------------------------------------------------');
+            // --- ENVÍO DE CORREO REAL ---
+            const mailOptions = {
+                from: '"Soporte GlowUp+" <oliverjdm2@gmail.com>', // Nombre que ve el usuario
+                to: email,
+                subject: 'Recuperación de Contraseña',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+                        <h2 style="color: #000; text-align: center;">Recuperar Contraseña</h2>
+                        <p style="color: #555; font-size: 16px;">Hola <b>${user.name}</b>,</p>
+                        <p style="color: #555; font-size: 16px;">Usa el siguiente código para restablecer tu contraseña. Este código expirará pronto.</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <span style="display: inline-block; background-color: #000; color: #fff; font-size: 24px; font-weight: bold; padding: 15px 30px; letter-spacing: 5px; border-radius: 5px;">
+                                ${otp}
+                            </span>
+                        </div>
+                        <p style="color: #999; font-size: 12px; text-align: center;">Si no solicitaste este cambio, ignora este correo.</p>
+                    </div>
+                `
+            };
+
+            // Esperamos a que el correo se envíe
+            await transporter.sendMail(mailOptions);
+            console.log(`✅ Correo enviado a ${email}`);
 
             return res.status(200).json({
                 success: true,
@@ -2029,11 +2059,11 @@ async filesupload(req, res, next) {
             });
 
         } catch (error) {
-            console.log(`Error: ${error}`);
+            console.error(`Error enviando correo: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al enviar el código.',
-                error: error
+                message: 'Hubo un error al enviar el correo electrónico.',
+                error: error.message
             });
         }
     },
@@ -2049,8 +2079,8 @@ async filesupload(req, res, next) {
             }
 
             // Validamos si el código coincide con el guardado en session_token
-            if (user.session_token !== otp) { 
-                 return res.status(401).json({
+            if (user.session_token !== otp) {
+                return res.status(401).json({
                     success: false,
                     message: 'El código es incorrecto.'
                 });
@@ -2079,7 +2109,7 @@ async filesupload(req, res, next) {
             // AQUÍ ESTÁ EL CAMBIO: 
             // Pasamos la contraseña PLANA ("123456"). El modelo se encargará de hacer el Hash MD5.
             await User.updatePasswordByEmail(email, password);
-            
+
             return res.status(200).json({
                 success: true,
                 message: 'Contraseña actualizada correctamente.'
