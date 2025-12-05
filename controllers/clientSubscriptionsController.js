@@ -616,5 +616,3 @@ module.exports = {
         }
     }
 };
-    
-};
