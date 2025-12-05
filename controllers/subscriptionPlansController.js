@@ -4,101 +4,119 @@ const keys = require('../config/keys.js');
 
 module.exports = {
 
-    /**
-     * Crear un nuevo plan de suscripción
-     */
-const User = require('../models/user'); // Asegúrate de importar el modelo User
-const SubscriptionPlan = require('../models/subscription_plan'); // Tu modelo de planes
-const stripeLib = require('stripe');
+  async create(req, res, next) {
 
-module.exports = {
-
-    // ... (otras funciones) ...
-
-    async create(req, res, next) {
         try {
-            const plan = req.body; // { name, description, price, ... }
-            const id_company = req.user.mi_store;
+
+            const plan = req.body; 
+
+            const id_company = req.user.mi_store; 
+
             
-            // 1. Obtener datos de la compañía para verificar Stripe
-            const company = await User.findCompanyById(id_company);
+
+            const company = await User.findCompanyById(id_company); 
+
             
-            if (!company) {
-                return res.status(404).json({
+
+            // **CORRECCIÓN: Usar camelCase**
+
+            if (!company || !company.stripeSecretKey) {
+
+                return res.status(400).json({
+
                     success: false,
-                    message: 'No se encontró la información del entrenador/gimnasio.'
+
+                    message: 'El entrenador no tiene una clave de Stripe configurada.'
+
                 });
+
             }
 
-            // 2. Verificar si tiene Stripe Configurado
-            // (Validamos que exista la key y que no esté vacía)
-            const hasStripe = company.stripeSecretKey && company.stripeSecretKey.length > 10;
+            
 
-            if (hasStripe) {
-                console.log(`[Plan] Creando plan AUTOMÁTICO en Stripe para company ${id_company}...`);
+            // **CORRECCIÓN: Usar camelCase**
 
-                // --- MODO AUTOMÁTICO (STRIPE) ---
-                const stripe = stripeLib(company.stripeSecretKey);
+            const stripe = require('stripe')(company.stripeSecretKey);
 
-                // A. Crear Producto en Stripe
-                const stripeProduct = await stripe.products.create({
-                    name: plan.name,
-                    description: plan.description || '', // Enviamos la descripción si existe
-                    type: 'service',
-                });
 
-                // B. Crear Precio en Stripe
-                const stripePrice = await stripe.prices.create({
-                    product: stripeProduct.id,
-                    unit_amount: (plan.price * 100).toFixed(0), // Centavos
-                    currency: 'mxn', // O la moneda que manejes
-                    recurring: {
-                        interval: 'month',
-                    },
-                });
 
-                // C. Asignar IDs de Stripe
-                plan.stripe_product_id = stripeProduct.id;
-                plan.stripe_price_id = stripePrice.id;
-                plan.is_manual = false; // <--- IMPORTANTE: Bandera para la App
+            // 2. Crear el Producto en Stripe
 
-            } else {
-                console.log(`[Plan] Creando plan MANUAL (Efectivo) para company ${id_company}...`);
+            const stripeProduct = await stripe.products.create({
 
-                // --- MODO MANUAL (EFECTIVO) ---
-                // Asignamos valores bandera para que la BD no se queje si los campos son NOT NULL
-                // O déjalos en NULL si tu BD lo permite.
-                plan.stripe_product_id = 'MANUAL'; 
-                plan.stripe_price_id = 'MANUAL';
-                plan.is_manual = true; // <--- IMPORTANTE: Bandera para la App
-            }
+                name: plan.name,
 
-            // 3. Completar objeto y Guardar en Base de Datos Local
+                type: 'service', 
+
+            });
+
+
+
+            // 3. Crear el Precio (Suscripción mensual) en Stripe
+
+            const stripePrice = await stripe.prices.create({
+
+                product: stripeProduct.id,
+
+                unit_amount: (plan.price * 100).toFixed(0), 
+
+                currency: 'mxn',
+
+                recurring: {
+
+                    interval: 'month', 
+
+                },
+
+            });
+
+
+
+            // 4. Asignar los IDs de Stripe a nuestro objeto de plan
+
             plan.id_company = id_company;
-            
-            // Llamamos a tu modelo SQL. Asegúrate de haber agregado la columna 'is_manual' 
-            // en tu sentencia INSERT dentro del modelo SubscriptionPlan.create
+
+            plan.stripe_product_id = stripeProduct.id;
+
+            plan.stripe_price_id = stripePrice.id;
+
+
+
+            // 5. Guardar el plan en NUESTRA base de datos
+
             const data = await SubscriptionPlan.create(plan);
+
             
+
             return res.status(201).json({
+
                 success: true,
-                message: hasStripe 
-                    ? 'Plan de suscripción automática creado correctamente.'
-                    : 'Plan de cobro manual creado correctamente.',
+
+                message: 'El plan de suscripción se ha creado correctamente.',
+
                 data: { 'id': data.id }
+
             });
 
         }
+
         catch (error) {
+
             console.log(`Error en subscriptionPlansController.create: ${error}`);
+
             return res.status(501).json({
+
                 success: false,
+
                 message: 'Error al crear el plan de suscripción',
+
                 error: error.message
+
             });
+
         }
+
     },
-    
     /**
      * Eliminar (Desactivar) un plan
      */
