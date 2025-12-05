@@ -6,7 +6,7 @@ module.exports = {
         try {
             const id_category_company = req.params.id_category_company ?? 4; // <= valor por defecto
             const data = await Category.getAll(id_category_company);
-            console.log(`Categorias: ${JSON.stringify(data)}`);
+           // console.log(`Categorias: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
             
         } catch (error) {
@@ -26,7 +26,7 @@ module.exports = {
         try {
             const id_category_company = req.params.id_category_company
             const data = await Category.getAllByStore(id_category_company);
-            console.log(`Categorias: ${JSON.stringify(data)}`);
+          //  console.log(`Categorias: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
             
         } catch (error) {
@@ -45,7 +45,7 @@ module.exports = {
         async getAllPlates(req, res, next) {
         try {
             const data = await Category.getAllPlates();
-            console.log(`Categorias: ${JSON.stringify(data)}`);
+          //  console.log(`Categorias: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
             
         } catch (error) {
@@ -65,7 +65,7 @@ module.exports = {
         try {
 
             const category = req.body;
-            console.log(`Categoria enviada: ${category}`);
+        //    console.log(`Categoria enviada: ${category}`);
 
             const data = await Category.create(category);
 
@@ -91,7 +91,7 @@ module.exports = {
         try {
 
             const id = req.params.id;
-            console.log(`Categoria enviada: ${id}`);
+          //  console.log(`Categoria enviada: ${id}`);
 
             const data = await Category.delete(id);
 
