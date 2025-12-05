@@ -49,7 +49,7 @@ async getPostAll(req, res, next) {
          
          
             const data = await Product.getPostAll();
-            console.log(`Status: ${JSON.stringify(data)}`);
+          //  console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
