@@ -1109,7 +1109,8 @@ User.getCompanyById = (id) => {
 	c.description,
 	c.ispromo,
 	c."deliveryCost",
-	c.logo
+	c.logo,
+	c.country
 		
 	from company as c
 	
