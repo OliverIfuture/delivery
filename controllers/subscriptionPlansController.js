@@ -99,8 +99,6 @@ module.exports = {
         }
     },
     
-    // ...
-};
     /**
      * Eliminar (Desactivar) un plan
      */
