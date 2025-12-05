@@ -550,25 +550,21 @@ module.exports = {
         }
     },
 
-   async createManualRequest(req, res, next) {
+ async createManualRequest(req, res, next) {
         try {
-            // Recibimos 'price' del front (con descuento aplicado si hubo)
             const { id_plan, id_company, price } = req.body;
             const id_client = req.user.id;
             
             // 1. VALIDACIÓN DE SEGURIDAD
-            // Aunque confiemos en el precio del front, debemos verificar que el plan EXISTA en la BD
-            const plan = await ClientSubscription.findById(id_plan); 
+            const plan = await SubscriptionPlan.findById(id_plan); 
             
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'El plan seleccionado ya no existe.' });
             }
 
-            // 2. CALCULAR FECHAS (LÓGICA MENSUAL ESTRICTA)
+            // 2. CALCULAR FECHAS (LÓGICA MENSUAL)
             const startDate = new Date();
             const endDate = new Date();
-            
-            // Sumamos 1 mes exacto a la fecha de hoy
             endDate.setMonth(startDate.getMonth() + 1);
 
             // 3. PREPARAR OBJETO
@@ -577,15 +573,20 @@ module.exports = {
                 id_company: id_company,
                 id_plan: id_plan,
                 start_date: startDate,
-                current_period_end: endDate // Fecha de corte: Hoy + 1 Mes
+                current_period_end: endDate
             };
 
             // 4. INSERTAR EN BD (Estado PENDING)
             const data = await ClientSubscription.createManual(subscriptionData);
 
+            // --- NUEVO PASO: ACTUALIZAR EL ENTRENADOR DEL USUARIO ---
+            // Vinculamos al cliente con este entrenador (id_company)
+            await User.updateTrainer(id_client, id_company);
+            console.log(`[Manual] Usuario ${id_client} vinculado al entrenador ${id_company}`);
+            // --------------------------------------------------------
             return res.status(201).json({
                 success: true,
-                message: 'Solicitud creada. Tu entrenador te contactará.',
+                message: 'Solicitud creada y entrenador asignado. Tu entrenador te contactará.',
                 data: { 'id': data.id }
             });
 
