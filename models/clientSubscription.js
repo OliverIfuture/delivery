@@ -68,7 +68,7 @@ ClientSubscription.findActiveByClient = (id_client) => {
             client_subscriptions
         WHERE
             id_client = $1 
-            AND (status = 'active' OR status = 'past_due') -- Aún se considera "activo" si el pago está retrasado
+            AND (status = 'active' OR status = 'past_due' OR status = 'PENDING') -- Aún se considera "activo" si el pago está retrasado
         ORDER BY
             created_at DESC
         LIMIT 1
