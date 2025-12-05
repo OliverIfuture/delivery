@@ -2021,6 +2021,7 @@ Product.getAllCompany = () =>{
 	c.description,
 	c.ispromo,
 	c."deliveryCost"
+	c.country
 		
 	from company as c
 	
