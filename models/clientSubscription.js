@@ -113,12 +113,11 @@ ClientSubscription.createManual = (sub) => {
             stripe_subscription_id, -- Guardaremos 'MANUAL' para identificarlo
             stripe_customer_id,     -- Guardaremos 'MANUAL'
             status,                 -- Será 'PENDING'
-            start_date,
             current_period_end,
             created_at,
             updated_at
         )
-        VALUES($1, $2, $3, 'MANUAL', 'MANUAL', 'PENDING', $4, $5, $6, $6)
+        VALUES($1, $2, $3, 'MANUAL', 'MANUAL', 'PENDING', $4, $5, $5)
         RETURNING id
     `;
 
@@ -126,7 +125,6 @@ ClientSubscription.createManual = (sub) => {
         sub.id_client,
         sub.id_company,
         sub.id_plan,
-        sub.start_date,         // Fecha inicio (Hoy)
         sub.current_period_end, // Fecha fin calculada
         new Date()              // created_at y updated_at
     ]);
