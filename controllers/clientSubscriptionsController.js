@@ -550,59 +550,42 @@ module.exports = {
         }
     },
 
-    async createManualRequest(req, res, next) {
+   async createManualRequest(req, res, next) {
         try {
+            // Recibimos 'price' del front (con descuento aplicado si hubo)
             const { id_plan, id_company, price } = req.body;
             const id_client = req.user.id;
-            const clientName = `${req.user.name} ${req.user.lastname}`;
-
-            // 1. Insertar en BD con estado 'PENDING' (Pendiente de Pago)
-            // Nota: Ajusta la query a tu modelo exacto de base de datos
-            const sql = `
-                INSERT INTO client_subscriptions(
-                    id_client, 
-                    id_company, 
-                    id_plan, 
-                    status, 
-                    start_date, 
-                    current_period_end,
-                    payment_method,
-                    created_at, 
-                    updated_at
-                )
-                VALUES($1, $2, $3, 'PENDING', NOW(), NOW() + INTERVAL '1 month', 'CASH', NOW(), NOW())
-                RETURNING id
-            `;
             
-            // Usamos tu instancia de 'db' que importas arriba
-            // Si usas un Modelo, sería: await ClientSubscription.createManual(...)
-            const db = require('../config/config'); 
-            const data = await db.one(sql, [id_client, id_company, id_plan]);
-
-            // 2. Obtener Token del Entrenador para Notificarle
-            // Asumimos que User.findById o similar trae el notification_token
-            const trainer = await User.findByIdSimple(id_company); // O tu método para traer usuario por ID
-
-            if (trainer && trainer.notification_token) {
-                // 3. Enviar Notificación PUSH
-                const notificationData = {
-                    title: '💰 Nueva Solicitud de Pago',
-                    body: `${clientName} quiere pagar el plan en efectivo. ¡Contáctalo para cerrar la venta!`,
-                    data: {
-                        'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-                        'screen': 'trainer/clients/pending', // Pantalla donde el entrenador ve los pendientes
-                        'id_subscription': data.id.toString(),
-                        'id_client': id_client.toString()
-                    }
-                };
-                
-                // Usamos tu controlador de notificaciones existente o Firebase directo
-                await PushNotificationController.sendNotificationToDevice(trainer.notification_token, notificationData);
+            // 1. VALIDACIÓN DE SEGURIDAD
+            // Aunque confiemos en el precio del front, debemos verificar que el plan EXISTA en la BD
+            const plan = await SubscriptionPlan.findById(id_plan); 
+            
+            if (!plan) {
+                return res.status(404).json({ success: false, message: 'El plan seleccionado ya no existe.' });
             }
+
+            // 2. CALCULAR FECHAS (LÓGICA MENSUAL ESTRICTA)
+            const startDate = new Date();
+            const endDate = new Date();
+            
+            // Sumamos 1 mes exacto a la fecha de hoy
+            endDate.setMonth(startDate.getMonth() + 1);
+
+            // 3. PREPARAR OBJETO
+            const subscriptionData = {
+                id_client: id_client,
+                id_company: id_company,
+                id_plan: id_plan,
+                start_date: startDate,
+                current_period_end: endDate // Fecha de corte: Hoy + 1 Mes
+            };
+
+            // 4. INSERTAR EN BD (Estado PENDING)
+            const data = await ClientSubscription.createManual(subscriptionData);
 
             return res.status(201).json({
                 success: true,
-                message: 'Solicitud enviada correctamente al entrenador.',
+                message: 'Solicitud creada. Tu entrenador te contactará.',
                 data: { 'id': data.id }
             });
 
@@ -610,9 +593,9 @@ module.exports = {
             console.log(`Error en createManualRequest: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al procesar la solicitud',
+                message: 'Error al crear la solicitud',
                 error: error.message
             });
         }
-    }
+    },
 };
