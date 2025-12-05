@@ -16,9 +16,10 @@ SubscriptionPlan.create = (plan) => {
             stripe_price_id,
             created_at,
             updated_at,
-            description
+            description,
+            is_manual
         )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
     `;
     return db.one(sql, [
         plan.id_company,
@@ -29,7 +30,8 @@ SubscriptionPlan.create = (plan) => {
         plan.stripe_price_id,
         new Date(),
         new Date(),
-        plan.description
+        plan.description,
+        plan.is_manual
     ]);
 };
 
