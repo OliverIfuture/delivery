@@ -1,122 +1,90 @@
 const SubscriptionPlan = require('../models/subscriptionPlan.js');
-const User = require('../models/user.js'); // Importamos User
+const User = require('../models/user.js'); 
 const keys = require('../config/keys.js'); 
 
 module.exports = {
 
-  async create(req, res, next) {
-
+    async create(req, res, next) {
         try {
-
             const plan = req.body; 
-
             const id_company = req.user.mi_store; 
-
             
-
-            const company = await User.findCompanyById(id_company); 
-
+            const company = await User.findCompanyById(id_company);
             
-
-            // **CORRECCIÓN: Usar camelCase**
-
-            if (!company || !company.stripeSecretKey) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message: 'El entrenador no tiene una clave de Stripe configurada.'
-
-                });
-
+            // Validamos si la compañía existe
+            if (!company) {
+                 return res.status(404).json({ success: false, message: 'Empresa no encontrada.' });
             }
 
-            
+            // --- LÓGICA HÍBRIDA ---
+            // Verificamos si tiene Stripe configurado
+            const hasStripe = company.stripeSecretKey && company.stripeSecretKey.length > 0;
 
-            // **CORRECCIÓN: Usar camelCase**
+            if (hasStripe) {
+                // =================================================
+                // CAMINO A: CON STRIPE (Tu lógica original intacta)
+                // =================================================
+                console.log('Creando plan en Stripe...');
+                
+                const stripe = require('stripe')(company.stripeSecretKey);
 
-            const stripe = require('stripe')(company.stripeSecretKey);
+                // 1. Crear Producto
+                const stripeProduct = await stripe.products.create({
+                    name: plan.name,
+                    type: 'service', 
+                });
 
+                // 2. Crear Precio
+                const stripePrice = await stripe.prices.create({
+                    product: stripeProduct.id,
+                    unit_amount: (plan.price * 100).toFixed(0), 
+                    currency: 'mxn',
+                    recurring: {
+                        interval: 'month', 
+                    },
+                });
 
+                // Asignamos IDs reales
+                plan.stripe_product_id = stripeProduct.id;
+                plan.stripe_price_id = stripePrice.id;
+                plan.is_manual = false; // <--- Bandera para la App (Stripe)
 
-            // 2. Crear el Producto en Stripe
+            } else {
+                // =================================================
+                // CAMINO B: MANUAL (Sin Stripe / Efectivo)
+                // =================================================
+                console.log('Creando plan MANUAL (Sin Stripe)...');
 
-            const stripeProduct = await stripe.products.create({
+                // Asignamos valores placeholder para que la BD no falle
+                plan.stripe_product_id = 'MANUAL';
+                plan.stripe_price_id = 'MANUAL';
+                plan.is_manual = true; // <--- Bandera para la App (Manual)
+            }
 
-                name: plan.name,
-
-                type: 'service', 
-
-            });
-
-
-
-            // 3. Crear el Precio (Suscripción mensual) en Stripe
-
-            const stripePrice = await stripe.prices.create({
-
-                product: stripeProduct.id,
-
-                unit_amount: (plan.price * 100).toFixed(0), 
-
-                currency: 'mxn',
-
-                recurring: {
-
-                    interval: 'month', 
-
-                },
-
-            });
-
-
-
-            // 4. Asignar los IDs de Stripe a nuestro objeto de plan
-
+            // Guardar en BD (Común para ambos casos)
             plan.id_company = id_company;
-
-            plan.stripe_product_id = stripeProduct.id;
-
-            plan.stripe_price_id = stripePrice.id;
-
-
-
-            // 5. Guardar el plan en NUESTRA base de datos
-
-            const data = await SubscriptionPlan.create(plan);
-
             
-
+            const data = await SubscriptionPlan.create(plan);
+            
             return res.status(201).json({
-
                 success: true,
-
-                message: 'El plan de suscripción se ha creado correctamente.',
-
+                message: hasStripe 
+                    ? 'El plan de suscripción automática se ha creado correctamente.' 
+                    : 'El plan manual se ha creado correctamente.',
                 data: { 'id': data.id }
-
             });
 
         }
-
         catch (error) {
-
             console.log(`Error en subscriptionPlansController.create: ${error}`);
-
             return res.status(501).json({
-
                 success: false,
-
                 message: 'Error al crear el plan de suscripción',
-
                 error: error.message
-
             });
-
         }
-
     },
+
     /**
      * Eliminar (Desactivar) un plan
      */
@@ -125,7 +93,9 @@ module.exports = {
             const id_plan = req.params.id;
             const id_company = req.user.mi_store; 
 
+            // Buscamos el plan primero para saber si es manual o stripe
             const plan = await SubscriptionPlan.findById(id_plan, id_company);
+            
             if (!plan) {
                 return res.status(404).json({
                     success: false,
@@ -133,32 +103,38 @@ module.exports = {
                 });
             }
 
-            // **CORRECCIÓN: Usar camelCase**
-            const company = await User.findCompanyById(id_company);
-            if (!company || !company.stripeSecretKey) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'El entrenador no tiene una clave de Stripe configurada.'
-                });
+            // --- LÓGICA DE BORRADO INTELIGENTE ---
+            
+            // Solo intentamos desactivar en Stripe si NO es manual y tiene IDs válidos
+            // y si la compañía TIENE llaves (por si las borró después de crear el plan)
+            const isStripePlan = plan.stripe_product_id !== 'MANUAL' && plan.is_manual !== true;
+
+            if (isStripePlan) {
+                const company = await User.findCompanyById(id_company);
+                
+                if (company && company.stripeSecretKey) {
+                    try {
+                        const stripe = require('stripe')(company.stripeSecretKey);
+                        
+                        // Desactivar Producto
+                        await stripe.products.update(plan.stripe_product_id, { active: false });
+                        // Desactivar Precio
+                        await stripe.prices.update(plan.stripe_price_id, { active: false });
+                        
+                        console.log('Plan desactivado en Stripe correctamente.');
+                    } catch (stripeError) {
+                        console.log('Advertencia: No se pudo desactivar en Stripe (quizás ya no existe), pero se borrará localmente.', stripeError.message);
+                        // No retornamos error, dejamos que continúe para borrarlo de la BD local
+                    }
+                }
             }
 
-            // **CORRECCIÓN: Usar camelCase**
-            const stripe = require('stripe')(company.stripeSecretKey);
-
-            // 3. Desactivar el Producto en Stripe
-            await stripe.products.update(plan.stripe_product_id, {
-                active: false
-            });
-            await stripe.prices.update(plan.stripe_price_id, {
-                active: false
-            });
-
-            // 4. Eliminar el plan de NUESTRA base de datos
+            // 4. Eliminar el plan de NUESTRA base de datos (Siempre se hace)
             await SubscriptionPlan.delete(id_plan, id_company);
             
             return res.status(200).json({
                 success: true,
-                message: 'El plan se ha desactivado y eliminado correctamente.'
+                message: 'El plan se ha eliminado correctamente.'
             });
         }
         catch (error) {
@@ -171,9 +147,6 @@ module.exports = {
         }
     },
 
-    /**
-     * Buscar todos los planes creados por un entrenador
-     */
     async findByCompany(req, res, next) {
         try {
             const id_company = req.params.id_company;
