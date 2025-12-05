@@ -549,5 +549,72 @@ module.exports = {
             });
         }
     },
+
+    async createManualRequest(req, res, next) {
+        try {
+            const { id_plan, id_company, price } = req.body;
+            const id_client = req.user.id;
+            const clientName = `${req.user.name} ${req.user.lastname}`;
+
+            // 1. Insertar en BD con estado 'PENDING' (Pendiente de Pago)
+            // Nota: Ajusta la query a tu modelo exacto de base de datos
+            const sql = `
+                INSERT INTO client_subscriptions(
+                    id_client, 
+                    id_company, 
+                    id_plan, 
+                    status, 
+                    start_date, 
+                    current_period_end,
+                    payment_method,
+                    created_at, 
+                    updated_at
+                )
+                VALUES($1, $2, $3, 'PENDING', NOW(), NOW() + INTERVAL '1 month', 'CASH', NOW(), NOW())
+                RETURNING id
+            `;
+            
+            // Usamos tu instancia de 'db' que importas arriba
+            // Si usas un Modelo, sería: await ClientSubscription.createManual(...)
+            const db = require('../config/config'); 
+            const data = await db.one(sql, [id_client, id_company, id_plan]);
+
+            // 2. Obtener Token del Entrenador para Notificarle
+            // Asumimos que User.findById o similar trae el notification_token
+            const trainer = await User.findByIdSimple(id_company); // O tu método para traer usuario por ID
+
+            if (trainer && trainer.notification_token) {
+                // 3. Enviar Notificación PUSH
+                const notificationData = {
+                    title: '💰 Nueva Solicitud de Pago',
+                    body: `${clientName} quiere pagar el plan en efectivo. ¡Contáctalo para cerrar la venta!`,
+                    data: {
+                        'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                        'screen': 'trainer/clients/pending', // Pantalla donde el entrenador ve los pendientes
+                        'id_subscription': data.id.toString(),
+                        'id_client': id_client.toString()
+                    }
+                };
+                
+                // Usamos tu controlador de notificaciones existente o Firebase directo
+                await PushNotificationController.sendNotificationToDevice(trainer.notification_token, notificationData);
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: 'Solicitud enviada correctamente al entrenador.',
+                data: { 'id': data.id }
+            });
+
+        } catch (error) {
+            console.log(`Error en createManualRequest: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al procesar la solicitud',
+                error: error.message
+            });
+        }
+    }
+};
     
 };
