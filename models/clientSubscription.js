@@ -142,5 +142,22 @@ ClientSubscription.findPendingByClient = (id_client, id_plan) => {
     return db.oneOrNone(sql, [id_client, id_plan]);
 }
 
+SubscriptionPlan.findById = (id) => {
+    const sql = `
+    SELECT
+        id,
+        name,
+        description,
+        price,
+        id_company,
+        is_manual
+    FROM
+        subscription_plans
+    WHERE
+        id = $1
+    `;
+    return db.oneOrNone(sql, id);
+}
+
 
 module.exports = ClientSubscription;
