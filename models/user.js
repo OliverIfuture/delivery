@@ -1002,7 +1002,8 @@ User.createWithImageUserAndCompany = (user, company) => {
                 membership_plan,
                 membership_status,
                 membership_expires_at,
-				"deliveryCost"
+				"deliveryCost",
+				country
             )
             VALUES(
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
@@ -1011,7 +1012,8 @@ User.createWithImageUserAndCompany = (user, company) => {
                 'fundador', -- Valor de membership_plan (Free Trial)
                 'active',   -- Valor de membership_status
                 $18,         -- Valor de membership_expires_at (La fecha calculada)
-                $19
+                $19,
+				$20
 			)
             RETURNING id
         `;
@@ -1036,7 +1038,8 @@ User.createWithImageUserAndCompany = (user, company) => {
             company.image_card, // 16
             company.description, // 17
             sevenDaysFromNow, // 18: La fecha de expiración calculada
-			company.deliveryCost
+			company.deliveryCost,
+			company.country
         ])
         .then(companyData => {
             const newCompanyId = companyData.id;
