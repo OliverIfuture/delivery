@@ -45,7 +45,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.findByUserId(id);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+            //console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
