@@ -29,6 +29,6 @@ module.exports = (app) => {
      */
     app.get('/api/subscriptions/getStatus', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getSubscriptionStatus);
     app.get('/api/subscriptions/getStatusTrainer', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getSubscriptionStatusTrainer);
-    app.post('/api/subscriptions/create-manual', passport.authenticate('jwt', {session: false}), ClientSubscriptionsController.createManualRequest);
+    app.post('/api/subscriptions/create-manual', passport.authenticate('jwt', {session: false}), clientSubscriptionsController.createManualRequest);
 
 };
