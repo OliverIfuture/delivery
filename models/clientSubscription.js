@@ -113,13 +113,12 @@ ClientSubscription.createManual = (sub) => {
             stripe_subscription_id, -- Guardaremos 'MANUAL' para identificarlo
             stripe_customer_id,     -- Guardaremos 'MANUAL'
             status,                 -- Será 'PENDING'
-            payment_method,         -- Nuevo campo importante: 'CASH'
             start_date,
             current_period_end,
             created_at,
             updated_at
         )
-        VALUES($1, $2, $3, 'MANUAL', 'MANUAL', 'PENDING', 'CASH', $4, $5, $6, $6)
+        VALUES($1, $2, $3, 'MANUAL', 'MANUAL', 'PENDING', $4, $5, $6, $6)
         RETURNING id
     `;
 
