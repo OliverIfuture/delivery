@@ -105,6 +105,10 @@ ClientSubscription.getTotalRevenue = () => {
 };
 
 ClientSubscription.createManual = (sub) => {
+
+    const timestamp = Date.now(); 
+    const fakeSubId = `sub_MANUAL_${timestamp}`; 
+    const fakeCusId = `cus_MANUAL_${timestamp}`;
     const sql = `
         INSERT INTO client_subscriptions(
             id_client,
@@ -117,7 +121,7 @@ ClientSubscription.createManual = (sub) => {
             created_at,
             updated_at
         )
-        VALUES($1, $2, $3, 'MANUAL', 'MANUAL', 'PENDING', $4, $5, $5)
+        VALUES($1, $2, $3, $6, $7, 'PENDING', $4, $5, $5)
         RETURNING id
     `;
 
@@ -126,7 +130,9 @@ ClientSubscription.createManual = (sub) => {
         sub.id_company,
         sub.id_plan,
         sub.current_period_end, // Fecha fin calculada
-        new Date()              // created_at y updated_at
+        new Date(),              // created_at y updated_at
+        fakeSubId, // $7: Ej. sub_MANUAL_1709876543
+        fakeCusId  // $8: Ej. cus_MANUAL_1709876543
     ]);
 };
 
