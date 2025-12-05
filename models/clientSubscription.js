@@ -104,5 +104,43 @@ ClientSubscription.getTotalRevenue = () => {
     return db.one(sql);
 };
 
+ClientSubscription.createManual = (sub) => {
+    const sql = `
+        INSERT INTO client_subscriptions(
+            id_client,
+            id_company,
+            id_plan,
+            stripe_subscription_id, -- Guardaremos 'MANUAL' para identificarlo
+            stripe_customer_id,     -- Guardaremos 'MANUAL'
+            status,                 -- Será 'PENDING'
+            payment_method,         -- Nuevo campo importante: 'CASH'
+            start_date,
+            current_period_end,
+            created_at,
+            updated_at
+        )
+        VALUES($1, $2, $3, 'MANUAL', 'MANUAL', 'PENDING', 'CASH', $4, $5, $6, $6)
+        RETURNING id
+    `;
+
+    return db.one(sql, [
+        sub.id_client,
+        sub.id_company,
+        sub.id_plan,
+        sub.start_date,         // Fecha inicio (Hoy)
+        sub.current_period_end, // Fecha fin calculada
+        new Date()              // created_at y updated_at
+    ]);
+};
+
+// Necesitarás esta para validar si ya existe una pendiente
+ClientSubscription.findPendingByClient = (id_client, id_plan) => {
+    const sql = `
+        SELECT id FROM client_subscriptions 
+        WHERE id_client = $1 AND id_plan = $2 AND status = 'PENDING'
+    `;
+    return db.oneOrNone(sql, [id_client, id_plan]);
+}
+
 
 module.exports = ClientSubscription;
