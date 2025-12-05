@@ -558,7 +558,7 @@ module.exports = {
             
             // 1. VALIDACIÓN DE SEGURIDAD
             // Aunque confiemos en el precio del front, debemos verificar que el plan EXISTA en la BD
-            const plan = await SubscriptionPlan.findById(id_plan); 
+            const plan = await ClientSubscription.findById(id_plan); 
             
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'El plan seleccionado ya no existe.' });
