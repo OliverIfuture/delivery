@@ -142,7 +142,7 @@ ClientSubscription.findPendingByClient = (id_client, id_plan) => {
     return db.oneOrNone(sql, [id_client, id_plan]);
 }
 
-SubscriptionPlan.findById = (id) => {
+ClientSubscription.findById = (id) => {
     const sql = `
     SELECT
         id,
