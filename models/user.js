@@ -1660,7 +1660,6 @@ User.getAvailableTrainers = () => {
         WHERE
             type = 'ENTRENADOR' 
             AND available = 'true'
-            AND "chargesEnabled" = true -- Solo mostrar los que pueden cobrar
         ORDER BY
             id asc
     `;
