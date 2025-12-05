@@ -2020,7 +2020,7 @@ Product.getAllCompany = () =>{
 	U.notification_token,
 	c.description,
 	c.ispromo,
-	c."deliveryCost"
+	c."deliveryCost",
 	c.country
 		
 	from company as c
