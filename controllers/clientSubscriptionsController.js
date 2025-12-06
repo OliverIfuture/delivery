@@ -599,4 +599,91 @@ module.exports = {
             });
         }
     },
+
+    // ... otras funciones ...
+
+    // 1. OBTENER SOLICITUDES PENDIENTES (Para el Entrenador)
+    async getPendingRequests(req, res, next) {
+        try {
+            const id_company = req.user.mi_store; // El ID del entrenador
+
+            // Hacemos JOIN para traer datos del cliente y del plan
+            const sql = `
+                SELECT 
+                    S.id,
+                    S.id_client,
+                    S.id_plan,
+                    S.status,
+                    S.created_at,
+                    U.name AS client_name,
+                    U.lastname AS client_lastname,
+                    U.image AS client_image,
+                    P.name AS plan_name,
+                    P.price AS plan_price
+                FROM 
+                    client_subscriptions AS S
+                INNER JOIN
+                    users AS U ON S.id_client = U.id
+                INNER JOIN
+                    subscription_plans AS P ON S.id_plan = P.id
+                WHERE
+                    S.id_company = $1 AND S.status = 'PENDING'
+                ORDER BY
+                    S.created_at DESC
+            `;
+            
+            const db = require('../config/config');
+            const data = await db.manyOrNone(sql, id_company);
+
+            return res.status(200).json(data);
+
+        } catch (error) {
+            console.log(`Error en getPendingRequests: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener solicitudes' });
+        }
+    },
+
+    // 2. APROBAR SOLICITUD (Activar Plan)
+    async approveRequest(req, res, next) {
+        try {
+            const { id_subscription } = req.body;
+
+            // Actualizamos estado a ACTIVE y reseteamos las fechas de inicio/fin a HOY
+            // (Para que el mes cuente desde que se paga, no desde que se pidió)
+            const sql = `
+                UPDATE client_subscriptions
+                SET 
+                    status = 'active',
+                    start_date = NOW(),
+                    current_period_end = NOW() + INTERVAL '1 month',
+                    updated_at = NOW()
+                WHERE id = $1
+                RETURNING id_client
+            `;
+            
+            const db = require('../config/config');
+            const result = await db.oneOrNone(sql, [id_subscription]);
+
+            if (result) {
+                // Notificar al Cliente
+                const client = await User.findById(result.id_client); // Usar tu método existente
+                if (client && client.notification_token) {
+                    await PushNotificationController.sendNotificationToDevice(
+                        client.notification_token, 
+                        {
+                            title: '✅ Plan Activado',
+                            body: 'Tu entrenador ha confirmado el pago. ¡Ya tienes acceso total!',
+                            data: { 'click_action': 'FLUTTER_NOTIFICATION_CLICK', 'screen': 'client/dashboard' }
+                        }
+                    );
+                }
+            }
+
+            return res.status(200).json({ success: true, message: 'Suscripción activada exitosamente.' });
+
+        } catch (error) {
+            console.log(`Error en approveRequest: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al activar' });
+        }
+    },
 };
