@@ -1,35 +1,33 @@
-const User = require('../models/user.js'); 
-const keys = require('../config/keys.js'); 
+const User = require('../models/user.js');
+const SubscriptionPlan = require('../models/subscriptionPlan.js'); // <--- IMPORTANTE: Agregado
+const keys = require('../config/keys.js');
 
-// ¡MUY IMPORTANTE!
-// Esta debe ser la Clave Secreta de TU CUENTA DE PLATAFORMA (ADMIN)
-// La usas para crear y gestionar las cuentas de tus entrenadores.
-const stripe = require('stripe')(keys.stripeAdminSecretKey); 
+// Inicializamos Stripe con TU llave de Plataforma
+const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
 module.exports = {
 
     /**
      * Crea una Cuenta Conectada (Express) y un Link de Onboarding
      */
-   async createConnectAccount(req, res, next) {
+    async createConnectAccount(req, res, next) {
         try {
             const id_company = req.user.mi_store;
             
-            // 1. Cargar datos del entrenador (compañía)
+            // 1. Cargar datos del entrenador
             const company = await User.findCompanyById(id_company);
             if (!company) {
                 return res.status(404).json({ success: false, message: 'No se encontró la compañía del entrenador.'});
             }
 
-            let accountId = company.stripeAccountId; 
+            let accountId = company.stripeAccountId;
             
-            // --- CORRECCIÓN CRÍTICA: ROBUSTEZ DEL ID DE STRIPE ---
-            // Solo consideramos el ID válido si es una cadena y empieza con 'acct_'
+            // Validar formato del ID
             const isValidStripeId = accountId && String(accountId).startsWith('acct_');
 
-            // 2. Si el entrenador AÚN NO tiene un ID de Stripe VÁLIDO, creamos uno
+            // 2. Crear cuenta si no existe
             if (!isValidStripeId) {
-                console.log(`[Connect] Creando nueva cuenta Express para ${company.name}. ID actual: ${accountId}`);
+                console.log(`[Connect] Creando nueva cuenta Express para ${company.name}.`);
 
                 const account = await stripe.accounts.create({
                     type: 'express',
@@ -45,33 +43,28 @@ module.exports = {
                 });
                 accountId = account.id;
 
-                // 3. Guardar el nuevo ID (acct_...) en nuestra BD
-                // Usamos la función de modelo que incluye copiar las llaves del Admin (que definimos antes)
+                // Guardar ID en BD
                 await User.updateStripeDataFromAdminId(id_company, accountId);
             } else {
                 console.log(`[Connect] Usando cuenta existente: ${accountId}`);
             }
-            // -------------------------------------------------------
 
-
-            // 4. Crear el Link de Onboarding (para un usuario existente o nuevo)
+            // 3. Crear Link de Onboarding
             const accountLink = await stripe.accountLinks.create({
-                account: accountId, // Aquí accountId ya está garantizado ser 'acct_...'
-                refresh_url: 'https://tu-app.com/stripe/reauth', 
+                account: accountId,
+                refresh_url: 'https://tu-app.com/stripe/reauth', // Ajusta a tus deep links reales
                 return_url: 'https://tu-app.com/stripe/success',
                 type: 'account_onboarding',
             });
 
-            // 5. Devolver la URL a la app de Flutter
             return res.status(200).json({
                 success: true,
                 url: accountLink.url
             });
 
         } catch (error) {
-            console.log(`Error en stripeConnectController.createConnectAccount: ${error}`);
+            console.log(`Error en createConnectAccount: ${error}`);
             
-            // Si el error es la cadena 'false' que persiste (Aún con la corrección), devolvemos un mensaje útil.
             const errorMessage = error.message.includes("'false'") 
                 ? "Error de configuración: El ID de Stripe de la compañía es inválido." 
                 : error.message;
@@ -85,7 +78,7 @@ module.exports = {
     },
     
     /**
-     * Verifica el estado de la cuenta después del onboarding
+     * Verifica el estado de la cuenta y MIGRA PLANES si está activa
      */
     async getAccountStatus(req, res, next) {
         try {
@@ -96,13 +89,22 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Este entrenador no tiene una cuenta de Stripe vinculada.'});
             }
 
-            // Consultar a Stripe el estado de la cuenta
+            // 1. Consultar a Stripe
             const account = await stripe.accounts.retrieve(company.stripeAccountId);
-            
             const chargesEnabled = account.charges_enabled; // boolean
 
-            // Actualizar nuestro DB
+            // 2. Actualizar DB
             await User.updateStripeDataFromAdmin(id_company, chargesEnabled);
+
+            // --- 3. TRIGGER DE MIGRACIÓN ---
+            // Si la cuenta ya puede cobrar, buscamos planes manuales y los subimos a Stripe
+            if (chargesEnabled) {
+                console.log(`[Connect] Cuenta ${company.stripeAccountId} activa. Verificando planes manuales...`);
+                // Ejecutamos la migración sin 'await' para no bloquear la respuesta (Background Task)
+                // o con 'await' si queremos asegurar. Usaremos await para logs limpios.
+                await _migrateManualPlans(id_company, company.stripeAccountId);
+            }
+            // -------------------------------
 
             return res.status(200).json({
                 success: true,
@@ -111,12 +113,64 @@ module.exports = {
             });
 
         } catch (error) {
-            console.log(`Error en stripeConnectController.getAccountStatus: ${error}`);
+            console.log(`Error en getAccountStatus: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error al obtener el estado de la cuenta',
                 error: error.message
             });
         }
+    },
+
+async function _migrateManualPlans(id_company, stripeAccountId) {
+    try {
+        // 1. Buscar planes marcados como manuales en la BD
+        const manualPlans = await SubscriptionPlan.findManualByCompany(id_company);
+
+        if (manualPlans.length === 0) {
+            return; // Nada que hacer
+        }
+
+        console.log(`[Migración] Encontrados ${manualPlans.length} planes manuales. Subiendo a cuenta ${stripeAccountId}...`);
+
+        for (const plan of manualPlans) {
+            try {
+                // 2. Crear Producto EN LA CUENTA CONECTADA
+                // El header { stripeAccount: ... } es la clave de Stripe Connect
+                const product = await stripe.products.create(
+                    {
+                        name: plan.name,
+                        description: plan.description || '',
+                        type: 'service',
+                    },
+                    { stripeAccount: stripeAccountId } // <--- MAGIA DE CONNECT
+                );
+
+                // 3. Crear Precio EN LA CUENTA CONECTADA
+                const price = await stripe.prices.create(
+                    {
+                        product: product.id,
+                        unit_amount: (plan.price * 100).toFixed(0), // Centavos
+                        currency: 'mxn',
+                        recurring: { interval: 'month' },
+                    },
+                    { stripeAccount: stripeAccountId } // <--- MAGIA DE CONNECT
+                );
+
+                // 4. Actualizar BD Local
+                // Ahora el plan tiene IDs reales y is_manual = false
+                await SubscriptionPlan.updateStripeIds(plan.id, product.id, price.id);
+
+                console.log(`-> Plan "${plan.name}" migrado a Stripe Connect.`);
+
+            } catch (innerError) {
+                console.error(`X Error migrando plan ${plan.id}: ${innerError.message}`);
+            }
+        }
+
+    } catch (e) {
+        console.error('Error general en migración de planes:', e);
     }
+}
 };
+
