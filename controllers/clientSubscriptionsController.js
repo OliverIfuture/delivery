@@ -550,47 +550,54 @@ module.exports = {
         }
     },
 
- async createManualRequest(req, res, next) {
+async createManualRequest(req, res, next) {
         try {
             const { id_plan, id_company, price } = req.body;
             const id_client = req.user.id;
 
-            console.log(`id_plan: ${id_plan}`);
-            console.log(`id_company: ${id_company}`);
-            console.log(`price: ${price}`);
+            console.log(`[Manual Request] Cliente: ${id_client} -> Plan: ${id_plan}`);
             
-            // 1. VALIDACIÓN DE SEGURIDAD
+            // 0. VALIDACIÓN ANTI-SPAM (NUEVO)
+            // Verificamos si este cliente YA tiene este plan en estado 'PENDING'
+            const existingRequest = await ClientSubscription.findPendingByClient(id_client, id_plan);
+            
+            if (existingRequest) {
+                return res.status(409).json({ // 409 Conflict
+                    success: false, 
+                    message: 'Ya tienes una solicitud pendiente para este plan. Espera a que tu entrenador la apruebe.' 
+                });
+            }
+
+            // 1. VALIDACIÓN DE EXISTENCIA DEL PLAN
+            // CORRECCIÓN: Usamos SubscriptionPlan, no ClientSubscription
             const plan = await ClientSubscription.findById(id_plan); 
             
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'El plan seleccionado ya no existe.' });
             }
 
-            // 2. CALCULAR FECHAS (LÓGICA MENSUAL)
+            // 2. CALCULAR FECHAS
             const startDate = new Date();
             const endDate = new Date();
-            endDate.setMonth(startDate.getMonth() + 1);
+            endDate.setMonth(startDate.getMonth() + 1); // +1 Mes
 
             // 3. PREPARAR OBJETO
             const subscriptionData = {
                 id_client: id_client,
                 id_company: id_company,
                 id_plan: id_plan,
-                updated_at: startDate,
+                start_date: startDate,
                 current_period_end: endDate
             };
 
-            // 4. INSERTAR EN BD (Estado PENDING)
+            // 4. INSERTAR EN BD
             const data = await ClientSubscription.createManual(subscriptionData);
 
-            // --- NUEVO PASO: ACTUALIZAR EL ENTRENADOR DEL USUARIO ---
-            // Vinculamos al cliente con este entrenador (id_company)
+            // --- VINCULACIÓN AUTOMÁTICA ---
             await User.updateTrainer(id_client, id_company);
-            console.log(`[Manual] Usuario ${id_client} vinculado al entrenador ${id_company}`);
-            // --------------------------------------------------------
             return res.status(201).json({
                 success: true,
-                message: 'Solicitud creada y entrenador asignado. Tu entrenador te contactará.',
+                message: 'Solicitud enviada. Tu entrenador ha sido notificado.',
                 data: { 'id': data.id }
             });
 
@@ -602,7 +609,7 @@ module.exports = {
                 error: error.message
             });
         }
-    },
+    }
 
     // ... otras funciones ...
 
