@@ -554,6 +554,10 @@ module.exports = {
         try {
             const { id_plan, id_company, price } = req.body;
             const id_client = req.user.id;
+
+            console.log(`id_plan: ${id_plan}`);
+            console.log(`id_company: ${id_company}`);
+            console.log(`price: ${price}`);
             
             // 1. VALIDACIÓN DE SEGURIDAD
             const plan = await ClientSubscription.findById(id_plan); 
