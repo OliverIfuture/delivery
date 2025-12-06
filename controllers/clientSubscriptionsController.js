@@ -627,6 +627,7 @@ async createManualRequest(req, res, next) {
                     S.status,
                     S.created_at,
                     U.name AS client_name,
+                    U.notification_token AS token,
                     U.lastname AS client_lastname,
                     U.image AS client_image,
                     P.name AS plan_name,
