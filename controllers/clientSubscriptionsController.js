@@ -655,7 +655,6 @@ module.exports = {
                 UPDATE client_subscriptions
                 SET 
                     status = 'active',
-                    start_date = NOW(),
                     current_period_end = NOW() + INTERVAL '1 month',
                     updated_at = NOW()
                 WHERE id = $1
