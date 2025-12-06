@@ -102,7 +102,7 @@ module.exports = {
                 console.log(`[Connect] Cuenta ${company.stripeAccountId} activa. Verificando planes manuales...`);
                 // Ejecutamos la migración sin 'await' para no bloquear la respuesta (Background Task)
                 // o con 'await' si queremos asegurar. Usaremos await para logs limpios.
-                await _migrateManualPlans(id_company, company.stripeAccountId);
+                await migrateManualPlans(id_company, company.stripeAccountId);
             }
             // -------------------------------
 
@@ -122,7 +122,7 @@ module.exports = {
         }
     },
 
-async function _migrateManualPlans(id_company, stripeAccountId) {
+async function migrateManualPlans(id_company, stripeAccountId) {
     try {
         // 1. Buscar planes marcados como manuales en la BD
         const manualPlans = await SubscriptionPlan.findManualByCompany(id_company);
