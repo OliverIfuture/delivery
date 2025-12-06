@@ -1461,15 +1461,19 @@ User.getWholesaleUsersByCompany = (id) => {
 User.getClientsByCompany = (id_company) => {
     const sql = `
         SELECT
-            id,
-            email,
-            name,
-            lastname,
-            phone,
-            image,
-			notification_token
+            U.id,
+            U.email,
+            U.name,
+            U.lastname,
+            U.phone,
+            U.image,
+			U.notification_token,
+			C.status as status_plan,
+			C.current_period_end as finaliza
         FROM
-            users
+            users as U
+	    INNER JOIN client_subscriptions as C
+		ON U.id = C.id_client
         WHERE
             id_entrenador = $1
         ORDER BY
