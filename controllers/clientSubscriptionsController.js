@@ -619,7 +619,8 @@ module.exports = {
                     U.lastname AS client_lastname,
                     U.image AS client_image,
                     P.name AS plan_name,
-                    P.price AS plan_price
+                    P.price AS plan_price,
+                    U.phone
                 FROM 
                     client_subscriptions AS S
                 INNER JOIN
