@@ -89,5 +89,41 @@ SubscriptionPlan.countByCompany = (id_company) => {
     return db.one(sql, id_company);
 };
 
+SubscriptionPlan.findManualByCompany = (id_company) => {
+    const sql = `
+    SELECT
+        id,
+        name,
+        description,
+        price
+    FROM
+        subscription_plans
+    WHERE
+        id_company = $1
+        AND (
+            is_manual = true 
+            OR stripe_price_id = 'MANUAL' 
+            OR stripe_price_id IS NULL
+        )
+    `;
+    return db.manyOrNone(sql, id_company);
+}
+
+// 2. ACTUALIZAR PLAN CON IDS DE STRIPE (PARA LA MIGRACIÓN)
+SubscriptionPlan.updateStripeIds = (id, stripeProductId, stripePriceId) => {
+    const sql = `
+    UPDATE
+        subscription_plans
+    SET
+        stripe_product_id = $2,
+        stripe_price_id = $3,
+        is_manual = false,
+        updated_at = NOW()
+    WHERE
+        id = $1
+    `;
+    return db.none(sql, [id, stripeProductId, stripePriceId]);
+}
+
 
 module.exports = SubscriptionPlan;
