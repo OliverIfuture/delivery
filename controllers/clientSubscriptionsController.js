@@ -663,9 +663,6 @@ module.exports = {
             
             const db = require('../config/config');
             const result = await db.oneOrNone(sql, [id_subscription]);
-
-            if (result) {
-
             return res.status(200).json({ success: true, message: 'Suscripción activada exitosamente.' });
 
         } catch (error) {
