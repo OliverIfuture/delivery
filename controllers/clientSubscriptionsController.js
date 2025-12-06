@@ -572,7 +572,7 @@ module.exports = {
                 id_client: id_client,
                 id_company: id_company,
                 id_plan: id_plan,
-                start_date: startDate,
+                updated_at: startDate,
                 current_period_end: endDate
             };
 
