@@ -665,19 +665,6 @@ module.exports = {
             const result = await db.oneOrNone(sql, [id_subscription]);
 
             if (result) {
-                // Notificar al Cliente
-                const client = await User.findById(result.id_client); // Usar tu método existente
-                if (client && client.notification_token) {
-                    await PushNotificationController.sendNotificationToDevice(
-                        client.notification_token, 
-                        {
-                            title: '✅ Plan Activado',
-                            body: 'Tu entrenador ha confirmado el pago. ¡Ya tienes acceso total!',
-                            data: { 'click_action': 'FLUTTER_NOTIFICATION_CLICK', 'screen': 'client/dashboard' }
-                        }
-                    );
-                }
-            }
 
             return res.status(200).json({ success: true, message: 'Suscripción activada exitosamente.' });
 
