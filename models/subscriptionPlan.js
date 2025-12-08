@@ -18,7 +18,7 @@ SubscriptionPlan.create = (plan) => {
             updated_at,
             description,
             is_manual,
-            durationInDays
+            "durationInDays"
         )
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id
     `;
@@ -62,7 +62,7 @@ SubscriptionPlan.findByCompany = (id_company) => {
             currency,
             stripe_product_id,
             stripe_price_id,
-            durationInDays
+            "durationInDays"
             FROM
             subscription_plans
         WHERE
