@@ -569,7 +569,7 @@ async createManualRequest(req, res, next) {
             }
 
             // 1. VALIDACIÓN DE EXISTENCIA DEL PLAN Y OBTENCIÓN DE DÍAS
-            const plan = await SubscriptionPlan.findById(id_plan); 
+            const plan = await ClientSubscription.findById(id_plan); 
             
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'El plan seleccionado ya no existe.' });
