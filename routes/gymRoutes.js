@@ -9,7 +9,8 @@ module.exports = (app) => {
     app.get('/api/gym/generate-access-token', passport.authenticate('jwt', { session: false }), gymController.generateAccessToken);
     app.post('/api/gym/check-in', passport.authenticate('jwt', { session: false }), gymController.checkInWithToken);
     app.get('/api/gym/get-membership-status/:id_client', passport.authenticate('jwt', { session: false }), gymController.getMembershipStatus);
-    
+    app.get('/api/gym/get-membership-status2/:id_client/:selectedStore', passport.authenticate('jwt', { session: false }), gymController.getMembershipStatus2);
+
     // --- RUTAS DE GESTIÓN DE MEMBRESÍAS (G4 - POS) ---
     
     // Venta de membresía (la usará el POS)
