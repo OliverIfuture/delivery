@@ -653,29 +653,42 @@ async createManualRequest(req, res, next) {
     },
 
     // 2. APROBAR SOLICITUD (Activar Plan)
+// ... imports
+
+// ... dentro de la clase ClientSubscriptionsController ...
+
     async approveRequest(req, res, next) {
         try {
             const { id_subscription } = req.body;
+            const db = require('../config/config');
 
-            // Actualizamos estado a ACTIVE y reseteamos las fechas de inicio/fin a HOY
-            // (Para que el mes cuente desde que se paga, no desde que se pidió)
+            // Actualizamos estado a ACTIVE y reseteamos las fechas HOY + DÍAS DEL PLAN
+            // Hacemos un JOIN implícito (o subconsulta) para obtener la duración del plan
             const sql = `
-                UPDATE client_subscriptions
+                UPDATE client_subscriptions cs
                 SET 
                     status = 'active',
-                    current_period_end = NOW() + INTERVAL '1 month',
+                    -- Calculamos la fecha final sumando los días del plan a la fecha actual (NOW())
+                    current_period_end = NOW() + (sp."durationInDays" || ' days')::INTERVAL,
                     updated_at = NOW()
-                WHERE id = $1
-                RETURNING id_client
+                FROM subscription_plans sp
+                WHERE cs.id = $1 AND cs.id_plan = sp.id
+                RETURNING cs.id_client
             `;
             
-            const db = require('../config/config');
             const result = await db.oneOrNone(sql, [id_subscription]);
+
+            if (!result) {
+                 return res.status(404).json({ success: false, message: 'Suscripción no encontrada o plan inválido.' });
+            }
+
             return res.status(200).json({ success: true, message: 'Suscripción activada exitosamente.' });
 
         } catch (error) {
             console.log(`Error en approveRequest: ${error}`);
-            return res.status(501).json({ success: false, message: 'Error al activar' });
+            return res.status(501).json({ success: false, message: 'Error al activar', error: error.message });
         }
     },
+
+// ...
 };
