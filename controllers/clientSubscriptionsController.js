@@ -21,7 +21,117 @@ module.exports = {
      */
 // (Esta es la función 'createExtensionIntent' en tu backend)
 
-    async createSubscriptionIntent(req, res, next) {
+async createSubscriptionIntent(req, res, next) {
+        try {
+            // Recibimos parámetros.
+            const { id_plan, id_company, price_id, discount_percent } = req.body;
+            const id_client = req.user.id;
+            
+            // 1. Validación de compañía y Stripe Keys
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El entrenador no tiene pagos configurados.'
+                });
+            }
+
+            // 2. OBTENER DATOS DEL PLAN DE LA BD (Precio y Días)
+            const SubscriptionPlan = require('../models/subscriptionPlan');
+            const planInfo = await SubscriptionPlan.findById(id_plan);
+            
+            if (!planInfo) {
+                 return res.status(404).json({success: false, message: 'Plan no encontrado'});
+            }
+
+            const durationDays = planInfo.duration_days ? planInfo.duration_days : 30;
+            const originalPrice = parseFloat(planInfo.price); // Precio base de la BD
+
+            const stripeInstance = require('stripe')(company.stripeSecretKey);
+
+            // 3. Gestión del Cliente (Customer)
+            let customer;
+            const existingCustomers = await stripeInstance.customers.list({ email: req.user.email, limit: 1 });
+
+            if (existingCustomers.data.length > 0) {
+                customer = existingCustomers.data[0];
+            } else {
+                customer = await stripeInstance.customers.create({
+                    email: req.user.email,
+                    name: `${req.user.name} ${req.user.lastname}`,
+                });
+            }
+
+            // --- 4. CÁLCULO MANUAL DEL PRECIO FINAL (PAGO ÚNICO) ---
+            // Como es pago único, Stripe no aplica cupones automáticos. Lo calculamos aquí.
+            
+            let finalAmount = originalPrice;
+            let discountApplied = 'NO';
+
+            if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
+                const discountDecimal = parseFloat(discount_percent) / 100;
+                finalAmount = originalPrice - (originalPrice * discountDecimal);
+                discountApplied = 'YES';
+                console.log(`Aplicando descuento manual: ${originalPrice} - ${discount_percent}% = ${finalAmount}`);
+            }
+
+            // Convertir a centavos (Stripe siempre usa centavos)
+            // Math.round es vital para evitar errores de decimales flotantes (ej. 199.999999)
+            const amountInCents = Math.round(finalAmount * 100); 
+
+            // Seguridad: El monto mínimo en MXN suele ser 10 pesos (1000 centavos) aprox
+            if (amountInCents < 1000) { 
+                 // Manejo opcional si el descuento deja el precio muy bajo
+            }
+            // -------------------------------------------------------
+
+
+            // 5. Crear el PaymentIntent (Pago Único)
+            const paymentIntent = await stripeInstance.paymentIntents.create({
+                amount: amountInCents,
+                currency: 'mxn',
+                customer: customer.id,
+                description: `Plan: ${planInfo.name} (${durationDays} días)`,
+                
+                // Configuración para transferir dinero al entrenador (Connect)
+                transfer_data: {
+                    destination: company.stripeAccountId,
+                },
+                
+                // --- METADATA CRÍTICA PARA EL WEBHOOK ---
+                metadata: {
+                    type: 'client_subscription_payment', // Cambiamos el tipo para identificarlo
+                    id_client: id_client,
+                    id_company: id_company,
+                    id_plan: id_plan,
+                    discount_applied: discountApplied,
+                    duration_days: durationDays // Días para calcular vencimiento
+                }
+            });
+
+            // 6. (Opcional) Crear registro en BD como 'PENDING' ahora mismo
+            // Esto ayuda a tener un rastro antes de que el usuario pague
+            // Puedes usar ClientSubscription.createManual con status 'PENDING_PAYMENT' si quieres
+
+            return res.status(200).json({
+                success: true,
+                paymentIntentId: paymentIntent.id, // ID del intento
+                clientSecret: paymentIntent.client_secret, // Lo que necesita Flutter
+                customerId: customer.id,
+                publishableKey: company.stripePublishableKey 
+            });
+
+        } catch (error) {
+            console.log(`Error CRÍTICO en createSubscriptionIntent (Pago Único): ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al procesar el pago',
+                error: error.message
+            });
+        }
+    },
+	
+    async createSubscriptionIntentAutom(req, res, next) {
         try {
             // Recibimos parámetros. 'discount_percent' puede venir null o undefined.
             const { id_plan, id_company, price_id, discount_percent } = req.body;
