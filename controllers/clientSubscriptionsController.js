@@ -106,9 +106,7 @@ async createSubscriptionIntent(req, res, next) {
                     id_plan: id_plan,
                     discount_applied: discountApplied,
                     duration_days: durationDays // Días para calcular vencimiento
-                },
-				console.log(`metadata ${metadata}`);
-
+                }
             });
 
 
