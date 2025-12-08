@@ -260,8 +260,8 @@ async getMembershipStatus(req, res, next) {
             // El frontend se encargará de mostrar "Sin membresías" si el array está vacío.
             return res.status(200).json({
                 success: true,
-                memberships: memberships 
-            });
+                data: memberships 
+			});
 
         } catch (error) {
             console.log(`Error en gymController.getMembershipStatus: ${error}`);
