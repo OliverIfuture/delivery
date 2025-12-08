@@ -7,14 +7,6 @@ const ClientSubscription = {};
  */
 ClientSubscription.create = (sub) => {
     
-    // --- CÁLCULO DE FECHA DE VENCIMIENTO ---
-    // Igual que arriba, calculamos la fecha final basada en los días del plan
-    const durationDays = sub.duration_days ? parseInt(sub.duration_days) : 30;
-    
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + durationDays);
-    // ---------------------------------------
-
     const sql = `
         INSERT INTO client_subscriptions(
             id_client,
@@ -38,7 +30,7 @@ ClientSubscription.create = (sub) => {
         sub.stripe_subscription_id,
         sub.stripe_customer_id,
         sub.status,
-        expirationDate, // $7: Usamos la fecha calculada aquí
+        sub.expirationDate, // $7: Usamos la fecha calculada aquí
         new Date(),     // $8
         new Date()      // $9
     ]);
