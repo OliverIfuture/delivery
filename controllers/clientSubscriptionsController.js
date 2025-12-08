@@ -268,11 +268,11 @@ async createSubscriptionIntent(req, res, next) {
                 if (metadata.type === 'client_subscription_payment') {
                     console.log('✅ Webhook: Pago Único de Entrenador Recibido.');
                     
-                    const { id_client, id_company, id_plan, duration_days } = metadata;
+                    const { id_client, id_company, id_plan, durationInDays } = metadata;
                     
                     // 1. Calcular Fecha de Vencimiento
                     // (Como es pago único, nosotros calculamos el fin)
-                    const days = parseInt(duration_days) || 30; // Default 30 si falla
+                    const days = parseInt(durationInDays) || 30; // Default 30 si falla
                     const expirationDate = new Date();
                     expirationDate.setDate(expirationDate.getDate() + days);
 
