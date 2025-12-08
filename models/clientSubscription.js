@@ -30,7 +30,7 @@ ClientSubscription.create = (sub) => {
         sub.stripe_subscription_id,
         sub.stripe_customer_id,
         sub.status,
-        sub.expirationDate, // $7: Usamos la fecha calculada aquí
+        sub.current_period_end, // $7: Usamos la fecha calculada aquí
         new Date(),     // $8
         new Date()      // $9
     ]);
