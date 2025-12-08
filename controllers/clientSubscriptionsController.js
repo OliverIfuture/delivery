@@ -237,13 +237,345 @@ async createSubscriptionIntent(req, res, next) {
         }
     },
 
-   
+     async stripeWebhook(req, res, next) {
+
+        
+
+        const sig = req.headers['stripe-signature'];
+
+        let event;
+
+
+
+        try {
+
+            if (!keys.stripeAdminSecretKey || !endpointSecret) {
+
+                console.log('❌ Error en Webhook: Faltan claves STRIPE_ADMIN_SECRET_KEY o STRIPE_WEBHOOK_SECRET.');
+
+                return res.status(500).send('Error de configuración del webhook.');
+
+            }
+
+            event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+
+        
+
+        } catch (err) {
+
+            console.log(`❌ Error en Webhook (constructEvent): ${err.message}`);
+
+            return res.status(400).send(`Webhook Error: ${err.message}`);
+
+        }
+
+
+
+        // Manejar el evento
+
+        switch (event.type) {
+
+            
+
+            // --- Caso 1: Suscripción de Entrenador Creada/Pagada (client_subscriptions) ---
+
+            case 'invoice.payment_succeeded':
+
+                const invoice = event.data.object;
+
+                
+
+                if (invoice.billing_reason === 'subscription_create' || invoice.billing_reason === 'subscription_cycle') {
+
+                    const subscriptionId = invoice.subscription;
+
+                    const customerId = invoice.customer;
+
+                    
+
+                    const subscription = await adminStripe.subscriptions.retrieve(subscriptionId);
+
+                    const metadata = subscription.metadata;
+
+
+
+                    if (metadata.type === 'client_subscription') { 
+
+                        const subscriptionData = {
+
+                            id_client: metadata.id_client,
+
+                            id_company: metadata.id_company,
+
+                            id_plan: metadata.id_plan,
+
+                            stripe_subscription_id: subscriptionId,
+
+                            stripe_customer_id: customerId,
+
+                            status: 'active', 
+
+                            current_period_end: new Date(subscription.current_period_end * 1000)
+
+                        };
+
+                        await ClientSubscription.create(subscriptionData);
+
+                        console.log('✅ Webhook: Suscripción (ClientSubscription) creada para el cliente:', metadata.id_client);
+
+
+
+                        if (metadata.id_client && metadata.id_company) {
+
+                             await User.updateTrainer(metadata.id_client, metadata.id_company);
+
+                              await User.transferClientData(metadata.id_client, metadata.id_company);
+
+                            console.log(`✅ Webhook: Usuario ${metadata.id_client} vinculado al entrenador ${metadata.id_company}`);
+
+                        }
+
+                    }
+
+                }
+
+                break;
+
+            
+
+            // --- Casos de Falla/Cancelación (client_subscriptions) ---
+
+            case 'invoice.payment_failed':
+
+                const subscriptionId_failed = event.data.object.subscription;
+
+                await ClientSubscription.updateStatus(subscriptionId_failed, 'past_due');
+
+                console.log('⚠️ Webhook: Pago fallido para suscripción:', subscriptionId_failed);
+
+                break;
+
+            case 'customer.subscription.deleted':
+
+                const canceledSubId = event.data.object.id;
+
+                await ClientSubscription.updateStatus(canceledSubId, 'canceled');
+
+                console.log('❌ Webhook: Suscripción cancelada:', canceledSubId);
+
+                break;
+
+
+
+            // --- Caso 2: Onboarding de Entrenador (Stripe Connect) ---
+
+            case 'account.updated':
+
+                 const account = event.data.object;
+
+                 const accountId = account.id;
+
+                 const chargesEnabled = account.charges_enabled;
+
+                 console.log(`Webhook 'account.updated': ${accountId}, charges_enabled: ${chargesEnabled}`);
+
+                 break;
+
+
+
+            // --- Caso 3: Pago de Comisión O Extensión de Membresía ---
+
+            case 'payment_intent.succeeded':
+
+                const paymentIntent = event.data.object; 
+
+                const metadata = paymentIntent.metadata;
+
+
+
+                // **Flujo A: Es un pago de comisión de Afiliado**
+
+                if (metadata.type === 'commission_payout') {
+
+                    console.log('✅ Webhook: Detectado pago de comisión.');
+
+                    const { id_vendor, id_affiliate } = metadata;
+
+                    try {
+
+                        await Affiliate.markAsPaid(id_vendor, id_affiliate);
+
+                        console.log(`✅ Comisiones marcadas como 'paid' para afiliado ${id_affiliate} de tienda ${id_vendor}`);
+
+                    } catch (e) {
+
+                        console.log(`❌ Error al procesar Payout de Comisión: ${e.message}`);
+
+                    }
+
+                }
+
+                
+
+                // --- ¡CAMBIO! LÓGICA DE WEBHOOK ACTUALIZADA ---
+
+                // **Flujo B: Es una extensión O COMPRA NUEVA de membresía (gym_memberships)**
+
+                else if (metadata.type === 'membership_extension') {
+
+                    console.log('✅ Webhook: Detectado pago de GIMNASIO (membership_extension).');
+
+                    
+
+                    const { id_client, id_membership_to_extend, id_plan, duration_days_to_add } = metadata; 
+
+
+
+                    try {
+
+                        // 1. Obtener los detalles del plan que se pagó
+
+                        const plan = await Gym.findById(id_plan);
+
+                        if (!plan) {
+
+                            throw new Error(`No se encontró el Plan (id_plan: ${id_plan}) para esta venta.`);
+
+                        }
+
+
+
+                        // 2. Buscar el turno activo para este gimnasio
+
+                        const activeShift = await Pos.findActiveShiftByCompany(plan.id_company);
+
+                        if (!activeShift) {
+
+                            console.log(`⚠️ Webhook: No se encontró turno activo para la Cía. ${plan.id_company}.`);
+
+                        }
+
+
+
+                        // 3. Calcular la nueva fecha de vencimiento
+
+                        let newEndDate = new Date();
+
+                        
+
+                        // **¡NUEVA LÓGICA!**
+
+                        // ¿Es una extensión o una compra nueva?
+
+                        // Verificamos si la metadata 'id_membership_to_extend' existe
+
+                        if (id_membership_to_extend) {
+
+                            // --- ES UNA EXTENSIÓN ---
+
+                            const currentSub = await Gym.findMembershipById(id_membership_to_extend);
+
+                            if (currentSub) {
+
+                                const today = new Date();
+
+                                const currentEndDate = new Date(currentSub.end_date);
+
+                                // Si la membresía actual sigue activa, extender desde el final
+
+                                const startDate = (currentEndDate > today) ? currentEndDate : today; 
+
+                                newEndDate = new Date(startDate);
+
+                                newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
+
+                                
+
+                                // Desactivar la membresía vieja
+
+                                await Gym.deactivateMembership(id_membership_to_extend, 'extended');
+
+                                console.log(`[Webhook] Membresía ${id_membership_to_extend} extendida.`);
+
+                            }
+
+                        } else {
+
+                            // --- ES UNA COMPRA NUEVA ---
+
+                            // La membresía empieza hoy y dura los días del plan
+
+                            newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
+
+                            console.log(`[Webhook] Creando nueva membresía para cliente ${id_client}.`);
+
+                        }
+
+                        // --- FIN DE LA NUEVA LÓGICA ---
+
+
+
+                        // 4. Crear la nueva fila de membresía
+
+                        const newMembershipData = {
+
+                            id_client: id_client,
+
+                            id_company: plan.id_company,
+
+                            plan_name: plan.name,
+
+                            price: plan.price,
+
+                            end_date: newEndDate,
+
+                            payment_method: 'STRIPE_APP',
+
+                            payment_id: paymentIntent.id,
+
+                            id_shift: activeShift ? activeShift.id : null // ¡Conectar al turno!
+
+                        };
+
+
+
+                        await Gym.createMembership(newMembershipData);
+
+                        
+
+                        console.log(`✅ Membresía registrada (con turno ${activeShift?.id}) para cliente ${id_client}`);
+
+
+
+                    } catch (e) {
+
+                        console.log(`❌ Error al procesar Extensión de Membresía: ${e.message}`);
+
+                    }
+
+                }
+
+                break;
+
+            
+
+            default:
+
+                console.log(`Evento de Webhook no manejado: ${event.type}`);
+
+        }
+
+
+
+        res.status(200).json({ received: true });
+
+    },
 
     /**
      * WEBHOOK DE STRIPE
      * (Esta función maneja TODAS las confirmaciones de pago)
      */
-    async stripeWebhook(req, res, next) {
+    async stripeWebhook12(req, res, next) {
         
         const sig = req.headers['stripe-signature'];
         let event;
