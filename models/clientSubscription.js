@@ -171,7 +171,8 @@ ClientSubscription.findById = (id) => {
         description,
         price,
         id_company,
-        is_manual
+        is_manual,
+        durationInDays
     FROM
         subscription_plans
     WHERE
