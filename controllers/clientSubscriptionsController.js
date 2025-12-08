@@ -107,9 +107,11 @@ async createSubscriptionIntent(req, res, next) {
                     discount_applied: discountApplied,
                     duration_days: durationDays // Días para calcular vencimiento
                 }
-			console.log(`duration_days ${duration_days}`);
 
             });
+
+			    console.log(`metadata ${metadata}`);
+
 
             // 6. (Opcional) Crear registro en BD como 'PENDING' ahora mismo
             // Esto ayuda a tener un rastro antes de que el usuario pague
