@@ -265,7 +265,7 @@ async createSubscriptionIntent(req, res, next) {
             
             // --- Caso 1: Suscripción de Entrenador Creada/Pagada (client_subscriptions) ---
             case 'payment_intent.succeeded':
-                const paymentIntent = event.data.object; 
+                const paymentIntent1 = event.data.object; 
                 const metadata = paymentIntent.metadata;
 
                 // --- A) PAGO DE ENTRENADOR (NUEVO FLUJO ÚNICO) ---
@@ -287,8 +287,8 @@ async createSubscriptionIntent(req, res, next) {
                         id_client: id_client,
                         id_company: id_company,
                         id_plan: id_plan,
-                        stripe_subscription_id: paymentIntent.id, // Guardamos el PI en vez de Sub ID
-                        stripe_customer_id: paymentIntent.customer,
+                        stripe_subscription_id: paymentIntent1.id, // Guardamos el PI en vez de Sub ID
+                        stripe_customer_id: paymentIntent1.customer,
                         status: 'active', // Nace activa porque ya pagó
                         current_period_end: expirationDate
                     };
