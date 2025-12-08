@@ -552,12 +552,12 @@ module.exports = {
 
 async createManualRequest(req, res, next) {
         try {
-            const { id_plan, id_company, price } = req.body;
+            const { id_plan, id_company } = req.body;
             const id_client = req.user.id;
 
             console.log(`[Manual Request] Cliente: ${id_client} -> Plan: ${id_plan}`);
             
-            // 0. VALIDACIÓN ANTI-SPAM (NUEVO)
+            // 0. VALIDACIÓN ANTI-SPAM
             // Verificamos si este cliente YA tiene este plan en estado 'PENDING'
             const existingRequest = await ClientSubscription.findPendingByClient(id_client, id_plan);
             
@@ -568,33 +568,28 @@ async createManualRequest(req, res, next) {
                 });
             }
 
-            // 1. VALIDACIÓN DE EXISTENCIA DEL PLAN
-            // CORRECCIÓN: Usamos SubscriptionPlan, no ClientSubscription
-            const plan = await ClientSubscription.findById(id_plan); 
+            // 1. VALIDACIÓN DE EXISTENCIA DEL PLAN Y OBTENCIÓN DE DÍAS
+            const plan = await SubscriptionPlan.findById(id_plan); 
             
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'El plan seleccionado ya no existe.' });
             }
 
-            // 2. CALCULAR FECHAS
-            const startDate = new Date();
-            const endDate = new Date();
-            endDate.setMonth(startDate.getMonth() + 1); // +1 Mes
-
-            // 3. PREPARAR OBJETO
+            // 2. PREPARAR OBJETO
+            // Ya no calculamos fechas aquí. Solo pasamos los datos y la duración.
             const subscriptionData = {
                 id_client: id_client,
                 id_company: id_company,
                 id_plan: id_plan,
-                start_date: startDate,
-                current_period_end: endDate
+                duration_days: plan.durationInDays // <--- PASAMOS EL DATO AL MODELO
             };
 
-            // 4. INSERTAR EN BD
+            // 3. INSERTAR EN BD (El modelo calculará la fecha de vencimiento)
             const data = await ClientSubscription.createManual(subscriptionData);
 
-            // --- VINCULACIÓN AUTOMÁTICA ---
+            // 4. VINCULACIÓN AUTOMÁTICA
             await User.updateTrainer(id_client, id_company);
+            
             return res.status(201).json({
                 success: true,
                 message: 'Solicitud enviada. Tu entrenador ha sido notificado.',
@@ -609,7 +604,7 @@ async createManualRequest(req, res, next) {
                 error: error.message
             });
         }
-    },
+    }
 
     // ... otras funciones ...
 
