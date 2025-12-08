@@ -310,7 +310,8 @@ async createSubscriptionIntent(req, res, next) {
                     console.log('✅ Webhook: Pago de GIMNASIO Recibido.');
                     
                     // Nota: Asegúrate de enviar 'duration_days' en la metadata desde Flutter/Controller
-                    const { id_client, id_membership_to_extend, id_plan, duration_days } = metadata; 
+                    const { id_client, id_membership_to_extend, id_plan, duration_days } = metadata;
+                        console.log(`✅ metadata${metadata}`);
                     const daysToAdd = parseInt(duration_days) || 30;
 
                     try {
