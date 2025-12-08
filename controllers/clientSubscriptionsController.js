@@ -604,7 +604,7 @@ async createManualRequest(req, res, next) {
                 error: error.message
             });
         }
-    }
+    },
 
     // ... otras funciones ...
 
