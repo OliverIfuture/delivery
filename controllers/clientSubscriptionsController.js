@@ -266,14 +266,14 @@ async createSubscriptionIntent(req, res, next) {
             // --- Caso 1: Suscripción de Entrenador Creada/Pagada (client_subscriptions) ---
             case 'payment_intent.succeeded':
                 const paymentIntent1 = event.data.object; 
-                const metadata = paymentIntent.metadata;
+                const metadata1 = paymentIntent.metadata;
 
                 // --- A) PAGO DE ENTRENADOR (NUEVO FLUJO ÚNICO) ---
-                if (metadata.type === 'client_subscription_payment') {
+                if (metadata1.type === 'client_subscription_payment') {
                     console.log('✅ Webhook: Pago Único de Entrenador Recibido.');
                     
-                    const { id_client, id_company, id_plan, duration_days } = metadata;
-                    console.log(`metadata de stripe: ${metadata}`);
+                    const { id_client, id_company, id_plan, duration_days } = metadata1;
+                    console.log(`metadata1 de stripe: ${metadata1}`);
 
                     // 1. Calcular Fecha de Vencimiento
                     // (Como es pago único, nosotros calculamos el fin)
