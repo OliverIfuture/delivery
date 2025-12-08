@@ -6,6 +6,15 @@ const ClientSubscription = {};
  * Crea un nuevo registro de suscripción
  */
 ClientSubscription.create = (sub) => {
+    
+    // --- CÁLCULO DE FECHA DE VENCIMIENTO ---
+    // Igual que arriba, calculamos la fecha final basada en los días del plan
+    const durationDays = sub.duration_days ? parseInt(sub.duration_days) : 30;
+    
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + durationDays);
+    // ---------------------------------------
+
     const sql = `
         INSERT INTO client_subscriptions(
             id_client,
@@ -21,6 +30,7 @@ ClientSubscription.create = (sub) => {
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) 
         RETURNING id
     `;
+
     return db.one(sql, [
         sub.id_client,
         sub.id_company,
@@ -28,12 +38,11 @@ ClientSubscription.create = (sub) => {
         sub.stripe_subscription_id,
         sub.stripe_customer_id,
         sub.status,
-        sub.current_period_end, // Puede ser null
-        new Date(),
-        new Date()
+        expirationDate, // $7: Usamos la fecha calculada aquí
+        new Date(),     // $8
+        new Date()      // $9
     ]);
 };
-
 /**
  * Actualiza el estado de una suscripción (usado por el Webhook)
  */
@@ -106,9 +115,19 @@ ClientSubscription.getTotalRevenue = () => {
 
 ClientSubscription.createManual = (sub) => {
 
-    const timestamp = Date.now(); 
-    const fakeSubId = `sub_MANUAL_${timestamp}`; 
+    const timestamp = Date.now();
+    const fakeSubId = `sub_MANUAL_${timestamp}`;
     const fakeCusId = `cus_MANUAL_${timestamp}`;
+
+    // --- CÁLCULO DE FECHA DE VENCIMIENTO ---
+    // 1. Obtener días del plan (o 30 por defecto si no viene)
+    const durationDays = sub.duration_days ? parseInt(sub.duration_days) : 30;
+    
+    // 2. Calcular fecha actual + días
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + durationDays);
+    // ---------------------------------------
+
     const sql = `
         INSERT INTO client_subscriptions(
             id_client,
@@ -116,8 +135,8 @@ ClientSubscription.createManual = (sub) => {
             id_plan,
             stripe_subscription_id, -- Guardaremos 'MANUAL' para identificarlo
             stripe_customer_id,     -- Guardaremos 'MANUAL'
-            status,                 -- Será 'PENDING'
-            current_period_end,
+            status,                 -- Será 'PENDING' o 'ACTIVE' según tu flujo
+            current_period_end,     -- Fecha calculada
             created_at,
             updated_at
         )
@@ -129,13 +148,12 @@ ClientSubscription.createManual = (sub) => {
         sub.id_client,
         sub.id_company,
         sub.id_plan,
-        sub.current_period_end, // Fecha fin calculada
-        new Date(),              // created_at y updated_at
-        fakeSubId, // $7: Ej. sub_MANUAL_1709876543
-        fakeCusId  // $8: Ej. cus_MANUAL_1709876543
+        expirationDate, // $4: La fecha de vencimiento calculada
+        new Date(),     // $5: created_at y updated_at
+        fakeSubId,      // $6: ID falso de subscripción
+        fakeCusId       // $7: ID falso de cliente
     ]);
 };
-
 // Necesitarás esta para validar si ya existe una pendiente
 ClientSubscription.findPendingByClient = (id_client, id_plan) => {
     const sql = `
