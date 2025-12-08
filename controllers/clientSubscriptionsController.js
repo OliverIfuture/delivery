@@ -107,6 +107,8 @@ async createSubscriptionIntent(req, res, next) {
                     discount_applied: discountApplied,
                     duration_days: durationDays // Días para calcular vencimiento
                 }
+			console.log(`duration_days ${duration_days}`);
+
             });
 
             // 6. (Opcional) Crear registro en BD como 'PENDING' ahora mismo
@@ -268,11 +270,12 @@ async createSubscriptionIntent(req, res, next) {
                 if (metadata.type === 'client_subscription_payment') {
                     console.log('✅ Webhook: Pago Único de Entrenador Recibido.');
                     
-                    const { id_client, id_company, id_plan, durationInDays } = metadata;
-                    
+                    const { id_client, id_company, id_plan, duration_days } = metadata;
+                    console.log(`metadata de stripe: ${metadata}`);
+
                     // 1. Calcular Fecha de Vencimiento
                     // (Como es pago único, nosotros calculamos el fin)
-                    const days = parseInt(durationInDays) || 30; // Default 30 si falla
+                    const days = parseInt(duration_days) || 30; // Default 30 si falla
                     const expirationDate = new Date();
                     expirationDate.setDate(expirationDate.getDate() + days);
 
