@@ -243,7 +243,7 @@ async createSubscriptionIntent(req, res, next) {
      * WEBHOOK DE STRIPE
      * (Esta función maneja TODAS las confirmaciones de pago)
      */
-    async stripeWebhoo(req, res, next) {
+    async stripeWebhook(req, res, next) {
         
         const sig = req.headers['stripe-signature'];
         let event;
