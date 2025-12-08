@@ -44,7 +44,7 @@ async createSubscriptionIntent(req, res, next) {
                  return res.status(404).json({success: false, message: 'Plan no encontrado'});
             }
 
-            const durationDays = planInfo.duration_days ? planInfo.duration_days : 30;
+            const durationDays = planInfo.durationInDays ? planInfo.durationInDays : 30;
             const originalPrice = parseFloat(planInfo.price); // Precio base de la BD
 
             const stripeInstance = require('stripe')(company.stripeSecretKey);
