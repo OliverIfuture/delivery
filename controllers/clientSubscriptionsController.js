@@ -38,7 +38,7 @@ async createSubscriptionIntent(req, res, next) {
 
             // 2. OBTENER DATOS DEL PLAN DE LA BD (Precio y Días)
             const SubscriptionPlan = require('../models/subscriptionPlan');
-            const planInfo = await SubscriptionPlan.findById(id_plan);
+            const planInfo = await ClientSubscription.findById(id_plan);
             
             if (!planInfo) {
                  return res.status(404).json({success: false, message: 'Plan no encontrado'});
