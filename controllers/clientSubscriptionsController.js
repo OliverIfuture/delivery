@@ -236,13 +236,168 @@ async createSubscriptionIntent(req, res, next) {
     },
 
 
+
+	async stripeWebhook(req, res, next) {
+        
+        const sig = req.headers['stripe-signature'];
+        let event;
+
+        try {
+            if (!keys.stripeAdminSecretKey || !endpointSecret) {
+                console.log('❌ Error en Webhook: Faltan claves.');
+                return res.status(500).send('Error de configuración.');
+            }
+            event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+        
+        } catch (err) {
+            console.log(`❌ Error en Webhook (constructEvent): ${err.message}`);
+            return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+
+        // Manejar el evento
+        switch (event.type) {
+            
+            // =================================================================
+            // CASO PRINCIPAL: PAGOS ÚNICOS EXITOSOS (Entrenadores y Gym)
+            // =================================================================
+            case 'payment_intent.succeeded':
+                const paymentIntent = event.data.object; 
+                const metadata = paymentIntent.metadata;
+
+                // --- A) PAGO DE ENTRENADOR (NUEVO FLUJO ÚNICO) ---
+                if (metadata.type === 'client_subscription_payment') {
+                    console.log('✅ Webhook: Pago Único de Entrenador Recibido.');
+                    
+                    const { id_client, id_company, id_plan, duration_days } = metadata;
+                    
+                    // 1. Calcular Fecha de Vencimiento
+                    // (Como es pago único, nosotros calculamos el fin)
+                    const days = parseInt(duration_days) || 30; // Default 30 si falla
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + days);
+
+                    // 2. Crear registro en BD
+                    // Reutilizamos el campo stripe_subscription_id para guardar el ID del pago
+                    const subscriptionData = {
+                        id_client: id_client,
+                        id_company: id_company,
+                        id_plan: id_plan,
+                        stripe_subscription_id: paymentIntent.id, // Guardamos el PI en vez de Sub ID
+                        stripe_customer_id: paymentIntent.customer,
+                        status: 'active', // Nace activa porque ya pagó
+                        current_period_end: expirationDate
+                    };
+
+                    try {
+                        await ClientSubscription.create(subscriptionData);
+                        console.log(`✅ Suscripción (Pago Único) creada para cliente ${id_client} hasta ${expirationDate}`);
+
+                        // 3. Vincular Entrenador
+                        if (id_client && id_company) {
+                             await User.updateTrainer(id_client, id_company);
+                             await User.transferClientData(id_client, id_company);
+                        }
+                    } catch (e) {
+                        console.log(`❌ Error creando suscripción local: ${e.message}`);
+                    }
+                }
+
+                // --- B) PAGO DE GIMNASIO (MEMBRESÍA) ---
+                else if (metadata.type === 'membership_extension' || metadata.type === 'gym_membership_payment') {
+                    console.log('✅ Webhook: Pago de GIMNASIO Recibido.');
+                    
+                    // Nota: Asegúrate de enviar 'duration_days' en la metadata desde Flutter/Controller
+                    const { id_client, id_membership_to_extend, id_plan, duration_days } = metadata; 
+                    const daysToAdd = parseInt(duration_days) || 30;
+
+                    try {
+                        // 1. Obtener datos del plan (para company_id)
+                        const plan = await Gym.findById(id_plan);
+                        if (!plan) throw new Error(`Plan ${id_plan} no encontrado`);
+
+                        // 2. Calcular Fechas
+                        let newEndDate = new Date();
+                        
+                        // Si es extensión, sumamos a la fecha actual de la membresía vieja
+                        if (id_membership_to_extend) {
+                            const currentSub = await Gym.findMembershipById(id_membership_to_extend);
+                            if (currentSub) {
+                                const today = new Date();
+                                const currentEnd = new Date(currentSub.end_date);
+                                // Si no ha vencido, extendemos desde su fecha fin. Si ya venció, desde hoy.
+                                const startDate = (currentEnd > today) ? currentEnd : today; 
+                                
+                                newEndDate = new Date(startDate);
+                                newEndDate.setDate(newEndDate.getDate() + daysToAdd);
+
+                                // Desactivar la vieja
+                                await Gym.deactivateMembership(id_membership_to_extend, 'extended');
+                            }
+                        } else {
+                            // Compra nueva: Hoy + Días
+                            newEndDate.setDate(newEndDate.getDate() + daysToAdd);
+                        }
+
+                        // 3. Buscar Turno Activo (Caja) del Gym
+                        const activeShift = await Pos.findActiveShiftByCompany(plan.id_company);
+
+                        // 4. Registrar Membresía
+                        const newMembershipData = {
+                            id_client: id_client,
+                            id_company: plan.id_company,
+                            plan_name: plan.name,
+                            price: plan.price,
+                            end_date: newEndDate,
+                            payment_method: 'STRIPE_APP',
+                            payment_id: paymentIntent.id,
+                            id_shift: activeShift ? activeShift.id : null
+                        };
+
+                        await Gym.createMembership(newMembershipData);
+                        console.log(`✅ Membresía Gym registrada para ${id_client} hasta ${newEndDate}`);
+
+                    } catch (e) {
+                        console.log(`❌ Error procesando Gym Membership: ${e.message}`);
+                    }
+                }
+
+                // --- C) PAGO DE COMISIÓN (AFFILIATES) ---
+                else if (metadata.type === 'commission_payout') {
+                    console.log('✅ Webhook: Pago de Comisión.');
+                    const { id_vendor, id_affiliate } = metadata;
+                    try {
+                        await Affiliate.markAsPaid(id_vendor, id_affiliate);
+                    } catch (e) { console.log(`❌ Error Affiliate: ${e.message}`); }
+                }
+                break;
+            
+            // =================================================================
+            // CASOS LEGACY O ERRORES
+            // =================================================================
+            case 'invoice.payment_succeeded':
+                // Este caso solo se usará si te quedan suscripciones viejas activas.
+                // Si todo es nuevo, puedes ignorarlo o dejarlo como fallback.
+                console.log('ℹ️ Webhook: Invoice pagado (Posible suscripción legacy).');
+                break;
+
+            case 'payment_intent.payment_failed':
+                console.log('❌ Webhook: Intento de pago fallido:', event.data.object.id);
+                break;
+
+            default:
+                console.log(`Evento no manejado: ${event.type}`);
+        }
+
+        res.status(200).json({ received: true });
+    },
+
    
 
     /**
      * WEBHOOK DE STRIPE
      * (Esta función maneja TODAS las confirmaciones de pago)
      */
-    async stripeWebhook(req, res, next) {
+    async stripeWebhookAutom(req, res, next) {
         
         const sig = req.headers['stripe-signature'];
         let event;
