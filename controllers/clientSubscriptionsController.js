@@ -627,7 +627,8 @@ async createManualRequest(req, res, next) {
                     U.image AS client_image,
                     P.name AS plan_name,
                     P.price AS plan_price,
-                    U.phone
+                    U.phone,
+					P."durationInDays"
                 FROM 
                     client_subscriptions AS S
                 INNER JOIN
