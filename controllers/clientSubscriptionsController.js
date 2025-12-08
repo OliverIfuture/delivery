@@ -266,7 +266,7 @@ async createSubscriptionIntent(req, res, next) {
             // --- Caso 1: Suscripción de Entrenador Creada/Pagada (client_subscriptions) ---
             case 'payment_intent.succeeded':
                 const paymentIntent1 = event.data.object; 
-                const metadata1 = paymentIntent.metadata;
+                const metadata1 = paymentIntent1.metadata;
 
                 // --- A) PAGO DE ENTRENADOR (NUEVO FLUJO ÚNICO) ---
                 if (metadata1.type === 'client_subscription_payment') {
