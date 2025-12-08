@@ -279,64 +279,47 @@ async createSubscriptionIntent(req, res, next) {
 
             // --- Caso 1: Suscripción de Entrenador Creada/Pagada (client_subscriptions) ---
 
-            case 'invoice.payment_succeeded':
+            case 'payment_intent.succeeded':
+                const paymentIntent1 = event.data.object; 
+                const metadata1 = paymentIntent1.metadata;
 
-                const invoice = event.data.object;
-
-                
-
-                if (invoice.billing_reason === 'subscription_create' || invoice.billing_reason === 'subscription_cycle') {
-
-                    const subscriptionId = invoice.subscription;
-
-                    const customerId = invoice.customer;
-
+                // --- A) PAGO DE ENTRENADOR (NUEVO FLUJO ÚNICO) ---
+                if (metadata1.type === 'client_subscription_payment') {
+                    console.log('✅ Webhook: Pago Único de Entrenador Recibido.');
                     
+                    const { id_client, id_company, id_plan, duration_days } = metadata1;
+                    console.log(`metadata1 de stripe: ${metadata1}`);
 
-                    const subscription = await adminStripe.subscriptions.retrieve(subscriptionId);
+                    // 1. Calcular Fecha de Vencimiento
+                    // (Como es pago único, nosotros calculamos el fin)
+                    const days = parseInt(duration_days) || 30; // Default 30 si falla
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + days);
 
-                    const metadata = subscription.metadata;
+                    // 2. Crear registro en BD
+                    // Reutilizamos el campo stripe_subscription_id para guardar el ID del pago
+                    const subscriptionData = {
+                        id_client: id_client,
+                        id_company: id_company,
+                        id_plan: id_plan,
+                        stripe_subscription_id: paymentIntent1.id, // Guardamos el PI en vez de Sub ID
+                        stripe_customer_id: paymentIntent1.customer,
+                        status: 'active', // Nace activa porque ya pagó
+                        current_period_end: expirationDate
+                    };
 
-
-
-                    if (metadata.type === 'client_subscription') { 
-
-                        const subscriptionData = {
-
-                            id_client: metadata.id_client,
-
-                            id_company: metadata.id_company,
-
-                            id_plan: metadata.id_plan,
-
-                            stripe_subscription_id: subscriptionId,
-
-                            stripe_customer_id: customerId,
-
-                            status: 'active', 
-
-                            current_period_end: new Date(subscription.current_period_end * 1000)
-
-                        };
-
+                    try {
                         await ClientSubscription.create(subscriptionData);
+                        console.log(`✅ Suscripción (Pago Único) creada para cliente ${id_client} hasta ${expirationDate}`);
 
-                        console.log('✅ Webhook: Suscripción (ClientSubscription) creada para el cliente:', metadata.id_client);
-
-
-
-                        if (metadata.id_client && metadata.id_company) {
-
-                             await User.updateTrainer(metadata.id_client, metadata.id_company);
-
-                              await User.transferClientData(metadata.id_client, metadata.id_company);
-
-                            console.log(`✅ Webhook: Usuario ${metadata.id_client} vinculado al entrenador ${metadata.id_company}`);
-
+                        // 3. Vincular Entrenador
+                        if (id_client && id_company) {
+                             await User.updateTrainer(id_client, id_company);
+                             await User.transferClientData(id_client, id_company);
                         }
-
+                    } catch (e) {
+                        console.log(`❌ Error creando suscripción local: ${e.message}`);
                     }
-
                 }
 
                 break;
