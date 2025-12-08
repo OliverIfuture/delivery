@@ -272,6 +272,58 @@ async getMembershipStatus(req, res, next) {
             });
         }
     },
+
+
+	async getMembershipStatus2(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+			const selectedStore = req.params.selectedStore;
+            
+            // Validación de seguridad básica
+            if (req.user.id != id_client) {
+                 return res.status(403).json({ success: false, message: 'No tienes permiso.' });
+            }
+            
+            // CONSULTA SQL OPTIMIZADA:
+            // 1. Obtenemos datos de la membresía (m) y de la empresa/gym (c).
+            // 2. 'DISTINCT ON (m.id_company)' asegura que solo devolvamos UNA fila por cada gimnasio distinto.
+            // 3. 'ORDER BY m.id_company, m.end_date DESC' asegura que esa fila sea la MÁS RECIENTE.
+            const sql = `
+              SELECT DISTINCT ON (m.id_company) 
+                    m.id AS id_membership,
+					p.id as plan_id,
+                    m.id_company,
+                    c.name AS gym_name,
+                    c."stripeAccountId",
+                    m.plan_name,
+                    m.end_date,
+                    m.status,
+                    m.price
+                FROM gym_memberships m
+                INNER JOIN company c ON m.id_company = c.id
+				left join gym_membership_plans as p on p.id_company = m.id_company
+                WHERE m.id_client = $1 and c.id = $2
+                ORDER BY m.id_company, m.end_date DESC
+				
+            `;
+            const memberships = await db.oneOrNone(sql, [id_client, selectedStore]);
+
+            // Siempre devolvemos success: true, incluso si la lista está vacía.
+            // El frontend se encargará de mostrar "Sin membresías" si el array está vacío.
+            return res.status(200).json({
+                success: true,
+                data: memberships 
+			});
+
+        } catch (error) {
+            console.log(`Error en gymController.getMembershipStatus: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener estado de membresía',
+                error: error.message
+            });
+        }
+    },
     // --- **NUEVAS FUNCIONES: CRUD DE PLANES (Paso G4.1)** ---
 
     /**
