@@ -15,6 +15,6 @@ module.exports = (app) => {
 
     // --- DELETE ---
     // Eliminar (desactivar) un plan de suscripción
-    app.delete('/api/subscriptionPlans/delete/:id', passport.authenticate('jwt', { session: false }), subscriptionPlansController.delete);
+    app.delete('/api/subscriptionPlans/delete/:id/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.delete);
 
 }
