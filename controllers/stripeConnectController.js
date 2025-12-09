@@ -120,7 +120,50 @@ module.exports = {
                 error: error.message
             });
         }
-    }
+    },
+
+    /**
+     * GET: Obtiene el historial de pagos de una Cuenta Conectada
+     * Params: :id_account (El ID de Stripe del entrenador, ej. acct_12345...)
+     */
+    async getChargesList(req, res, next) {
+        try {
+            const { id_account } = req.params;
+
+            if (!id_account) {
+                return res.status(400).json({ success: false, message: 'Falta el ID de la cuenta de Stripe.' });
+            }
+
+            console.log(`[Connect] Obteniendo historial de pagos para cuenta: ${id_account}`);
+
+            // Consultamos la API de Stripe
+            // Usamos 'paymentIntents' porque es la forma moderna que implementamos en tu flujo de pago único
+            const paymentIntents = await stripe.paymentIntents.list(
+                { 
+                    limit: 50, // Traemos los últimos 50 movimientos
+                    // Opcional: expandir datos si necesitas más detalles
+                    // expand: ['data.customer', 'data.payment_method'] 
+                }, 
+                { 
+                    stripeAccount: id_account // <--- MAGIA: Consultamos A NOMBRE DEL ENTRENADOR
+                }
+            );
+
+            // Devolvemos la lista limpia
+            return res.status(200).json({
+                success: true,
+                data: paymentIntents.data 
+            });
+
+        } catch (error) {
+            console.log(`Error en getChargesList: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener historial de pagos',
+                error: error.message
+            });
+        }
+    },
 };
 
 // --- FUNCIÓN AUXILIAR: MIGRACIÓN A CONNECT ---
