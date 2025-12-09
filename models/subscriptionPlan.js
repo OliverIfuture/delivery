@@ -42,7 +42,8 @@ SubscriptionPlan.create = (plan) => {
  */
 SubscriptionPlan.delete = (id_plan, id_company) => {
     const sql = `
-        DELETE FROM subscription_plans
+        UPDATE public.subscription_plans
+        	SET  active = false
         WHERE id = $1 AND id_company = $2
     `;
     return db.none(sql, [id_plan, id_company]);
