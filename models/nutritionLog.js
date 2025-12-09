@@ -5,12 +5,9 @@ const NutritionLog = {};
 NutritionLog.create = (log) => {
     
     // --- 1. CALCULAR HORA MÉXICO (CDMX) ---
-    // Obtenemos la fecha actual y la forzamos a la zona horaria de México
     const now = new Date();
     const cdmxDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
 
-    // Formateamos manualmente a YYYY-MM-DD HH:MM:SS para PostgreSQL
-    // (No usamos toISOString porque regresaría a UTC)
     const year = cdmxDate.getFullYear();
     const month = String(cdmxDate.getMonth() + 1).padStart(2, '0');
     const day = String(cdmxDate.getDate()).padStart(2, '0');
@@ -18,7 +15,6 @@ NutritionLog.create = (log) => {
     const minutes = String(cdmxDate.getMinutes()).padStart(2, '0');
     const seconds = String(cdmxDate.getSeconds()).padStart(2, '0');
 
-    // Esta es la constante que pediste con la hora correcta
     const mexicoTimestamp = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     // --------------------------------------
 
@@ -39,13 +35,13 @@ NutritionLog.create = (log) => {
                 created_at,
                 updated_at
             )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12) -- Usamos $12 en lugar de NOW()
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
         RETURNING id
     `;
 
     return db.one(sql, [
         log.id_client,
-        log.id_company,
+        log.id_company || null, // <--- CORRECCIÓN: Si es 0, false o undefined, envía NULL
         log.product_name,
         log.barcode,
         log.calories,
@@ -55,7 +51,7 @@ NutritionLog.create = (log) => {
         log.portion_size,
         log.image_url,
         log.meal_type,
-        mexicoTimestamp // $12: Pasamos la fecha calculada
+        mexicoTimestamp // $12
     ]);
 };
 
