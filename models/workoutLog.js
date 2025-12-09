@@ -116,8 +116,6 @@ SELECT
 };
 
 WorkoutLog.findByClientAndRoutineToday = (id_client, id_routine) => {
-    // Definimos el inicio de hoy en UTC. 
-    // PostgreSQL puede usar DATE_TRUNC para obtener el inicio del día en la zona horaria del servidor.
     const sql = `
         SELECT 
             id, id_client, id_company, id_routine, exercise_name, set_number, 
@@ -127,8 +125,11 @@ WorkoutLog.findByClientAndRoutineToday = (id_client, id_routine) => {
         WHERE 
             id_client = $1 AND 
             id_routine = $2 AND 
-            -- Filtramos los logs que se hicieron hoy (asumiendo que created_at es TIMESTAMP WITH TIME ZONE)
-            created_at >= DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC')
+            -- CORRECCIÓN DE ZONA HORARIA:
+            -- 1. Tomamos NOW() y lo convertimos a hora de México.
+            -- 2. Truncamos al inicio del día (00:00 AM de México).
+            -- 3. Comparamos si el registro se creó después de esa hora.
+            created_at >= DATE_TRUNC('day', NOW() AT TIME ZONE 'America/Mexico_City')
         ORDER BY 
             created_at ASC
     `;
