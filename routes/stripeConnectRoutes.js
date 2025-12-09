@@ -30,4 +30,14 @@ module.exports = (app) => {
         stripeConnectController.getAccountStatus
     );
 
+    /**
+     * GET: /api/stripe/connect/charges/:id_account
+     * * Obtiene la lista de transacciones de una cuenta conectada
+     */
+    app.get(
+        '/api/stripe/connect/charges/:id_account',
+        passport.authenticate('jwt', { session: false }),
+        stripeConnectController.getChargesList
+    );
+
 }
