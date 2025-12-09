@@ -66,7 +66,7 @@ SubscriptionPlan.findByCompany = (id_company) => {
             FROM
             subscription_plans
         WHERE
-            id_company = $1
+            id_company = $1 and active == true
         ORDER BY
             price ASC
     `;
