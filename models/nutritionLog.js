@@ -18,6 +18,14 @@ NutritionLog.create = (log) => {
     const mexicoTimestamp = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     // --------------------------------------
 
+    // --- CORRECCIÓN: Validación robusta para id_company ---
+    let companyId = log.id_company;
+    // Si viene como string "null", "0", número 0, undefined o vacío, forzamos NULL real
+    if (!companyId || companyId === 'null' || companyId === 0 || companyId === '0') {
+        companyId = null;
+    }
+    // -----------------------------------------------------
+
     const sql = `
         INSERT INTO
             client_nutrition_log(
@@ -41,7 +49,7 @@ NutritionLog.create = (log) => {
 
     return db.one(sql, [
         log.id_client,
-        log.id_company || null, // <--- CORRECCIÓN: Si es 0, false o undefined, envía NULL
+        companyId, // <--- Usamos la variable saneada que garantiza NULL o un ID válido
         log.product_name,
         log.barcode,
         log.calories,
@@ -54,7 +62,6 @@ NutritionLog.create = (log) => {
         mexicoTimestamp // $12
     ]);
 };
-
 // Obtener el historial de hoy de un cliente
 NutritionLog.findByClientToday = (id_client) => {
     
