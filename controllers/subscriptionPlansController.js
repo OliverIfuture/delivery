@@ -91,7 +91,7 @@ module.exports = {
     async delete(req, res, next) {
         try {
             const id_plan = req.params.id;
-            const id_company = req.user.mi_store; 
+            const id_company = req.params.mi_store; 
 
             // Buscamos el plan primero para saber si es manual o stripe
             const plan = await SubscriptionPlan.findById(id_plan, id_company);
