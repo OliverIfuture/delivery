@@ -1692,7 +1692,7 @@ module.exports = {
 
             const id = req.params.id;
             const data = await User.getDiscountCodesByCompany(id);
-            console.log(`Datos enviados de los getDiscountCodesByCompany: ${JSON.stringify(data)}`);
+           // console.log(`Datos enviados de los getDiscountCodesByCompany: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
