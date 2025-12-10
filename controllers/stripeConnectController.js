@@ -160,6 +160,7 @@ async getChargesList(req, res, next) {
                 status: 'succeeded', // En balanceTransactions, si está aquí, suele ser exitoso
                 description: tx.description || `Transferencia de Plataforma (${tx.type})`
             }));
+            console.log(`Datos enviados stripe ${JSON.stringify(formattedData)}`);
 
             return res.status(200).json({
                 success: true,
