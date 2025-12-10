@@ -126,7 +126,7 @@ module.exports = {
      * GET: Obtiene el historial de pagos de una Cuenta Conectada
      * Params: :id_account (El ID de Stripe del entrenador, ej. acct_12345...)
      */
-    async getChargesList(req, res, next) {
+async getChargesList(req, res, next) {
         try {
             const { id_account } = req.params;
 
@@ -134,32 +134,43 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Falta el ID de la cuenta de Stripe.' });
             }
 
-            console.log(`[Connect] Obteniendo historial de pagos para cuenta: ${id_account}`);
+            console.log(`[Connect] Obteniendo balance para cuenta: ${id_account}`);
 
-            // Consultamos la API de Stripe
-            // Usamos 'paymentIntents' porque es la forma moderna que implementamos en tu flujo de pago único
-            const paymentIntents = await stripe.paymentIntents.list(
+            // CAMBIO CLAVE: Usamos 'balanceTransactions' en lugar de 'paymentIntents'
+            // Esto muestra el dinero que REALMENTE entró a la cuenta del entrenador.
+            const transactions = await stripe.balanceTransactions.list(
                 { 
-                    limit: 50, // Traemos los últimos 50 movimientos
-                    // Opcional: expandir datos si necesitas más detalles
-                    // expand: ['data.customer', 'data.payment_method'] 
+                    limit: 50,
+                    // Filtramos para ver solo lo que suma dinero (pagos recibidos)
+                    // type: 'payment' suele ser para Direct Charges.
+                    // type: 'transfer' suele ser para Destination Charges (tu caso).
+                    // Para ver todo, quitamos el filtro de tipo por ahora.
                 }, 
                 { 
-                    stripeAccount: id_account // <--- MAGIA: Consultamos A NOMBRE DEL ENTRENADOR
+                    stripeAccount: id_account // Consultamos A NOMBRE DEL ENTRENADOR
                 }
             );
 
-            // Devolvemos la lista limpia
+            // Mapeamos los datos para que el Frontend los entienda igual
+            const formattedData = transactions.data.map(tx => ({
+                id: tx.id,
+                amount: tx.amount, // Monto en centavos
+                currency: tx.currency,
+                created: tx.created, // Timestamp
+                status: 'succeeded', // En balanceTransactions, si está aquí, suele ser exitoso
+                description: tx.description || `Transferencia de Plataforma (${tx.type})`
+            }));
+
             return res.status(200).json({
                 success: true,
-                data: paymentIntents.data 
+                data: formattedData 
             });
 
         } catch (error) {
             console.log(`Error en getChargesList: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al obtener historial de pagos',
+                message: 'Error al obtener historial',
                 error: error.message
             });
         }
