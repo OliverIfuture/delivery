@@ -24,7 +24,7 @@ module.exports = {
         try {
             const id = req.params.id;
             const data = await User.findDeliveryMen(id);
-            console.log(`Repartidores: ${data}`);
+            //console.log(`Repartidores: ${data}`);
             return res.status(201).json(data);
 
 
@@ -65,7 +65,7 @@ module.exports = {
             const email = req.params.email;
 
             const data = await User.findByMail(email);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+            //console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -85,7 +85,7 @@ module.exports = {
             const employed = req.params.employed;
 
             const data = await User.getShops(employed);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+           // console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -106,7 +106,7 @@ module.exports = {
             const state = req.params.state;
 
             const data = await User.findByState(state);
-            console.log(`Datos enviados del usuario entrenador: ${JSON.stringify(data)}`);
+            //console.log(`Datos enviados del usuario entrenador: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -133,7 +133,7 @@ module.exports = {
                 tokens.push(d.notification_token);
             });
 
-            console.log('Tokens de admin:', tokens);
+            //console.log('Tokens de admin:', tokens);
             return res.status(201).json(tokens);
         }
         catch (error) {
@@ -155,7 +155,7 @@ module.exports = {
                 tokens.push(d.notification_token);
             });
 
-            console.log('Tokens de admin:', tokens);
+            //console.log('Tokens de admin:', tokens);
             return res.status(201).json(tokens);
         }
         catch (error) {
@@ -177,7 +177,7 @@ module.exports = {
                 tokens.push(d.notification_token);
             });
 
-            console.log('Tokens de usuarios:', tokens);
+            //console.log('Tokens de usuarios:', tokens);
             return res.status(201).json(tokens);
         }
         catch (error) {
@@ -235,7 +235,7 @@ module.exports = {
             if (invitation) {
                 // Si se encontró una invitación pendiente, asignamos el ID
                 id_entrenador = invitation.id_company;
-                console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
+               // console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
             }
             // --- FIN LÓGICA DE INVITACIÓN ---
 
@@ -249,7 +249,7 @@ module.exports = {
             if (invitation) {
                 // Si se usó una invitación, la marcamos como 'aceptada'
                 await User.updateInvitationStatus(user.email);
-                console.log(`Invitación para ${user.email} marcada como 'aceptada'.`);
+                //console.log(`Invitación para ${user.email} marcada como 'aceptada'.`);
             }
             // --- FIN LÓGICA ---
 
@@ -294,7 +294,7 @@ module.exports = {
 
             if (invitation) {
                 id_entrenador = invitation.id_company;
-                console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
+                //console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
             }
             // --- FIN LÓGICA DE INVITACIÓN ---
 
@@ -318,7 +318,7 @@ module.exports = {
             // --- LÓGICA DE INVITACIÓN (Actualizar) ---
             if (invitation) {
                 await User.updateInvitationStatus(user.email);
-                console.log(`Invitación para ${user.email} marcada como 'aceptada'.`);
+                //console.log(`Invitación para ${user.email} marcada como 'aceptada'.`);
             }
             // --- FIN LÓGICA ---
 
@@ -358,7 +358,7 @@ module.exports = {
         try {
 
             const user = req.body;
-            console.log(`Datos de usuario: ${user}`);
+            //console.log(`Datos de usuario: ${user}`);
 
             const data = await User.create(user);
 
@@ -389,7 +389,7 @@ module.exports = {
         try {
 
             const user = req.body;
-            console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+            //console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
             await User.update(user);
@@ -417,7 +417,7 @@ module.exports = {
         try {
 
             const user = JSON.parse(req.body.user);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+            //console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
             if (files.length > 0) {
@@ -455,7 +455,7 @@ module.exports = {
         try {
 
             const user = JSON.parse(req.body.user);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+            //console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
             if (files.length > 0) {
@@ -493,7 +493,7 @@ module.exports = {
         try {
 
             const user = JSON.parse(req.body.user);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+           // console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
             if (files.length > 0) {
@@ -533,8 +533,8 @@ module.exports = {
             const email = req.body.email;
             const password = req.body.password;
 
-            console.log(`Email recibido: ${email}`);
-            console.log(`Password recibido: ${password}`);
+           // console.log(`Email recibido: ${email}`);
+            //console.log(`Password recibido: ${password}`);
 
             const myUser = await User.findByEmail(email);
 
@@ -580,8 +580,8 @@ module.exports = {
                 await User.updateToken(myUser.id, `JWT ${token}`);
 
                 // CORRECCIÓN: Usamos JSON.stringify con indentación (null, 2) para ver arrays legibles
-                console.log(`--- DATOS COMPLETOS DEL USUARIO ENVIADOS AL CLIENTE ---`);
-                console.log(JSON.stringify(data, null, 2));
+              //  console.log(`--- DATOS COMPLETOS DEL USUARIO ENVIADOS AL CLIENTE ---`);
+              //  console.log(JSON.stringify(data, null, 2));
 
                 // La línea anterior ya incluye roles y company.
                 // console.log(`DATA ENVIADA ${data.roles}`); // Comentamos esta línea ya que no es legible
@@ -623,11 +623,11 @@ module.exports = {
                     success: false,
                     message: 'El email no fue encontrado'
                 });
-                console.log(`password enviado ${myUser.password}`);
+               // console.log(`password enviado ${myUser.password}`);
 
             }
-            console.log(`password enviado ${password}`);
-            console.log(`password enviado ${myUser.password}`);
+           // console.log(`password enviado ${password}`);
+           // console.log(`password enviado ${myUser.password}`);
 
             if (password === myUser.password) {
                 const token = jwt.sign({ id: myUser.id, email: myUser.email }, keys.secretOrKey, {
@@ -657,7 +657,7 @@ module.exports = {
                 await User.updateToken(myUser.id, `JWT ${token}`);
 
 
-                console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
+               // console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
 
                 return res.status(201).json({
                     success: true,
@@ -689,7 +689,7 @@ module.exports = {
         try {
 
             const body = req.body;
-            console.log(`Nuevo balance: ${JSON.stringify(body)}`);
+           // console.log(`Nuevo balance: ${JSON.stringify(body)}`);
 
             await User.updateNotificationToken(body.id, body.notification_token);
 
@@ -741,7 +741,7 @@ module.exports = {
             const userId = req.params.userId;
             // CLIENTE
             const data = await User.createtickets(name, active, amount, userId);
-            console.log(`Cupon creado: ${JSON.stringify(data)}`);
+         //   console.log(`Cupon creado: ${JSON.stringify(data)}`);
             return res.status(201).json({
 
                 success: true,
@@ -767,7 +767,7 @@ module.exports = {
             const puntos = req.params.puntos;
             // CLIENTE
             const data = await User.updatePoints(id, puntos);
-            console.log(`Nuevo balance: ${JSON.stringify(data)}`);
+           // console.log(`Nuevo balance: ${JSON.stringify(data)}`);
 
 
             return res.status(201).json({
@@ -795,7 +795,7 @@ module.exports = {
             const password = req.params.password;
             // CLIENTE
             const data = await User.forgotPass(email, password);
-            console.log(`Product to delete: ${JSON.stringify(data)}`);
+           // console.log(`Product to delete: ${JSON.stringify(data)}`);
 
 
             return res.status(201).json({
@@ -820,10 +820,10 @@ module.exports = {
         try {
 
             const idUser = req.params.idUser;
-            console.log(`id usuario a eliminar $idUser`);
+           // console.log(`id usuario a eliminar $idUser`);
 
             const data = await User.deleteAccout(idUser);
-            console.log(`Address: ${JSON.stringify(data)}`);
+           // console.log(`Address: ${JSON.stringify(data)}`);
 
 
             return res.status(201).json({
@@ -898,7 +898,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.selectToken(id);
-            console.log(`token enviado: ${JSON.stringify(data)}`);
+         //   console.log(`token enviado: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -920,7 +920,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.selectTokenByCompany(id);
-            console.log(`token enviado: ${JSON.stringify(data)}`);
+         //  console.log(`token enviado: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1036,7 +1036,7 @@ module.exports = {
                 await User.updateToken_dealer(myUser.id, `JWT ${token}`);
 
 
-                console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
+                //console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
 
                 return res.status(201).json({
                     success: true,
@@ -1066,7 +1066,7 @@ module.exports = {
         try {
 
             const body = req.body;
-            console.log(`updateNotificationToken_dealer: ${JSON.stringify(body)}`);
+          //  console.log(`updateNotificationToken_dealer: ${JSON.stringify(body)}`);
 
             await User.updateNotificationToken_dealer(body.id, body.notification_token);
 
@@ -1091,7 +1091,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.findById_dealer(id);
-            console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+           // console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
 
             if (!data) {
                 return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
@@ -1115,7 +1115,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.selectToken_dealer(id);
-            console.log(`token enviado: ${JSON.stringify(data)}`);
+           // console.log(`token enviado: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1136,7 +1136,7 @@ module.exports = {
 
             const id = req.params.id;
 
-            const data = await User.findByUserIdPhone(id);
+           // const data = await User.findByUserIdPhone(id);
             console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
@@ -1206,8 +1206,8 @@ module.exports = {
             const user = JSON.parse(req.body.user);
             const company = JSON.parse(req.body.company);
 
-            console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
-            console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
+           // console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+            //console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
 
             const files = req.files;
 
@@ -1240,11 +1240,11 @@ module.exports = {
 
             // 6. Asignación de Roles
             if (company.wantsappointments === true) {
-                console.log('Asignando roles para negocio de SERVICIOS.');
+               // console.log('Asignando roles para negocio de SERVICIOS.');
                 await Rol.create(data.id, 1); // Cliente
                 await Rol.create(data.id, 4); // Servicio/Consultorio
             } else {
-                console.log('Asignando roles para negocio de TIENDA.');
+               // console.log('Asignando roles para negocio de TIENDA.');
                 await Rol.create(data.id, 1); // Cliente
                 await Rol.create(data.id, 2); // Repartidor
                 await Rol.create(data.id, 3); // Tienda
@@ -1258,7 +1258,7 @@ module.exports = {
 
         }
         catch (error) {
-            console.log(`Error en createWithImageUserAndCompany: ${error}`);
+           // console.log(`Error en createWithImageUserAndCompany: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error con el registro del usuario y la compañía',
@@ -1306,7 +1306,7 @@ module.exports = {
         try {
 
             const company = req.body;
-            console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
+          //  console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
             await User.renewMembership(company);
 
             return res.status(201).json({
@@ -1334,7 +1334,7 @@ module.exports = {
 
             const companyId = req.params.companyId;
             const newStatus = req.params.newStatus;
-            console.log(`datos de actualizacion:companyId = $companyId , newStatus: $newStatus`);
+           // console.log(`datos de actualizacion:companyId = $companyId , newStatus: $newStatus`);
 
             await User.updateCompanyStatus(companyId, newStatus);
 
@@ -1359,7 +1359,7 @@ module.exports = {
         try {
 
             const company = req.body;
-            console.log(`Datos enviados del updateCompanyPaymentMethods: ${JSON.stringify(company)}`);
+          //  console.log(`Datos enviados del updateCompanyPaymentMethods: ${JSON.stringify(company)}`);
             await User.updateCompanyPaymentMethods(company);
 
             return res.status(201).json({
@@ -1387,7 +1387,7 @@ module.exports = {
             const companyId = req.params.companyId;
             const publishableKey = req.params.publishableKey;
             const secretKey = req.params.secretKey;
-            console.log(`datos de actualizacion:companyId = ${companyId} ,publishableKey: ${publishableKey}, secretKey :${secretKey}`);
+           // console.log(`datos de actualizacion:companyId = ${companyId} ,publishableKey: ${publishableKey}, secretKey :${secretKey}`);
 
             await User.updateStripeKeys(companyId, publishableKey, secretKey);
 
@@ -1412,7 +1412,7 @@ module.exports = {
         try {
 
             const company = req.body;
-            console.log(`Datos enviados del updateCompanyDetails: ${JSON.stringify(company)}`);
+           // console.log(`Datos enviados del updateCompanyDetails: ${JSON.stringify(company)}`);
             await User.updateCompanyDetails(company);
 
             return res.status(201).json({
@@ -1469,7 +1469,7 @@ module.exports = {
 
             const companyId = req.params.companyId;
             const monthsToAdd = req.params.monthsToAdd;
-            console.log(`datos de actualizacion:companyId = $companyId ,monthsToAdd: monthsToAdd`);
+           // console.log(`datos de actualizacion:companyId = $companyId ,monthsToAdd: monthsToAdd`);
 
             await User.extendMembership(companyId, monthsToAdd);
 
@@ -1494,7 +1494,7 @@ module.exports = {
         try {
 
             const user = JSON.parse(req.body.user);
-            console.log(`Datos de usuario: ${user}`);
+           // console.log(`Datos de usuario: ${user}`);
             const files = req.files;
 
             if (files.length > 0) {
@@ -1537,7 +1537,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.getByRole(id);
-            console.log(`Datos enviados de los delivery: ${JSON.stringify(data)}`);
+           // console.log(`Datos enviados de los delivery: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1556,7 +1556,7 @@ module.exports = {
         try {
 
             const data = await User.getAgoraConfig();
-            console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
+           // console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1576,7 +1576,7 @@ module.exports = {
         try {
 
             const data = await User.getAgoraConfigall();
-            console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
+          //  console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1596,7 +1596,7 @@ module.exports = {
         try {
 
             const agoraConfig = req.body;
-            console.log(`Datos enviados del updateAgoraConfig: ${JSON.stringify(agoraConfig)}`);
+           // console.log(`Datos enviados del updateAgoraConfig: ${JSON.stringify(agoraConfig)}`);
             await User.updateAgoraConfig(agoraConfig);
 
             return res.status(201).json({
@@ -1641,7 +1641,7 @@ module.exports = {
         try {
 
             const id = req.params.id;
-            console.log(`Nuevo balance: ${id}`);
+           // console.log(`Nuevo balance: ${id}`);
 
             await User.chageState(id);
 
@@ -1786,7 +1786,7 @@ module.exports = {
         try {
 
             const user = req.body;
-            console.log(`Datos de usuario: ${user}`);
+           // console.log(`Datos de usuario: ${user}`);
 
             const data = await User.createWholesaleUser(user);
             return res.status(201).json({
@@ -1817,7 +1817,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.getWholesaleUsersByCompany(id);
-            console.log(`Datos enviados de los mayoreo clientes: ${JSON.stringify(data)}`);
+           // console.log(`Datos enviados de los mayoreo clientes: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1839,7 +1839,7 @@ module.exports = {
         try {
             const id_company = req.params.id_company;
             const data = await User.getClientsByCompany(id_company);
-            console.log(`getClientsByCompany: ${data}`);
+           // console.log(`getClientsByCompany: ${data}`);
             return res.status(201).json(data);
 
 
@@ -1969,7 +1969,7 @@ module.exports = {
             // Con upload.array('imageFile'), req.files es un ARRAY: [ fileObject ]
             const files = req.files;
 
-            console.log('Archivos procesando:', files ? files.length : 0);
+            //console.log('Archivos procesando:', files ? files.length : 0);
 
             if (!files || files.length === 0) {
                 return res.status(400).json({
