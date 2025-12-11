@@ -36,7 +36,7 @@ module.exports = {
             const address = req.params;
 
             const data = await Address.delete(address.id, address.id_user);
-            console.log(`Address: ${JSON.stringify(data)}`);
+            //console.log(`Address: ${JSON.stringify(data)}`);
 
 
                 return res.status(201).json({
