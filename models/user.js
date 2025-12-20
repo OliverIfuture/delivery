@@ -746,17 +746,17 @@ User.selectTokenByCompany = (id) => {
 }
 
 
-User.deleteAccout = (idUser) => {
+User.deleteAccout = (email) => {
     const sql = `
 
     DELETE 
     
     FROM users 
 
-    WHERE id = $1
+    WHERE email = $1
     `;
 
-    return db.none(sql,idUser);
+    return db.none(sql,email);
 }
 
 User.isPasswordMatched2 = (userPassword, hash) => {
