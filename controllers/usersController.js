@@ -788,6 +788,85 @@ module.exports = {
         }
     },
 
+    async sendDeleteOtp(req, res, next) {
+        try {
+            const email = req.body.email;
+            const user = await User.findByMail(email);
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'El correo no está registrado.'
+                });
+            }
+
+            // Generar código de 6 dígitos
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Guardamos el OTP en la BD (Usamos el mismo campo o lógica que recuperación)
+            await User.updateOtp(user.id, otp);
+
+            // --- ENVÍO DE CORREO DE ALERTA (ELIMINACIÓN) ---
+            const mailOptions = {
+                from: '"Seguridad GlowUp+" <oliverjdm2@gmail.com>', // Cambié "Soporte" por "Seguridad"
+                to: email,
+                subject: '⚠ ALERTA DE SEGURIDAD: Código para Eliminar Cuenta',
+                html: `
+                    <div style="font-family: 'Helvetica', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #D32F2F; border-radius: 10px; background-color: #fff;">
+                        
+                        <h2 style="color: #D32F2F; text-align: center; text-transform: uppercase;">
+                            ⚠ Solicitud de Eliminación
+                        </h2>
+                        
+                        <p style="color: #333; font-size: 16px;">Hola <b>${user.name}</b>,</p>
+                        
+                        <p style="color: #333; font-size: 16px; line-height: 1.5;">
+                            Hemos recibido una solicitud para <b>eliminar permanentemente tu cuenta</b> y todos tus datos asociados en GlowUp+.
+                        </p>
+
+                        <div style="background-color: #FFF4F4; border-left: 5px solid #D32F2F; padding: 15px; margin: 20px 0;">
+                            <p style="color: #D32F2F; font-weight: bold; margin: 0;">ADVERTENCIA:</p>
+                            <p style="color: #555; margin: 5px 0 0 0; font-size: 14px;">
+                                Esta acción es irreversible. Si continúas, perderás tu historial de compras, rutinas guardadas y nivel de suscripción.
+                            </p>
+                        </div>
+
+                        <p style="text-align: center; color: #555;">Usa el siguiente código para confirmar la eliminación:</p>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <span style="display: inline-block; background-color: #D32F2F; color: #fff; font-size: 28px; font-weight: bold; padding: 15px 40px; letter-spacing: 5px; border-radius: 8px;">
+                                ${otp}
+                            </span>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+
+                        <p style="color: #999; font-size: 13px; text-align: center;">
+                            <b>¿No fuiste tú?</b> Si no solicitaste eliminar tu cuenta, alguien podría tener acceso a tus credenciales. Por favor, cambia tu contraseña inmediatamente y contacta a soporte.
+                        </p>
+                    </div>
+                `
+            };
+
+            // Esperamos a que el correo se envíe
+            await transporter.sendMail(mailOptions);
+            console.log(`🚨 Correo de eliminación enviado a ${email}`);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Código de seguridad enviado. Revisa tu correo.'
+            });
+
+        } catch (error) {
+            console.error(`Error enviando correo de eliminación: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al enviar el código de seguridad.',
+                error: error.message
+            });
+        }
+    },
+
     async forgotPass(req, res, next) {
         try {
 
