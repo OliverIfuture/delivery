@@ -898,10 +898,10 @@ module.exports = {
     async deleteAccout(req, res, next) {
         try {
 
-            const idUser = req.params.idUser;
+            const email = req.params.email;
            // console.log(`id usuario a eliminar $idUser`);
 
-            const data = await User.deleteAccout(idUser);
+            const data = await User.deleteAccout(email);
            // console.log(`Address: ${JSON.stringify(data)}`);
 
 
