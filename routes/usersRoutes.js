@@ -94,6 +94,7 @@ module.exports = (app, upload) => {
         passport.authenticate('jwt', { session: false }), 
         UsersController.generateAccessQr
     );
+    app.post('/api/users/sendDeleteOtp', UsersController.sendDeleteOtp);
 
     app.post('/api/users/send-otp', UsersController.sendOtp);
     app.post('/api/users/verify-otp', UsersController.verifyOtp);
