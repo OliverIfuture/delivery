@@ -189,4 +189,51 @@ module.exports = {
             });
         }
     },
+
+    /**
+     * Obtener listado de plantillas (Para las Cards de Flutter)
+     */
+    async getSystemTemplates(req, res, next) {
+        try {
+            const data = await Routine.getSystemTemplates();
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error getting templates: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener plantillas',
+                error: error
+            });
+        }
+    },
+
+    /**
+     * Activar (Clonar) una plantilla para el usuario
+     */
+    async activateSystemTemplate(req, res, next) {
+        try {
+            const id_client = req.user.id; // Del Token JWT
+            const id_template = req.body.id_template; // ID de la card seleccionada (1, 2 o 3)
+
+            if (!id_template) {
+                return res.status(400).json({ success: false, message: 'Falta el ID de la plantilla' });
+            }
+
+            await Routine.activateTemplate(id_client, id_template);
+
+            return res.status(200).json({
+                success: true,
+                message: '¡Plan activado con éxito! Tu rutina ha sido actualizada.'
+            });
+        }
+        catch (error) {
+            console.log(`Error activating template: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al activar el plan',
+                error: error.message || error
+            });
+        }
+    },
 };
