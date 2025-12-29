@@ -32,4 +32,12 @@ module.exports = (app) => {
     // ...
     app.get('/api/routines/findAllByClient', passport.authenticate('jwt', { session: false }), routinesController.findAllByClient);
 
+
+// --- RUTINAS DEL SISTEMA (TEMPLATES) ---
+    
+    // Obtener las cards de los planes
+    app.get('/api/routines/system/templates', passport.authenticate('jwt', { session: false }), routinesController.getSystemTemplates);
+
+    // Activar un plan (Clonar)
+    app.post('/api/routines/system/activate', passport.authenticate('jwt', { session: false }), routinesController.activateSystemTemplate);    
 }
