@@ -133,8 +133,11 @@ module.exports = {
      * Analiza dos fotos (Antes y Después) usando Gemini Vision
      * Recibe: { "image_before": "url...", "image_after": "url..." }
      */
+
+
     async analyzeProgressAI(req, res, next) {
         try {
+            // 1. VALIDACIÓN DE ENTRADA
             const { image_before, image_after } = req.body;
 
             if (!image_before || !image_after) {
@@ -144,22 +147,16 @@ module.exports = {
                 });
             }
 
-            console.log(`[AI Progress] Iniciando análisis para usuario ${req.user.id}...`);
+            console.log(`[AI] Iniciando análisis de progreso para usuario ${req.user ? req.user.id : 'Desconocido'}...`);
 
-            // 1. Función auxiliar para descargar la imagen y convertirla a formato Gemini
-            // 1. Función auxiliar MEJORADA
+            // 2. FUNCIÓN AUXILIAR PARA DESCARGAR IMÁGENES (Con Headers para evitar bloqueos)
             const urlToGenerativePart = async (url) => {
                 try {
-                    console.log(`[AI] Intentando descargar: ${url.substring(0, 50)}...`);
-
+                    console.log(`[AI] Descargando: ${url.substring(0, 40)}...`);
                     const response = await axios.get(url, {
                         responseType: 'arraybuffer',
-                        // AGREGAMOS ESTO: Algunos servidores rechazan peticiones sin User-Agent
-                        headers: {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NodeJS Axios'
-                        }
+                        headers: { 'User-Agent': 'Mozilla/5.0 (NodeJS Axios)' }
                     });
-
                     return {
                         inlineData: {
                             data: Buffer.from(response.data).toString('base64'),
@@ -167,27 +164,19 @@ module.exports = {
                         },
                     };
                 } catch (error) {
-                    console.error("❌ ERROR DESCARGANDO IMAGEN:");
-                    if (error.response) {
-                        // El servidor respondió con un error (404, 403, etc)
-                        console.error(`🔥 Status: ${error.response.status}`);
-                        // Convertimos el buffer de error a texto para leer qué dice Firebase
-                        const errMsg = Buffer.from(error.response.data).toString('utf8');
-                        console.error(`🔥 Mensaje: ${errMsg}`);
-                    } else {
-                        console.error(`🔥 Error de red: ${error.message}`);
-                    }
-                    throw new Error("No se pudo acceder a una de las imágenes. Verifica que sean públicas.");
+                    console.error(`❌ Error descargando imagen: ${url}`);
+                    throw new Error("No se pudo acceder a una de las imágenes. Verifica permisos.");
                 }
             };
 
-            // 2. Descargamos las imágenes en paralelo
+            // 3. PREPARAR DATOS (Descarga paralela)
+            // Esto es equivalente a cuando procesabas el PDF file.buffer en tu ejemplo
             const [imagePartBefore, imagePartAfter] = await Promise.all([
                 urlToGenerativePart(image_before),
                 urlToGenerativePart(image_after)
             ]);
 
-            // 3. El Prompt del Entrenador (Personalidad GlowUp+)
+            // 4. PROMPT MAESTRO
             const promptText = `
                 Actúa como 'GlowUp Coach', un entrenador personal experto, motivador y empático.
                 
@@ -207,28 +196,36 @@ module.exports = {
                 - Si el cambio es sutil, felicítalo por la disciplina y la constancia.
                 - NO des diagnósticos médicos ni uses lenguaje técnico aburrido.
                 
-                Ejemplo de salida deseada: "¡Wow! 🔥 Se nota muchísimo el trabajo en tus hombros y la reducción en la cintura es evidente. ¡Esa disciplina está dando frutos, sigue así equipo! 🚀"
+                Responde SOLO con el texto del mensaje motivacional.
             `;
 
-            // 4. Llamada a Gemini (Usamos Flash para rapidez)
+            // 5. LLAMADA A GEMINI (Estilo SDK Standard)
+            // Usamos el modelo Flash para velocidad
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
             const result = await model.generateContent([
                 promptText,
-                imagePartBefore, // Imagen 1
-                imagePartAfter   // Imagen 2
+                imagePartBefore,
+                imagePartAfter
             ]);
 
             const response = await result.response;
-            const text = response.text();
 
-            console.log("[AI Progress] Respuesta generada:", text);
+            // 6. PROCESAR RESPUESTA (Igual que en tu ejemplo)
+            let text = response.text();
 
-            // 5. Devolver la respuesta al Flutter
+            if (!text) throw new Error("La IA no generó respuesta de texto.");
+
+            // Limpieza básica por si acaso (aunque pedimos texto plano)
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            console.log(`[AI] Análisis completado: ${text.substring(0, 30)}...`);
+
+            // 7. RESPONDER AL CLIENTE
             return res.status(200).json({
                 success: true,
                 message: 'Análisis completado exitosamente',
-                data: text // El string directo para mostrar en el diálogo
+                data: text // Enviamos el texto directo para mostrar en el Dialog
             });
 
         } catch (error) {
@@ -236,7 +233,7 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Error al analizar las imágenes con IA',
-                error: error.message
+                error: error.message || error
             });
         }
     }
