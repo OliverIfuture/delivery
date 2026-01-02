@@ -22,7 +22,7 @@ module.exports = (app) => {
     app.post(
         '/api/progress/analyze-ai',
         passport.authenticate('jwt', { session: false }),
-        progressController.analyzeProgressAI
+        clientProgressController.analyzeProgressAI
     );
 
 };
