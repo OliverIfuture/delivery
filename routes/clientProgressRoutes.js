@@ -8,7 +8,7 @@ module.exports = (app) => {
     // --- GET ---
     // Obtener todos los logs de métricas (peso, etc.) de un cliente
     app.get('/api/progress/metrics/:id_client', passport.authenticate('jwt', { session: false }), clientProgressController.getMetrics);
-    
+
     // Obtener todas las fotos de progreso de un cliente
     app.get('/api/progress/photos/:id_client', passport.authenticate('jwt', { session: false }), clientProgressController.getPhotos);
 
@@ -18,5 +18,11 @@ module.exports = (app) => {
 
     // Guardar la URL de una foto de progreso (después de subirla a Firebase)
     app.post('/api/progress/logPhoto', passport.authenticate('jwt', { session: false }), clientProgressController.logPhoto);
+
+    app.post(
+        '/api/progress/analyze-ai',
+        passport.authenticate('jwt', { session: false }),
+        progressController.analyzeProgressAI
+    );
 
 };
