@@ -1,3 +1,5 @@
+
+const axios = require('axios'); // <--- ¡TE FALTA ESTA LÍNEA!
 const ClientProgress = require('../models/clientProgress.js');
 // Si no tienes un archivo de config separado, inicialízalo aquí:
 const { GoogleGenAI } = require("@google/genai");
