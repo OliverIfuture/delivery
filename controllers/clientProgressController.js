@@ -145,9 +145,19 @@ module.exports = {
             console.log(`[AI Progress] Iniciando análisis para usuario ${req.user.id}...`);
 
             // 1. Función auxiliar para descargar la imagen y convertirla a formato Gemini
+            // 1. Función auxiliar MEJORADA
             const urlToGenerativePart = async (url) => {
                 try {
-                    const response = await axios.get(url, { responseType: 'arraybuffer' });
+                    console.log(`[AI] Intentando descargar: ${url.substring(0, 50)}...`);
+
+                    const response = await axios.get(url, {
+                        responseType: 'arraybuffer',
+                        // AGREGAMOS ESTO: Algunos servidores rechazan peticiones sin User-Agent
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NodeJS Axios'
+                        }
+                    });
+
                     return {
                         inlineData: {
                             data: Buffer.from(response.data).toString('base64'),
@@ -155,8 +165,17 @@ module.exports = {
                         },
                     };
                 } catch (error) {
-                    console.error("Error descargando imagen:", url);
-                    throw new Error("No se pudo acceder a una de las imágenes.");
+                    console.error("❌ ERROR DESCARGANDO IMAGEN:");
+                    if (error.response) {
+                        // El servidor respondió con un error (404, 403, etc)
+                        console.error(`🔥 Status: ${error.response.status}`);
+                        // Convertimos el buffer de error a texto para leer qué dice Firebase
+                        const errMsg = Buffer.from(error.response.data).toString('utf8');
+                        console.error(`🔥 Mensaje: ${errMsg}`);
+                    } else {
+                        console.error(`🔥 Error de red: ${error.message}`);
+                    }
+                    throw new Error("No se pudo acceder a una de las imágenes. Verifica que sean públicas.");
                 }
             };
 
