@@ -1,6 +1,6 @@
 const ClientProgress = require('../models/clientProgress.js');
 // Si no tienes un archivo de config separado, inicialízalo aquí:
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI } = require("@google/genai");
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY); // Usa tu API KEY
 module.exports = {
 
