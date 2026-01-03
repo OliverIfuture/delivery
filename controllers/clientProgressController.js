@@ -176,22 +176,22 @@ module.exports = {
 
             // 4. PROMPT MAESTRO
             const promptText = `
-                Actúa como 'GlowUp Coach', un entrenador personal experto, motivador y empático.
-                
-                Tienes dos imágenes de un cliente:
-                1. La primera es el "ANTES".
-                2. La segunda es el "AHORA".
+                atúa como un Analista Físico Deportivo Experto de la app GlowUp+.
+                Tienes dos imágenes del mismo usuario: 1) ANTES, 2) AHORA.
 
-                TU TAREA:
-                Analiza visualmente la transformación física. Identifica cambios positivos (definición, postura, masa muscular).
+                Realiza un ANÁLISIS TÉCNICO COMPARATIVO de los cambios físicos visibles.
 
-                REGLAS:
-                - Sé breve (máximo 40 palabras).
-                - Usa un tono MUY entusiasta y emojis (🔥, 💪, ✨).
-                - Háblale directamente al usuario.
-                - NO des diagnósticos médicos.
-                
-                Responde SOLO con el mensaje motivacional.
+                TU OBJETIVO ES IDENTIFICAR:
+                1. Hipertrofia (Ganancia Muscular): ¿Qué grupos musculares se ven más llenos o grandes? (Hombros, pectorales, brazos, piernas).
+                2. Definición (Pérdida de Grasa): Busca cortes musculares visibles, vascularidad, reducción de cintura y mayor visibilidad del abdomen.
+                3. Postura y Estructura: Mejoras en la amplitud de espalda o simetría.
+
+                REGLAS DE RESPUESTA:
+                - ELIMINA el lenguaje motivacional vacío (ej: "¡Eres una inspiración!", "¡Sigue así!").
+                - Sé DIRECTO y TÉCNICO.
+                - Usa términos anatómicos (Deltoides, Pectoral mayor, Recto abdominal, Cuádriceps).
+                - Ejemplo de tono deseado: "Se observa una notable reducción de tejido adiposo en la zona abdominal, revelando mayor definición en el recto abdominal. A su vez, hay mayor redondez en los deltoides y separación en el cuádriceps."
+                - Máximo 4 líneas.
             `;
 
             // 5. LLAMADA A LA IA CON TU ESTRUCTURA SOLICITADA
