@@ -3,7 +3,7 @@ const axios = require('axios'); // <--- ¡TE FALTA ESTA LÍNEA!
 const ClientProgress = require('../models/clientProgress.js');
 // Si no tienes un archivo de config separado, inicialízalo aquí:
 const { GoogleGenAI } = require("@google/genai");
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 module.exports = {
 
     /**
