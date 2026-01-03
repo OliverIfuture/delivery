@@ -147,33 +147,31 @@ module.exports = {
                 });
             }
 
-            console.log(`[AI] Iniciando análisis de progreso para usuario ${req.user ? req.user.id : 'Desconocido'}...`);
+            console.log(`[AI] Iniciando análisis para usuario...`);
 
-            // 2. FUNCIÓN AUXILIAR PARA DESCARGAR IMÁGENES (Con Headers para evitar bloqueos)
-            const urlToGenerativePart = async (url) => {
+            // 2. FUNCIÓN AUXILIAR PARA DESCARGAR Y OBTENER BASE64
+            const getBase64FromUrl = async (url) => {
                 try {
                     console.log(`[AI] Descargando: ${url.substring(0, 40)}...`);
                     const response = await axios.get(url, {
                         responseType: 'arraybuffer',
                         headers: { 'User-Agent': 'Mozilla/5.0 (NodeJS Axios)' }
                     });
+
                     return {
-                        inlineData: {
-                            data: Buffer.from(response.data).toString('base64'),
-                            mimeType: response.headers['content-type'] || 'image/jpeg',
-                        },
+                        mimeType: response.headers['content-type'] || 'image/jpeg',
+                        data: Buffer.from(response.data).toString('base64')
                     };
                 } catch (error) {
                     console.error(`❌ Error descargando imagen: ${url}`);
-                    throw new Error("No se pudo acceder a una de las imágenes. Verifica permisos.");
+                    throw new Error("No se pudo acceder a una de las imágenes.");
                 }
             };
 
-            // 3. PREPARAR DATOS (Descarga paralela)
-            // Esto es equivalente a cuando procesabas el PDF file.buffer en tu ejemplo
-            const [imagePartBefore, imagePartAfter] = await Promise.all([
-                urlToGenerativePart(image_before),
-                urlToGenerativePart(image_after)
+            // 3. DESCARGAR IMÁGENES EN PARALELO
+            const [imgDataBefore, imgDataAfter] = await Promise.all([
+                getBase64FromUrl(image_before),
+                getBase64FromUrl(image_after)
             ]);
 
             // 4. PROMPT MAESTRO
@@ -182,41 +180,67 @@ module.exports = {
                 
                 Tienes dos imágenes de un cliente:
                 1. La primera es el "ANTES".
-                2. La segunda es el "AHORA" (Progreso actual).
+                2. La segunda es el "AHORA".
 
                 TU TAREA:
-                Analiza visualmente la transformación física comparando ambas fotos.
-                Identifica cambios positivos como: definición muscular, reducción de grasa, mejor postura, aumento de masa muscular, o simplemente constancia.
+                Analiza visualmente la transformación física. Identifica cambios positivos (definición, postura, masa muscular).
 
-                REGLAS DE RESPUESTA:
-                - Sé breve (máximo 3 líneas o 40 palabras).
-                - Usa un tono MUY entusiasta y motivador.
-                - Usa emojis (🔥, 💪, ✨, 🚀).
-                - Háblale directamente al usuario ("¡Has logrado...", "Te ves...").
-                - Si el cambio es sutil, felicítalo por la disciplina y la constancia.
-                - NO des diagnósticos médicos ni uses lenguaje técnico aburrido.
+                REGLAS:
+                - Sé breve (máximo 40 palabras).
+                - Usa un tono MUY entusiasta y emojis (🔥, 💪, ✨).
+                - Háblale directamente al usuario.
+                - NO des diagnósticos médicos.
                 
-                Responde SOLO con el texto del mensaje motivacional.
+                Responde SOLO con el mensaje motivacional.
             `;
 
-            // 5. LLAMADA A GEMINI (Estilo SDK Standard)
-            // Usamos el modelo Flash para velocidad
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            // 5. LLAMADA A LA IA CON TU ESTRUCTURA SOLICITADA
+            // Aquí inyectamos el texto Y las dos imágenes en el array 'parts'
+            const response = await aiClient.models.generateContent({
+                model: 'gemini-2.5-flash', // Usamos 1.5-flash (el estándar actual)
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [
+                            { text: promptText },
+                            {
+                                inlineData: {
+                                    mimeType: imgDataBefore.mimeType,
+                                    data: imgDataBefore.data
+                                }
+                            },
+                            {
+                                inlineData: {
+                                    mimeType: imgDataAfter.mimeType,
+                                    data: imgDataAfter.data
+                                }
+                            }
+                        ]
+                    }
+                ]
+            });
 
-            const result = await model.generateContent([
-                promptText,
-                imagePartBefore,
-                imagePartAfter
-            ]);
+            // 6. PROCESAR RESPUESTA (Adaptado a la estructura de Vertex/Raw)
+            let text = '';
 
-            const response = await result.response;
+            // Verificamos si response tiene candidates (estructura típica)
+            if (response && response.candidates && response.candidates.length > 0) {
+                const firstCandidate = response.candidates[0];
+                if (firstCandidate.content && firstCandidate.content.parts && firstCandidate.content.parts.length > 0) {
+                    text = firstCandidate.content.parts[0].text;
+                }
+            }
+            // Fallback por si la estructura varía ligeramente según el cliente
+            else if (response && response.text) {
+                text = response.text;
+            }
 
-            // 6. PROCESAR RESPUESTA (Igual que en tu ejemplo)
-            let text = response.text();
+            if (!text) {
+                console.error("Respuesta completa IA:", JSON.stringify(response, null, 2));
+                throw new Error("La IA no generó respuesta de texto válida.");
+            }
 
-            if (!text) throw new Error("La IA no generó respuesta de texto.");
-
-            // Limpieza básica por si acaso (aunque pedimos texto plano)
+            // Limpieza
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
             console.log(`[AI] Análisis completado: ${text.substring(0, 30)}...`);
@@ -225,7 +249,7 @@ module.exports = {
             return res.status(200).json({
                 success: true,
                 message: 'Análisis completado exitosamente',
-                data: text // Enviamos el texto directo para mostrar en el Dialog
+                data: text
             });
 
         } catch (error) {
