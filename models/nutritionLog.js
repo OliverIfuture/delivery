@@ -89,4 +89,28 @@ NutritionLog.findByClientToday = (id_client) => {
     return db.manyOrNone(sql, [id_client, mexicoStartOfDay]);
 };
 
+NutritionLog.getWeeklyHistory = (id_client) => {
+    const sql = `
+        SELECT 
+            TO_CHAR(created_at, 'YYYY-MM-DD') as date_iso,
+            TO_CHAR(created_at, 'DD') as day_number,
+            SUM(calories) as calories,
+            SUM(proteins) as proteins,
+            SUM(carbs) as carbs,
+            SUM(fats) as fats
+        FROM 
+            client_nutrition_log
+        WHERE 
+            id_client = $1 
+            AND created_at >= CURRENT_DATE - INTERVAL '6 days' 
+        GROUP BY 
+            TO_CHAR(created_at, 'YYYY-MM-DD'),
+            TO_CHAR(created_at, 'DD')
+        ORDER BY 
+            date_iso ASC
+    `;
+
+    return db.manyOrNone(sql, [id_client]);
+};
+
 module.exports = NutritionLog;
