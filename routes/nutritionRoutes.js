@@ -26,4 +26,10 @@ module.exports = (app) => {
         upload.single('image'), // <--- Aquí estaba el error
         nutritionController.analyzeMealAI
     );
+
+    app.get(
+        '/api/nutrition/history/:id_client', 
+        passport.authenticate('jwt', {session: false}), 
+        nutritionController.getWeeklyHistory // <--- Función nueva en el controller
+    );
 }
