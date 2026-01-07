@@ -192,4 +192,27 @@ module.exports = {
             return res.status(501).json({ success: false, message: 'Error al analizar el plato', error: error.message });
         }
     },
+
+    async getWeeklyHistory(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            
+            // Llamamos al modelo
+            const data = await NutritionLog.getWeeklyHistory(id_client);
+            
+            // Retornamos la data tal cual (es una lista)
+            return res.status(200).json({ 
+                success: true, 
+                data: data 
+            });
+            
+        } catch (error) {
+            console.error('Error en getWeeklyHistory:', error);
+            return res.status(501).json({ 
+                success: false, 
+                message: 'Error al obtener historial', 
+                error: error 
+            });
+        }
+    },
 };
