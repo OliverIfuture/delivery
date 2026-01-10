@@ -1650,6 +1650,26 @@ module.exports = {
         }
     },
 
+    async getUpcomingEvent(req, res, next) {
+        try {
+
+            const data = await User.getUpcomingEvent();
+           // console.log(`Datos enviados de los getUpcomingEvent: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'error al obtener los getUpcomingEvent'
+            });
+        }
+    },
+
+    
 
     async getAgoraConfigall(req, res, next) {
         try {
