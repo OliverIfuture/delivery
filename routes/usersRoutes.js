@@ -69,6 +69,8 @@ module.exports = (app, upload) => {
      app.put('/api/users/extendMembership/:companyId/:monthsToAdd', UsersController.extendMembership);
      app.get('/api/users/getByRole/:id',passport.authenticate('jwt', {session: false}) ,UsersController.getByRole);
      app.get('/api/users/getAgoraConfig',passport.authenticate('jwt', {session: false}) ,UsersController.getAgoraConfig);
+     app.get('/api/users/getUpcomingEvent',passport.authenticate('jwt', {session: false}) ,UsersController.getUpcomingEvent);
+    
      app.get('/api/users/getAgoraConfigall',passport.authenticate('jwt', {session: false}) ,UsersController.getAgoraConfigall);
      app.put('/api/users/updateAgoraConfig', UsersController.updateAgoraConfig);
      app.put('/api/users/chageState/:id', UsersController.chageState);
