@@ -1311,6 +1311,17 @@ User.getAgoraConfig = () => {
 
 }
 
+User.getUpcomingEvent  = () => {
+
+    const sql = `
+    SELECT * FROM public.upcoming_events 
+    ORDER BY id DESC limit 1
+		`;
+    
+    return db.oneOrNone(sql)
+
+}
+
 User.getAgoraConfigall = () => {
 
     const sql = `
