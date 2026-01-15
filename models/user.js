@@ -485,12 +485,16 @@ User.createticket = (id) => {
     return db.oneOrNone(sql, id);
 }
 
-User.create = (user, id_entrenador) => { // <-- CAMBIO AQUÍ
+User.create = (user, id_entrenador) => { 
 
-    // Encriptar contraseña
-	    const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
-
+    // 1. Encriptar contraseña
+    const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
     user.password = myPasswordHashed;
+
+    // 2. LÓGICA DE ASIGNACIÓN (EL CAMBIO IMPORTANTE)
+    // Explicación: Si user.id_entrenador tiene valor (no es null ni undefined), úsalo.
+    // Si no, usa la variable 'id_entrenador' que recibimos como argumento.
+    const idEntrenadorFinal = user.id_entrenador ? user.id_entrenador : id_entrenador;
 
     const sql = `
         INSERT INTO users(
@@ -502,9 +506,9 @@ User.create = (user, id_entrenador) => { // <-- CAMBIO AQUÍ
             password,
             created_at,
             updated_at,
-            id_entrenador -- <-- NUEVA COLUMNA
+            id_entrenador
         )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id -- <-- NUEVO VALOR
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
     `;
     
     return db.one(sql, [
@@ -516,7 +520,7 @@ User.create = (user, id_entrenador) => { // <-- CAMBIO AQUÍ
         user.password,
         new Date(),
         new Date(),
-        id_entrenador // <-- NUEVO VALOR
+        idEntrenadorFinal // <--- AQUÍ PASAMOS EL ID YA CALCULADO
     ]);
 };
 
