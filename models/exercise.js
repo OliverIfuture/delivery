@@ -94,7 +94,7 @@ Exercise.delete = (id, id_company) => {
     // (Tu lógica de 'delete' existente...)
     const sql = `
         DELETE FROM exercises
-        WHERE id = $1 AND id_company = $2
+        WHERE id = $1
     `;
     return db.none(sql, [id, id_company]);
 };
