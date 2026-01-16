@@ -90,13 +90,13 @@ Exercise.findByCompany = (id_company) => {
 /**
  * Elimina un ejercicio
  */
-Exercise.delete = (id, id_company) => {
+Exercise.delete = (id) => {
     // (Tu lógica de 'delete' existente...)
     const sql = `
         DELETE FROM exercises
         WHERE id = $1
     `;
-    return db.none(sql, [id, id_company]);
+    return db.none(sql, id);
 };
 
 /**
