@@ -788,6 +788,88 @@ module.exports = {
         }
     },
 
+    async sendInvitation(req, res, next) {
+        try {
+            // Recibimos los datos desde Flutter
+            const { email, clientName, trainerName, invitationLink } = req.body;
+
+            if (!email || !invitationLink) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan datos obligatorios (email o link).'
+                });
+            }
+
+            // --- DISEÑO DEL CORREO DE INVITACIÓN (DARK PREMIUM) ---
+            const mailOptions = {
+                from: '"GlowUp+ Team" <oliverjdm2@gmail.com>',
+                to: email,
+                subject: `💪 ${trainerName} te ha invitado a entrenar`,
+                html: `
+                    <div style="font-family: 'Helvetica', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 10px; overflow: hidden;">
+                        
+                        <div style="background-color: #1E1E1E; padding: 30px; text-align: center; border-bottom: 2px solid #FFD700;">
+                            <h2 style="color: #FFD700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">
+                                GlowUp+
+                            </h2>
+                            <p style="color: #888; margin: 5px 0 0 0; font-size: 12px;">ENTRENAMIENTO PROFESIONAL</p>
+                        </div>
+                        
+                        <div style="padding: 40px 30px; text-align: center;">
+                            
+                            <h3 style="color: #ffffff; font-size: 24px; margin-bottom: 20px;">
+                                ¡Hola ${clientName}!
+                            </h3>
+                            
+                            <p style="color: #cccccc; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                                El entrenador <strong style="color: #FFD700;">${trainerName}</strong> te ha invitado a unirte a su equipo exclusivo en nuestra plataforma.
+                            </p>
+
+                            <div style="background-color: #2C2C2C; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                                <p style="color: #fff; margin: 0; font-size: 14px;">
+                                    Tendrás acceso a tus rutinas, dietas y seguimiento de progreso directamente desde tu móvil.
+                                </p>
+                            </div>
+
+                            <a href="${invitationLink}" style="display: inline-block; background-color: #FFD700; color: #000000; font-size: 16px; font-weight: bold; padding: 15px 40px; text-decoration: none; border-radius: 50px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);">
+                                ACEPTAR INVITACIÓN
+                            </a>
+
+                            <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                                O copia y pega este enlace en tu navegador:<br>
+                                <span style="color: #FFD700;">${invitationLink}</span>
+                            </p>
+                        </div>
+
+                        <div style="background-color: #000000; padding: 20px; text-align: center;">
+                            <p style="color: #444; font-size: 12px; margin: 0;">
+                                © 2026 GlowUp+. Todos los derechos reservados.<br>
+                                Si no esperabas esta invitación, puedes ignorar este correo.
+                            </p>
+                        </div>
+                    </div>
+                `
+            };
+
+            // Enviamos el correo
+            await transporter.sendMail(mailOptions);
+            console.log(`🚀 Invitación enviada a ${email} por parte de ${trainerName}`);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Invitación enviada correctamente.'
+            });
+
+        } catch (error) {
+            console.error(`Error enviando invitación: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al enviar la invitación.',
+                error: error.message
+            });
+        }
+    },
+
     async sendDeleteOtp(req, res, next) {
         try {
             const email = req.body.email;
