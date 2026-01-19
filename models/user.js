@@ -1128,6 +1128,30 @@ WHERE id_company_affiliate = $1
 
 }
 
+User.getMonthlyMemberships = (id) => {
+
+    const sql = `
+SELECT 
+    EXTRACT(MONTH FROM s.created_at) :: INTEGER as month, 
+    COALESCE(SUM(p.price), 0) as total
+FROM client_subscriptions s
+JOIN subscription_plans p ON s.id_plan = p.id
+WHERE 
+    s.id_company = $1  -- Filtra por la compañía actual
+    AND s.created_at >= '2026-01-01' -- Filtra por el año actual
+    AND s.created_at <= '2026-12-31'
+    -- Opcional: Si guardas estatus fallidos, descomenta la siguiente linea:
+    -- AND s.status IN ('active', 'paid') 
+GROUP BY month
+ORDER BY month ASC;
+
+		`;
+    
+    return db.manyOrNone(sql, id)
+
+}
+
+
 
 User.getCompanyById = (id) => {
 
