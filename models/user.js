@@ -1091,6 +1091,20 @@ User.getClients = (id) => {
 
 }
 
+User.getTotalComision = (id) => {
+
+    const sql = `
+SELECT SUM(commission_amount) 
+FROM affiliate_commissions 
+WHERE id_company_affiliate = $1
+
+		`;
+    
+    return db.oneOrNone(sql, id)
+
+}
+
+
 User.getCompanyById = (id) => {
 
     const sql = `
