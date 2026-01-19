@@ -1381,6 +1381,28 @@ module.exports = {
         }
     },
 
+   async getMonthlyMemberships(req, res, next) {
+        try {
+            const id = req.params.id;
+
+            const data = await User.getMonthlyMemberships(id);
+           // console.log(`Datos enviados del getMonthlyMemberships: ${JSON.stringify(data)}`);
+
+            if (!data) {
+                return res.status(404).json({ success: false, message: 'company no encontrado' });
+            }
+
+            return res.status(200).json(data); // Cambiar a 200 para respuesta exitosa
+        } catch (error) {
+            console.error(`error: ${error}`); // Usar console.error para errores
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener el company por ID'
+            });
+        }
+    },
+
+    
         async getTotalComision(req, res, next) {
         try {
             const id = req.params.id;
