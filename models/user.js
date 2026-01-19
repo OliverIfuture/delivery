@@ -1078,6 +1078,23 @@ User.getCompanyByUser = (id) => {
 
 }
 
+
+User.getClients = (id) => {
+
+    const sql = `
+    select 
+	c.id,
+	c.name,
+	from company as c
+	
+		inner join users as U on U.id = c.user_id
+	where c.id = $1
+		`;
+    
+    return db.manyOrNone(sql, id)
+
+}
+
 User.getCompanyById = (id) => {
 
     const sql = `
