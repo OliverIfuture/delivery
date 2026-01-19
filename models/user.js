@@ -1082,8 +1082,32 @@ User.getCompanyByUser = (id) => {
 User.getClients = (id) => {
 
     const sql = `
-    select 
-    name from users where id_entrenador = $1
+SELECT 
+    U.id,
+    U.email,
+    U.name,
+    U.lastname,
+    U.phone,
+    U.image,
+    U.notification_token,
+    LastSub.status as status_plan,
+    LastSub.current_period_end as finaliza
+FROM 
+    users AS U
+INNER JOIN (
+    -- Subconsulta: Trae solo la última suscripción por cada cliente
+    SELECT DISTINCT ON (id_client) 
+        id_client, 
+        status, 
+        current_period_end
+    FROM client_subscriptions
+    -- Ordenamos por cliente y por fecha descendente para que la primera sea la más nueva
+    ORDER BY id_client, current_period_end DESC
+) AS LastSub ON U.id = LastSub.id_client
+WHERE 
+    U.id_entrenador = $1
+ORDER BY 
+    U.name ASC;
 
 		`;
     
