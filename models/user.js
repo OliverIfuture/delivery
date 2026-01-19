@@ -1084,7 +1084,7 @@ User.getClients = (id) => {
     const sql = `
     select 
 	c.id,
-	c.name,
+	c.name
 	from company as c
 	
 		inner join users as U on U.id = c.user_id
