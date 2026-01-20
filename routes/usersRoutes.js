@@ -95,7 +95,7 @@ module.exports = (app, upload) => {
     ]), UsersController.createWithImageUserAndCompany);
 
     app.get(
-    'api/users/invitations/get/:id', 
+    '/api/users/invitations/get/:id', 
     passport.authenticate('jwt', { session: false }), // Protegemos la ruta
     UsersController.getInvitations
 );
