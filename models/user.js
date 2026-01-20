@@ -1885,5 +1885,62 @@ User.updatePasswordByEmail = (email, password) => {
     return db.none(sql, [email, myPasswordHashed]);
 }
 
+User.updateTrainerProfileData = (user, company) => {
+    return db.tx(async t => {
+        
+        // --- QUERY 1: Actualizar Usuario ---
+        const sqlUser = `
+            UPDATE users
+            SET 
+                name = $1,
+                phone = $2,
+                image = $3,
+                updated_at = $4
+            WHERE id = $5
+        `;
+        
+        await t.none(sqlUser, [
+            user.name,
+            user.phone,
+            user.image,
+            new Date(),
+            user.id
+        ]);
+
+        // --- QUERY 2: Actualizar Compañía ---
+        // Basado en los campos que enviaste: cashPayment, cardPayment, available (string 'true'/'false' en tus datos), etc.
+        const sqlCompany = `
+            UPDATE companies
+            SET 
+                name = $1,
+                description = $2,
+                logo = $3,
+                image_card = $4,  -- Verifica si en tu BD es 'company_card' o 'card_image'
+                delivery_cost = $5,
+                affiliate_commission_rate = $6,
+                cashaccept = $7,
+                creditcardaccepted = $8,
+                available = $9,
+                updated_at = $10
+            WHERE id = $11
+        `;
+
+        await t.none(sqlCompany, [
+            company.name,
+            company.description,
+            company.logo,
+            company.cardImage, // En el objeto JSON suele venir como cardImage
+            company.deliveryCost,
+            company.affiliateCommissionRate,
+            company.cashPayment, // Booleano true/false
+            company.cardPayment, // Booleano true/false
+            company.available,   // String 'true'/'false' o Booleano (según tu DB)
+            new Date(),
+            company.id // Ojo: Asegúrate de enviar el company.id correctamente desde Flutter o user.mi_store
+        ]);
+        
+        return true;
+    });
+}
 
 module.exports = User;
