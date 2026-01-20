@@ -1916,8 +1916,8 @@ User.updateTrainerProfileData = (user, company) => {
                 description = $2,
                 logo = $3,
                 image_card = $4,  -- Verifica si en tu BD es 'company_card' o 'card_image'
-                delivery_cost = $5,
-                affiliate_commission_rate = $6,
+                deliveryCost = $5,
+                affiliateCommissionRate = $6,
                 cashaccept = $7,
                 creditcardaccepted = $8,
                 available = $9,
