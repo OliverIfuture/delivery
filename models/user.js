@@ -1927,9 +1927,9 @@ User.updateTrainerProfileData = (user, company) => {
             company.name,
             company.description,
             company.logo,
-            company.cardImage, // En el objeto JSON suele venir como cardImage
-            company.cashPayment, // Booleano true/false
-            company.cardPayment, // Booleano true/false
+            company.image_card, // En el objeto JSON suele venir como cardImage
+            company.cashaccept, // Booleano true/false
+            company.creditcardaccepted, // Booleano true/false
             company.available,   // String 'true'/'false' o Booleano (según tu DB)
             new Date(),
             company.id // Ojo: Asegúrate de enviar el company.id correctamente desde Flutter o user.mi_store
