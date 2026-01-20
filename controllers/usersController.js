@@ -2368,40 +2368,90 @@ module.exports = {
         }
     },
 
-    async updateTrainerProfile(req, res, next) {
+ async updateTrainerProfile(req, res, next) {
+        console.log("\n================== 🟢 INICIO REQUEST NODE: UPDATE TRAINER 🟢 ==================");
+        
         try {
-            // 1. Parsear los datos de texto
-            const user = JSON.parse(req.body.user);
-            const company = JSON.parse(req.body.company);
-            
-            // 2. Manejo de Archivos (req.files es un objeto gracias a upload.fields)
-            const files = req.files;
+            // ---------------------------------------------------------
+            // 1. INSPECCIÓN DE DATOS CRUDOS
+            // ---------------------------------------------------------
+            console.log("1. Inspecting Request Body:");
+            // No imprimimos todo el string JSON si es muy largo, solo confirmamos que llegó
+            console.log("   - req.body.user present?", req.body.user ? "YES" : "NO"); 
+            console.log("   - req.body.company present?", req.body.company ? "YES" : "NO");
 
+            // 1. Parsear los datos de texto
+            let user, company;
+            try {
+                user = JSON.parse(req.body.user);
+                company = JSON.parse(req.body.company);
+                
+                console.log("2. Data Parsed Successfully:");
+                console.log(`   - User ID: ${user.id} | Name: ${user.name}`);
+                console.log(`   - Company ID: ${company.id} | Name: ${company.name}`);
+                console.log(`   - Switches -> Available: ${company.available}, Cash: ${company.cashPayment}, Card: ${company.cardPayment}`);
+            } catch (parseError) {
+                console.log("❌ Error parsing JSON body:", parseError);
+                throw new Error("Invalid JSON format in user or company fields");
+            }
+            
+            // ---------------------------------------------------------
+            // 2. INSPECCIÓN DE ARCHIVOS
+            // ---------------------------------------------------------
+            const files = req.files;
+            console.log("3. Inspecting Files:");
+            if (files) {
+                console.log("   - Keys found:", Object.keys(files));
+                console.log("   - Image (Profile):", files['image'] ? "YES" : "NO");
+                console.log("   - ImageLogo:", files['imageLogo'] ? "YES" : "NO");
+                console.log("   - ImageCard:", files['imageCard'] ? "YES" : "NO");
+            } else {
+                console.log("   - No files object in request.");
+            }
+
+            // ---------------------------------------------------------
+            // 3. SUBIDA DE IMÁGENES
+            // ---------------------------------------------------------
+            
             // A. Foto de Perfil (campo 'image')
             if (files && files['image'] && files['image'].length > 0) {
-                const path = `user_image_${Date.now()}`; // Nombre único
+                console.log("   -> Uploading Profile Image...");
+                const path = `user_image_${Date.now()}`;
                 const url = await storage(files['image'][0], path);
-                if (url) user.image = url; // Actualizamos la URL en el objeto user
+                console.log("      URL Generated:", url);
+                
+                if (url) user.image = url; 
             }
 
             // B. Logo de Empresa (campo 'imageLogo')
             if (files && files['imageLogo'] && files['imageLogo'].length > 0) {
+                console.log("   -> Uploading Company Logo...");
                 const path = `company_logo_${Date.now()}`;
                 const url = await storage(files['imageLogo'][0], path);
-                if (url) company.logo = url; // Actualizamos la URL en el objeto company
+                console.log("      URL Generated:", url);
+
+                if (url) company.logo = url; 
             }
 
             // C. Portada de Empresa (campo 'imageCard')
             if (files && files['imageCard'] && files['imageCard'].length > 0) {
+                console.log("   -> Uploading Company Cover...");
                 const path = `company_card_${Date.now()}`;
                 const url = await storage(files['imageCard'][0], path);
-                // NOTA: Asegúrate si en tu BD se llama 'cardImage' o 'company_card'
-                // En el objeto Company de Flutter suele ser 'cardImage'
+                console.log("      URL Generated:", url);
+
+                // NOTA: Asegúrate de usar la propiedad correcta que espera tu Modelo SQL
                 if (url) company.cardImage = url; 
             }
 
-            // 3. Llamada al Modelo (Transacción)
+            // ---------------------------------------------------------
+            // 4. ACTUALIZACIÓN EN DB
+            // ---------------------------------------------------------
+            console.log("4. Executing Database Update...");
             await User.updateTrainerProfileData(user, company);
+            console.log("✅ Database Update Successful");
+
+            console.log("================== 🏁 FIN REQUEST NODE 🏁 ==================\n");
 
             return res.status(201).json({
                 success: true,
@@ -2409,7 +2459,10 @@ module.exports = {
             });
 
         } catch (error) {
-            console.log(`Error: ${error}`);
+            console.log("\n❌ ERROR EN UPDATE TRAINER CONTROLLER ❌");
+            console.log("Error details:", error);
+            console.log("============================================================\n");
+
             return res.status(501).json({
                 success: false,
                 message: 'Error al actualizar el perfil',
