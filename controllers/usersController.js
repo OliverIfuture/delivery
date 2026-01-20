@@ -2494,4 +2494,33 @@ async sendInvitation(req, res, next) {
         }
     },
 
+    // En controllers/usersController.js
+
+    async getInvitations(req, res, next) {
+        try {
+            const id_store = req.params.id; // Recibe el ID de la URL
+
+            if (!id_store) {
+                 return res.status(400).json({
+                    success: false,
+                    message: 'Falta el parámetro ID de la tienda.'
+                });
+            }
+
+            // Llamamos al modelo
+            const data = await User.getInvitationsByStore(id_store);
+
+            // Respondemos con la lista pura (array) como espera Flutter
+            return res.status(200).json(data);
+
+        } catch (error) {
+            console.error(`Error obteniendo invitaciones: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener las invitaciones',
+                error: error
+            });
+        }
+    },
+
 };
