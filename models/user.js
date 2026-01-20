@@ -1885,6 +1885,29 @@ User.updatePasswordByEmail = (email, password) => {
     return db.none(sql, [email, myPasswordHashed]);
 }
 
+// En models/user.js
+
+User.getInvitationsByStore = (id_store) => {
+    const sql = `
+        SELECT 
+            id,
+            store_id,
+            client_id,
+            email,
+            name,
+            status,
+            created_at,
+            updated_at
+        FROM 
+            invitations
+        WHERE 
+            store_id = $1
+        ORDER BY 
+            created_at DESC
+    `;
+    return db.manyOrNone(sql, [id_store]);
+}
+
 User.updateTrainerProfileData = (user, company) => {
     return db.tx(async t => {
         
