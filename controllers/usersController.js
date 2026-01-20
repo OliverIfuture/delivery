@@ -790,46 +790,37 @@ module.exports = {
     },
 
 async sendInvitation(req, res, next) {
-    try {
-        // 1. Recibimos los datos desde Flutter
-        const { email, clientName, trainerName, invitationLink } = req.body;
-        
-        // Obtenemos el ID de la tienda/entrenador desde el Token de sesión
-        // IMPORTANTE: Asegúrate que tu middleware de auth llene req.user
-        const id_store = req.user.mi_store; 
+        try {
+            // 1. Recibimos los datos desde Flutter
+            const { email, clientName, trainerName, invitationLink } = req.body;
+            
+            // 2. Obtenemos el ID de la tienda/entrenador (asegúrate que tu middleware de auth llene req.user)
+            const id_store = req.user.mi_store; 
 
-        if (!email || !invitationLink || !id_store) {
-            return res.status(400).json({
-                success: false,
-                message: 'Faltan datos obligatorios (email, link o store_id).'
-            });
-        }
+            // Validación de seguridad
+            if (!email || !invitationLink || !id_store) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan datos obligatorios (email, link o store_id).'
+                });
+            }
 
-        // --- PASO NUEVO: INSERTAR EN POSTGRESQL ---
-        // Usamos ON CONFLICT para que si ya invitaste a este correo, 
-        // solo actualice la fecha y el nombre, en lugar de dar error.
-        // (Esto requiere que hayas creado el UNIQUE CONSTRAINT que vimos antes)
-        
-        const sqlInsert = `
-            INSERT INTO invitations (store_id, email, name, status, created_at)
-            VALUES ($1, $2, $3, 'pending', NOW())
-            ON CONFLICT (store_id, email) 
-            DO UPDATE SET 
-                created_at = NOW(), 
-                name = $3, 
-                status = 'pending'
-        `;
+            // --- PASO 1: INSERTAR EN BASE DE DATOS ---
+            // Intentamos insertar. Si ya existe (por el constraint UNIQUE), saltará al catch con código 23505
+            const sqlInsert = `
+                INSERT INTO invitations (store_id, email, name, status, created_at)
+                VALUES ($1, $2, $3, 'pending', NOW())
+            `;
 
-        // Ejecutamos la query (Ajusta 'db.none' según tu librería: pg-promise, sequelize, etc.)
-        await db.none(sqlInsert, [id_store, email, clientName]);
+            // Ejecutamos la query
+            await db.none(sqlInsert, [id_store, email, clientName]);
 
-
-        // --- DISEÑO DEL CORREO DE INVITACIÓN (DARK PREMIUM) ---
-        const mailOptions = {
-            from: '"GlowUp+ Team" <oliverjdm2@gmail.com>',
-            to: email,
-            subject: `💪 ${trainerName} te ha invitado a entrenar`,
-            html: `
+            // --- PASO 2: SI NO HUBO ERROR, PREPARAMOS EL EMAIL ---
+            const mailOptions = {
+                from: '"GlowUp+ Team" <oliverjdm2@gmail.com>', // Tu correo configurado
+                to: email,
+                subject: `💪 ${trainerName} te ha invitado a entrenar`,
+                html: `
                 <div style="font-family: 'Helvetica', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #121212; border-radius: 10px; overflow: hidden;">
                     
                     <div style="background-color: #1E1E1E; padding: 30px; text-align: center; border-bottom: 2px solid #FFD700;">
@@ -872,28 +863,36 @@ async sendInvitation(req, res, next) {
                         </p>
                     </div>
                 </div>
-            `
-        };
+                `
+            };
 
-        // Enviamos el correo
-        await transporter.sendMail(mailOptions);
-        console.log(`🚀 Invitación guardada en DB y enviada a ${email}`);
+            // --- PASO 3: ENVIAR EL EMAIL ---
+            await transporter.sendMail(mailOptions);
+            console.log(`🚀 Invitación enviada y registrada para: ${email}`);
 
-        return res.status(200).json({
-            success: true,
-            message: 'Invitación enviada y registrada correctamente.'
-        });
+            return res.status(200).json({
+                success: true,
+                message: 'Invitación enviada y registrada correctamente.'
+            });
 
-    } catch (error) {
-        console.error(`Error enviando invitación: ${error}`);
-        return res.status(501).json({
-            success: false,
-            message: 'Hubo un error al procesar la invitación.',
-            error: error.message
-        });
-    }
-},
+        } catch (error) {
+            // --- MANEJO DE DUPLICADOS ---
+            // Si PostgreSQL devuelve el código de "Unique Violation"
+            if (error.code === '23505') {
+                return res.status(409).json({ // 409 Conflict
+                    success: false,
+                    message: 'Ya enviaste una invitación a este correo anteriormente.'
+                });
+            }
 
+            console.error(`Error enviando invitación: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error interno al procesar la invitación.',
+                error: error.message
+            });
+        }
+    },
     async sendDeleteOtp(req, res, next) {
         try {
             const email = req.body.email;
