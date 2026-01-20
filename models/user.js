@@ -1908,6 +1908,34 @@ User.getInvitationsByStore = (id_store) => {
     return db.manyOrNone(sql, [id_store]);
 }
 
+// En models/user.js
+
+User.checkAndClaimInvitation = async (email, newUserId) => {
+    // 1. Buscamos si hay una invitación pendiente para este email
+    const findSql = `
+        SELECT id, store_id 
+        FROM invitations 
+        WHERE email = $1 AND status = 'pending'
+        LIMIT 1
+    `;
+    const invitation = await db.oneOrNone(findSql, [email]);
+
+    // Si no hay invitación, no hacemos nada (retorna null)
+    if (!invitation) return null;
+
+    // 2. Si existe, hacemos el "Claim" (Reclamar invitación)
+    // A) Actualizamos la tabla invitations
+    const updateInviteSql = `
+        UPDATE invitations
+        SET status = 'registered', client_id = $2, updated_at = NOW()
+        WHERE id = $1
+    `;
+    await db.none(updateInviteSql, [invitation.id, newUserId]);
+
+    // B) Retornamos el store_id (ID del entrenador) para asignarlo al usuario
+    return invitation.store_id;
+}
+
 User.updateTrainerProfileData = (user, company) => {
     return db.tx(async t => {
         
