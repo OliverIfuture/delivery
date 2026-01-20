@@ -100,7 +100,7 @@ module.exports = (app, upload) => {
         UsersController.generateAccessQr
     );
     app.post('/api/users/sendDeleteOtp', UsersController.sendDeleteOtp);
-    app.post('/invite', passport.authenticate('jwt', { session: false }), usersController.sendInvitation);
+    app.post('/invite', passport.authenticate('jwt', { session: false }), UsersController.sendInvitation);
     app.post('/api/users/send-otp', UsersController.sendOtp);
     app.post('/api/users/verify-otp', UsersController.verifyOtp);
     app.put('/api/users/reset-password', UsersController.resetPassword);
