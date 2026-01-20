@@ -2441,7 +2441,7 @@ module.exports = {
                 console.log("      URL Generated:", url);
 
                 // NOTA: Asegúrate de usar la propiedad correcta que espera tu Modelo SQL
-                if (url) company.cardImage = url; 
+                if (url) company.image_card = url; 
             }
 
             // ---------------------------------------------------------
