@@ -285,22 +285,12 @@ module.exports = {
         }
     },
 
-    async registerWithImage(req, res, next) {
+async registerWithImage(req, res, next) {
         try {
             const user = JSON.parse(req.body.user);
 
-            // --- LÓGICA DE INVITACIÓN DE ENTRENADOR ---
-            let id_entrenador = null;
-            const invitation = await User.findInvitationByEmail(user.email);
-
-            if (invitation) {
-                id_entrenador = invitation.id_company;
-                //console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
-            }
-            // --- FIN LÓGICA DE INVITACIÓN ---
-
+            // 1. MANEJO DE IMAGEN (Sin cambios)
             const files = req.files;
-
             if (files.length > 0) {
                 const path = `image_${Date.now()}`;
                 const url = await storage(files[0], path);
@@ -310,19 +300,27 @@ module.exports = {
                 }
             }
 
-            // Pasamos el id_entrenador
-            const data = await User.create(user, id_entrenador);
+            // 2. CREAR USUARIO
+            // IMPORTANTE: Pasamos 'null' como segundo parámetro (id_entrenador)
+            // porque aún no hemos procesado la invitación.
+            const data = await User.create(user, null);
 
-            // Asignar rol por defecto (asumimos rol 'Cliente' con id '3')
+            // 3. ASIGNAR ROL (Cliente por defecto)
             await Rol.create(data.id, 3);
 
-            // --- LÓGICA DE INVITACIÓN (Actualizar) ---
-            if (invitation) {
-                await User.updateInvitationStatus(user.email);
-                //console.log(`Invitación para ${user.email} marcada como 'aceptada'.`);
-            }
-            // --- FIN LÓGICA ---
+            // --- 4. NUEVA LÓGICA DE INVITACIONES ---
+            // Verificamos si este email tenía una invitación pendiente en la nueva tabla.
+            // Esta función marca la invitación como 'registered' y nos devuelve el ID del entrenador.
+            const trainerId = await User.checkAndClaimInvitation(user.email, data.id);
 
+            if (trainerId) {
+                // ¡Bingo! Había invitación. Vinculamos el usuario al entrenador.
+                await User.updateTrainer(data.id, trainerId);
+                console.log(`🔗 Usuario ${user.email} vinculado automáticamente al Store/Entrenador ${trainerId}`);
+            }
+            // --- FIN NUEVA LÓGICA ---
+
+            // 5. GENERAR TOKEN Y RESPONDER
             const token = jwt.sign({ id: data.id, email: user.email }, keys.secretOrKey, {
                 // expiresIn: 86400 // 1 dia
             });
@@ -353,8 +351,6 @@ module.exports = {
             });
         }
     },
-
-
     async registerWithOutImage(req, res, next) {
         try {
 
