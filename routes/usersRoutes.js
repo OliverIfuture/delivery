@@ -94,6 +94,12 @@ module.exports = (app, upload) => {
         { name: 'imageCard', maxCount: 1 } // <-- ¡NUEVO CAMPO AÑADIDO!
     ]), UsersController.createWithImageUserAndCompany);
 
+    router.get(
+    'api/users/invitations/get/:id', 
+    passport.authenticate('jwt', { session: false }), // Protegemos la ruta
+    UsersController.getInvitations
+);
+
     app.get(
         '/api/users/generateAccessQr', 
         passport.authenticate('jwt', { session: false }), 
