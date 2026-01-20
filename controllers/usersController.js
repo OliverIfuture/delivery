@@ -2368,4 +2368,54 @@ module.exports = {
         }
     },
 
+    async updateTrainerProfile(req, res, next) {
+        try {
+            // 1. Parsear los datos de texto
+            const user = JSON.parse(req.body.user);
+            const company = JSON.parse(req.body.company);
+            
+            // 2. Manejo de Archivos (req.files es un objeto gracias a upload.fields)
+            const files = req.files;
+
+            // A. Foto de Perfil (campo 'image')
+            if (files && files['image'] && files['image'].length > 0) {
+                const path = `user_image_${Date.now()}`; // Nombre único
+                const url = await storage(files['image'][0], path);
+                if (url) user.image = url; // Actualizamos la URL en el objeto user
+            }
+
+            // B. Logo de Empresa (campo 'imageLogo')
+            if (files && files['imageLogo'] && files['imageLogo'].length > 0) {
+                const path = `company_logo_${Date.now()}`;
+                const url = await storage(files['imageLogo'][0], path);
+                if (url) company.logo = url; // Actualizamos la URL en el objeto company
+            }
+
+            // C. Portada de Empresa (campo 'imageCard')
+            if (files && files['imageCard'] && files['imageCard'].length > 0) {
+                const path = `company_card_${Date.now()}`;
+                const url = await storage(files['imageCard'][0], path);
+                // NOTA: Asegúrate si en tu BD se llama 'cardImage' o 'company_card'
+                // En el objeto Company de Flutter suele ser 'cardImage'
+                if (url) company.cardImage = url; 
+            }
+
+            // 3. Llamada al Modelo (Transacción)
+            await User.updateTrainerProfileData(user, company);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Perfil y configuración actualizados correctamente'
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al actualizar el perfil',
+                error: error
+            });
+        }
+    },
+
 };
