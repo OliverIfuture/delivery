@@ -105,5 +105,15 @@ module.exports = (app, upload) => {
     app.post('/api/users/send-otp', UsersController.sendOtp);
     app.post('/api/users/verify-otp', UsersController.verifyOtp);
     app.put('/api/users/reset-password', UsersController.resetPassword);
+
+    app.put('/api/users/update_trainer_profile', 
+        upload.fields([
+            { name: 'image', maxCount: 1 },     // Foto de perfil
+            { name: 'imageLogo', maxCount: 1 }, // Logo
+            { name: 'imageCard', maxCount: 1 }  // Portada
+        ]), 
+        passport.authenticate('jwt', { session: false }), 
+        UsersController.updateTrainerProfile
+    );
 }   
 
