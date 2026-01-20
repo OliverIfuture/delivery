@@ -1916,13 +1916,11 @@ User.updateTrainerProfileData = (user, company) => {
                 description = $2,
                 logo = $3,
                 image_card = $4,  -- Verifica si en tu BD es 'company_card' o 'card_image'
-                deliveryCost = $5,
-                affiliateCommissionRate = $6,
-                cashaccept = $7,
-                creditcardaccepted = $8,
-                available = $9,
-                updated_at = $10
-            WHERE id = $11
+                cashaccept = $5,
+                creditcardaccepted = $6,
+                available = $7,
+                updated_at = $8
+            WHERE id = $9
         `;
 
         await t.none(sqlCompany, [
@@ -1930,8 +1928,6 @@ User.updateTrainerProfileData = (user, company) => {
             company.description,
             company.logo,
             company.cardImage, // En el objeto JSON suele venir como cardImage
-            company.deliveryCost,
-            company.affiliateCommissionRate,
             company.cashPayment, // Booleano true/false
             company.cardPayment, // Booleano true/false
             company.available,   // String 'true'/'false' o Booleano (según tu DB)
