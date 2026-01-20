@@ -1910,7 +1910,7 @@ User.updateTrainerProfileData = (user, company) => {
         // --- QUERY 2: Actualizar Compañía ---
         // Basado en los campos que enviaste: cashPayment, cardPayment, available (string 'true'/'false' en tus datos), etc.
         const sqlCompany = `
-            UPDATE companies
+            UPDATE company
             SET 
                 name = $1,
                 description = $2,
