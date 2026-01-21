@@ -290,18 +290,16 @@ async registerWithImage(req, res, next) {
             const user = JSON.parse(req.body.user);
             
             // ---------------------------------------------------------
-            // 1. DETECTAR SI FLUTTER NOS MANDÓ EL ID DEL ENTRENADOR
+            // 1. DETECTAR ID DEL ENTRENADOR (LIMPIO)
             // ---------------------------------------------------------
-            // El 'ref=1' del enlace mágico debe llegar aquí como user.mi_store o user.id_entrenador
+            // Solo miramos id_entrenador. Ignoramos mi_store para evitar cruces.
             let trainerIdFromLink = null;
             
-            if (user.mi_store) {
-                trainerIdFromLink = user.mi_store;
-            } else if (user.id_entrenador) {
+            if (user.id_entrenador) {
                 trainerIdFromLink = user.id_entrenador;
             }
 
-            // 2. MANEJO DE IMAGEN (Tu código original)
+            // 2. MANEJO DE IMAGEN
             const files = req.files;
             if (files.length > 0) {
                 const path = `image_${Date.now()}`;
@@ -312,32 +310,40 @@ async registerWithImage(req, res, next) {
             }
 
             // 3. CREAR USUARIO
-            // Si trajimos ID del link, lo usamos directo. Si no, mandamos null.
+            // Pasamos el trainerIdFromLink (que ahora solo viene de id_entrenador)
             const data = await User.create(user, trainerIdFromLink);
 
             // 4. ASIGNAR ROL
             await Rol.create(data.id, 3);
 
-
             // ---------------------------------------------------------
-            // 5. LÓGICA DE RESPALDO (INVITACIONES POR EMAIL)
+            // 5. LÓGICA DE INVITACIONES / REFERIDOS
             // ---------------------------------------------------------
-            // Solo si NO vino un ID del link, buscamos si hay invitación por correo
+            
             if (!trainerIdFromLink) {
-                
+                // CASO A: Registro sin enlace. Buscamos invitación por email.
                 const trainerIdFromEmail = await User.checkAndClaimInvitation(user.email, data.id);
 
                 if (trainerIdFromEmail) {
-                    // Si encontramos invitación por email, actualizamos al usuario
                     await User.updateTrainer(data.id, trainerIdFromEmail);
                     console.log(`🔗 Usuario ${user.email} vinculado por EMAIL al Entrenador ${trainerIdFromEmail}`);
                     
-                    // Actualizamos el objeto data para devolverlo correcto al frontend
-                    // (Opcional, pero recomendado para que la UI se actualice)
+                    // Actualizamos data para el response
+                    // Nota: Si tu DB usa la columna 'mi_store' internamente para guardar el ID, 
+                    // aquí se actualiza solo para visualización, pero la lógica sigue siendo de entrenador.
                     data.mi_store = trainerIdFromEmail; 
                 }
             } else {
-                 console.log(`🔗 Usuario ${user.email} vinculado por ENLACE DIRECTO (Ref) al Entrenador ${trainerIdFromLink}`);
+                // CASO B: Registro por Enlace Mágico.
+                console.log(`🔗 Usuario ${user.email} vinculado por ENLACE DIRECTO (id_entrenador) al ID ${trainerIdFromLink}`);
+                
+                // Creamos el registro en la tabla de invitaciones para que cuente en las métricas
+                await User.createOrUpdateInvitation(
+                    user.email, 
+                    trainerIdFromLink, 
+                    data.id, 
+                    `${user.name} ${user.lastname}`
+                );
             }
 
             // 6. GENERAR TOKEN
@@ -350,13 +356,14 @@ async registerWithImage(req, res, next) {
                 email: user.email,
                 phone: user.phone,
                 image: user.image,
-                mi_store: data.mi_store || trainerIdFromLink, // Devolvemos el entrenador asignado
+                // Devolvemos el ID asignado (sea por link o por email)
+                id_entrenador: data.mi_store || trainerIdFromLink, 
                 session_token: `JWT ${token}`
             };
 
             return res.status(201).json({
                 success: true,
-                message: 'El registro se realizo correctamente',
+                message: 'El registro se realizó correctamente',
                 data: userData
             });
 
