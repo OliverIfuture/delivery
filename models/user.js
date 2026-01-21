@@ -485,6 +485,45 @@ User.createticket = (id) => {
     return db.oneOrNone(sql, id);
 }
 
+// En models/user.js
+
+User.createOrUpdateInvitation = async (email, trainerId, clientId, fullName) => {
+    // 1. Verificar si ya existe alguna invitación (pendiente o rechazada) para este email
+    const findSql = `SELECT id FROM invitations WHERE email = $1 LIMIT 1`;
+    const existingInvite = await db.oneOrNone(findSql, [email]);
+
+    if (existingInvite) {
+        // A) Si existe: La actualizamos a 'registered' y vinculamos el cliente
+        const updateSql = `
+            UPDATE invitations
+            SET status = 'registered', 
+                client_id = $2, 
+                store_id = $3, -- Nos aseguramos que quede con el ID del link
+                updated_at = NOW()
+            WHERE id = $1
+        `;
+        await db.none(updateSql, [existingInvite.id, clientId, trainerId]);
+        console.log(`✅ Invitación existente actualizada a REGISTERED para: ${email}`);
+    } else {
+        // B) Si NO existe: Creamos una nueva directamente como 'registered'
+        // Esto sirve para que el entrenador vea que este usuario llegó "de la nada" (por su link)
+        const insertSql = `
+            INSERT INTO invitations (
+                store_id, 
+                email, 
+                name, 
+                status, 
+                client_id, 
+                created_at, 
+                updated_at
+            )
+            VALUES ($1, $2, $3, 'registered', $4, NOW(), NOW())
+        `;
+        await db.none(insertSql, [trainerId, email, fullName, clientId]);
+        console.log(`✅ Invitación automática (Referral) creada para: ${email}`);
+    }
+}
+
 User.create = (user, id_entrenador) => { 
 
     // 1. Encriptar contraseña
