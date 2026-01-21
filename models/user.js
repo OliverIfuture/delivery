@@ -1001,7 +1001,7 @@ User.createWithImageUserAndCompany = (user, company) => {
     // --- LÓGICA DE TRIAL GRATUITO ---
     // Calcular la fecha de expiración: Hoy + 7 días
     const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 20);
     
     // Asignamos el estado de activación
     company.state = 'ACTIVE'; // Se asume que el estado de la compañía debe ser activo para el trial.
