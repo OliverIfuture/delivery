@@ -1768,14 +1768,15 @@ User.getAvailableTrainers = () => {
     return db.manyOrNone(sql);
 };
 
-User.updateTrainer = (id_user, id_trainer) => {
+User.updateTrainer = (userId, trainerId) => {
+    // Ajusta 'mi_store' o 'id_entrenador' según como se llame la columna en tu tabla 'users'
     const sql = `
-		UPDATE users
+        UPDATE users
         SET id_entrenador = $2, updated_at = NOW()
         WHERE id = $1
     `;
-    return db.none(sql, [id_trainer, new Date(), id_user]);
-};
+    return db.none(sql, [userId, trainerId]);
+};;
 
 User.transferClientData = (id_client, id_company) => {
     // Usamos una transacción para garantizar que ambas actualizaciones se ejecuten correctamente
