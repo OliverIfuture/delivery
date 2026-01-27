@@ -1,6 +1,6 @@
 const NutritionLog = require('../models/nutritionLog');
 const NutritionGoals = require('../models/nutritionGoals');
-const db = require('../config/config');
+const db = require('../config/config.js');
 
 // --- 1. CONFIGURACIÓN DE IA (LIBRERÍA ESTABLE) ---
 // Usamos @google/generative-ai porque es la que soporta BLOCK_NONE correctamente

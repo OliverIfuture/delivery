@@ -2,7 +2,7 @@ const Diet = require('../models/diet');
 // IMPORTS DE LA LIBRERÍA ESTABLE (NO @google/genai)
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
 const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const db = require('../config/config');
+const db = require('../config/config.js');
 const storage = require('../utils/cloud_storage');
 /**
  * FUNCIÓN INTERNA: Procesa Gemini y actualiza la BD (Background)
