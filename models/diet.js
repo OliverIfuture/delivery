@@ -87,5 +87,47 @@ Diet.findActiveByClient = (id_client) => {
     return db.oneOrNone(sql, id_client); 
 };
 
+Diet.create = (data) => {
+    const sql = `
+        INSERT INTO ai_generated_diets(
+            id_client,
+            physiology_data,
+            ai_analysis_result,
+            created_at,
+            updated_at
+        )
+        VALUES($1, $2, $3, $4, $5) RETURNING id
+    `;
+    return db.one(sql, [
+        data.id_client,
+        data.physiology_data,   // Se guarda como JSONB
+        data.ai_analysis_result,// Se guarda como JSONB
+        new Date(),
+        new Date()
+    ]);
+};
+
+/**
+ * Busca el análisis de IA más reciente de un cliente
+ */
+Diet.findLatestByClient = (id_client) => {
+    const sql = `
+        SELECT
+            id,
+            id_client,
+            physiology_data,
+            ai_analysis_result,
+            created_at
+        FROM
+            ai_generated_diets
+        WHERE
+            id_client = $1
+        ORDER BY
+            created_at DESC
+        LIMIT 1
+    `;
+    return db.oneOrNone(sql, id_client);
+};
+
 
 module.exports = Diet;
