@@ -129,11 +129,25 @@ module.exports = {
      */
     async assign(req, res, next) {
         try {
-            const diet = req.body; // El objeto JSON completo
-            // Asegurarnos que el id_company viene del token (más seguro)
+            const diet = req.body;
+
+            // 1. ASIGNAR ID DEL ENTRENADOR (Desde el token)
             diet.id_company = req.user.mi_store;
 
+            // 🔍 DEBUG: IMPRIMIR LO QUE VAMOS A GUARDAR
+            console.log("📦 [DEBUG] Intentando insertar Dieta:");
+            console.log("   -> id_client:", diet.id_client); // ¿Esto imprime un número o undefined?
+            console.log("   -> id_company:", diet.id_company);
+            console.log("   -> file_url:", diet.file_url);
+
+            // Validación manual antes de llamar al modelo
+            if (!diet.id_client) {
+                return res.status(400).json({ success: false, message: 'Falta el id_client' });
+            }
+
             const data = await Diet.create(diet);
+
+            console.log("✅ [DEBUG] ID Generado en BD:", data.id);
 
             return res.status(201).json({
                 success: true,
@@ -142,11 +156,11 @@ module.exports = {
             });
         }
         catch (error) {
-            console.log(`Error en dietsController.assign: ${error}`);
+            console.log(`❌ Error en dietsController.assign: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error al asignar la dieta',
-                error: error
+                error: error.message || error
             });
         }
     },
