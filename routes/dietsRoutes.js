@@ -41,10 +41,10 @@ module.exports = (app) => {
     // Consultar estado (Polling)
     app.get('/api/diets/status/:id', passport.authenticate('jwt', { session: false }), dietsController.checkStatus);
 
-    app.post('/api/diets/generate-data', passport.authenticate('jwt', { session: false }), aiDietController.generateDietJSON_NoImages);
+    app.post('/api/diets/generate-data', passport.authenticate('jwt', { session: false }), dietsController.generateDietJSON_NoImages);
 
     // 2. Subir PDF Final (Sigue igual)
-    app.post('/api/diets/upload-pdf', passport.authenticate('jwt', { session: false }), upload.single('pdf'), aiDietController.uploadDietPdf);
+    app.post('/api/diets/upload-pdf', passport.authenticate('jwt', { session: false }), upload.single('pdf'), dietsController.uploadDietPdf);
 }
 
 
