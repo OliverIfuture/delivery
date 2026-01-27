@@ -167,12 +167,12 @@ Devuelve SOLO JSON:
         // -----------------------------
         // 7. Guardar BD
         // -----------------------------
-        await AIDiet.updateResult(analysisId, finalResult);
+        await Diet.updateResult(analysisId, finalResult);
         console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
 
     } catch (error) {
         console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
-        await AIDiet.updateError(analysisId);
+        await Diet.updateError(analysisId);
     }
 };
 
