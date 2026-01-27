@@ -668,12 +668,12 @@ async generateDietJSON(req, res, next) {
 
 async generateDietJSON_NoImages(req, res, next) {
         try {
-            const physiologyData = req.body; // Recibimos el objeto JSON directo
+            const physiologyData = req.body; 
             const id_client = req.user.id;
 
             console.log(`[AI-DIET] Calculando dieta para cliente ${id_client}...`);
 
-            // --- PROMPT MATEMÁTICO PROFESIONAL ---
+            // 1. PROMPT MATEMÁTICO (Igual que antes, muy robusto)
             const promptText = `
             ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO EXPERTO (Nivel PhD).
             
@@ -684,68 +684,84 @@ async generateDietJSON_NoImages(req, res, next) {
             1. Calcula el TMB (Tasa Metabólica Basal) usando la ecuación de Mifflin-St Jeor.
             2. Calcula el GET (Gasto Energético Total) multiplicando por el factor de actividad correcto.
             3. Ajusta las calorías según el 'goal' (Objetivo):
-               - Perder peso: Resta entre 300 y 500 kcal (Déficit agresivo pero seguro).
-               - Ganar músculo: Suma entre 200 y 300 kcal (Superávit controlado).
+               - Perder peso: Resta entre 300 y 500 kcal.
+               - Ganar músculo: Suma entre 200 y 300 kcal.
                - Mantener: Mantén el GET.
             
             FORMATO DE SALIDA (JSON ESTRICTO):
             Responde SOLO con un JSON válido. Sin markdown. Estructura:
             {
               "analysis": {
-                "detected_somatotype": "Estimación basada en peso/altura (Ej: Ecto-Mesomorfo)",
+                "detected_somatotype": "Estimación basada en peso/altura",
                 "caloric_needs": { 
                     "bmr": 0000, 
                     "tdee_activity_factor": 0.0,
                     "tdee_maintenance": 0000,
                     "goal_calories": 0000, 
                     "goal_type": "Déficit/Superávit/Mantenimiento",
-                    "math_explanation": "Breve texto explicando el cálculo (Ej: Mifflin: 1800 * 1.55 act - 500 déficit)"
+                    "math_explanation": "Breve explicación del cálculo"
                 },
                 "macros": { 
-                    "protein": "000g (Calcula 1.8g a 2.2g por kg peso objetivo)", 
-                    "carbs": "000g (Resto calórico)", 
-                    "fats": "000g (0.8g a 1g por kg peso)" 
+                    "protein": "000g", 
+                    "carbs": "000g", 
+                    "fats": "000g" 
                 }
               },
               "diet_plan": {
-                "overview": "Resumen de la estrategia nutricional.",
+                "overview": "Resumen de la estrategia.",
                 "daily_menu": [
                     { 
                       "meal_name": "Desayuno", 
-                      "options": [ { "food": "Nombre del plato detallado", "calories": 000, "macros": "P:00g C:00g G:00g" } ] 
+                      "options": [ { "food": "Nombre del plato", "calories": 000, "macros": "P:00g C:00g G:00g" } ] 
                     },
-                    { 
-                      "meal_name": "Almuerzo", "options": [...] 
-                    },
-                    { 
-                      "meal_name": "Cena", "options": [...] 
-                    },
-                    { 
-                      "meal_name": "Snack", "options": [...] 
-                    }
+                    { "meal_name": "Almuerzo", "options": [] },
+                    { "meal_name": "Cena", "options": [] },
+                    { "meal_name": "Snack", "options": [] }
                 ],
-                "recommendations": ["Tip 1", "Tip 2", "Suplementación sugerida"]
+                "recommendations": ["Tip 1", "Tip 2"]
               }
             }
             `;
 
-            // Configuración del modelo
-            const model = aiClient.getGenerativeModel({ model: "gemini-2.5-flash" });
+            // 2. LLAMADA A LA API (Sintaxis @google/genai)
+            // Aquí NO usamos .getGenerativeModel, usamos .models.generateContent
+            const response = await aiClient.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text: promptText }]
+                    }
+                ],
+                // Opcional: Forzar JSON si el modelo lo soporta, o confiar en el prompt
+                config: {
+                    responseMimeType: 'application/json' 
+                }
+            });
 
-            const result = await model.generateContent(promptText);
-            const response = await result.response;
-            const text = response.text();
+            // 3. VALIDACIÓN DE RESPUESTA
+            if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
+                 throw new Error("La IA no generó respuesta o fue bloqueada.");
+            }
 
-            if (!text) throw new Error("La IA no generó respuesta.");
+            // 4. PARSEO (Estructura específica de @google/genai)
+            let text = response.response.candidates[0].content.parts[0].text;
+            
+            // Limpieza extra por si acaso manda markdown
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            
+            let jsonResult;
+            try {
+                jsonResult = JSON.parse(text);
+            } catch (e) {
+                console.error("Error parseando JSON:", text);
+                throw new Error("La IA no devolvió un JSON válido.");
+            }
 
-            // Limpieza JSON
-            const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const jsonResult = JSON.parse(cleanText);
-
-            // Guardar historial en BD (Opcional, pero recomendado)
+            // 5. GUARDAR HISTORIAL PENDIENTE (Opcional)
             await Diet.createPending(id_client, physiologyData); 
-            // Nota: Podrías actualizarlo a 'completed' inmediatamente aquí si quieres guardar el resultado en BD también.
 
+            // 6. RESPONDER
             return res.status(200).json({
                 success: true,
                 message: 'Cálculos nutricionales completados.',
