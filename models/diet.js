@@ -129,5 +129,49 @@ Diet.findLatestByClient = (id_client) => {
     return db.oneOrNone(sql, id_client);
 };
 
+// 1. Crear registro PENDIENTE (Al recibir las fotos)
+Diet.createPending = (id_client, physiology_data) => {
+    const sql = `
+        INSERT INTO ai_generated_diets(
+            id_client,
+            physiology_data,
+            status,
+            created_at,
+            updated_at
+        )
+        VALUES($1, $2, 'pending', $3, $4) RETURNING id
+    `;
+    return db.one(sql, [id_client, physiology_data, new Date(), new Date()]);
+};
+
+// 2. Actualizar con el RESULTADO (Cuando Gemini termina)
+Diet.updateResult = (id, jsonResult) => {
+    const sql = `
+        UPDATE ai_generated_diets
+        SET ai_analysis_result = $2,
+            status = 'completed',
+            updated_at = $3
+        WHERE id = $1
+    `;
+    return db.none(sql, [id, jsonResult, new Date()]);
+};
+
+// 3. Marcar como ERROR (Si Gemini falla)
+Diet.updateError = (id) => {
+    const sql = `
+        UPDATE ai_generated_diets
+        SET status = 'failed',
+            updated_at = $2
+        WHERE id = $1
+    `;
+    return db.none(sql, [id, new Date()]);
+};
+
+// 4. Consultar Estado (Polling)
+Diet.findById = (id) => {
+    const sql = `SELECT * FROM ai_generated_diets WHERE id = $1`;
+    return db.oneOrNone(sql, id);
+};
+
 
 module.exports = Diet;
