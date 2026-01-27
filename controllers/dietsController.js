@@ -257,9 +257,78 @@ async generateDietJSON(req, res, next) {
             const imageParts = files.map(file => ({
                 inlineData: { mimeType: file.mimetype, data: file.buffer.toString("base64") }
             }));
-
-            // 2. Prompt (El mismo que ya tenías)
-            const promptText = `ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO... (Tu prompt maestro) ... JSON`;
+            const promptText = `
+            ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO DE ÉLITE Y ANTROPOMETRISTA NIVEL ISAK 3.
+            
+            TIENES 2 FUENTES DE INFORMACIÓN:
+            A) DATOS REPORTADOS POR EL CLIENTE (JSON):
+            ${physiologyStr}
+            
+            B) EVIDENCIA VISUAL (3 FOTOS ADJUNTAS):
+            Analiza la estructura ósea, inserciones musculares, acumulación de grasa y postura.
+            
+            TU OBJETIVO:
+            Generar un Plan Nutricional preciso. 
+            IMPORTANTE: Si los datos del cliente (ej. "Soy muy activo") contradicen la evidencia visual (ej. "Alto porcentaje de grasa"), PRIORIZA TU ANÁLISIS VISUAL para ajustar las calorías y no sobrealimentarlo.
+            
+            FORMATO DE SALIDA (ESTRICTAMENTE JSON):
+            No incluyas texto introductorio ni markdown (\`\`\`json). Solo el objeto JSON crudo con esta estructura exacta:
+            
+            {
+              "analysis": {
+                "detected_somatotype": "Ej: Endomorfo-Mesomorfo (Predominancia ósea ancha)",
+                "estimated_body_fat": "Ej: 18-22% (Visualmente)",
+                "muscle_mass_assessment": "Bajo/Medio/Alto",
+                "visual_observations": "Ej: Hombros caídos, acumulación de grasa en zona abdominal (androide).",
+                "caloric_needs": {
+                    "bmr": 0000,
+                    "tdee_adjusted": 0000,
+                    "goal_calories": 0000,
+                    "goal_type": "Déficit / Superávit / Mantenimiento"
+                },
+                "macros": {
+                    "protein": "000g",
+                    "carbs": "000g",
+                    "fats": "000g"
+                }
+              },
+              "diet_plan": {
+                "overview": "Resumen de 1 linea de la estrategia.",
+                "daily_menu": [
+                    {
+                        "meal_name": "Desayuno",
+                        "options": [
+                            {"food": "Ej: 3 Huevos revueltos con espinacas", "calories": 250},
+                            {"food": "Ej: 1 Scoop de Whey Protein con avena", "calories": 250}
+                        ]
+                    },
+                    {
+                        "meal_name": "Almuerzo",
+                        "options": [
+                            {"food": "Ej: 150g Pechuga de pollo + 100g Arroz", "calories": 400}
+                        ]
+                    },
+                    {
+                        "meal_name": "Cena",
+                        "options": [
+                            {"food": "Ej: Ensalada de atún con aguacate", "calories": 300}
+                        ]
+                    },
+                    {
+                        "meal_name": "Snack/Pre-entreno",
+                        "options": [
+                             {"food": "Ej: Manzana verde y almendras", "calories": 150}
+                        ]
+                    }
+                ],
+                "recommendations": [
+                    "Recomendación breve 1",
+                    "Recomendación breve 2",
+                    "Suplemento sugerido (si aplica)"
+                ]
+              }
+            }
+            `;
 
             // 3. Llamar a Gemini
             const response = await aiClient.models.generateContent({
@@ -295,10 +364,14 @@ async generateDietJSON(req, res, next) {
     /**
      * PASO 2: Recibe el PDF generado por Flutter -> Sube a Firebase -> Actualiza User
      */
-    async uploadDietPdf(req, res, next) {
+  async uploadDietPdf(req, res, next) {
         try {
-            const file = req.file; // El PDF que viene de Flutter
+            const file = req.file; // PDF desde Flutter
             const id_client = req.user.id;
+
+            // --- CAMBIO SOLICITADO ---
+            // Definimos id_company como null explícitamente
+            const id_company = null; 
 
             if (!file) {
                 return res.status(400).json({ success: false, message: 'No se recibió el PDF.' });
@@ -306,19 +379,30 @@ async generateDietJSON(req, res, next) {
 
             console.log(`[STORAGE] Subiendo PDF final del cliente ${id_client}...`);
 
-            // 1. Subir a Firebase (usando tu utilidad existente)
+            // 1. Subir a Firebase
             const pathImage = `diet_files/ai_plan_${Date.now()}_${id_client}.pdf`;
             const pdfUrl = await storage(file, pathImage);
 
             if (pdfUrl) {
-                // 2. Actualizar la URL en la tabla de Usuarios
-                await User.updateDietUrl(id_client, pdfUrl);
+                
+                // 2. CREAR REGISTRO EN LA TABLA DIETS
+                const newDiet = {
+                    id_company: id_company, // Se enviará null a la BD
+                    id_client: id_client,
+                    file_url: pdfUrl,
+                    file_name: file.originalname || `Plan_IA_${Date.now()}.pdf`
+                };
+
+                // Llamamos a tu modelo Diet.create (el que usa INSERT INTO diets...)
+                const data = await Diet.create(newDiet);
 
                 return res.status(201).json({
                     success: true,
-                    message: 'Plan guardado y vinculado exitosamente.',
+                    message: 'Plan guardado exitosamente en el historial.',
+                    data: data, // ID de la nueva dieta
                     url: pdfUrl
                 });
+
             } else {
                 throw new Error('Falló la subida a Firebase');
             }
