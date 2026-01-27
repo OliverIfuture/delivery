@@ -1,21 +1,21 @@
 const NutritionLog = require('../models/nutritionLog');
 const NutritionGoals = require('../models/nutritionGoals');
-const db = require('../config/config'); // Necesario para deleteLog si usas db.none
+const db = require('../config/config');
 
-// --- 1. CONFIGURACIÓN DE IA (ESTILO NUEVO SDK) ---
-const { GoogleGenAI } = require("@google/genai");
-const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-// -------------------------------------------------
-
+// --- 1. CONFIGURACIÓN DE IA (LIBRERÍA ESTABLE) ---
+// Usamos @google/generative-ai porque es la que soporta BLOCK_NONE correctamente
+const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
+const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// ------------------------
 module.exports = {
 
     async logFood(req, res, next) {
         try {
             const logData = req.body;
-            logData.id_client = req.user.id; 
-            
+            logData.id_client = req.user.id;
+
             if (!logData.product_name || logData.calories === undefined || logData.calories === null) {
-                 return res.status(400).json({success: false, message: 'Datos incompletos: Faltan calorías o nombre.'});
+                return res.status(400).json({ success: false, message: 'Datos incompletos: Faltan calorías o nombre.' });
             }
 
             const data = await NutritionLog.create(logData);
@@ -42,7 +42,7 @@ module.exports = {
             return res.status(200).json(data);
         } catch (error) {
             console.log(`Error: ${error}`);
-            return res.status(501).json({success: false, error: error});
+            return res.status(501).json({ success: false, error: error });
         }
     },
 
@@ -82,52 +82,52 @@ module.exports = {
     },
 
     // --- FUNCIÓN ACTUALIZADA CON @google/genai ---
-   // --- FUNCIÓN ANALYZE MEAL AI (CORREGIDA MIME TYPE) ---
+    // --- FUNCIÓN ANALYZE MEAL AI (CORREGIDA MIME TYPE) ---
     async analyzeMealAI(req, res, next) {
         try {
             console.log('🚀 [START] analyzeMealAI request received');
-            
-            const file = req.file; 
-            const { weight, description } = req.body; 
 
-            console.log('📦 Datos recibidos:', { 
-                weight, 
-                description, 
-                fileRecibido: file ? 'Sí' : 'No',
-                mimetype: file ? file.mimetype : 'N/A' // Aquí veías 'application/octet-stream'
-            });
+            const file = req.file;
+            const { weight, description } = req.body;
 
             if (!file) {
                 return res.status(400).json({ success: false, message: 'Falta la foto del plato.' });
             }
 
-            // --- CORRECCIÓN CRÍTICA DE MIME TYPE ---
-            // Gemini falla si recibe 'application/octet-stream'.
-            // Como sabemos que es una foto de celular, forzamos a 'image/jpeg' si es genérico.
+            // 1. CORRECCIÓN DE MIME TYPE
             let mimeTypeToSend = file.mimetype;
             if (mimeTypeToSend === 'application/octet-stream') {
-                console.log('⚠️ MIME type genérico detectado. Forzando a image/jpeg.');
                 mimeTypeToSend = 'image/jpeg';
             }
-            // ---------------------------------------
 
-            // Convertir buffer a base64
-            const base64Data = file.buffer.toString("base64");
+            // 2. PREPARAR MODELO CON SEGURIDAD DESACTIVADA
+            // Usamos gemini-1.5-flash porque es el estándar actual (2.5 a veces no existe en todas las regiones)
+            const model = aiClient.getGenerativeModel({
+                model: "gemini-1.5-flash",
+                safetySettings: [
+                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                ]
+            });
 
+            // 3. PROMPT EXACTO PARA JSON
             const promptText = `
-                Actúa como un nutricionista experto. Analiza la imagen de este plato de comida.
-                Datos del usuario:
-                - Peso aproximado total del plato: ${weight} gramos
-                - Descripción: ${description}
+                ACTÚA COMO UN NUTRICIONISTA EXPERTO DE APPS DE FITNESS.
+                Analiza la imagen de este plato.
+                
+                CONTEXTO:
+                - Peso total aprox: ${weight} gramos
+                - Descripción usuario: ${description}
 
-                Tareas:
-                1. Identifica los alimentos.
-                2. Calcula calorías y macros estimados para ese peso.
-                3. Genera un nombre corto.
-
-                IMPORTANTE: Responde SOLO con un JSON válido (sin markdown, sin explicaciones):
+                TAREA:
+                1. Identifica los alimentos visualmente.
+                2. Calcula macros aproximados para el peso dado.
+                
+                SALIDA (JSON ESTRICTO, SIN TEXTO ADICIONAL):
                 {
-                    "product_name": "Nombre del plato",
+                    "product_name": "Nombre corto del plato",
                     "calories": 0, 
                     "proteins": 0, 
                     "carbs": 0, 
@@ -136,38 +136,27 @@ module.exports = {
                 }
             `;
 
-            console.log(`🤖 [IA] Enviando imagen (${mimeTypeToSend}) a Gemini...`);
-            
-            // --- USO NUEVO DEL SDK (@google/genai) ---
-            const response = await aiClient.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [
-                    {
-                        parts: [
-                            { text: promptText },
-                            // Usamos la variable corregida 'mimeTypeToSend'
-                            { inlineData: { mimeType: mimeTypeToSend, data: base64Data } }
-                        ]
+            // 4. GENERAR CONTENIDO (Sintaxis Estable)
+            const result = await model.generateContent([
+                promptText,
+                {
+                    inlineData: {
+                        mimeType: mimeTypeToSend,
+                        data: file.buffer.toString("base64")
                     }
-                ]
-            });
-
-            // Extracción de texto basada en la estructura del nuevo SDK
-            let text;
-            if (response && response.candidates && response.candidates.length > 0) {
-                const firstCandidate = response.candidates[0];
-                if (firstCandidate.content && firstCandidate.content.parts && firstCandidate.content.parts.length > 0) {
-                    text = firstCandidate.content.parts[0].text;
                 }
-            }
+            ]);
 
-            console.log('🤖 [IA] Respuesta cruda recibida:', text);
+            const response = await result.response;
+            let text = response.text();
+
+            console.log('🤖 [IA] Respuesta cruda:', text);
 
             if (!text) throw new Error("IA sin respuesta de texto");
-            
-            // Limpieza de JSON
+
+            // 5. LIMPIEZA JSON
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            
+
             let analysis;
             try {
                 analysis = JSON.parse(text);
@@ -176,7 +165,7 @@ module.exports = {
                 throw new Error("La IA no devolvió un JSON válido.");
             }
 
-            console.log('✅ [SUCCESS] JSON parseado correctamente:', analysis);
+            console.log('✅ [SUCCESS] JSON procesado:', analysis);
 
             return res.status(200).json({
                 success: true,
@@ -184,11 +173,7 @@ module.exports = {
             });
 
         } catch (error) {
-            console.error("❌ [CRITICAL ERROR] analyzeMealAI:", error);
-            // Verificar si es error de la API de Google para dar más detalle
-            if (error.response) {
-                console.error("Detalle API Google:", JSON.stringify(error.response, null, 2));
-            }
+            console.error("❌ [ERROR] analyzeMealAI:", error);
             return res.status(501).json({ success: false, message: 'Error al analizar el plato', error: error.message });
         }
     },
@@ -196,22 +181,22 @@ module.exports = {
     async getWeeklyHistory(req, res, next) {
         try {
             const id_client = req.params.id_client;
-            
+
             // Llamamos al modelo
             const data = await NutritionLog.getWeeklyHistory(id_client);
-            
+
             // Retornamos la data tal cual (es una lista)
-            return res.status(200).json({ 
-                success: true, 
-                data: data 
+            return res.status(200).json({
+                success: true,
+                data: data
             });
-            
+
         } catch (error) {
             console.error('Error en getWeeklyHistory:', error);
-            return res.status(501).json({ 
-                success: false, 
-                message: 'Error al obtener historial', 
-                error: error 
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener historial',
+                error: error
             });
         }
     },
