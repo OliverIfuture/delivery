@@ -27,23 +27,19 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
     // -----------------------------
     // 1. Preparar imágenes
     // -----------------------------
-    const imageParts = files.map(file => {
-      const finalMimeType =
-        file.mimetype === 'application/octet-stream'
-          ? 'image/jpeg'
-          : file.mimetype;
+const imageParts = files.map(file => {
+  const mimeType =
+    file.mimetype === 'application/octet-stream'
+      ? 'image/jpeg'
+      : file.mimetype;
 
-      if (file.buffer.length > 4_000_000) {
-        throw new Error("Imagen demasiado grande para Gemini Vision");
-      }
-
-      return {
-        inlineData: {
-          mimeType: finalMimeType,
-          data: file.buffer.toString("base64")
-        }
-      };
-    });
+  return {
+    inline_data: {
+      mime_type: mimeType,
+      data: file.buffer.toString("base64")
+    }
+  };
+});
 
     // -----------------------------
     // 2. Prompt seguro
