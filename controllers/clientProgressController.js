@@ -1,9 +1,9 @@
 
-const axios = require('axios'); // <--- ¡TE FALTA ESTA LÍNEA!
+const axios = require('axios'); // <--- AGREGADO (Necesario para descargar fotos)
 const ClientProgress = require('../models/clientProgress.js');
-// Si no tienes un archivo de config separado, inicialízalo aquí:
-const { GoogleGenAI } = require("@google/genai");
-const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// USAMOS LA LIBRERÍA ESTABLE (La misma que en DietController)
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 module.exports = {
 
     /**
@@ -137,118 +137,77 @@ module.exports = {
 
     async analyzeProgressAI(req, res, next) {
         try {
-            // 1. VALIDACIÓN DE ENTRADA
+            // 1. VALIDACIÓN
             const { image_before, image_after } = req.body;
 
             if (!image_before || !image_after) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Faltan las URLs de las imágenes (image_before, image_after).'
+                    message: 'Faltan las URLs (image_before, image_after).'
                 });
             }
 
-            console.log(`[AI] Iniciando análisis para usuario...`);
+            console.log(`[AI] Iniciando análisis comparativo...`);
 
-            // 2. FUNCIÓN AUXILIAR PARA DESCARGAR Y OBTENER BASE64
+            // 2. DESCARGAR IMÁGENES (Helper interno)
             const getBase64FromUrl = async (url) => {
                 try {
-                    console.log(`[AI] Descargando: ${url.substring(0, 40)}...`);
                     const response = await axios.get(url, {
                         responseType: 'arraybuffer',
-                        headers: { 'User-Agent': 'Mozilla/5.0 (NodeJS Axios)' }
+                        headers: { 'User-Agent': 'NodeJS Axios' }
                     });
-
                     return {
                         mimeType: response.headers['content-type'] || 'image/jpeg',
                         data: Buffer.from(response.data).toString('base64')
                     };
                 } catch (error) {
-                    console.error(`❌ Error descargando imagen: ${url}`);
-                    throw new Error("No se pudo acceder a una de las imágenes.");
+                    console.error(`❌ Error descargando: ${url}`);
+                    throw new Error("No se pudo acceder a las imágenes.");
                 }
             };
 
-            // 3. DESCARGAR IMÁGENES EN PARALELO
             const [imgDataBefore, imgDataAfter] = await Promise.all([
                 getBase64FromUrl(image_before),
                 getBase64FromUrl(image_after)
             ]);
 
-            // 4. PROMPT MAESTRO
+            // 3. PROMPT
             const promptText = `
-                atúa como un Analista Físico Deportivo Experto de la app GlowUp+.
-                Tienes dos imágenes del mismo usuario: 1) ANTES, 2) AHORA.
+                Actúa como un Analista Físico Deportivo Experto.
+                Comparando la imagen 1 (ANTES) con la imagen 2 (AHORA):
 
-                Realiza un ANÁLISIS TÉCNICO COMPARATIVO de los cambios físicos visibles.
+                IDENTIFICA:
+                1. Hipertrofia: ¿Qué músculos se ven más grandes?
+                2. Definición: ¿Dónde hay menos grasa visible (abdomen, cortes)?
+                3. Postura: Mejoras estructurales.
 
-                TU OBJETIVO ES IDENTIFICAR:
-                1. Hipertrofia (Ganancia Muscular): ¿Qué grupos musculares se ven más llenos o grandes? (Hombros, pectorales, brazos, piernas).
-                2. Definición (Pérdida de Grasa): Busca cortes musculares visibles, vascularidad, reducción de cintura y mayor visibilidad del abdomen.
-                3. Postura y Estructura: Mejoras en la amplitud de espalda o simetría.
-
-                REGLAS DE RESPUESTA:
-                - ELIMINA el lenguaje motivacional vacío (ej: "¡Eres una inspiración!", "¡Sigue así!").
-                - Sé DIRECTO y TÉCNICO.
-                - Usa términos anatómicos (Deltoides, Pectoral mayor, Recto abdominal, Cuádriceps).
-                - Ejemplo de tono deseado: "Se observa una notable reducción de tejido adiposo en la zona abdominal, revelando mayor definición en el recto abdominal. A su vez, hay mayor redondez en los deltoides y separación en el cuádriceps."
+                REGLAS:
+                - Sé TÉCNICO y DIRECTO (Usa anatomía real).
+                - Nada de motivación vacía.
                 - Máximo 4 líneas.
             `;
 
-            // 5. LLAMADA A LA IA CON TU ESTRUCTURA SOLICITADA
-            // Aquí inyectamos el texto Y las dos imágenes en el array 'parts'
-            const response = await aiClient.models.generateContent({
-                model: 'gemini-2.5-flash', // Usamos 1.5-flash (el estándar actual)
-                contents: [
-                    {
-                        role: 'user',
-                        parts: [
-                            { text: promptText },
-                            {
-                                inlineData: {
-                                    mimeType: imgDataBefore.mimeType,
-                                    data: imgDataBefore.data
-                                }
-                            },
-                            {
-                                inlineData: {
-                                    mimeType: imgDataAfter.mimeType,
-                                    data: imgDataAfter.data
-                                }
-                            }
-                        ]
-                    }
-                ]
-            });
+            // 4. LLAMADA A LA API (SINTAXIS LIBRERÍA ESTABLE)
+            // Usamos 'gemini-1.5-flash' porque es la versión multimodal estable actual
+            const model = aiClient.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-            // 6. PROCESAR RESPUESTA (Adaptado a la estructura de Vertex/Raw)
-            let text = '';
+            const result = await model.generateContent([
+                promptText,
+                { inlineData: { mimeType: imgDataBefore.mimeType, data: imgDataBefore.data } },
+                { inlineData: { mimeType: imgDataAfter.mimeType, data: imgDataAfter.data } }
+            ]);
 
-            // Verificamos si response tiene candidates (estructura típica)
-            if (response && response.candidates && response.candidates.length > 0) {
-                const firstCandidate = response.candidates[0];
-                if (firstCandidate.content && firstCandidate.content.parts && firstCandidate.content.parts.length > 0) {
-                    text = firstCandidate.content.parts[0].text;
-                }
-            }
-            // Fallback por si la estructura varía ligeramente según el cliente
-            else if (response && response.text) {
-                text = response.text;
-            }
+            const response = await result.response;
+            const text = response.text();
 
-            if (!text) {
-                console.error("Respuesta completa IA:", JSON.stringify(response, null, 2));
-                throw new Error("La IA no generó respuesta de texto válida.");
-            }
+            if (!text) throw new Error("La IA no generó texto.");
 
-            // Limpieza
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            console.log(`[AI] Análisis completado.`);
 
-            console.log(`[AI] Análisis completado: ${text.substring(0, 30)}...`);
-
-            // 7. RESPONDER AL CLIENTE
+            // 5. RESPONDER
             return res.status(200).json({
                 success: true,
-                message: 'Análisis completado exitosamente',
+                message: 'Análisis completado',
                 data: text
             });
 
@@ -256,7 +215,7 @@ module.exports = {
             console.error("Error en analyzeProgressAI:", error);
             return res.status(501).json({
                 success: false,
-                message: 'Error al analizar las imágenes con IA',
+                message: 'Error al analizar imágenes',
                 error: error.message || error
             });
         }
