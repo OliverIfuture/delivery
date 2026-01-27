@@ -241,6 +241,107 @@ module.exports = {
     },
 
 
+    async startDietAnalysis(req, res, next) {
+        try {
+            const files = req.files;
+            const physiologyStr = req.body.physiology;
+            const id_client = req.user.id;
+
+            if (!files || files.length < 1) {
+                return res.status(400).json({ success: false, message: 'Faltan imágenes.' });
+            }
+
+            // 1. Guardar en BD como "pending" INMEDIATAMENTE
+            const newAnalysis = await AIDiet.createPending(id_client, JSON.parse(physiologyStr));
+            const analysisId = newAnalysis.id;
+
+            console.log(`[AI-POLLING] Iniciado análisis ID: ${analysisId} para cliente ${id_client}`);
+
+            // 2. RESPONDER AL CLIENTE YA (Para evitar timeout H12)
+            res.status(202).json({
+                success: true,
+                message: 'Analizando en segundo plano...',
+                data: { id: analysisId, status: 'pending' }
+            });
+
+            // 3. INICIAR PROCESO PESADO (Sin await para no bloquear la respuesta anterior)
+            // Llamamos a la función interna que hará el trabajo sucio
+            this.processGeminiBackground(analysisId, files, physiologyStr);
+
+        } catch (error) {
+            console.error(`Error inicio análisis: ${error}`);
+            // Si falla antes de responder, mandamos error 500 normal
+            if (!res.headersSent) {
+                 return res.status(501).json({ success: false, error: error.message });
+            }
+        }
+    },
+
+    /**
+     * FUNCIÓN INTERNA: Procesa Gemini y actualiza la BD (No es una ruta)
+     */
+    async processGeminiBackground(analysisId, files, physiologyStr) {
+        try {
+            console.log(`[BG-PROCESS] Ejecutando Gemini para ID ${analysisId}...`);
+            
+            // Preparar imágenes
+            const imageParts = files.map(file => ({
+                inlineData: { mimeType: file.mimetype, data: file.buffer.toString("base64") }
+            }));
+
+            // Prompt (El mismo de siempre)
+            const promptText = `ACTÚA COMO UN NUTRIÓLOGO... (Tu prompt completo)... JSON`;
+
+            // Llamada Lenta a Gemini
+            const response = await aiClient.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: [{ parts: [{ text: promptText }, ...imageParts] }]
+            });
+
+            // Validar respuesta
+            if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
+                 throw new Error("Sin candidatos válidos de IA");
+            }
+
+            // Parsear JSON
+            let text = response.response.candidates[0].content.parts[0].text;
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const jsonResult = JSON.parse(text);
+
+            // ACTUALIZAR BD: Marcar como 'completed' y guardar JSON
+            await AIDiet.updateResult(analysisId, jsonResult);
+            console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
+
+        } catch (error) {
+            console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
+            await AIDiet.updateError(analysisId);
+        }
+    },
+
+    /**
+     * PASO 2 (POLLING): El cliente pregunta "¿Ya terminó?"
+     */
+    async checkStatus(req, res, next) {
+        try {
+            const id = req.params.id;
+            const analysis = await AIDiet.findById(id);
+
+            if (!analysis) {
+                return res.status(404).json({ success: false, message: 'Análisis no encontrado' });
+            }
+
+            // Respondemos el estado actual
+            return res.status(200).json({
+                success: true,
+                status: analysis.status, // 'pending', 'completed', 'failed'
+                data: analysis.ai_analysis_result // Será null si está pending, o el JSON si está completed
+            });
+
+        } catch (error) {
+            return res.status(501).json({ success: false, error: error.message });
+        }
+    },
+
 async generateDietJSON(req, res, next) {
         try {
             const files = req.files;
