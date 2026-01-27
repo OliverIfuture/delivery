@@ -36,10 +36,10 @@ module.exports = (app) => {
         dietsController.getDietById
     );
 
-    app.post('/api/diets/start', passport.authenticate('jwt', { session: false }), upload.array('images', 3), aiDietController.startDietAnalysis);
+    app.post('/api/diets/start', passport.authenticate('jwt', { session: false }), upload.array('images', 3), dietsController.startDietAnalysis);
 
     // Consultar estado (Polling)
-    app.get('/api/diets/status/:id', passport.authenticate('jwt', { session: false }), aiDietController.checkStatus);
+    app.get('/api/diets/status/:id', passport.authenticate('jwt', { session: false }), dietsController.checkStatus);
 
     app.post('/api/diets/generate', passport.authenticate('jwt', { session: false }), upload.array('images', 3), dietsController.generateDietJSON);
 
