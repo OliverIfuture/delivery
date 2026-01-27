@@ -1976,6 +1976,7 @@ User.checkAndClaimInvitation = async (email, newUserId) => {
     return invitation.store_id;
 }
 
+
 User.updateTrainerProfileData = (user, company) => {
     return db.tx(async t => {
         
