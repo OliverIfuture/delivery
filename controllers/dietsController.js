@@ -332,9 +332,10 @@ async generateDietJSON(req, res, next) {
 
             // 3. Llamar a Gemini
             const response = await aiClient.models.generateContent({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-2.5-flash',
                 contents: [{ parts: [{ text: promptText }, ...imageParts] }]
             });
+            
 
             // 4. Limpiar JSON
             let text = response.response.candidates[0].content.parts[0].text;
