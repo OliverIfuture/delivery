@@ -252,7 +252,7 @@ module.exports = {
             }
 
             // 1. Guardar en BD como "pending" INMEDIATAMENTE
-            const newAnalysis = await AIDiet.createPending(id_client, JSON.parse(physiologyStr));
+            const newAnalysis = await Diet.createPending(id_client, JSON.parse(physiologyStr));
             const analysisId = newAnalysis.id;
 
             console.log(`[AI-POLLING] Iniciado análisis ID: ${analysisId} para cliente ${id_client}`);
@@ -309,12 +309,12 @@ module.exports = {
             const jsonResult = JSON.parse(text);
 
             // ACTUALIZAR BD: Marcar como 'completed' y guardar JSON
-            await AIDiet.updateResult(analysisId, jsonResult);
+            await Diet.updateResult(analysisId, jsonResult);
             console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
 
         } catch (error) {
             console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
-            await AIDiet.updateError(analysisId);
+            await Diet.updateError(analysisId);
         }
     },
 
@@ -324,7 +324,7 @@ module.exports = {
     async checkStatus(req, res, next) {
         try {
             const id = req.params.id;
-            const analysis = await AIDiet.findById(id);
+            const analysis = await Diet.findById(id);
 
             if (!analysis) {
                 return res.status(404).json({ success: false, message: 'Análisis no encontrado' });
