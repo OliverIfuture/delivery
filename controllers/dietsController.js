@@ -3,6 +3,113 @@ const { GoogleGenAI } = require("@google/genai");
 const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const db = require('../config/config');
 
+const processDietBackground = async (analysisId, physiologyData) => {
+    try {
+        console.log(`[BG-PROCESS] Iniciando Simulación AI para ID ${analysisId}...`);
+
+        // --- PROMPT "SAFE" (MODO SIMULACIÓN) ---
+        // Usamos el prompt de simulación para evitar bloqueos de "Medical Advice"
+        const promptText = `
+        CONTEXTO: ERES UN ASISTENTE DE IA PARA FINES EDUCATIVOS Y DE ENTRETENIMIENTO.
+        NO ERES UN MÉDICO. ESTO ES UNA SIMULACIÓN TEÓRICA DE UN CASO DE ESTUDIO.
+        
+        TAREA:
+        Genera un ejemplo de plan nutricional basado en el siguiente PERFIL DE CLIENTE FICTICIO (Simulado):
+        ${JSON.stringify(physiologyData)}
+        
+        INSTRUCCIONES DE LA SIMULACIÓN:
+        1. Realiza cálculos matemáticos estándar (Mifflin-St Jeor) para estimar TMB y GET teóricos.
+        2. Crea un menú de ejemplo basado en esos números.
+        3. El objetivo es meramente ilustrativo para mostrar cómo se vería una dieta.
+        
+        FORMATO DE SALIDA (JSON ESTRICTO):
+        Responde SOLO con un JSON válido. Sin markdown. Estructura:
+        {
+          "analysis": {
+            "detected_somatotype": "Estimación teórica",
+            "caloric_needs": { 
+                "bmr": 0000, 
+                "tdee_activity_factor": 0.0,
+                "tdee_maintenance": 0000,
+                "goal_calories": 0000, 
+                "goal_type": "Déficit/Superávit/Mantenimiento",
+                "math_explanation": "Explicación académica del cálculo"
+            },
+            "macros": { 
+                "protein": "000g", 
+                "carbs": "000g", 
+                "fats": "000g" 
+            }
+          },
+          "diet_plan": {
+            "overview": "Resumen de la estrategia simulada.",
+            "daily_menu": [
+                { 
+                  "meal_name": "Desayuno Ejemplo", 
+                  "options": [ { "food": "Descripción plato", "calories": 000, "macros": "P:00g C:00g G:00g" } ] 
+                },
+                { "meal_name": "Almuerzo Ejemplo", "options": [] },
+                { "meal_name": "Cena Ejemplo", "options": [] },
+                { "meal_name": "Snack Ejemplo", "options": [] }
+            ],
+            "recommendations": ["Tip educativo 1", "Tip educativo 2"]
+          }
+        }
+        `;
+
+        // Configuración de Seguridad para PERMITIR temas de salud/fitness
+        const safetySettings = [
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        ];
+
+        // LLAMADA A LA API
+        const response = await aiClient.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [
+                {
+                    role: "user",
+                    parts: [{ text: promptText }]
+                }
+            ],
+            config: {
+                responseMimeType: 'application/json',
+                safetySettings: safetySettings, 
+            }
+        });
+
+        // VALIDACIÓN
+        if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
+             if(response?.response?.promptFeedback) {
+                console.error("Bloqueo Gemini:", JSON.stringify(response.response.promptFeedback));
+             }
+             throw new Error("La IA no generó respuesta o fue bloqueada.");
+        }
+
+        // PARSEO
+        let text = response.response.candidates[0].content.parts[0].text;
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        let jsonResult;
+        try {
+            jsonResult = JSON.parse(text);
+        } catch (e) {
+            console.error("Error parseando JSON:", text);
+            throw new Error("La IA no devolvió un JSON válido.");
+        }
+
+        // ACTUALIZAR BD: COMPLETADO
+        await Diet.updateResult(analysisId, jsonResult);
+        console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
+
+    } catch (error) {
+        console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
+        await Diet.updateError(analysisId);
+    }
+};
+
 module.exports = {
 
     /**
@@ -328,7 +435,6 @@ async checkStatus(req, res, next) {
                 return res.status(404).json({ success: false, message: 'Análisis no encontrado' });
             }
 
-            // Respondemos el estado actual
             return res.status(200).json({
                 success: true,
                 data: {
@@ -341,7 +447,6 @@ async checkStatus(req, res, next) {
             return res.status(501).json({ success: false, error: error.message });
         }
     },
-
 async generateDietJSON(req, res, next) {
         try {
             const files = req.files;
@@ -472,118 +577,34 @@ async generateDietJSON(req, res, next) {
 /**
      * PASO 1: Generación de Dieta (MODO SIMULACIÓN PARA EVITAR BLOQUEOS)
      */
-    async generateDietJSON_NoImages(req, res, next) {
+   async generateDietJSON_NoImages(req, res, next) {
         try {
             const physiologyData = req.body; 
             const id_client = req.user.id;
 
-            console.log(`[AI-DIET] Iniciando simulación nutricional para cliente ${id_client}...`);
+            console.log(`[AI-DIET] Iniciando solicitud para cliente ${id_client}...`);
 
-            // --- PROMPT "SAFE" (MODO SIMULACIÓN) ---
-            const promptText = `
-            CONTEXTO: ERES UN ASISTENTE DE IA PARA FINES EDUCATIVOS Y DE ENTRETENIMIENTO.
-            NO ERES UN MÉDICO. ESTO ES UNA SIMULACIÓN TEÓRICA DE UN CASO DE ESTUDIO.
-            
-            TAREA:
-            Genera un ejemplo de plan nutricional basado en el siguiente PERFIL DE CLIENTE FICTICIO (Simulado):
-            ${JSON.stringify(physiologyData)}
-            
-            INSTRUCCIONES DE LA SIMULACIÓN:
-            1. Realiza cálculos matemáticos estándar (Mifflin-St Jeor) para estimar TMB y GET teóricos.
-            2. Crea un menú de ejemplo basado en esos números.
-            3. El objetivo es meramente ilustrativo para mostrar cómo se vería una dieta.
-            
-            FORMATO DE SALIDA (JSON ESTRICTO):
-            Responde SOLO con un JSON válido. Sin markdown. Estructura:
-            {
-              "analysis": {
-                "detected_somatotype": "Estimación teórica",
-                "caloric_needs": { 
-                    "bmr": 0000, 
-                    "tdee_activity_factor": 0.0,
-                    "tdee_maintenance": 0000,
-                    "goal_calories": 0000, 
-                    "goal_type": "Déficit/Superávit/Mantenimiento",
-                    "math_explanation": "Explicación académica del cálculo"
-                },
-                "macros": { 
-                    "protein": "000g", 
-                    "carbs": "000g", 
-                    "fats": "000g" 
-                }
-              },
-              "diet_plan": {
-                "overview": "Resumen de la estrategia simulada.",
-                "daily_menu": [
-                    { 
-                      "meal_name": "Desayuno Ejemplo", 
-                      "options": [ { "food": "Descripción plato", "calories": 000, "macros": "P:00g C:00g G:00g" } ] 
-                    },
-                    { "meal_name": "Almuerzo Ejemplo", "options": [] },
-                    { "meal_name": "Cena Ejemplo", "options": [] },
-                    { "meal_name": "Snack Ejemplo", "options": [] }
-                ],
-                "recommendations": ["Tip educativo 1", "Tip educativo 2"]
-              }
-            }
-            `;
+            // 1. Crear registro 'pending' en BD INMEDIATAMENTE
+            // Asumimos que Diet.createPending acepta (id_client, jsonData)
+            const newAnalysis = await Diet.createPending(id_client, physiologyData);
+            const analysisId = newAnalysis.id;
 
-            // Configuración de Seguridad para PERMITIR temas de salud/fitness
-            const safetySettings = [
-                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-                { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-                { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-            ];
-
-            // LLAMADA A LA API
-            const response = await aiClient.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [
-                    {
-                        role: "user",
-                        parts: [{ text: promptText }]
-                    }
-                ],
-                config: {
-                    responseMimeType: 'application/json',
-                    safetySettings: safetySettings, // <--- Importante: Desactivar filtros
-                }
-            });
-
-            // VALIDACIÓN
-            if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
-                 // Si falla, intentamos ver el feedback de bloqueo en los logs
-                 if(response?.response?.promptFeedback) {
-                    console.error("Bloqueo Gemini:", JSON.stringify(response.response.promptFeedback));
-                 }
-                 throw new Error("La IA no generó respuesta o fue bloqueada por políticas de seguridad.");
-            }
-
-            // PARSEO
-            let text = response.response.candidates[0].content.parts[0].text;
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            
-            let jsonResult;
-            try {
-                jsonResult = JSON.parse(text);
-            } catch (e) {
-                console.error("Error parseando JSON:", text);
-                throw new Error("La IA no devolvió un JSON válido.");
-            }
-
-            // GUARDAR HISTORIAL
-            await Diet.createPending(id_client, physiologyData); 
-
-            return res.status(200).json({
+            // 2. RESPONDER AL CLIENTE YA (Esto evita el Timeout H12 de Heroku)
+            res.status(202).json({
                 success: true,
-                message: 'Simulación nutricional completada.',
-                data: jsonResult
+                message: 'Simulación iniciada en segundo plano...',
+                data: { id: analysisId, status: 'pending' }
             });
+
+            // 3. INICIAR PROCESO PESADO (Fire and Forget - Sin await)
+            processDietBackground(analysisId, physiologyData);
 
         } catch (error) {
-            console.error(`Error AI Calculation: ${error}`);
-            return res.status(501).json({ success: false, message: 'Error en cálculo', error: error.message });
+            console.error(`Error inicio análisis: ${error}`);
+            // Solo respondemos error si aún no hemos enviado la respuesta 202
+            if (!res.headersSent) {
+                 return res.status(501).json({ success: false, message: 'Error iniciando análisis', error: error.message });
+            }
         }
     },
     /**
@@ -593,7 +614,7 @@ async uploadDietPdf(req, res, next) {
         try {
             const file = req.file; 
             const id_client = req.user.id;
-            const id_company = null; // Asumimos null como acordamos
+            const id_company = null; 
 
             if (!file) {
                 return res.status(400).json({ success: false, message: 'No se recibió el PDF.' });
@@ -601,12 +622,10 @@ async uploadDietPdf(req, res, next) {
 
             console.log(`[STORAGE] Subiendo PDF final del cliente ${id_client}...`);
 
-            // 1. Subir a Firebase
             const pathImage = `diet_files/ai_plan_${Date.now()}_${id_client}.pdf`;
             const pdfUrl = await storage(file, pathImage);
 
             if (pdfUrl) {
-                // 2. CREAR REGISTRO EN LA TABLA DIETS
                 const newDiet = {
                     id_company: id_company,
                     id_client: id_client,
@@ -630,5 +649,5 @@ async uploadDietPdf(req, res, next) {
             console.error(`Error Upload PDF: ${error}`);
             return res.status(501).json({ success: false, error: error.message });
         }
-    }
+    },
 };
