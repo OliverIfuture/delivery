@@ -3,30 +3,26 @@ const { GoogleGenAI } = require("@google/genai");
 const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const db = require('../config/config');
 
+/**
+ * FUNCIÓN AUXILIAR: Procesa Gemini y actualiza la BD en segundo plano.
+ */
 const processGeminiBackground = async (analysisId, files, physiologyStr) => {
     try {
         console.log(`[BG-PROCESS] Ejecutando Gemini para ID ${analysisId}...`);
         
-        // 1. Preparar imágenes
-    const imageParts = files.map(file => {
-            // Si viene como genérico (octet-stream), lo forzamos a JPEG
-            // Gemini odia 'application/octet-stream', pero ama 'image/jpeg'
+        // 1. Preparar imágenes (Forzando JPEG)
+        const imageParts = files.map(file => {
             let finalMimeType = file.mimetype;
-            
             if (finalMimeType === 'application/octet-stream') {
                 finalMimeType = 'image/jpeg';
             }
-
             return {
-                inlineData: { 
-                    mimeType: finalMimeType, 
-                    data: file.buffer.toString("base64") 
-                }
+                inlineData: { mimeType: finalMimeType, data: file.buffer.toString("base64") }
             };
         });
 
-        // 2. Prompt Maestro
-        const promptText = `
+        // 2. Prompt (Sin cambios)
+ const promptText = `
         ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO DE ÉLITE Y ANTROPOMETRISTA NIVEL ISAK 3.
         
         TIENES 2 FUENTES DE INFORMACIÓN:
@@ -60,29 +56,58 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
         }
         `;
 
-        // 3. Llamada a Gemini
+        // 3. CONFIGURACIÓN DE SEGURIDAD (CRUCIAL PARA FITNESS)
+        // Usamos strings directos para evitar problemas de importación de enums
+        const safetySettings = [
+            {
+                category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                threshold: 'BLOCK_NONE', // Permitir todo (necesario para análisis corporal)
+            },
+            {
+                category: 'HARM_CATEGORY_HARASSMENT',
+                threshold: 'BLOCK_NONE',
+            },
+            {
+                category: 'HARM_CATEGORY_HATE_SPEECH',
+                threshold: 'BLOCK_NONE',
+            },
+            {
+                category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                threshold: 'BLOCK_NONE',
+            },
+        ];
+
+        // 4. Llamada a Gemini con Safety Settings
         const response = await aiClient.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [{ parts: [{ text: promptText }, ...imageParts] }]
+            model: 'gemini-1.5-flash',
+            contents: [{ parts: [{ text: promptText }, ...imageParts] }],
+            safetySettings: safetySettings, // <--- AQUÍ ESTÁ LA SOLUCIÓN
         });
 
-        // 4. Validar respuesta
+        // 5. Validar y Loguear si falla
+        // Si hay bloqueo, response.promptFeedback nos dirá por qué
         if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
-             throw new Error("Sin candidatos válidos de IA");
+             
+             // Intento de loguear la razón del bloqueo si existe
+             if (response && response.response && response.response.promptFeedback) {
+                 console.error(`[BG-PROCESS] Bloqueo de Gemini:`, JSON.stringify(response.response.promptFeedback));
+             }
+             
+             throw new Error("Sin candidatos válidos de IA (Posible bloqueo de seguridad o imagen ilegible)");
         }
 
-        // 5. Parsear JSON
+        // 6. Parsear JSON
         let text = response.response.candidates[0].content.parts[0].text;
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const jsonResult = JSON.parse(text);
 
-        // 6. ACTUALIZAR BD: Marcar como 'completed' y guardar JSON
-        await Diet.updateResult(analysisId, jsonResult);
+        // 7. ACTUALIZAR BD
+        await AIDiet.updateResult(analysisId, jsonResult);
         console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
 
     } catch (error) {
         console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
-        await Diet.updateError(analysisId);
+        await AIDiet.updateError(analysisId);
     }
 };
 
