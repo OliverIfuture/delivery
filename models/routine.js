@@ -3,27 +3,44 @@ const db = require('../config/config.js');
 const Routine = {};
 
 Routine.create = (routine) => {
-    const sql = `
-        INSERT INTO routines(
-            id_company,
-            id_client,
-            name,
-            plan_data,
-            is_active,
-            created_at,
-            updated_at
-        )
-        VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
-    `;
-    return db.one(sql, [
-        routine.id_company, // Puede ser null ahora
-        routine.id_client,
-        routine.name,
-        routine.plan_data,
-        routine.is_active ?? false,
-        new Date(),
-        new Date()
-    ]);
+    return db.tx(async t => {
+        // PASO 1: Si la nueva rutina viene marcada como activa...
+        const isActive = routine.is_active ?? false;
+
+        if (isActive) {
+            // ...buscamos cualquier rutina activa anterior de este cliente y la apagamos (is_active = false)
+            const sqlDeactivate = `
+                UPDATE routines 
+                SET is_active = false, updated_at = $2
+                WHERE id_client = $1 AND is_active = true
+            `;
+            await t.none(sqlDeactivate, [routine.id_client, new Date()]);
+        }
+
+        // PASO 2: Ahora sí, insertamos la nueva rutina sin miedo al conflicto
+        const sqlInsert = `
+            INSERT INTO routines(
+                id_company,
+                id_client,
+                name,
+                plan_data,
+                is_active,
+                created_at,
+                updated_at
+            )
+            VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
+        `;
+
+        return t.one(sqlInsert, [
+            routine.id_company,
+            routine.id_client,
+            routine.name,
+            routine.plan_data,
+            isActive,
+            new Date(),
+            new Date()
+        ]);
+    });
 };
 
 Routine.update = (routine) => {
@@ -61,7 +78,7 @@ Routine.setActive = (id_routine, id_client) => {
             SET is_active = false, updated_at = $1
             WHERE id_client = $2
         `, [new Date(), id_client]);
-        
+
         // 2. Activar la rutina seleccionada
         await t.none(`
             UPDATE routines
@@ -107,7 +124,7 @@ Routine.findActiveByClient = (id_client) => {
         WHERE
             r.id_client = $1 AND r.is_active = true
     `;
-    return db.oneOrNone(sql, id_client); 
+    return db.oneOrNone(sql, id_client);
 };
 
 /**
@@ -168,7 +185,7 @@ Routine.activateTemplate = (id_client, id_system_routine) => {
     return db.tx(async t => {
         // 1. Obtener la información de la Plantilla
         const template = await t.oneOrNone('SELECT * FROM system_routines WHERE id = $1', [id_system_routine]);
-        
+
         if (!template) throw new Error('Plantilla no encontrada');
 
         // 2. Obtener todos los ejercicios de esa plantilla, unidos con la tabla maestra de ejercicios
