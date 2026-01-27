@@ -335,6 +335,10 @@ async generateDietJSON(req, res, next) {
                 model: 'gemini-2.5-flash',
                 contents: [{ parts: [{ text: promptText }, ...imageParts] }]
             });
+
+            if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
+                 throw new Error("La IA no devolvió candidatos válidos. Posible bloqueo de seguridad o imagen no clara.");
+            }
             
 
             // 4. Limpiar JSON
@@ -343,7 +347,7 @@ async generateDietJSON(req, res, next) {
             const jsonResult = JSON.parse(text);
 
             // 5. Guardar el registro del ANÁLISIS (solo datos)
-            await AIDiet.create({
+            await Diet.create({
                 id_client: id_client,
                 physiology_data: JSON.parse(physiologyStr),
                 ai_analysis_result: jsonResult
