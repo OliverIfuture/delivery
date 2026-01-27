@@ -12,89 +12,162 @@ const db = require('../config/config');
 const processGeminiBackground = async (analysisId, files, physiologyStr) => {
     try {
         console.log(`[BG-PROCESS] Ejecutando Gemini para ID ${analysisId}...`);
-        
-        // 1. Preparar imágenes (Forzando JPEG)
+
+        const physiology = JSON.parse(physiologyStr);
+
+        // -----------------------------
+        // 1. Preparar imágenes
+        // -----------------------------
         const imageParts = files.map(file => {
-            let finalMimeType = file.mimetype;
-            if (finalMimeType === 'application/octet-stream') {
-                finalMimeType = 'image/jpeg';
-            }
+            let finalMimeType = file.mimetype === 'application/octet-stream'
+                ? 'image/jpeg'
+                : file.mimetype;
+
             return {
-                inlineData: { mimeType: finalMimeType, data: file.buffer.toString("base64") }
+                inlineData: {
+                    mimeType: finalMimeType,
+                    data: file.buffer.toString("base64")
+                }
             };
         });
 
-        // 2. Prompt
+        // -----------------------------
+        // 2. Prompt (ANTI BLOQUEO)
+        // -----------------------------
         const promptText = `
-        ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO DE ÉLITE Y ANTROPOMETRISTA NIVEL ISAK 3.
-        
-        TIENES 2 FUENTES DE INFORMACIÓN:
-        A) DATOS REPORTADOS POR EL CLIENTE (JSON):
-        ${physiologyStr}
-        
-        B) EVIDENCIA VISUAL (3 FOTOS ADJUNTAS):
-        Analiza la estructura ósea, inserciones musculares, acumulación de grasa y postura.
-        
-        TU OBJETIVO:
-        Generar un Plan Nutricional preciso.
-        
-        FORMATO DE SALIDA (ESTRICTAMENTE JSON):
-        Solo el objeto JSON crudo con esta estructura exacta:
-        {
-          "analysis": {
-            "detected_somatotype": "...",
-            "estimated_body_fat": "...",
-            "muscle_mass_assessment": "...",
-            "visual_observations": "...",
-            "caloric_needs": { "goal_calories": 0000, "goal_type": "..." },
-            "macros": { "protein": "...", "carbs": "...", "fats": "..." }
-          },
-          "diet_plan": {
-            "overview": "...",
-            "daily_menu": [
-                { "meal_name": "...", "options": [ { "food": "...", "calories": 000 } ] }
-            ],
-            "recommendations": ["..."]
-          }
-        }
+Actúa como entrenador fitness profesional.
+
+Analiza visualmente de forma general y no médica:
+
+• Complexión corporal
+• Nivel aparente de grasa visible
+• Desarrollo muscular observable
+• Postura y simetría
+
+Devuelve SOLO JSON:
+
+{
+  "detected_somatotype": "...",
+  "fitness_level_visual": "...",
+  "muscle_development": "...",
+  "visual_observations": "..."
+}
         `;
 
-        // 3. CONFIGURACIÓN DE SEGURIDAD
-        const safetySettings = [
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-        ];
-
-        // 4. LLAMADA A GEMINI (CORREGIDA)
-        // La librería @google/genai espera 'config' para los ajustes
+        // -----------------------------
+        // 3. Gemini call
+        // -----------------------------
         const response = await aiClient.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: [{ parts: [{ text: promptText }, ...imageParts] }],
-            config: {
-                safetySettings: safetySettings, // <--- AQUI DENTRO DE CONFIG
-            }
         });
 
-        // 5. Validar respuesta
-        if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
-             
-             // Loguear feedback de seguridad para depurar
-             if (response && response.response && response.response.promptFeedback) {
-                 console.error(`[BG-PROCESS] Bloqueo de Seguridad:`, JSON.stringify(response.response.promptFeedback, null, 2));
-             }
-             
-             throw new Error("Sin candidatos válidos de IA (Posible bloqueo de seguridad)");
+        if (!response?.response?.candidates?.length) {
+            throw new Error("Bloqueo o respuesta vacía de Gemini");
         }
 
-        // 6. Parsear JSON
-        let text = response.response.candidates[0].content.parts[0].text;
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonResult = JSON.parse(text);
+        const parts = response.response.candidates[0].content.parts;
+        let text = parts.map(p => p.text || '').join('');
+        text = text.replace(/```json|```/g, '').trim();
 
-        // 7. ACTUALIZAR BD
-        await AIDiet.updateResult(analysisId, jsonResult);
+        const visualAnalysis = JSON.parse(text);
+
+        // -----------------------------
+        // 4. Cálculo nutricional real
+        // -----------------------------
+
+        const {
+            weight,     // kg
+            height,     // cm
+            age,
+            gender,     // "male" | "female"
+            activity_level, // sedentary | light | moderate | active | very_active
+            goal        // lose_fat | maintain | gain_muscle
+        } = physiology;
+
+        const activityFactors = {
+            sedentary: 1.2,
+            light: 1.375,
+            moderate: 1.55,
+            active: 1.725,
+            very_active: 1.9
+        };
+
+        const factor = activityFactors[activity_level] || 1.55;
+
+        let bmr;
+        if (gender === "male") {
+            bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+        } else {
+            bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+        }
+
+        let maintenanceCalories = Math.round(bmr * factor);
+
+        let goalCalories;
+        let goalType;
+
+        if (goal === "lose_fat") {
+            goalCalories = maintenanceCalories - 400;
+            goalType = "fat_loss";
+        } else if (goal === "gain_muscle") {
+            goalCalories = maintenanceCalories + 350;
+            goalType = "muscle_gain";
+        } else {
+            goalCalories = maintenanceCalories;
+            goalType = "maintenance";
+        }
+
+        // -----------------------------
+        // 5. Macros científicos
+        // -----------------------------
+        const proteinGrams = Math.round(weight * 2.0); // 2g/kg estándar fitness
+        const proteinCalories = proteinGrams * 4;
+
+        const fatCalories = Math.round(goalCalories * 0.25);
+        const fatGrams = Math.round(fatCalories / 9);
+
+        const remainingCalories = goalCalories - (proteinCalories + fatCalories);
+        const carbGrams = Math.round(remainingCalories / 4);
+
+        // -----------------------------
+        // 6. Estructura final EXACTA
+        // -----------------------------
+        const finalResult = {
+            analysis: {
+                detected_somatotype: visualAnalysis.detected_somatotype,
+                estimated_body_fat: visualAnalysis.fitness_level_visual,
+                muscle_mass_assessment: visualAnalysis.muscle_development,
+                visual_observations: visualAnalysis.visual_observations,
+                caloric_needs: {
+                    goal_calories: goalCalories,
+                    goal_type: goalType
+                },
+                macros: {
+                    protein: `${proteinGrams}g`,
+                    carbs: `${carbGrams}g`,
+                    fats: `${fatGrams}g`
+                }
+            },
+            diet_plan: {
+                overview: `Plan enfocado a ${goalType} con balance alto en proteína.`,
+                daily_menu: [
+                    { meal_name: "Desayuno", options: [{ food: "Huevos con avena", calories: 450 }] },
+                    { meal_name: "Comida", options: [{ food: "Pollo con arroz y verduras", calories: 650 }] },
+                    { meal_name: "Cena", options: [{ food: "Pescado con camote", calories: 500 }] }
+                ],
+                recommendations: [
+                    "Mantén hidratación constante",
+                    "Consume proteína en cada comida",
+                    "Prioriza alimentos naturales"
+                ]
+            }
+        };
+
+        // -----------------------------
+        // 7. Guardar BD
+        // -----------------------------
+        await AIDiet.updateResult(analysisId, finalResult);
         console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
 
     } catch (error) {
@@ -102,6 +175,7 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
         await AIDiet.updateError(analysisId);
     }
 };
+
 
 module.exports = {
 
