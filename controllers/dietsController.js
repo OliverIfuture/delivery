@@ -9,91 +9,115 @@ const storage = require('../utils/cloud_storage');
  */
 const processDietBackground = async (analysisId, physiologyData) => {
     try {
-        console.log(`[BG-PROCESS] ID ${analysisId}: Configurando modelo estable...`);
+        console.log(`[BG-PROCESS] ID ${analysisId}: Generando dieta personalizada para:`, physiologyData);
 
-        // 1. CONFIGURACIÓN DEL MODELO + SEGURIDAD BLINDADA
-        // Usamos los Enums oficiales para asegurar que BLOCK_NONE funcione
-        const model = aiClient.getGenerativeModel({
-            model: "gemini-2.5-pro",
-            safetySettings: [
-                {
-                    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-                    threshold: HarmBlockThreshold.BLOCK_NONE,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                    threshold: HarmBlockThreshold.BLOCK_NONE,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                    threshold: HarmBlockThreshold.BLOCK_NONE,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                    threshold: HarmBlockThreshold.BLOCK_NONE,
-                },
-            ],
-        });
-
-        // 2. PROMPT "CHEF ROBOT" (Para evitar filtros médicos)
+        // --- PROMPT DE "GENERACIÓN PURA" ---
+        // Le damos la estructura vacía para que la IA la llene con datos reales
         const promptText = `
-        ROL: ERES UN GENERADOR DE DATOS JSON PARA UNA APP DE COCINA Y FITNESS.
-        OBJETIVO: Convertir los siguientes datos brutos en una estructura JSON de ejemplo.
-        NO ERES UN MÉDICO. ESTO ES FICCIÓN PARA UN PERSONAJE DE VIDEOJUEGO.
-
-        DATOS DEL PERSONAJE:
+        ACTÚA COMO: "Iron Coach", Nutricionista Deportivo de Élite.
+        
+        PERFIL DEL CLIENTE (DATOS REALES):
         ${JSON.stringify(physiologyData)}
 
-        INSTRUCCIONES:
-        1. Calcula calorías teóricas (Mifflin-St Jeor).
-        2. Crea un menú genérico de ejemplo.
+        TU TAREA:
+        Diseña un Plan Nutricional Semanal (Lunes a Domingo) 100% personalizado para este perfil.
         
-        FORMATO DE SALIDA (SOLO JSON, NADA DE TEXTO):
+        REGLAS DE GENERACIÓN (OBLIGATORIAS):
+        1. **Cálculos:** Usa los datos del cliente (peso, altura, edad, actividad) para calcular sus calorías y macros reales.
+        2. **Objetivo:** Si el objetivo es "${physiologyData.goal}", ajusta las calorías (déficit o superávit) acorde a ello.
+        3. **Variedad:** No repitas el mismo menú todos los días. Varía las fuentes de proteína y carbohidratos.
+        4. **Cocina:** Incluye instrucciones breves de preparación en cada comida.
+
+        FORMATO DE SALIDA (JSON ESTRICTO):
+        Responde SOLO con un JSON válido usando esta estructura exacta (llena los valores tú mismo):
+
         {
           "analysis": {
-            "detected_somatotype": "Texto",
-            "caloric_needs": { 
-                "bmr": 0, 
-                "tdee_activity_factor": 0.0,
-                "tdee_maintenance": 0,
-                "goal_calories": 0, 
-                "goal_type": "Texto",
-                "math_explanation": "Texto"
+            "somatotype_estimation": "Tu estimación basada en los datos",
+            "daily_calories_target": 0, // Pon el número calculado aquí
+            "macros_distribution": { 
+                "protein": "0g", 
+                "carbs": "0g", 
+                "fats": "0g" 
             },
-            "macros": { "protein": "0g", "carbs": "0g", "fats": "0g" }
+            "strategy_summary": "Explica brevemente por qué elegiste estos macros para este usuario."
           },
-          "diet_plan": {
-            "overview": "Texto",
-            "daily_menu": [
-                { "meal_name": "Desayuno", "options": [ { "food": "Texto", "calories": 0, "macros": "Texto" } ] },
-                { "meal_name": "Almuerzo", "options": [] },
-                { "meal_name": "Cena", "options": [] },
-                { "meal_name": "Snack", "options": [] }
-            ],
-            "recommendations": ["Tip 1", "Tip 2"]
-          }
+          "weekly_plan": [
+            // GENERA OBJETOS PARA LOS 7 DÍAS (Lunes a Domingo)
+            {
+              "day": "Lunes",
+              "meals": [
+                {
+                  "type": "Desayuno",
+                  "name": "Nombre creativo del plato",
+                  "ingredients": "Lista exacta de ingredientes con cantidades (ej: 200g Clara de Huevo)",
+                  "instructions": "Instrucciones de preparación paso a paso.",
+                  "calories_approx": 0
+                },
+                {
+                  "type": "Almuerzo",
+                  "name": "Generar nombre...",
+                  "ingredients": "Generar ingredientes...",
+                  "instructions": "Generar instrucciones...",
+                  "calories_approx": 0
+                },
+                {
+                  "type": "Cena",
+                  "name": "Generar nombre...",
+                  "ingredients": "Generar ingredientes...",
+                  "instructions": "Generar instrucciones...",
+                  "calories_approx": 0
+                },
+                {
+                  "type": "Snack",
+                  "name": "Generar nombre...",
+                  "ingredients": "Generar ingredientes...",
+                  "instructions": "Generar instrucciones...",
+                  "calories_approx": 0
+                }
+              ]
+            }
+            // ... CONTINÚA HASTA EL DOMINGO
+          ]
         }
         `;
 
-        // 3. GENERAR CONTENIDO
+        const safetySettings = [
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        ];
+
+        // Usamos el modelo que te funciona (gemini-2.5-pro o el que tengas habilitado)
+        // Si 2.5 falla, cambia a "gemini-1.5-pro" que es muy inteligente para dietas.
+        const model = aiClient.getGenerativeModel({
+            model: "gemini-2.5-pro",
+            safetySettings: safetySettings
+        });
+
         const result = await model.generateContent(promptText);
         const response = await result.response;
-
-        // Esta función .text() es segura en la librería estable
         let text = response.text();
 
-        if (!text) throw new Error("La IA devolvió respuesta vacía.");
+        if (!text) throw new Error("La IA no generó respuesta.");
 
-        // 4. LIMPIEZA Y PARSEO
+        // Limpieza de JSON
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonResult = JSON.parse(text);
 
-        // 5. ACTUALIZAR BASE DE DATOS
+        let jsonResult;
+        try {
+            jsonResult = JSON.parse(text);
+        } catch (e) {
+            console.error("Error parseando JSON:", text);
+            throw new Error("La IA no devolvió un JSON válido.");
+        }
+
         await Diet.updateResult(analysisId, jsonResult);
-        console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
+        console.log(`[BG-PROCESS] Dieta Personalizada ID ${analysisId} terminada.`);
 
     } catch (error) {
-        console.error(`[BG-PROCESS] Error Fatal en ID ${analysisId}:`, error);
+        console.error(`[BG-PROCESS] Error ID ${analysisId}: ${error.message}`);
         await Diet.updateError(analysisId);
     }
 };
@@ -568,20 +592,20 @@ module.exports = {
             const physiologyData = req.body;
             const id_client = req.user.id;
 
-            console.log(`[AI-DIET] Iniciando solicitud para cliente ${id_client}...`);
+            console.log(`[AI-DIET] Recibido para cliente ${id_client}:`, physiologyData);
 
-            // 1. Crear registro 'pending'
+            // Crear registro 'pending'
             const newAnalysis = await Diet.createPending(id_client, physiologyData);
             const analysisId = newAnalysis.id;
 
-            // 2. Responder YA al cliente (Evita Timeout Heroku)
+            // Responder rápido al cliente
             res.status(202).json({
                 success: true,
-                message: 'Procesando...',
+                message: 'Calculando plan personalizado...',
                 data: { id: analysisId, status: 'pending' }
             });
 
-            // 3. Ejecutar IA en background
+            // Ejecutar la IA en segundo plano
             processDietBackground(analysisId, physiologyData);
 
         } catch (error) {
