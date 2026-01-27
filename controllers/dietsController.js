@@ -25,24 +25,28 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
     } = physiology;
 
     // -----------------------------
-    // 1. Preparar imágenes
+    // 1. Preparar imágenes (formato correcto Gemini)
     // -----------------------------
-const imageParts = files.map(file => {
-  const mimeType =
-    file.mimetype === 'application/octet-stream'
-      ? 'image/jpeg'
-      : file.mimetype;
+    const imageParts = files.map(file => {
+      const mimeType =
+        file.mimetype === 'application/octet-stream'
+          ? 'image/jpeg'
+          : file.mimetype;
 
-  return {
-    inline_data: {
-      mime_type: mimeType,
-      data: file.buffer.toString("base64")
-    }
-  };
-});
+      if (!file.buffer || !file.buffer.length) {
+        throw new Error("Imagen vacía recibida");
+      }
+
+      return {
+        inlineData: {
+          mimeType: mimeType,
+          data: file.buffer.toString("base64")
+        }
+      };
+    });
 
     // -----------------------------
-    // 2. Prompt seguro
+    // 2. Prompt permitido por policy
     // -----------------------------
     const promptText = `
 Actúa como entrenador fitness profesional.
@@ -65,7 +69,7 @@ Devuelve SOLO JSON:
 `;
 
     // -----------------------------
-    // 3. Gemini call correcto
+    // 3. Llamada Gemini (multimodal correcta)
     // -----------------------------
     const response = await aiClient.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -82,14 +86,14 @@ Devuelve SOLO JSON:
 
     if (!response?.response?.candidates?.length) {
       console.error(
-        "Prompt feedback:",
-        JSON.stringify(response?.response?.promptFeedback, null, 2)
+        "Gemini raw response:",
+        JSON.stringify(response?.response, null, 2)
       );
-      throw new Error("Bloqueo o respuesta vacía de Gemini");
+      throw new Error("Respuesta vacía de Gemini");
     }
 
     // -----------------------------
-    // 4. Parse robusto
+    // 4. Parse seguro de salida
     // -----------------------------
     const parts = response.response.candidates[0].content.parts;
     let text = parts.map(p => p.text || '').join("");
@@ -98,7 +102,7 @@ Devuelve SOLO JSON:
     const visualAnalysis = JSON.parse(text);
 
     // -----------------------------
-    // 5. Cálculo calórico real
+    // 5. Cálculo calórico científico
     // -----------------------------
     const activityFactors = {
       sedentary: 1.2,
@@ -149,7 +153,7 @@ Devuelve SOLO JSON:
     const carbGrams = Math.round(remainingCalories / 4);
 
     // -----------------------------
-    // 7. Resultado EXACTO para tu BD
+    // 7. Resultado final (igual a tu schema)
     // -----------------------------
     const finalResult = {
       analysis: {
@@ -168,15 +172,15 @@ Devuelve SOLO JSON:
         }
       },
       diet_plan: {
-        overview: `Plan enfocado a ${goalType} con alta proteína.`,
+        overview: `Plan orientado a ${goalType} con alto consumo proteico.`,
         daily_menu: [
           { meal_name: "Desayuno", options: [{ food: "Huevos con avena", calories: 450 }] },
           { meal_name: "Comida", options: [{ food: "Pollo con arroz y verduras", calories: 650 }] },
           { meal_name: "Cena", options: [{ food: "Pescado con camote", calories: 500 }] }
         ],
         recommendations: [
-          "Mantén buena hidratación",
-          "Consume proteína en cada comida",
+          "Mantén hidratación constante",
+          "Incluye proteína en cada comida",
           "Duerme al menos 7 horas"
         ]
       }
@@ -189,10 +193,11 @@ Devuelve SOLO JSON:
     console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
 
   } catch (error) {
-    console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
+    console.error(`[BG-PROCESS] Error en ID ${analysisId}:`, error.message || error);
     await Diet.updateError(analysisId);
   }
 };
+
 
 
 module.exports = {
