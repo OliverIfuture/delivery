@@ -79,7 +79,7 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
 
         // 4. Llamada a Gemini con Safety Settings
         const response = await aiClient.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             contents: [{ parts: [{ text: promptText }, ...imageParts] }],
             safetySettings: safetySettings, // <--- AQUÍ ESTÁ LA SOLUCIÓN
         });
