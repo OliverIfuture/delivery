@@ -3,6 +3,76 @@ const { GoogleGenAI } = require("@google/genai");
 const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const db = require('../config/config');
 
+const processGeminiBackground = async (analysisId, files, physiologyStr) => {
+    try {
+        console.log(`[BG-PROCESS] Ejecutando Gemini para ID ${analysisId}...`);
+        
+        // 1. Preparar imágenes
+        const imageParts = files.map(file => ({
+            inlineData: { mimeType: file.mimetype, data: file.buffer.toString("base64") }
+        }));
+
+        // 2. Prompt Maestro
+        const promptText = `
+        ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO DE ÉLITE Y ANTROPOMETRISTA NIVEL ISAK 3.
+        
+        TIENES 2 FUENTES DE INFORMACIÓN:
+        A) DATOS REPORTADOS POR EL CLIENTE (JSON):
+        ${physiologyStr}
+        
+        B) EVIDENCIA VISUAL (3 FOTOS ADJUNTAS):
+        Analiza la estructura ósea, inserciones musculares, acumulación de grasa y postura.
+        
+        TU OBJETIVO:
+        Generar un Plan Nutricional preciso. Si hay contradicción, PRIORIZA EL ANÁLISIS VISUAL.
+        
+        FORMATO DE SALIDA (ESTRICTAMENTE JSON):
+        Solo el objeto JSON crudo con esta estructura exacta:
+        {
+          "analysis": {
+            "detected_somatotype": "...",
+            "estimated_body_fat": "...",
+            "muscle_mass_assessment": "...",
+            "visual_observations": "...",
+            "caloric_needs": { "goal_calories": 0000, "goal_type": "..." },
+            "macros": { "protein": "...", "carbs": "...", "fats": "..." }
+          },
+          "diet_plan": {
+            "overview": "...",
+            "daily_menu": [
+                { "meal_name": "...", "options": [ { "food": "...", "calories": 000 } ] }
+            ],
+            "recommendations": ["..."]
+          }
+        }
+        `;
+
+        // 3. Llamada a Gemini
+        const response = await aiClient.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: [{ parts: [{ text: promptText }, ...imageParts] }]
+        });
+
+        // 4. Validar respuesta
+        if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
+             throw new Error("Sin candidatos válidos de IA");
+        }
+
+        // 5. Parsear JSON
+        let text = response.response.candidates[0].content.parts[0].text;
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonResult = JSON.parse(text);
+
+        // 6. ACTUALIZAR BD: Marcar como 'completed' y guardar JSON
+        await Diet.updateResult(analysisId, jsonResult);
+        console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
+
+    } catch (error) {
+        console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
+        await Diet.updateError(analysisId);
+    }
+};
+
 module.exports = {
 
     /**
@@ -241,7 +311,7 @@ module.exports = {
     },
 
 
-    async startDietAnalysis(req, res, next) {
+async startDietAnalysis(req, res, next) {
         try {
             const files = req.files;
             const physiologyStr = req.body.physiology;
@@ -264,13 +334,11 @@ module.exports = {
                 data: { id: analysisId, status: 'pending' }
             });
 
-            // 3. INICIAR PROCESO PESADO (Sin await para no bloquear la respuesta anterior)
-            // Llamamos a la función interna que hará el trabajo sucio
-            this.processGeminiBackground(analysisId, files, physiologyStr);
+            // 3. INICIAR PROCESO PESADO (Llamada directa sin 'this')
+            processGeminiBackground(analysisId, files, physiologyStr);
 
         } catch (error) {
             console.error(`Error inicio análisis: ${error}`);
-            // Si falla antes de responder, mandamos error 500 normal
             if (!res.headersSent) {
                  return res.status(501).json({ success: false, error: error.message });
             }
@@ -321,7 +389,7 @@ module.exports = {
     /**
      * PASO 2 (POLLING): El cliente pregunta "¿Ya terminó?"
      */
-    async checkStatus(req, res, next) {
+async checkStatus(req, res, next) {
         try {
             const id = req.params.id;
             const analysis = await Diet.findById(id);
@@ -333,8 +401,10 @@ module.exports = {
             // Respondemos el estado actual
             return res.status(200).json({
                 success: true,
-                status: analysis.status, // 'pending', 'completed', 'failed'
-                data: analysis.ai_analysis_result // Será null si está pending, o el JSON si está completed
+                data: {
+                    status: analysis.status, // 'pending', 'completed', 'failed'
+                    data: analysis.ai_analysis_result // Será null si está pending
+                }
             });
 
         } catch (error) {
@@ -470,14 +540,11 @@ async generateDietJSON(req, res, next) {
     /**
      * PASO 2: Recibe el PDF generado por Flutter -> Sube a Firebase -> Actualiza User
      */
-  async uploadDietPdf(req, res, next) {
+async uploadDietPdf(req, res, next) {
         try {
-            const file = req.file; // PDF desde Flutter
+            const file = req.file; 
             const id_client = req.user.id;
-
-            // --- CAMBIO SOLICITADO ---
-            // Definimos id_company como null explícitamente
-            const id_company = null; 
+            const id_company = null; // Asumimos null como acordamos
 
             if (!file) {
                 return res.status(400).json({ success: false, message: 'No se recibió el PDF.' });
@@ -490,25 +557,22 @@ async generateDietJSON(req, res, next) {
             const pdfUrl = await storage(file, pathImage);
 
             if (pdfUrl) {
-                
                 // 2. CREAR REGISTRO EN LA TABLA DIETS
                 const newDiet = {
-                    id_company: id_company, // Se enviará null a la BD
+                    id_company: id_company,
                     id_client: id_client,
                     file_url: pdfUrl,
                     file_name: file.originalname || `Plan_IA_${Date.now()}.pdf`
                 };
 
-                // Llamamos a tu modelo Diet.create (el que usa INSERT INTO diets...)
                 const data = await Diet.create(newDiet);
 
                 return res.status(201).json({
                     success: true,
-                    message: 'Plan guardado exitosamente en el historial.',
-                    data: data, // ID de la nueva dieta
+                    message: 'Plan guardado exitosamente.',
+                    data: data,
                     url: pdfUrl
                 });
-
             } else {
                 throw new Error('Falló la subida a Firebase');
             }
