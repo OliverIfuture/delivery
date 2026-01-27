@@ -36,10 +36,10 @@ module.exports = (app) => {
         dietsController.getDietById
     );
 
-    app.post('/api/ai-diets/generate', passport.authenticate('jwt', { session: false }), upload.array('images', 3), dietsController.generateDietJSON);
+    app.post('/api/diets/generate', passport.authenticate('jwt', { session: false }), upload.array('images', 3), dietsController.generateDietJSON);
 
     // Paso 2: Guardar PDF (Recibe 1 archivo PDF)
-    app.post('/api/ai-diets/upload-pdf', passport.authenticate('jwt', { session: false }), upload.single('pdf'), dietsController.uploadDietPdf);
+    app.post('/api/diets/upload-pdf', passport.authenticate('jwt', { session: false }), upload.single('pdf'), dietsController.uploadDietPdf);
 }
 
 
