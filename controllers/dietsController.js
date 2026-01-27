@@ -664,6 +664,100 @@ async generateDietJSON(req, res, next) {
         }
     },
 
+
+
+async generateDietJSON_NoImages(req, res, next) {
+        try {
+            const physiologyData = req.body; // Recibimos el objeto JSON directo
+            const id_client = req.user.id;
+
+            console.log(`[AI-DIET] Calculando dieta para cliente ${id_client}...`);
+
+            // --- PROMPT MATEMÁTICO PROFESIONAL ---
+            const promptText = `
+            ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO EXPERTO (Nivel PhD).
+            
+            TU CLIENTE TIENE ESTOS DATOS FISIOLÓGICOS Y PREFERENCIAS:
+            ${JSON.stringify(physiologyData)}
+            
+            TAREAS DE CÁLCULO (OBLIGATORIO USAR FÓRMULAS CIENTÍFICAS):
+            1. Calcula el TMB (Tasa Metabólica Basal) usando la ecuación de Mifflin-St Jeor.
+            2. Calcula el GET (Gasto Energético Total) multiplicando por el factor de actividad correcto.
+            3. Ajusta las calorías según el 'goal' (Objetivo):
+               - Perder peso: Resta entre 300 y 500 kcal (Déficit agresivo pero seguro).
+               - Ganar músculo: Suma entre 200 y 300 kcal (Superávit controlado).
+               - Mantener: Mantén el GET.
+            
+            FORMATO DE SALIDA (JSON ESTRICTO):
+            Responde SOLO con un JSON válido. Sin markdown. Estructura:
+            {
+              "analysis": {
+                "detected_somatotype": "Estimación basada en peso/altura (Ej: Ecto-Mesomorfo)",
+                "caloric_needs": { 
+                    "bmr": 0000, 
+                    "tdee_activity_factor": 0.0,
+                    "tdee_maintenance": 0000,
+                    "goal_calories": 0000, 
+                    "goal_type": "Déficit/Superávit/Mantenimiento",
+                    "math_explanation": "Breve texto explicando el cálculo (Ej: Mifflin: 1800 * 1.55 act - 500 déficit)"
+                },
+                "macros": { 
+                    "protein": "000g (Calcula 1.8g a 2.2g por kg peso objetivo)", 
+                    "carbs": "000g (Resto calórico)", 
+                    "fats": "000g (0.8g a 1g por kg peso)" 
+                }
+              },
+              "diet_plan": {
+                "overview": "Resumen de la estrategia nutricional.",
+                "daily_menu": [
+                    { 
+                      "meal_name": "Desayuno", 
+                      "options": [ { "food": "Nombre del plato detallado", "calories": 000, "macros": "P:00g C:00g G:00g" } ] 
+                    },
+                    { 
+                      "meal_name": "Almuerzo", "options": [...] 
+                    },
+                    { 
+                      "meal_name": "Cena", "options": [...] 
+                    },
+                    { 
+                      "meal_name": "Snack", "options": [...] 
+                    }
+                ],
+                "recommendations": ["Tip 1", "Tip 2", "Suplementación sugerida"]
+              }
+            }
+            `;
+
+            // Configuración del modelo
+            const model = aiClient.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+            const result = await model.generateContent(promptText);
+            const response = await result.response;
+            const text = response.text();
+
+            if (!text) throw new Error("La IA no generó respuesta.");
+
+            // Limpieza JSON
+            const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const jsonResult = JSON.parse(cleanText);
+
+            // Guardar historial en BD (Opcional, pero recomendado)
+            await Diet.createPending(id_client, physiologyData); 
+            // Nota: Podrías actualizarlo a 'completed' inmediatamente aquí si quieres guardar el resultado en BD también.
+
+            return res.status(200).json({
+                success: true,
+                message: 'Cálculos nutricionales completados.',
+                data: jsonResult
+            });
+
+        } catch (error) {
+            console.error(`Error AI Calculation: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error en cálculo', error: error.message });
+        }
+    },
+  
     /**
      * PASO 2: Recibe el PDF generado por Flutter -> Sube a Firebase -> Actualiza User
      */
