@@ -189,7 +189,7 @@ module.exports = {
 
             // 4. LLAMADA A LA API (SINTAXIS LIBRERÍA ESTABLE)
             // Usamos 'gemini-1.5-flash' porque es la versión multimodal estable actual
-            const model = aiClient.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = aiClient.getGenerativeModel({ model: "gemini-2.5-pro" });
 
             const result = await model.generateContent([
                 promptText,

@@ -103,7 +103,7 @@ module.exports = {
             // 2. PREPARAR MODELO CON SEGURIDAD DESACTIVADA
             // Usamos gemini-1.5-flash porque es el estándar actual (2.5 a veces no existe en todas las regiones)
             const model = aiClient.getGenerativeModel({
-                model: "gemini-1.5-flash",
+                model: "gemini-2.5-pro",
                 safetySettings: [
                     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
                     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },

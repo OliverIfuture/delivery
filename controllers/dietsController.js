@@ -14,7 +14,7 @@ const processDietBackground = async (analysisId, physiologyData) => {
         // 1. CONFIGURACIÓN DEL MODELO + SEGURIDAD BLINDADA
         // Usamos los Enums oficiales para asegurar que BLOCK_NONE funcione
         const model = aiClient.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-pro",
             safetySettings: [
                 {
                     category: HarmCategory.HARM_CATEGORY_HARASSMENT,
