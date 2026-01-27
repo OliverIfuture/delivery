@@ -6,6 +6,9 @@ const db = require('../config/config');
 /**
  * FUNCIÓN AUXILIAR: Procesa Gemini y actualiza la BD en segundo plano.
  */
+/**
+ * FUNCIÓN AUXILIAR: Procesa Gemini y actualiza la BD en segundo plano.
+ */
 const processGeminiBackground = async (analysisId, files, physiologyStr) => {
     try {
         console.log(`[BG-PROCESS] Ejecutando Gemini para ID ${analysisId}...`);
@@ -21,8 +24,8 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
             };
         });
 
-        // 2. Prompt (Sin cambios)
- const promptText = `
+        // 2. Prompt
+        const promptText = `
         ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO DE ÉLITE Y ANTROPOMETRISTA NIVEL ISAK 3.
         
         TIENES 2 FUENTES DE INFORMACIÓN:
@@ -33,7 +36,7 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
         Analiza la estructura ósea, inserciones musculares, acumulación de grasa y postura.
         
         TU OBJETIVO:
-        Generar un Plan Nutricional preciso. Si hay contradicción, PRIORIZA EL ANÁLISIS VISUAL.
+        Generar un Plan Nutricional preciso.
         
         FORMATO DE SALIDA (ESTRICTAMENTE JSON):
         Solo el objeto JSON crudo con esta estructura exacta:
@@ -56,44 +59,33 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
         }
         `;
 
-        // 3. CONFIGURACIÓN DE SEGURIDAD (CRUCIAL PARA FITNESS)
-        // Usamos strings directos para evitar problemas de importación de enums
+        // 3. CONFIGURACIÓN DE SEGURIDAD
         const safetySettings = [
-            {
-                category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                threshold: 'BLOCK_NONE', // Permitir todo (necesario para análisis corporal)
-            },
-            {
-                category: 'HARM_CATEGORY_HARASSMENT',
-                threshold: 'BLOCK_NONE',
-            },
-            {
-                category: 'HARM_CATEGORY_HATE_SPEECH',
-                threshold: 'BLOCK_NONE',
-            },
-            {
-                category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                threshold: 'BLOCK_NONE',
-            },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
         ];
 
-        // 4. Llamada a Gemini con Safety Settings
+        // 4. LLAMADA A GEMINI (CORREGIDA)
+        // La librería @google/genai espera 'config' para los ajustes
         const response = await aiClient.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: [{ parts: [{ text: promptText }, ...imageParts] }],
-            safetySettings: safetySettings, // <--- AQUÍ ESTÁ LA SOLUCIÓN
+            config: {
+                safetySettings: safetySettings, // <--- AQUI DENTRO DE CONFIG
+            }
         });
 
-        // 5. Validar y Loguear si falla
-        // Si hay bloqueo, response.promptFeedback nos dirá por qué
+        // 5. Validar respuesta
         if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
              
-             // Intento de loguear la razón del bloqueo si existe
+             // Loguear feedback de seguridad para depurar
              if (response && response.response && response.response.promptFeedback) {
-                 console.error(`[BG-PROCESS] Bloqueo de Gemini:`, JSON.stringify(response.response.promptFeedback));
+                 console.error(`[BG-PROCESS] Bloqueo de Seguridad:`, JSON.stringify(response.response.promptFeedback, null, 2));
              }
              
-             throw new Error("Sin candidatos válidos de IA (Posible bloqueo de seguridad o imagen ilegible)");
+             throw new Error("Sin candidatos válidos de IA (Posible bloqueo de seguridad)");
         }
 
         // 6. Parsear JSON
@@ -102,12 +94,12 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
         const jsonResult = JSON.parse(text);
 
         // 7. ACTUALIZAR BD
-        await Diet.updateResult(analysisId, jsonResult);
+        await AIDiet.updateResult(analysisId, jsonResult);
         console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
 
     } catch (error) {
         console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
-        await Diet.updateError(analysisId);
+        await AIDiet.updateError(analysisId);
     }
 };
 
