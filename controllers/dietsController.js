@@ -241,4 +241,91 @@ module.exports = {
     },
 
 
+async generateDietJSON(req, res, next) {
+        try {
+            const files = req.files;
+            const physiologyStr = req.body.physiology;
+            const id_client = req.user.id;
+
+            if (!files || files.length < 1) {
+                return res.status(400).json({ success: false, message: 'Faltan imágenes.' });
+            }
+
+            console.log(`[AI] Analizando cliente ${id_client}...`);
+
+            // 1. Preparar imágenes para Gemini
+            const imageParts = files.map(file => ({
+                inlineData: { mimeType: file.mimetype, data: file.buffer.toString("base64") }
+            }));
+
+            // 2. Prompt (El mismo que ya tenías)
+            const promptText = `ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO... (Tu prompt maestro) ... JSON`;
+
+            // 3. Llamar a Gemini
+            const response = await aiClient.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: [{ parts: [{ text: promptText }, ...imageParts] }]
+            });
+
+            // 4. Limpiar JSON
+            let text = response.response.candidates[0].content.parts[0].text;
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const jsonResult = JSON.parse(text);
+
+            // 5. Guardar el registro del ANÁLISIS (solo datos)
+            await AIDiet.create({
+                id_client: id_client,
+                physiology_data: JSON.parse(physiologyStr),
+                ai_analysis_result: jsonResult
+            });
+
+            // 6. DEVOLVER JSON A FLUTTER (No generamos PDF aquí)
+            return res.status(200).json({
+                success: true,
+                message: 'Análisis completado',
+                data: jsonResult 
+            });
+
+        } catch (error) {
+            console.error(`Error AI: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error en análisis IA', error: error.message });
+        }
+    },
+
+    /**
+     * PASO 2: Recibe el PDF generado por Flutter -> Sube a Firebase -> Actualiza User
+     */
+    async uploadDietPdf(req, res, next) {
+        try {
+            const file = req.file; // El PDF que viene de Flutter
+            const id_client = req.user.id;
+
+            if (!file) {
+                return res.status(400).json({ success: false, message: 'No se recibió el PDF.' });
+            }
+
+            console.log(`[STORAGE] Subiendo PDF final del cliente ${id_client}...`);
+
+            // 1. Subir a Firebase (usando tu utilidad existente)
+            const pathImage = `diet_files/ai_plan_${Date.now()}_${id_client}.pdf`;
+            const pdfUrl = await storage(file, pathImage);
+
+            if (pdfUrl) {
+                // 2. Actualizar la URL en la tabla de Usuarios
+                await User.updateDietUrl(id_client, pdfUrl);
+
+                return res.status(201).json({
+                    success: true,
+                    message: 'Plan guardado y vinculado exitosamente.',
+                    url: pdfUrl
+                });
+            } else {
+                throw new Error('Falló la subida a Firebase');
+            }
+
+        } catch (error) {
+            console.error(`Error Upload PDF: ${error}`);
+            return res.status(501).json({ success: false, error: error.message });
+        }
+    }
 };
