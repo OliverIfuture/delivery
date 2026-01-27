@@ -102,12 +102,12 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
         const jsonResult = JSON.parse(text);
 
         // 7. ACTUALIZAR BD
-        await AIDiet.updateResult(analysisId, jsonResult);
+        await Diet.updateResult(analysisId, jsonResult);
         console.log(`[BG-PROCESS] ID ${analysisId} completado exitosamente.`);
 
     } catch (error) {
         console.error(`[BG-PROCESS] Error en ID ${analysisId}: ${error.message}`);
-        await AIDiet.updateError(analysisId);
+        await Diet.updateError(analysisId);
     }
 };
 
