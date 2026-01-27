@@ -8,9 +8,22 @@ const processGeminiBackground = async (analysisId, files, physiologyStr) => {
         console.log(`[BG-PROCESS] Ejecutando Gemini para ID ${analysisId}...`);
         
         // 1. Preparar imágenes
-        const imageParts = files.map(file => ({
-            inlineData: { mimeType: file.mimetype, data: file.buffer.toString("base64") }
-        }));
+    const imageParts = files.map(file => {
+            // Si viene como genérico (octet-stream), lo forzamos a JPEG
+            // Gemini odia 'application/octet-stream', pero ama 'image/jpeg'
+            let finalMimeType = file.mimetype;
+            
+            if (finalMimeType === 'application/octet-stream') {
+                finalMimeType = 'image/jpeg';
+            }
+
+            return {
+                inlineData: { 
+                    mimeType: finalMimeType, 
+                    data: file.buffer.toString("base64") 
+                }
+            };
+        });
 
         // 2. Prompt Maestro
         const promptText = `
