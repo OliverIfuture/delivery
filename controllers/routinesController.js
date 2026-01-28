@@ -124,17 +124,15 @@ module.exports = {
                 return res.status(404).json({ success: false, message: "No encontrado" });
             }
 
-            if (evaluation.status === 'completed') {
-                return res.status(200).json({
-                    success: true,
-                    status: 'completed',
-                    data: evaluation.result
-                });
-            } else if (evaluation.status === 'failed') {
-                return res.status(500).json({ success: false, status: 'failed', message: "Falló la IA." });
-            } else {
-                return res.status(200).json({ success: true, status: evaluation.status, message: "Procesando..." });
-            }
+            // --- CORRECCIÓN: Envolvemos todo en un objeto unificado ---
+            return res.status(200).json({
+                success: true,
+                data: {
+                    status: evaluation.status, // 'pending', 'processing', 'completed'
+                    result: evaluation.result  // Aquí va el texto JSON de la IA (o null)
+                }
+            });
+            // -----------------------------------------------------------
 
         } catch (error) {
             console.error(error);
