@@ -147,7 +147,7 @@ WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {
     const sql = `
         SELECT * FROM workout_logs
         WHERE id_client = $1 
-          AND id = $2
+          AND exercise_id = $2
           AND created_at >= NOW() - INTERVAL '30 days'
         ORDER BY created_at ASC
     `;
@@ -162,19 +162,18 @@ WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {
     // o vamos a cambiar el frontend para mandar el nombre.
 
     // Usemos esta query genérica asumiendo que el parámetro $2 será lo que guardaste en la columna correcta.
-    /* const sql = `
-         SELECT 
-             id,
-             completed_weight, 
-             completed_reps, 
-             created_at 
-         FROM workout_logs
-         WHERE id_client = $1 
-           AND exercise_name = $2 -- O exercise_id = $2
-           AND created_at >= NOW() - INTERVAL '30 days'
-         ORDER BY created_at ASC
-     `;
-     */
+    const sql = `
+        SELECT 
+            id,
+            completed_weight, 
+            completed_reps, 
+            created_at 
+        FROM workout_logs
+        WHERE id_client = $1 
+          AND exercise_name = $2 -- O exercise_id = $2
+          AND created_at >= NOW() - INTERVAL '30 days'
+        ORDER BY created_at ASC
+    `;
     return db.manyOrNone(sql, [id_client, exercise_id]);
 };
 
