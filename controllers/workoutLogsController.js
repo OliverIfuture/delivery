@@ -1,5 +1,5 @@
 const WorkoutLog = require('../models/workoutLog.js');
-const User = require('../models/user.js'); 
+const User = require('../models/user.js');
 
 module.exports = {
 
@@ -8,13 +8,13 @@ module.exports = {
      */
     async create(req, res, next) {
         try {
-            const log = req.body; 
-            log.id_client = req.user.id; 
-            
+            const log = req.body;
+            log.id_client = req.user.id;
+
             // --- CORRECCIÓN FREEMIUM ---
             // Si tiene entrenador, lo usamos. Si no, se queda en null.
             // Y lo más importante: ¡QUITAMOS EL IF QUE BLOQUEABA!
-            log.id_company = req.user.id_entrenador || null; 
+            log.id_company = req.user.id_entrenador || null;
             // ---------------------------
 
             const data = await WorkoutLog.create(log);
@@ -23,7 +23,7 @@ module.exports = {
             // pero es bueno saber si funcionó.
             const streakData = await User.updateStreak(log.id_client);
             console.log(`🔥 Racha actualizada para usuario ${log.id_client}: ${streakData.current_streak} días`);
-            
+
             return res.status(201).json({
                 success: true,
                 message: 'Progreso registrado correctamente.',
@@ -46,7 +46,7 @@ module.exports = {
         try {
             const id_client = req.params.id_client;
             const exercise_name = req.params.exercise_name;
-            
+
             // Seguridad: Asegurar que el usuario (entrenador) pide el de su cliente
             // O que el cliente pide el suyo
             // (Esta lógica puede mejorarse, pero por ahora funciona)
@@ -62,7 +62,7 @@ module.exports = {
             });
         }
     },
-    
+
     /**
      * Obtener todos los logs de una rutina
      */
@@ -88,10 +88,10 @@ module.exports = {
     async findByClient(req, res, next) {
         try {
             const id_client = req.params.id_client;
-            
+
             // Aquí deberíamos validar que el req.user (entrenador)
             // tenga permiso para ver este id_client.
-            
+
             const data = await WorkoutLog.findByClient(id_client);
             return res.status(200).json(data);
         }
@@ -110,7 +110,7 @@ module.exports = {
         try {
             const id_client = req.params.id_client;
             // CRÍTICO: Obtenemos el ID de la rutina de los query parameters
-            const id_routine = req.params.idRoutine; 
+            const id_routine = req.params.idRoutine;
 
             if (!id_routine) {
                 return res.status(400).json({
@@ -118,10 +118,10 @@ module.exports = {
                     message: 'Falta el parámetro id_routine.'
                 });
             }
-            
+
             // Llama a la función del modelo filtrada por la fecha de hoy
             const data = await WorkoutLog.findByClientAndRoutineToday(id_client, id_routine);
-           // console.log(`logs del dia: ${JSON.stringify(data)}`);
+            // console.log(`logs del dia: ${JSON.stringify(data)}`);
 
             return res.status(200).json(data);
         }
@@ -138,11 +138,11 @@ module.exports = {
     async getTrainerFeed(req, res, next) {
         try {
             // Seguridad: Asegura que el entrenador solo pueda ver su propio feed
-            const id_company = req.user.mi_store; 
+            const id_company = req.user.mi_store;
             console.log(`id del entrenador: id_company= ${id_company} `);
-            
+
             if (req.params.id_company != id_company) {
-                 return res.status(403).json({
+                return res.status(403).json({
                     success: false,
                     message: 'No tienes permiso para ver este feed.'
                 });
@@ -158,6 +158,19 @@ module.exports = {
                 message: 'Error al obtener el feed de actividad',
                 error: error
             });
+        }
+    },
+
+    async getLogsLast30Days(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const exercise_identifier = req.params.exercise_identifier; // Puede ser nombre o ID
+
+            const data = await WorkoutLog.getLogsLast30Days(id_client, exercise_identifier);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error getLogsLast30Days: ${error}`);
+            return res.status(501).json({ success: false, error: error.message });
         }
     },
 

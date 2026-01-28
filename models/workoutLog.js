@@ -136,5 +136,46 @@ WorkoutLog.findByClientAndRoutineToday = (id_client, id_routine) => {
     return db.manyOrNone(sql, [id_client, id_routine]);
 };
 
+WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {
+    // IMPORTANTE: Si tu tabla usa 'exercise_name', cambia la condición WHERE.
+    // Si tienes 'exercise_id', usa esta.
+    // Aquí asumo que quieres filtrar por el ID del ejercicio que viene de la rutina.
+    // Si tu tabla workout_logs NO tiene exercise_id, tendrás que buscar por nombre.
+
+    // OPCIÓN A: Si tienes exercise_id en workout_logs
+    /*
+    const sql = `
+        SELECT * FROM workout_logs
+        WHERE id_client = $1 
+          AND exercise_id = $2
+          AND created_at >= NOW() - INTERVAL '30 days'
+        ORDER BY created_at ASC
+    `;
+    */
+
+    // OPCIÓN B (Más probable según tu código anterior): Buscas por NOMBRE
+    // Pero el frontend manda ID. Necesitas que el frontend mande el NOMBRE o que la BD tenga el ID.
+    // Voy a asumir que en el frontend tienes acceso al nombre y lo enviaremos.
+
+    // Si realmente necesitas por ID y tu tabla solo tiene exercise_name, es un problema de diseño.
+    // SOLUCIÓN RÁPIDA: Vamos a filtrar por exercise_id suponiendo que lo agregaste, 
+    // o vamos a cambiar el frontend para mandar el nombre.
+
+    // Usemos esta query genérica asumiendo que el parámetro $2 será lo que guardaste en la columna correcta.
+    const sql = `
+        SELECT 
+            id,
+            completed_weight, 
+            completed_reps, 
+            created_at 
+        FROM workout_logs
+        WHERE id_client = $1 
+          AND exercise_name = $2 -- O exercise_id = $2
+          AND created_at >= NOW() - INTERVAL '30 days'
+        ORDER BY created_at ASC
+    `;
+    return db.manyOrNone(sql, [id_client, exercise_id]);
+};
+
 
 module.exports = WorkoutLog;

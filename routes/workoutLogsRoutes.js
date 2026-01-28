@@ -8,11 +8,11 @@ module.exports = (app) => {
     // --- GET ---
     // Obtener el historial de un cliente para un ejercicio específico
     app.get('/api/workoutlogs/history/:id_client/:exercise_name', passport.authenticate('jwt', { session: false }), workoutLogsController.getHistoryByExercise);
-    
+
     // Obtener todos los logs de una rutina específica
     app.get('/api/workoutlogs/findByRoutine/:id_routine', passport.authenticate('jwt', { session: false }), workoutLogsController.findByRoutine);
-    
-// **NUEVA RUTA: Obtener TODO el historial de un cliente**
+
+    // **NUEVA RUTA: Obtener TODO el historial de un cliente**
     app.get('/api/workoutlogs/findByClient/:id_client', passport.authenticate('jwt', { session: false }), workoutLogsController.findByClient);
 
     // --- POST ---
@@ -23,9 +23,12 @@ module.exports = (app) => {
     app.get('/api/workoutlogs/feed/:id_company', passport.authenticate('jwt', { session: false }), workoutLogsController.getTrainerFeed);
 
     app.get(
-        '/api/workoutlogs/findLogsForCurrentRoutine/:id_client/:idRoutine', 
-        passport.authenticate('jwt', { session: false }), 
+        '/api/workoutlogs/findLogsForCurrentRoutine/:id_client/:idRoutine',
+        passport.authenticate('jwt', { session: false }),
         workoutLogsController.findLogsForCurrentRoutine
     );
-    
+
+    // Nueva ruta para las gráficas
+    app.get('/api/workoutlogs/history-30days/:id_client/:exercise_identifier', passport.authenticate('jwt', { session: false }), workoutLogsController.getLogsLast30Days);
+
 };
