@@ -4,125 +4,105 @@ const Routine = require('../models/routine.js');
 
 const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ---------------------------------------------------------
-// ENDPOINT 1: SOLICITAR EVALUACIÓN (POST)
-// ---------------------------------------------------------
-exports.requestEvaluation = async (req, res) => {
-    try {
-        const { userId, trainerId, userContextData } = req.body;
-
-        // 1. VERIFICACIÓN DE 15 DÍAS (Ahorro de costos)
-        const lastEval = await EvaluationControl.findOne({
-            userId: userId,
-            status: 'completed' // Solo cuentan las exitosas
-        }).sort({ createdAt: -1 });
-
-        if (lastEval) {
-            const daysDiff = (new Date() - new Date(lastEval.createdAt)) / (1000 * 60 * 60 * 24);
-            if (daysDiff < 15) {
-                return res.status(429).json({
-                    success: false,
-                    message: `Debes esperar 15 días entre evaluaciones. Faltan ${Math.ceil(15 - daysDiff)} días.`,
-                    canEvaluate: false
-                });
-            }
-        }
-
-        // 2. CREAR REGISTRO DE "PENDING"
-        // Creamos el ticket inmediatamente para responder a Heroku rápido
-        const newEval = new EvaluationControl({
-            userId,
-            trainerId,
-            status: 'pending'
-        });
-        await newEval.save();
-
-        // 3. INICIAR PROCESO EN BACKGROUND (NO usamos await aquí para no bloquear)
-        // Llamamos a la función pero NO esperamos su respuesta para el 'res.json'
-        processGeminiAnalysis(newEval._id, userContextData).catch(err => {
-            console.error("Error en background process:", err);
-            // Si falla, actualizamos el estado a failed
-            EvaluationControl.findByIdAndUpdate(newEval._id, { status: 'failed' }).exec();
-        });
-
-        // 4. RESPONDER RÁPIDO AL CLIENTE (Evita timeout de Heroku)
-        return res.status(202).json({
-            success: true,
-            message: "Análisis iniciado. Por favor consulta el estado con el ID.",
-            pollingId: newEval._id, // El cliente usará este ID para preguntar
-            status: 'pending'
-        });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, error: error.message });
-    }
-};
 
 // ---------------------------------------------------------
 // FUNCIÓN PRIVADA: PROCESAMIENTO DE IA (Corre en background)
 // ---------------------------------------------------------
 async function processGeminiAnalysis(evaluationId, data) {
-    // Cambiamos estado a processing
     await EvaluationControl.findByIdAndUpdate(evaluationId, { status: 'processing' });
-
     try {
-        // Tu lógica de Prompt
-        const model = aiClient.getGenerativeModel({ model: "gemini-pro" });
-        const prompt = `Actúa como entrenador experto. Analiza estos datos: ${JSON.stringify(data)}...`;
+        const model = aiClient.getGenerativeModel({ model: "gemini-2.5-pro" });
+        const prompt = `Actúa como entrenador experto. Analiza estos datos: ${JSON.stringify(data)}. Dame recomendaciones concretas.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
 
-        // GUARDAMOS EL RESULTADO EN LA BASE DE DATOS
         await EvaluationControl.findByIdAndUpdate(evaluationId, {
             status: 'completed',
-            result: text, // Aquí queda guardado el análisis
+            result: text,
             lastEvaluationDate: new Date()
         });
         console.log(`Evaluación ${evaluationId} completada exitosamente.`);
-
     } catch (error) {
         console.error(`Error procesando evaluación ${evaluationId}:`, error);
         await EvaluationControl.findByIdAndUpdate(evaluationId, { status: 'failed' });
     }
 }
 
-// ---------------------------------------------------------
-// ENDPOINT 2: POLLING / CONSULTAR ESTADO (GET)
-// ---------------------------------------------------------
-exports.checkEvaluationStatus = async (req, res) => {
-    try {
-        const { pollingId } = req.params;
-        const evaluation = await EvaluationControl.findById(pollingId);
-
-        if (!evaluation) {
-            return res.status(404).json({ success: false, message: "Evaluación no encontrada" });
-        }
-
-        if (evaluation.status === 'completed') {
-            return res.status(200).json({
-                success: true,
-                status: 'completed',
-                data: evaluation.result // ¡Aquí entregas el análisis final!
-            });
-        } else if (evaluation.status === 'failed') {
-            return res.status(500).json({ success: false, status: 'failed', message: "La IA falló al procesar." });
-        } else {
-            // Sigue esperando (pending o processing)
-            return res.status(200).json({
-                success: true,
-                status: evaluation.status,
-                message: "Aún procesando..."
-            });
-        }
-
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-};
 module.exports = {
+
+    // ==========================================
+    // NUEVAS FUNCIONES DE IA (Ahora dentro del objeto)
+    // ==========================================
+
+    async requestEvaluation(req, res) {
+        try {
+            const { userId, trainerId, userContextData } = req.body;
+
+            // 1. Verificación 15 días
+            const lastEval = await EvaluationControl.findOne({
+                userId: userId,
+                status: 'completed'
+            }).sort({ createdAt: -1 });
+
+            if (lastEval) {
+                const daysDiff = (new Date() - new Date(lastEval.createdAt)) / (1000 * 60 * 60 * 24);
+                if (daysDiff < 15) {
+                    return res.status(429).json({
+                        success: false,
+                        message: `Debes esperar 15 días entre evaluaciones. Faltan ${Math.ceil(15 - daysDiff)} días.`,
+                        canEvaluate: false
+                    });
+                }
+            }
+
+            // 2. Crear Pending
+            const newEval = new EvaluationControl({
+                userId,
+                trainerId,
+                status: 'pending'
+            });
+            await newEval.save();
+
+            // 3. Background Process
+            processGeminiAnalysis(newEval._id, userContextData).catch(err => {
+                console.error("Error en background process:", err);
+                EvaluationControl.findByIdAndUpdate(newEval._id, { status: 'failed' }).exec();
+            });
+
+            // 4. Respuesta Rápida
+            return res.status(202).json({
+                success: true,
+                message: "Análisis iniciado.",
+                pollingId: newEval._id,
+                status: 'pending'
+            });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+    },
+
+    async checkEvaluationStatus(req, res) {
+        try {
+            const { pollingId } = req.params;
+            const evaluation = await EvaluationControl.findById(pollingId);
+
+            if (!evaluation) return res.status(404).json({ success: false, message: "No encontrado" });
+
+            if (evaluation.status === 'completed') {
+                return res.status(200).json({ success: true, status: 'completed', data: evaluation.result });
+            } else if (evaluation.status === 'failed') {
+                return res.status(500).json({ success: false, status: 'failed', message: "Falló la IA." });
+            } else {
+                return res.status(200).json({ success: true, status: evaluation.status, message: "Procesando..." });
+            }
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
+    },
 
     /**
      * Crear una nueva rutina (AHORA SOPORTA CLIENTES GRATUITOS)

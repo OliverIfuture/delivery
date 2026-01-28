@@ -33,6 +33,15 @@ module.exports = (app) => {
     app.get('/api/routines/findAllByClient', passport.authenticate('jwt', { session: false }), routinesController.findAllByClient);
 
 
+    // ==========================================
+    // NUEVAS RUTAS DE IA (POLLING)
+    // ==========================================
+    // 1. Iniciar evaluación (POST)
+    app.post('/api/routines/start-evaluation', passport.authenticate('jwt', { session: false }), routinesController.requestEvaluation);
+
+    // 2. Consultar estado (GET) - Nota: pollingId viaja en la URL
+    app.get('/api/routines/check-status/:pollingId', passport.authenticate('jwt', { session: false }), routinesController.checkEvaluationStatus);
+
     // --- RUTINAS DEL SISTEMA (TEMPLATES) ---
 
     // Obtener las cards de los planes
@@ -41,6 +50,5 @@ module.exports = (app) => {
     // Activar un plan (Clonar)
     app.post('/api/routines/system/activate', passport.authenticate('jwt', { session: false }), routinesController.activateSystemTemplate);
     app.post('/api/routines/analyze-progress', passport.authenticate('jwt', { session: false }), routinesController.analyzeProgressAI);
-    app.post('/start-evaluation', routinesController.requestEvaluation);
-    app.get('/check-status/:pollingId', routinesController.checkEvaluationStatus);
+
 }
