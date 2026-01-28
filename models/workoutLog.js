@@ -144,13 +144,13 @@ WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {
 
     // OPCIÓN A: Si tienes exercise_id en workout_logs
 
-    const sql = `
-        SELECT * FROM workout_logs
-        WHERE id_client = $1 
-          AND exercise_id = $2
-          AND created_at >= NOW() - INTERVAL '30 days'
-        ORDER BY created_at ASC
-    `;
+    /* const sql = `
+         SELECT * FROM workout_logs
+         WHERE id_client = $1 
+           AND exercise_id = $2
+           AND created_at >= NOW() - INTERVAL '30 days'
+         ORDER BY created_at ASC
+     `;*/
 
 
     // OPCIÓN B (Más probable según tu código anterior): Buscas por NOMBRE
