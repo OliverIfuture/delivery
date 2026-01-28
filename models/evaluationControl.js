@@ -1,14 +1,16 @@
 const mongoose = require('mongoose');
 
 const evaluationControlSchema = new mongoose.Schema({
+    // CAMBIO IMPORTANTE:
+    // Quitamos "mongoose.Schema.Types.ObjectId" y ponemos "String".
+    // También quitamos "ref: 'User'" porque el usuario no vive en MongoDB, vive en tu SQL.
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // El cliente/alumno
-        required: true
+        type: String,
+        required: true,
+        index: true // Mantenemos el índice para búsquedas rápidas
     },
     trainerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // El entrenador (si aplica)
+        type: String,
         required: false
     },
     status: {
@@ -17,7 +19,7 @@ const evaluationControlSchema = new mongoose.Schema({
         default: 'pending'
     },
     result: {
-        type: String, // Aquí guardaremos la respuesta de Gemini cuando termine
+        type: String,
         default: null
     },
     lastEvaluationDate: {
@@ -25,10 +27,10 @@ const evaluationControlSchema = new mongoose.Schema({
         default: Date.now
     }
 }, {
-    timestamps: true // Esto crea automáticamente createdAt y updatedAt
+    timestamps: true
 });
 
-// Índice compuesto para búsquedas rápidas
+// Índice compuesto para la validación de los 15 días
 evaluationControlSchema.index({ userId: 1, lastEvaluationDate: -1 });
 
 module.exports = mongoose.model('EvaluationControl', evaluationControlSchema);
