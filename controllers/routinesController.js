@@ -10,22 +10,84 @@ const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // ---------------------------------------------------------
 // FUNCIÓN PRIVADA: PROCESAMIENTO DE IA (SQL VERSION)
 // ---------------------------------------------------------
+// ---------------------------------------------------------
+// FUNCIÓN PRIVADA: PROCESAMIENTO DE IA (BLINDADO)
+// ---------------------------------------------------------
+// ---------------------------------------------------------
+// FUNCIÓN PRIVADA: PROCESAMIENTO DE IA (ESTRICTO)
+// ---------------------------------------------------------
 async function processGeminiAnalysis(evaluationId, data) {
-    // 1. Cambiar a Processing
     try {
         await EvaluationControl.updateStatus(evaluationId, 'processing', null);
 
-        // 2. Llamar a Gemini
-        const model = aiClient.getGenerativeModel({ model: "gemini-2.5-pro" }); // Usa 1.5-pro o gemini-pro
-        const prompt = `Actúa como entrenador experto. Analiza estos datos y responde SOLO con un JSON válido: ${JSON.stringify(data)}. Dame recomendaciones concretas.`;
+        // CONFIGURACIÓN: Baja temperatura para eliminar "creatividad" estructural
+        const model = aiClient.getGenerativeModel({
+            model: "gemini-2.5-pro", // O 'gemini-pro'
+            generationConfig: {
+                temperature: 0.1, // CASI CERO: La IA será robótica y obediente
+                responseMimeType: "application/json" // Forzamos modo JSON
+            }
+        });
+
+        // EL PROMPT MAESTRO (ESTRUCTURA INMUTABLE)
+        const prompt = `
+        Actúa como una API de Backend experta en entrenamiento de hipertrofia.
+        Tu trabajo es analizar los datos de entrada y devolver una respuesta JSON estrictamente formateada.
+
+        DATOS DE ENTRADA (Contexto del Usuario):
+        ${JSON.stringify(data)}
+
+        INSTRUCCIONES CRÍTICAS:
+        1. Responde ÚNICAMENTE con el objeto JSON. Sin markdown, sin explicaciones previas.
+        2. Mantén el idioma ESPAÑOL para los textos legibles.
+        3. Para cada ejercicio analizado, DEBES incluir el "exercise_id" original que viene en los datos de entrada. ESTO ES OBLIGATORIO.
+        4. Todos los valores numéricos (peso, reps) deben ser CADENAS DE TEXTO (Strings). Ejemplo: "100", NO 100.
+        
+        USO DE CÓDIGOS DE ESTADO (status):
+        - "PROGRESS": El usuario superó el plan. Sugerir subir peso.
+        - "MAINTAIN": Rendimiento adecuado. Mantener peso o subir reps.
+        - "DECREASE": El usuario falló el objetivo. Sugerir bajar peso.
+        - "TRACK_ERROR": Datos inconsistentes o faltantes.
+
+        ESTRUCTURA DE SALIDA REQUERIDA (NO CAMBIES LAS LLAVES):
+        {
+            "analysis_summary": {
+                "overall_performance": "Resumen corto de 2 lineas sobre el rendimiento general.",
+                "general_recommendation": "Consejo principal para la siguiente semana."
+            },
+            "recommendations": [
+                {
+                    "exercise_id": "COPIA_EXACTA_DEL_ID_DE_ENTRADA",
+                    "name": "Nombre del ejercicio",
+                    "status": "PROGRESS | MAINTAIN | DECREASE | TRACK_ERROR",
+                    "analysis": "Explicación breve de 1 frase del por qué del cambio.",
+                    "current_plan": {
+                        "weight": "Peso actual",
+                        "reps": "Reps actuales",
+                        "sets": "Series actuales"
+                    },
+                    "suggested_next_plan": {
+                        "weight": "Nuevo peso sugerido (String)",
+                        "reps": "Nuevas reps sugeridas (String)",
+                        "sets": "Series sugeridas (String)"
+                    }
+                }
+            ]
+        }
+        `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        let text = response.text();
 
-        // 3. Guardar Resultado (SQL)
+        // Limpieza de seguridad por si acaso
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        // Validación: Si no es JSON válido, que falle aquí y no en la App
+        JSON.parse(text);
+
         await EvaluationControl.updateStatus(evaluationId, 'completed', text);
-        console.log(`Evaluación SQL ID ${evaluationId} completada.`);
+        console.log(`Evaluación Estricta ID ${evaluationId} completada.`);
 
     } catch (error) {
         console.error(`Error procesando evaluación ${evaluationId}:`, error);

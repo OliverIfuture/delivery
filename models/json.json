@@ -1,0 +1,335 @@
+```json
+{
+  "client_name": "giovanni",
+  "routine_name": "MES 1",
+  "goal": "Hipertrofia",
+  "analysis_date": "2026-02-01T10:00:00.000Z",
+  "overall_summary": {
+    "positive_points": [
+      "Demuestras una gran fuerza y un alto nivel de esfuerzo, lo cual es fundamental para la hipertrofia.",
+      "Hay una buena base de consistencia en la asistencia al gimnasio, como se ve en el historial.",
+      "En muchos ejercicios, una vez que se establece un peso, lo dominas rápidamente."
+    ],
+    "areas_for_improvement": [
+      "El 'current_plan' a menudo no coincide con tu rendimiento real. Es crucial actualizar los pesos y repeticiones del plan después de cada sesión para que la siguiente sea un desafío calculado y no una improvisación.",
+      "Se observa una tendencia a usar pesos que impiden alcanzar el rango de repeticiones objetivo. Para la hipertrofia, es vital acumular volumen (series x reps x peso), por lo que es preferible asegurar las repeticiones antes de subir el peso.",
+      "Falta un registro sistemático para los ejercicios nuevos o aquellos sin peso asignado en el plan. Establecer un peso inicial y registrarlo es clave para medir el progreso."
+    ],
+    "general_recommendation": "¡Gran trabajo, Giovanni! Para maximizar tus ganancias, el siguiente paso es enfocarse en la 'sobrecarga progresiva planificada'. Después de cada entrenamiento, ajusta el plan para la próxima semana: si completaste todas las series y repeticiones, aumenta ligeramente el peso. Si no llegaste a las repeticiones, mantén el peso y concéntrate en alcanzar el objetivo. Esta disciplina en el registro y la planificación acelerará tus resultados."
+  },
+  "exercise_feedback": [
+    {
+      "name": "Extensión de Cuádriceps en Máquina",
+      "analysis": "El peso de 220 es demasiado alto para alcanzar el objetivo de 12 repeticiones, ya que tu rendimiento máximo fue de 10 reps y decayó. Estás sacrificando volumen por intensidad.",
+      "recommendation": "Reduce el peso a 210. El objetivo principal es completar las 4 series de 12 repeticiones con buena técnica. Una vez que lo logres de forma consistente, será el momento de volver a subir.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "210" }
+    },
+    {
+      "name": "Sentadilla Hack",
+      "analysis": "El historial es inconsistente y el plan de 270 para 12 repeticiones es demasiado ambicioso comparado con tu último rendimiento de 180 para 12 repeticiones.",
+      "recommendation": "Basa tu progreso en tu último logro. Aumenta el peso a 200 y enfócate en completar las 6 series de 12 repeticiones. Progresa desde ahí de forma gradual.",
+      "suggested_next_plan": { "sets": "6", "reps": "12", "weight": "200" }
+    },
+    {
+      "name": "Curl Femoral Horizontal en Máquina",
+      "analysis": "El peso en el plan (96) es incorrecto. Has estado trabajando con 130, lo cual es excelente, pero las repeticiones cayeron a 8 en la última serie, indicando fatiga.",
+      "recommendation": "Actualiza tu plan a 130. Mantén este peso y concéntrate en que todas las series alcancen al menos 10 repeticiones antes de considerar un aumento.",
+      "suggested_next_plan": { "sets": "4", "reps": "10", "weight": "130" }
+    },
+    {
+      "name": "Sentadilla búlgara",
+      "analysis": "Tu rendimiento (10 reps con 60) supera con creces el plan actual (8 reps con 45). El plan es demasiado fácil.",
+      "recommendation": "Aumenta el peso del plan a 65 y mantén el objetivo de 8 repeticiones por pierna, asegurando una técnica impecable y un rango de movimiento completo.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "65" }
+    },
+    {
+      "name": "Peso Muerto Rumano con Barra",
+      "analysis": "No alcanzaste las 12 repeticiones con 180, pero luego hiciste un salto impresionante a 220. Para un estímulo hipertrófico más consistente, es mejor mantener la carga en todas las series de trabajo.",
+      "recommendation": "Establece 180 como tu peso de trabajo y no lo aumentes hasta que completes las 4 series de 12 repeticiones. La técnica es primordial en este ejercicio.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "180" }
+    },
+    {
+      "name": "Extensión de gemelos",
+      "analysis": "Cumpliste el plan de 12 repeticiones con 85. Estás listo para progresar.",
+      "recommendation": "Aplica la sobrecarga progresiva. Aumenta el peso a 95 y vuelve a apuntar a las 12 repeticiones, concentrándote en la contracción máxima y la pausa en la parte superior.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "95" }
+    },
+    {
+      "name": "Extensión de Gemelos sentado en Máquina",
+      "analysis": "Este es un ejercicio nuevo sin historial registrado.",
+      "recommendation": "Comienza con el peso planificado de 70. Concéntrate en aprender el movimiento, sentir la contracción del sóleo y completar las 12 repeticiones. Ajusta el peso en la siguiente sesión si es necesario.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "70" }
+    },
+    {
+      "name": "Press Militar en Pronación con Mancuernas",
+      "analysis": "Tu historial muestra un rendimiento sólido de 8 repeticiones con 70. El plan actual de 12 repeticiones no tiene un peso asignado y requeriría una carga menor.",
+      "recommendation": "Para este plan de 12 repeticiones, comienza con un peso de 60. El objetivo es encontrar una carga que te permita completar las 12 repeticiones en al menos las dos primeras series.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "60" }
+    },
+    {
+      "name": "Elevaciones Laterales Neutras con Mancuernas",
+      "analysis": "El historial muestra que tuviste que bajar de 30 a 25 para completar las series. Esto indica que 30 es actualmente tu peso para una serie máxima, no para volumen de trabajo.",
+      "recommendation": "Establece 25 como tu peso de trabajo principal. Concéntrate en completar las 4 series de 12 repeticiones con 25 antes de intentar subir a 30 de nuevo.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "25" }
+    },
+    {
+      "name": "Aperturas Traseras en Pronación en Máquina",
+      "analysis": "Completaste exitosamente 3 series de 12 repeticiones con 65. Excelente trabajo, estás listo para un nuevo estímulo.",
+      "recommendation": "Es el momento perfecto para la sobrecarga progresiva. Aumenta el peso a 70 y apunta a completar nuevamente las 12 repeticiones.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "70" }
+    },
+    {
+      "name": "Encogimientos en Máquina",
+      "analysis": "Tu historial muestra un máximo de 8 repeticiones con 210. El objetivo de 12 repeticiones requerirá un peso menor.",
+      "recommendation": "Para el objetivo de 12 repeticiones, reduce el peso a 170. El objetivo es el volumen y la contracción, no solo mover el peso máximo.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "170" }
+    },
+    {
+      "name": "Remo al menton con barra",
+      "analysis": "Estás cerca de la meta de 12 repeticiones con 80, alcanzando 10 repeticiones. Falta poco.",
+      "recommendation": "Mantén el peso en 80 y enfócate en la técnica para intentar añadir una repetición más a cada serie en la próxima sesión. El objetivo es llegar a 12 en todas las series.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "80" }
+    },
+    {
+      "name": "Encogimientos Delanteros con Barra",
+      "analysis": "Comenzaste con 110 pero tuviste que bajar a 80 para completar el entrenamiento. Esto indica que 110 es demasiado pesado para el volumen planeado.",
+      "recommendation": "Utiliza 80 como tu peso de trabajo estable. Una vez que puedas completar todas las series de 12 repeticiones con 80 con facilidad, sube a 90.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "80" }
+    },
+    {
+      "name": "Curl en Supinación con Barra Z",
+      "analysis": "Tu rendimiento es muy consistente con 8 repeticiones con 80, pero no estás progresando en repeticiones.",
+      "recommendation": "Para romper el estancamiento, enfócate en aumentar las repeticiones antes que el peso. Intenta hacer 9 o 10 repeticiones en la primera serie con 80.",
+      "suggested_next_plan": { "sets": "4", "reps": "8-10", "weight": "80" }
+    },
+    {
+      "name": "Curl alternado con mancuernas",
+      "analysis": "Has dominado las 8 repeticiones con 40. Es hora de un nuevo desafío.",
+      "recommendation": "Aumenta el peso a 45 y busca alcanzar entre 6 y 8 repeticiones. Es un progreso natural.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "45" }
+    },
+    {
+      "name": "Curl Inclinado Alterno en Supinación con Mancuernas",
+      "analysis": "El peso de 35 fue demasiado, obligándote a bajar a 25. El registro es escaso.",
+      "recommendation": "Establece 25 como tu peso inicial. Realiza las 4 series completas y registra las repeticiones. Concéntrate en la técnica y el estiramiento en la fase excéntrica.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "25" }
+    },
+    {
+      "name": "Curl en Banco Scott Neutro con Mancuerna",
+      "analysis": "Ejercicio nuevo sin historial.",
+      "recommendation": "Comienza con un peso conservador para asegurar una buena técnica y evitar lesiones en el codo. Si no hay un peso en el plan, prueba con 25 o 30 y ajusta desde ahí.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "30" }
+    },
+    {
+      "name": "Dominadas pull-ups",
+      "analysis": "Te has estancado en 8 repeticiones durante varias semanas. Es un punto común que requiere un cambio de estrategia.",
+      "recommendation": "Para romper la meseta, intenta añadir una cuarta serie. Otra opción es añadir lastre: usa un cinturón con un disco de 5 o 10 lbs y apunta a 6-8 repeticiones.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "85" }
+    },
+    {
+      "name": "Jalón Cerrado en Pronación en Polea Alta",
+      "analysis": "Mostraste buena fuerza al subir de 145 a 165 y mantener las 8 repeticiones.",
+      "recommendation": "Establece 165 como tu peso de trabajo para todas las series. Una vez que completes las 4 series de 8 repeticiones, aumenta a 175.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "165" }
+    },
+    {
+      "name": "Pullover en polea alta",
+      "analysis": "El historial muestra que puedes manejar 120 para 12 repeticiones. El plan de 8 repeticiones debería usar un peso mayor.",
+      "recommendation": "Para este plan de 8 repeticiones, desafíate con un peso mayor. Prueba con 130, enfocándote en el estiramiento del dorsal.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "130" }
+    },
+    {
+      "name": "Remo Horizontal Cerrado Neutro en Polea",
+      "analysis": "Rendimiento muy sólido y consistente de 3 series de 8 repeticiones con 230.",
+      "recommendation": "Estás claramente listo para más. Aumenta el peso a 240 y mantén el objetivo de 8 repeticiones.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "240" }
+    },
+    {
+      "name": "Encogimientos en Máquina",
+      "analysis": "Tu último rendimiento fue de 8 repeticiones con 210.",
+      "recommendation": "Actualiza el plan para reflejar tu capacidad. Establece 210 como tu peso de trabajo y concéntrate en completar las 4 series de 8 repeticiones.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "210" }
+    },
+    {
+      "name": "Encogimientos Delanteros con Barra",
+      "analysis": "El historial muestra que con 80 puedes hacer hasta 12 repeticiones. Para un objetivo de 8 repeticiones, puedes manejar más peso.",
+      "recommendation": "Aumenta el peso a 100 para tu objetivo de 8 repeticiones. Esto te dará un estímulo más apropiado para la fuerza y la hipertrofia.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "100" }
+    },
+    {
+      "name": "Curl en Supinación con Barra Z",
+      "analysis": "Has dominado las 8 repeticiones con 80. Es hora de progresar.",
+      "recommendation": "Sube el peso a 85 y apunta a conseguir al menos 6-8 repeticiones. No temas que las reps bajen un poco al aumentar la carga.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "85" }
+    },
+    {
+      "name": "Curl Inclinado Lateral con Mancuernas",
+      "analysis": "Rendimiento consistente de 3 series de 8 repeticiones con 35.",
+      "recommendation": "Aumenta el peso a 40 y busca completar las 8 repeticiones. Concéntrate en el control del movimiento.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "40" }
+    },
+    {
+      "name": "Curl alternado con mancuernas",
+      "analysis": "Has dominado las 8 repeticiones con 40.",
+      "recommendation": "Aumenta el peso a 45 y busca alcanzar entre 6 y 8 repeticiones.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "45" }
+    },
+    {
+      "name": "Aperturas Inclinadas con Mancuernas",
+      "analysis": "El plan de 35 es demasiado ligero; ya estás manejando 40 para 8-10 repeticiones.",
+      "recommendation": "Actualiza tu plan a 40. Mantén este peso y trabaja para lograr las 4 series de 10 repeticiones.",
+      "suggested_next_plan": { "sets": "4", "reps": "10", "weight": "40" }
+    },
+    {
+      "name": "Press de banca inclinado con barra",
+      "analysis": "Estás utilizando un esquema de pirámide ascendente (90, 110, 130). Para un enfoque de hipertrofia más directo, las series efectivas con el mismo peso son más eficientes.",
+      "recommendation": "Después de calentar, realiza todas tus series de trabajo con 110. El objetivo es completar las 4 series de 10 repeticiones. Una vez logrado, sube a 115.",
+      "suggested_next_plan": { "sets": "4", "reps": "10", "weight": "110" }
+    },
+    {
+      "name": "Press Frontal Superior en Máquina",
+      "analysis": "El plan de 8 repeticiones con 230 es demasiado pesado, ya que solo lograste 6 repeticiones.",
+      "recommendation": "Reduce el peso a 215. Esto debería permitirte completar las 8 repeticiones con buena forma, maximizando la tensión en el pectoral.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "215" }
+    },
+    {
+      "name": "Aperturas Extendidas en Máquina",
+      "analysis": "Estás progresando bien con 165, aumentando las repeticiones en cada serie, pero aún no llegas a 12.",
+      "recommendation": "Mantén el peso de 165. Tu objetivo principal para la próxima sesión es alcanzar 12 repeticiones en la primera serie y tratar de mantener ese número en las siguientes.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "165" }
+    },
+    {
+      "name": "Extensión Horizontal con Barra Z",
+      "analysis": "Completaste las 3 series de 10 repeticiones con 45. ¡Misión cumplida! Es hora de progresar.",
+      "recommendation": "Aumenta el peso a 50 y mantén el objetivo de 10 repeticiones. Concéntrate en no usar impulso y aislar el tríceps.",
+      "suggested_next_plan": { "sets": "4", "reps": "10", "weight": "50" }
+    },
+    {
+      "name": "Extensión Vertical Neutra en Polea Alta",
+      "analysis": "Excelente rendimiento, completando 12 repeticiones con 135.",
+      "recommendation": "Sube el peso a 145. El aumento de la carga te dará el estímulo necesario para seguir creciendo.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "145" }
+    },
+    {
+      "name": "Extensión Horizontal en Martillo en Polea Alta",
+      "analysis": "Lograste el objetivo de 12 repeticiones en la última serie con 125, mostrando buena capacidad de esfuerzo.",
+      "recommendation": "Mantén el peso en 125. El desafío ahora es conseguir 12 repeticiones en todas las series, no solo en la última.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "125" }
+    },
+    {
+      "name": "Elevaciones Laterales Neutras con Mancuernas",
+      "analysis": "El plan indica 30, pero el historial muestra que 25 es el peso que puedes manejar para el volumen requerido.",
+      "recommendation": "Sé realista con la planificación. Usa 25 como tu peso de trabajo y domínalo. Cuando completes 4 series de 10-12 repeticiones, sube a 30 para la primera serie y ve cómo te sientes.",
+      "suggested_next_plan": { "sets": "4", "reps": "10", "weight": "25" }
+    },
+    {
+      "name": "Face Pull",
+      "analysis": "Alcanzaste el objetivo de 12 repeticiones en la última serie. Buen final.",
+      "recommendation": "Mantén el peso de 35 y concéntrate en la calidad de cada repetición. El objetivo es llegar a 12 en todas las series, con una pausa y apretando los omóplatos.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "35" }
+    },
+    {
+      "name": "Press Militar en Pronación con Mancuernas",
+      "analysis": "Completaste las 3 series de 8 repeticiones con 70. Has dominado este peso y repeticiones.",
+      "recommendation": "Aumenta el peso a 75 (por mancuerna) y apunta a conseguir 8 repeticiones. Es el siguiente paso lógico.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "75" }
+    },
+    {
+      "name": "Aperturas Traseras en Pronación en Máquina",
+      "analysis": "Cumpliste perfectamente el plan de 12 repeticiones con 65. Estás listo para más.",
+      "recommendation": "Aumenta el peso a 70. Este pequeño salto es ideal para seguir progresando sin comprometer la técnica.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "70" }
+    },
+    {
+      "name": "Curl alternado con mancuernas",
+      "analysis": "Has dominado las 8 repeticiones con 40.",
+      "recommendation": "Aumenta el peso a 45 y apunta a 8 repeticiones. No tengas miedo de que las últimas repeticiones sean desafiantes.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "45" }
+    },
+    {
+      "name": "Curl en Banco Scott Neutro con Mancuerna",
+      "analysis": "Este es un ejercicio nuevo en el plan.",
+      "recommendation": "Comienza con el peso planificado de 40. Concéntrate en evitar el balanceo y en realizar un rango de movimiento completo, sintiendo la contracción del bíceps.",
+      "suggested_next_plan": { "sets": "4", "reps": "10", "weight": "40" }
+    },
+    {
+      "name": "Curl en Supinación hacia abajo con Barra Z",
+      "analysis": "Ejercicio nuevo sin historial.",
+      "recommendation": "Empieza con el peso de 60. Presta especial atención a la tensión en las muñecas y codos, y ajusta el peso si sientes alguna molestia.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "60" }
+    },
+    {
+      "name": "Encogimientos en Máquina",
+      "analysis": "El plan de 230 es significativamente más alto que tu rendimiento probado de 210 para 8 repeticiones.",
+      "recommendation": "Ajusta el plan a un peso más realista y alcanzable. Establece el peso en 215 y apunta a 10 repeticiones para un nuevo estímulo.",
+      "suggested_next_plan": { "sets": "4", "reps": "10", "weight": "215" }
+    },
+    {
+      "name": "Remo al mentón con Mancuernas",
+      "analysis": "Ejercicio nuevo sin historial.",
+      "recommendation": "Comienza con 65. Usa mancuernas en lugar de barra para una mayor libertad de movimiento y menor riesgo para los hombros. Eleva los codos, no las manos.",
+      "suggested_next_plan": { "sets": "4", "reps": "10", "weight": "65" }
+    },
+    {
+      "name": "Dominadas pull-ups",
+      "analysis": "Estancado en 8 repeticiones con tu peso corporal (85).",
+      "recommendation": "Es hora de cambiar el estímulo. Intenta hacer las 3 series, pero en la última, haz tantas repeticiones como sea posible (AMRAP). Esto puede ayudarte a superar la barrera de las 8.",
+      "suggested_next_plan": { "sets": "3", "reps": "8, 8, AMRAP", "weight": "85" }
+    },
+    {
+      "name": "Jalón en Pronación en Máquina",
+      "analysis": "Completaste 2 series de 8 repeticiones con 200 después de una serie de aproximación.",
+      "recommendation": "El peso es el correcto. Ahora el objetivo es la consistencia. Intenta completar las 4 series de trabajo con 200 antes de subir el peso.",
+      "suggested_next_plan": { "sets": "4", "reps": "8", "weight": "200" }
+    },
+    {
+      "name": "Pullover en polea alta",
+      "analysis": "Completaste 12 repeticiones con 120. ¡Excelente!",
+      "recommendation": "Aumenta el peso a 125 o 130 y apunta a 10-12 repeticiones. Sigue enfocándote en el estiramiento y la contracción del dorsal.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "125" }
+    },
+    {
+      "name": "Press de banca inclinado con barra",
+      "analysis": "El historial muestra que 8 repeticiones con 130 es tu máximo, por lo que 12 repeticiones requerirán un peso menor.",
+      "recommendation": "Para un objetivo de 12 repeticiones, un buen punto de partida sería 100 o 110. Concéntrate en el volumen total.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "110" }
+    },
+    {
+      "name": "Press Frontal Superior en Máquina",
+      "analysis": "Tu máximo fue de 6 repeticiones con 230, por lo que el objetivo de 12 repeticiones es inalcanzable con ese peso.",
+      "recommendation": "Para el objetivo de 12 repeticiones, baja el peso a 180. Esto te permitirá acumular el volumen necesario para la hipertrofia.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "180" }
+    },
+    {
+      "name": "Aperturas Extendidas en Máquina",
+      "analysis": "Estás progresando hacia las 12 repeticiones con 165, pero aún no lo has logrado.",
+      "recommendation": "Mantén el peso en 165 y sigue empujando para alcanzar esas 12 repeticiones. La perseverancia con este peso te dará resultados.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "165" }
+    },
+    {
+      "name": "Fondos en Paralelas",
+      "analysis": "Excelente rendimiento, casi logras 12 repeticiones en todas las series con tu peso corporal.",
+      "recommendation": "Estás más que listo para añadir lastre. Comienza con un disco de 10 lbs en un cinturón y apunta a 10-12 repeticiones.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "95" }
+    },
+    {
+      "name": "Extensión Horizontal en Martillo en Polea Alta",
+      "analysis": "Ya has demostrado que puedes hacer 12 repeticiones con 125.",
+      "recommendation": "Es hora de aumentar la carga. Sube a 130 y mantén el objetivo de 12 repeticiones.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "130" }
+    },
+    {
+      "name": "Extensión Vertical Neutra en Polea Alta",
+      "analysis": "Has completado exitosamente 12 repeticiones con 135.",
+      "recommendation": "Aumenta el peso a 145. Sigue progresando.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "145" }
+    },
+    {
+      "name": "Extensión Lateral Aislada en Supinación en Polea Alta •",
+      "analysis": "El historial de datos es extraño (salto de 10 a 75). Asumiendo que 75 es el peso de trabajo real y que se lograron las 12 repeticiones.",
+      "recommendation": "Si 75 es correcto, estás muy fuerte. Progresa a 80. Si fue un error, encuentra tu peso real para 12 repeticiones y regístralo.",
+      "suggested_next_plan": { "sets": "4", "reps": "12", "weight": "80" }
+    }
+  ]
+}
+```
