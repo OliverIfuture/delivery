@@ -41,6 +41,6 @@ module.exports = (app) => {
     // Activar un plan (Clonar)
     app.post('/api/routines/system/activate', passport.authenticate('jwt', { session: false }), routinesController.activateSystemTemplate);
     app.post('/api/routines/analyze-progress', passport.authenticate('jwt', { session: false }), routinesController.analyzeProgressAI);
-    app.post('/start-evaluation', controller.requestEvaluation);
-    app.get('/check-status/:pollingId', controller.checkEvaluationStatus);
+    app.post('/start-evaluation', routinesController.requestEvaluation);
+    app.get('/check-status/:pollingId', routinesController.checkEvaluationStatus);
 }
