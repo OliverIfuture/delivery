@@ -6,7 +6,7 @@ const Diet = {};
  * Crea una nueva asignación de dieta
  * El objeto 'diet' debe tener: id_company, id_client, file_url, file_name
  */
-Diet.create = (diet) => {
+Diet.createAssignment = (diet) => {
     const sql = `
         INSERT INTO diets(
             id_company,
@@ -25,7 +25,6 @@ Diet.create = (diet) => {
         new Date()
     ]);
 };
-
 /**
  * Elimina una dieta.
  * Solo el entrenador que la creó puede eliminarla.
@@ -84,10 +83,10 @@ Diet.findActiveByClient = (id_client) => {
             d.created_at DESC
         LIMIT 1 -- Obtiene solo la dieta más reciente
     `;
-    return db.oneOrNone(sql, id_client); 
+    return db.oneOrNone(sql, id_client);
 };
 
-Diet.create = (data) => {
+Diet.createAIEntry = (data) => {
     const sql = `
         INSERT INTO ai_generated_diets(
             id_client,
@@ -100,8 +99,8 @@ Diet.create = (data) => {
     `;
     return db.one(sql, [
         data.id_client,
-        data.physiology_data,   // Se guarda como JSONB
-        data.ai_analysis_result,// Se guarda como JSONB
+        data.physiology_data,
+        data.ai_analysis_result,
         new Date(),
         new Date()
     ]);

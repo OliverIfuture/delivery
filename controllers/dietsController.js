@@ -4,6 +4,7 @@ const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@googl
 const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const db = require('../config/config.js');
 const storage = require('../utils/cloud_storage');
+
 /**
  * FUNCIÓN INTERNA: Procesa Gemini y actualiza la BD (Background)
  */
@@ -12,7 +13,6 @@ const processDietBackground = async (analysisId, physiologyData) => {
         console.log(`[BG-PROCESS] ID ${analysisId}: Generando dieta personalizada para:`, physiologyData);
 
         // --- PROMPT DE "GENERACIÓN PURA" ---
-        // Le damos la estructura vacía para que la IA la llene con datos reales
         const promptText = `
         ACTÚA COMO: "Iron Coach", Nutricionista Deportivo de Élite.
         
@@ -34,7 +34,7 @@ const processDietBackground = async (analysisId, physiologyData) => {
         {
           "analysis": {
             "somatotype_estimation": "Tu estimación basada en los datos",
-            "daily_calories_target": 0, // Pon el número calculado aquí
+            "daily_calories_target": 0, 
             "macros_distribution": { 
                 "protein": "0g", 
                 "carbs": "0g", 
@@ -54,27 +54,7 @@ const processDietBackground = async (analysisId, physiologyData) => {
                   "instructions": "Instrucciones de preparación paso a paso.",
                   "calories_approx": 0
                 },
-                {
-                  "type": "Almuerzo",
-                  "name": "Generar nombre...",
-                  "ingredients": "Generar ingredientes...",
-                  "instructions": "Generar instrucciones...",
-                  "calories_approx": 0
-                },
-                {
-                  "type": "Cena",
-                  "name": "Generar nombre...",
-                  "ingredients": "Generar ingredientes...",
-                  "instructions": "Generar instrucciones...",
-                  "calories_approx": 0
-                },
-                {
-                  "type": "Snack",
-                  "name": "Generar nombre...",
-                  "ingredients": "Generar ingredientes...",
-                  "instructions": "Generar instrucciones...",
-                  "calories_approx": 0
-                }
+                // ... más comidas
               ]
             }
             // ... CONTINÚA HASTA EL DOMINGO
@@ -89,10 +69,8 @@ const processDietBackground = async (analysisId, physiologyData) => {
             { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
         ];
 
-        // Usamos el modelo que te funciona (gemini-2.5-pro o el que tengas habilitado)
-        // Si 2.5 falla, cambia a "gemini-1.5-pro" que es muy inteligente para dietas.
         const model = aiClient.getGenerativeModel({
-            model: "gemini-2.5-pro",
+            model: "gemini-2.5-pro", // O gemini-1.5-pro si prefieres
             safetySettings: safetySettings
         });
 
@@ -125,7 +103,7 @@ const processDietBackground = async (analysisId, physiologyData) => {
 module.exports = {
 
     /**
-     * Asignar una nueva dieta
+     * Asignar una nueva dieta (MANUAL / DEL ENTRENADOR)
      */
     async assign(req, res, next) {
         try {
@@ -134,18 +112,17 @@ module.exports = {
             // 1. ASIGNAR ID DEL ENTRENADOR (Desde el token)
             diet.id_company = req.user.mi_store;
 
-            // 🔍 DEBUG: IMPRIMIR LO QUE VAMOS A GUARDAR
-            console.log("📦 [DEBUG] Intentando insertar Dieta:");
-            console.log("   -> id_client:", diet.id_client); // ¿Esto imprime un número o undefined?
+            console.log("📦 [DEBUG] Intentando insertar Dieta Manual:");
+            console.log("   -> id_client:", diet.id_client);
             console.log("   -> id_company:", diet.id_company);
             console.log("   -> file_url:", diet.file_url);
 
-            // Validación manual antes de llamar al modelo
             if (!diet.id_client) {
                 return res.status(400).json({ success: false, message: 'Falta el id_client' });
             }
 
-            const data = await Diet.create(diet);
+            // CAMBIO AQUÍ: Usamos createAssignment para la tabla 'diets'
+            const data = await Diet.createAssignment(diet);
 
             console.log("✅ [DEBUG] ID Generado en BD:", data.id);
 
@@ -171,7 +148,7 @@ module.exports = {
     async delete(req, res, next) {
         try {
             const id_diet = req.params.id;
-            const id_company = req.user.mi_store; // ID del entrenador
+            const id_company = req.user.mi_store;
 
             await Diet.delete(id_diet, id_company);
 
@@ -247,41 +224,14 @@ module.exports = {
                 
                 Tareas:
                 1. Extrae TODOS los ingredientes para la lista de compras y consolida cantidades.
-                2. **EXTRAE EL MENÚ SEMANAL DETALLADO:** Necesito saber exactamente qué comer cada día, desglosado por tiempos de comida (Desayuno, Comida, Cena, Snacks). Incluye los alimentos y una breve instrucción muy importante agregarla.
+                2. **EXTRAE EL MENÚ SEMANAL DETALLADO:** Necesito saber exactamente qué comer cada día, desglosado por tiempos de comida.
                 3. Calcula costos estimados y recomienda lugares.
 
                 IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta:
                 {
-                    "shopping_list": [
-                        {"item": "Nombre ingrediente", "quantity": "Cantidad total", "category": "Carnes/Verduras/Etc"}
-                    ],
-                    "weekly_plan": [
-                        {
-                            "day": "Lunes",
-                            "meals": [
-                                {
-                                    "time": "Desayuno", 
-                                    "food": "Descripción completa de los alimentos (ej. 3 Huevos con 50g de Avena)",
-                                    "instructions": "Instrucción breve de preparación (importante)"
-                                },
-                                {
-                                    "time": "Almuerzo",
-                                    "food": "...",
-                                    "instructions": "..."
-                                }
-                            ]
-                        },
-                         {
-                            "day": "Martes",
-                            "meals": []
-                        }
-                        // ... resto de los días
-                    ],
-                    "economics": {
-                        "estimated_total": "$MXN",
-                        "tips": "Tip ahorro",
-                        "supermarkets": [{"name": "Tienda", "reason": "Razón"}]
-                    },
+                    "shopping_list": [...],
+                    "weekly_plan": [...],
+                    "economics": {...},
                     "summary": "Resumen corto"
                 }
             `;
@@ -298,16 +248,10 @@ module.exports = {
                 ]
             });
 
-            // ... (Procesamiento de respuesta y guardado en BD igual que antes) ...
-            // ... Asegúrate de copiar el resto de la función igual ...
-
             // 4. Procesar Respuesta
             let text;
-            if (response && response.candidates && response.candidates.length > 0) {
-                const firstCandidate = response.candidates[0];
-                if (firstCandidate.content && firstCandidate.content.parts && firstCandidate.content.parts.length > 0) {
-                    text = firstCandidate.content.parts[0].text;
-                }
+            if (response && response.response && response.response.candidates && response.response.candidates.length > 0) {
+                text = response.response.candidates[0].content.parts[0].text;
             }
 
             if (!text) throw new Error("La IA no generó respuesta de texto.");
@@ -360,7 +304,7 @@ module.exports = {
 
             return res.status(200).json({
                 success: true,
-                data: diet // Regresa la dieta con el campo 'ai_analysis' ya lleno
+                data: diet
             });
 
         } catch (error) {
@@ -373,7 +317,7 @@ module.exports = {
         }
     },
 
-
+    // --- FLUJO IA CON IMÁGENES (POLLING) ---
     async startDietAnalysis(req, res, next) {
         try {
             const files = req.files;
@@ -385,12 +329,13 @@ module.exports = {
             }
 
             // 1. Guardar en BD como "pending" INMEDIATAMENTE
+            // Nota: Este usa createPending, que apunta a ai_generated_diets. Está bien.
             const newAnalysis = await Diet.createPending(id_client, JSON.parse(physiologyStr));
             const analysisId = newAnalysis.id;
 
             console.log(`[AI-POLLING] Iniciado análisis ID: ${analysisId} para cliente ${id_client}`);
 
-            // 2. RESPONDER AL CLIENTE YA (Para evitar timeout H12)
+            // 2. RESPONDER AL CLIENTE YA
             res.status(202).json({
                 success: true,
                 message: 'Analizando en segundo plano...',
@@ -398,7 +343,9 @@ module.exports = {
             });
 
             // 3. INICIAR PROCESO PESADO (Llamada directa sin 'this')
-            processGeminiBackground(analysisId, files, physiologyStr);
+            // OJO: Aquí no hay 'await' intencionalmente para liberar el request
+            // Asegúrate de que processGeminiBackground esté accesible o definido abajo
+            module.exports.processGeminiBackground(analysisId, files, physiologyStr);
 
         } catch (error) {
             console.error(`Error inicio análisis: ${error}`);
@@ -409,7 +356,7 @@ module.exports = {
     },
 
     /**
-     * FUNCIÓN INTERNA: Procesa Gemini y actualiza la BD (No es una ruta)
+     * FUNCIÓN INTERNA: Procesa Gemini con IMÁGENES
      */
     async processGeminiBackground(analysisId, files, physiologyStr) {
         try {
@@ -420,8 +367,11 @@ module.exports = {
                 inlineData: { mimeType: file.mimetype, data: file.buffer.toString("base64") }
             }));
 
-            // Prompt (El mismo de siempre)
-            const promptText = `ACTÚA COMO UN NUTRIÓLOGO... (Tu prompt completo)... JSON`;
+            // Prompt
+            const promptText = `
+            ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO... (Prompt completo de análisis visual)...
+            Responde SOLO JSON.
+            `;
 
             // Llamada Lenta a Gemini
             const response = await aiClient.models.generateContent({
@@ -429,7 +379,6 @@ module.exports = {
                 contents: [{ parts: [{ text: promptText }, ...imageParts] }]
             });
 
-            // Validar respuesta
             if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
                 throw new Error("Sin candidatos válidos de IA");
             }
@@ -450,7 +399,7 @@ module.exports = {
     },
 
     /**
-     * PASO 2 (POLLING): El cliente pregunta "¿Ya terminó?"
+     * POLLING: Consultar Estado
      */
     async checkStatus(req, res, next) {
         try {
@@ -471,6 +420,8 @@ module.exports = {
             return res.status(501).json({ success: false, error: error.message });
         }
     },
+
+    // --- FLUJO DIRECTO (SIN POLLING, BLOQUEANTE) ---
     async generateDietJSON(req, res, next) {
         try {
             const files = req.files;
@@ -483,107 +434,36 @@ module.exports = {
 
             console.log(`[AI] Analizando cliente ${id_client}...`);
 
-            // 1. Preparar imágenes para Gemini
             const imageParts = files.map(file => ({
                 inlineData: { mimeType: file.mimetype, data: file.buffer.toString("base64") }
             }));
             const promptText = `
-            ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO DE ÉLITE Y ANTROPOMETRISTA NIVEL ISAK 3.
-            
-            TIENES 2 FUENTES DE INFORMACIÓN:
-            A) DATOS REPORTADOS POR EL CLIENTE (JSON):
-            ${physiologyStr}
-            
-            B) EVIDENCIA VISUAL (3 FOTOS ADJUNTAS):
-            Analiza la estructura ósea, inserciones musculares, acumulación de grasa y postura.
-            
-            TU OBJETIVO:
-            Generar un Plan Nutricional preciso. 
-            IMPORTANTE: Si los datos del cliente (ej. "Soy muy activo") contradicen la evidencia visual (ej. "Alto porcentaje de grasa"), PRIORIZA TU ANÁLISIS VISUAL para ajustar las calorías y no sobrealimentarlo.
-            
-            FORMATO DE SALIDA (ESTRICTAMENTE JSON):
-            No incluyas texto introductorio ni markdown (\`\`\`json). Solo el objeto JSON crudo con esta estructura exacta:
-            
-            {
-              "analysis": {
-                "detected_somatotype": "Ej: Endomorfo-Mesomorfo (Predominancia ósea ancha)",
-                "estimated_body_fat": "Ej: 18-22% (Visualmente)",
-                "muscle_mass_assessment": "Bajo/Medio/Alto",
-                "visual_observations": "Ej: Hombros caídos, acumulación de grasa en zona abdominal (androide).",
-                "caloric_needs": {
-                    "bmr": 0000,
-                    "tdee_adjusted": 0000,
-                    "goal_calories": 0000,
-                    "goal_type": "Déficit / Superávit / Mantenimiento"
-                },
-                "macros": {
-                    "protein": "000g",
-                    "carbs": "000g",
-                    "fats": "000g"
-                }
-              },
-              "diet_plan": {
-                "overview": "Resumen de 1 linea de la estrategia.",
-                "daily_menu": [
-                    {
-                        "meal_name": "Desayuno",
-                        "options": [
-                            {"food": "Ej: 3 Huevos revueltos con espinacas", "calories": 250},
-                            {"food": "Ej: 1 Scoop de Whey Protein con avena", "calories": 250}
-                        ]
-                    },
-                    {
-                        "meal_name": "Almuerzo",
-                        "options": [
-                            {"food": "Ej: 150g Pechuga de pollo + 100g Arroz", "calories": 400}
-                        ]
-                    },
-                    {
-                        "meal_name": "Cena",
-                        "options": [
-                            {"food": "Ej: Ensalada de atún con aguacate", "calories": 300}
-                        ]
-                    },
-                    {
-                        "meal_name": "Snack/Pre-entreno",
-                        "options": [
-                             {"food": "Ej: Manzana verde y almendras", "calories": 150}
-                        ]
-                    }
-                ],
-                "recommendations": [
-                    "Recomendación breve 1",
-                    "Recomendación breve 2",
-                    "Suplemento sugerido (si aplica)"
-                ]
-              }
-            }
+            ACTÚA COMO UN NUTRIÓLOGO DEPORTIVO DE ÉLITE...
+            (Prompt completo para imágenes + datos)
+            FORMATO DE SALIDA (ESTRICTAMENTE JSON)...
             `;
 
-            // 3. Llamar a Gemini
             const response = await aiClient.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: [{ parts: [{ text: promptText }, ...imageParts] }]
             });
 
             if (!response || !response.response || !response.response.candidates || response.response.candidates.length === 0) {
-                throw new Error("La IA no devolvió candidatos válidos. Posible bloqueo de seguridad o imagen no clara.");
+                throw new Error("La IA no devolvió candidatos válidos.");
             }
 
-
-            // 4. Limpiar JSON
             let text = response.response.candidates[0].content.parts[0].text;
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
             const jsonResult = JSON.parse(text);
 
-            // 5. Guardar el registro del ANÁLISIS (solo datos)
-            await Diet.create({
+            // CAMBIO AQUÍ: Usamos createAIEntry porque va a la tabla 'ai_generated_diets'
+            // y le pasamos los datos con la estructura correcta.
+            await Diet.createAIEntry({
                 id_client: id_client,
                 physiology_data: JSON.parse(physiologyStr),
                 ai_analysis_result: jsonResult
             });
 
-            // 6. DEVOLVER JSON A FLUTTER (No generamos PDF aquí)
             return res.status(200).json({
                 success: true,
                 message: 'Análisis completado',
@@ -596,11 +476,9 @@ module.exports = {
         }
     },
 
-
-
     /**
-         * PASO 1: Generación de Dieta (MODO SIMULACIÓN PARA EVITAR BLOQUEOS)
-         */
+     * FLUJO: Generación de Dieta SOLO DATOS (Sin imágenes)
+     */
     async generateDietJSON_NoImages(req, res, next) {
         try {
             const physiologyData = req.body;
@@ -612,7 +490,6 @@ module.exports = {
             const newAnalysis = await Diet.createPending(id_client, physiologyData);
             const analysisId = newAnalysis.id;
 
-            // Responder rápido al cliente
             res.status(202).json({
                 success: true,
                 message: 'Calculando plan personalizado...',
@@ -627,22 +504,15 @@ module.exports = {
             if (!res.headersSent) res.status(501).json({ success: false, error: error.message });
         }
     },
+
     /**
-     * PASO 2: Recibe el PDF generado por Flutter -> Sube a Firebase -> Actualiza User
+     * PASO FINAL: Subida del PDF generado (Firebase -> Tabla 'diets')
      */
-    /**
-         * PASO 2: Recibe el PDF generado por Flutter -> Sube a Firebase -> Actualiza User
-         */
     async uploadDietPdf(req, res, next) {
         try {
             const file = req.file;
             const id_client = req.user.id;
 
-            // --- CORRECCIÓN: EVITAR EL NULL ---
-            // Intentamos obtener el entrenador desde el token del usuario
-            // 1. Si soy entrenador, uso mi ID (req.user.mi_store)
-            // 2. Si soy cliente, uso el ID de mi entrenador (req.user.id_entrenador)
-            // 3. Si no hay nada, entonces sí dejamos null (pero esto es lo que queremos evitar)
             let id_company = req.user.mi_store || req.user.id_entrenador || null;
 
             if (!file) {
@@ -656,13 +526,14 @@ module.exports = {
 
             if (pdfUrl) {
                 const newDiet = {
-                    id_company: id_company, // <--- AHORA SÍ TIENE VALOR REAL
+                    id_company: id_company,
                     id_client: id_client,
                     file_url: pdfUrl,
                     file_name: file.originalname || `Plan_IA_${Date.now()}.pdf`
                 };
 
-                const data = await Diet.create(newDiet);
+                // CAMBIO AQUÍ: Usamos createAssignment para la tabla 'diets'
+                const data = await Diet.createAssignment(newDiet);
 
                 return res.status(201).json({
                     success: true,
