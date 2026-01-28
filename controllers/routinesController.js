@@ -16,7 +16,7 @@ async function processGeminiAnalysis(evaluationId, data) {
         await EvaluationControl.updateStatus(evaluationId, 'processing', null);
 
         // 2. Llamar a Gemini
-        const model = aiClient.getGenerativeModel({ model: "gemini-1.5-pro" }); // Usa 1.5-pro o gemini-pro
+        const model = aiClient.getGenerativeModel({ model: "gemini-2.5-pro" }); // Usa 1.5-pro o gemini-pro
         const prompt = `Actúa como entrenador experto. Analiza estos datos y responde SOLO con un JSON válido: ${JSON.stringify(data)}. Dame recomendaciones concretas.`;
 
         const result = await model.generateContent(prompt);
