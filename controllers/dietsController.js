@@ -513,26 +513,33 @@ module.exports = {
             const file = req.file;
             const id_client = req.user.id;
 
-            let id_company = req.user.mi_store || req.user.id_entrenador || null;
+            // --- CORRECCIÓN AQUÍ ---
+            // Obtenemos el posible ID
+            let rawCompanyId = req.user.mi_store || req.user.id_entrenador;
+
+            // Si es 0, '0', undefined o null, forzamos a que sea NULL puro
+            let id_company = (rawCompanyId && rawCompanyId != 0 && rawCompanyId != '0')
+                ? rawCompanyId
+                : null;
 
             if (!file) {
                 return res.status(400).json({ success: false, message: 'No se recibió el PDF.' });
             }
 
-            console.log(`[STORAGE] Subiendo PDF del cliente ${id_client} para el entrenador ${id_company}...`);
+            console.log(`[STORAGE] Subiendo PDF del cliente ${id_client}. Entrenador asignado: ${id_company} (Si es null es correcto)`);
 
             const pathImage = `diet_files/ai_plan_${Date.now()}_${id_client}.pdf`;
             const pdfUrl = await storage(file, pathImage);
 
             if (pdfUrl) {
                 const newDiet = {
-                    id_company: id_company,
+                    id_company: id_company, // Ahora enviará null, no 0
                     id_client: id_client,
                     file_url: pdfUrl,
                     file_name: file.originalname || `Plan_IA_${Date.now()}.pdf`
                 };
 
-                // CAMBIO AQUÍ: Usamos createAssignment para la tabla 'diets'
+                // Usamos la función de asignación
                 const data = await Diet.createAssignment(newDiet);
 
                 return res.status(201).json({
