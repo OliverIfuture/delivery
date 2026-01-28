@@ -67,6 +67,10 @@ Diet.findByTrainer = (id_company) => {
 /**
  * Busca la dieta activa de un cliente (la más reciente)
  */
+/**
+ * Busca la dieta activa de un cliente (la más reciente)
+ * CORRECCIÓN: Usamos LEFT JOIN para traer la dieta aunque no tenga entrenador (IA)
+ */
 Diet.findActiveByClient = (id_client) => {
     const sql = `
         SELECT
@@ -75,13 +79,13 @@ Diet.findActiveByClient = (id_client) => {
             c.logo as trainer_logo
         FROM
             diets AS d
-        INNER JOIN
+        LEFT JOIN
             company AS c ON d.id_company = c.id
         WHERE
             d.id_client = $1
         ORDER BY
             d.created_at DESC
-        LIMIT 1 -- Obtiene solo la dieta más reciente
+        LIMIT 1
     `;
     return db.oneOrNone(sql, id_client);
 };
