@@ -8,7 +8,7 @@ module.exports = (app) => {
     // --- GET ---
     // Obtener todas las rutinas creadas por un entrenador
     app.get('/api/routines/findByTrainer/:id_company', passport.authenticate('jwt', { session: false }), routinesController.findByTrainer);
-    
+
     // Obtener la rutina ACTIVA de un cliente específico (para la app del cliente)
     app.get('/api/routines/findActiveByClient/:id_client', passport.authenticate('jwt', { session: false }), routinesController.findActiveByClient);
 
@@ -33,11 +33,14 @@ module.exports = (app) => {
     app.get('/api/routines/findAllByClient', passport.authenticate('jwt', { session: false }), routinesController.findAllByClient);
 
 
-// --- RUTINAS DEL SISTEMA (TEMPLATES) ---
-    
+    // --- RUTINAS DEL SISTEMA (TEMPLATES) ---
+
     // Obtener las cards de los planes
     app.get('/api/routines/system/templates', passport.authenticate('jwt', { session: false }), routinesController.getSystemTemplates);
 
     // Activar un plan (Clonar)
-    app.post('/api/routines/system/activate', passport.authenticate('jwt', { session: false }), routinesController.activateSystemTemplate);    
+    app.post('/api/routines/system/activate', passport.authenticate('jwt', { session: false }), routinesController.activateSystemTemplate);
+    app.post('/api/routines/analyze-progress', passport.authenticate('jwt', { session: false }), routinesController.analyzeProgressAI);
+    app.post('/start-evaluation', controller.requestEvaluation);
+    app.get('/check-status/:pollingId', controller.checkEvaluationStatus);
 }
