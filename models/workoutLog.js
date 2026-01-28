@@ -143,7 +143,7 @@ WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {
     // Si tu tabla workout_logs NO tiene exercise_id, tendrás que buscar por nombre.
 
     // OPCIÓN A: Si tienes exercise_id en workout_logs
-    /*
+
     const sql = `
         SELECT * FROM workout_logs
         WHERE id_client = $1 
@@ -151,7 +151,7 @@ WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {
           AND created_at >= NOW() - INTERVAL '30 days'
         ORDER BY created_at ASC
     `;
-    */
+
 
     // OPCIÓN B (Más probable según tu código anterior): Buscas por NOMBRE
     // Pero el frontend manda ID. Necesitas que el frontend mande el NOMBRE o que la BD tenga el ID.
@@ -162,18 +162,19 @@ WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {
     // o vamos a cambiar el frontend para mandar el nombre.
 
     // Usemos esta query genérica asumiendo que el parámetro $2 será lo que guardaste en la columna correcta.
-    const sql = `
-        SELECT 
-            id,
-            completed_weight, 
-            completed_reps, 
-            created_at 
-        FROM workout_logs
-        WHERE id_client = $1 
-          AND exercise_name = $2 -- O exercise_id = $2
-          AND created_at >= NOW() - INTERVAL '30 days'
-        ORDER BY created_at ASC
-    `;
+    /* const sql = `
+         SELECT 
+             id,
+             completed_weight, 
+             completed_reps, 
+             created_at 
+         FROM workout_logs
+         WHERE id_client = $1 
+           AND exercise_name = $2 -- O exercise_id = $2
+           AND created_at >= NOW() - INTERVAL '30 days'
+         ORDER BY created_at ASC
+     `;
+     */
     return db.manyOrNone(sql, [id_client, exercise_id]);
 };
 
