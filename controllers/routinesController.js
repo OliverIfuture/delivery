@@ -8,28 +8,30 @@ const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // ---------------------------------------------------------
 // FUNCIÓN PRIVADA: PROCESAMIENTO DE IA (Corre en background)
 // ---------------------------------------------------------
+// FUNCIÓN PRIVADA: PROCESAMIENTO DE IA (SQL VERSION)
+// ---------------------------------------------------------
 async function processGeminiAnalysis(evaluationId, data) {
-    await EvaluationControl.findByIdAndUpdate(evaluationId, { status: 'processing' });
+    // 1. Cambiar a Processing
     try {
-        const model = aiClient.getGenerativeModel({ model: "gemini-2.5-pro" });
-        const prompt = `Actúa como entrenador experto. Analiza estos datos: ${JSON.stringify(data)}. Dame recomendaciones concretas.`;
+        await EvaluationControl.updateStatus(evaluationId, 'processing', null);
+
+        // 2. Llamar a Gemini
+        const model = aiClient.getGenerativeModel({ model: "gemini-1.5-pro" }); // Usa 1.5-pro o gemini-pro
+        const prompt = `Actúa como entrenador experto. Analiza estos datos y responde SOLO con un JSON válido: ${JSON.stringify(data)}. Dame recomendaciones concretas.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
 
-        await EvaluationControl.findByIdAndUpdate(evaluationId, {
-            status: 'completed',
-            result: text,
-            lastEvaluationDate: new Date()
-        });
-        console.log(`Evaluación ${evaluationId} completada exitosamente.`);
+        // 3. Guardar Resultado (SQL)
+        await EvaluationControl.updateStatus(evaluationId, 'completed', text);
+        console.log(`Evaluación SQL ID ${evaluationId} completada.`);
+
     } catch (error) {
         console.error(`Error procesando evaluación ${evaluationId}:`, error);
-        await EvaluationControl.findByIdAndUpdate(evaluationId, { status: 'failed' });
+        await EvaluationControl.updateStatus(evaluationId, 'failed', null);
     }
 }
-
 module.exports = {
 
     // ==========================================
@@ -38,44 +40,46 @@ module.exports = {
 
     async requestEvaluation(req, res) {
         try {
-            const { userId, trainerId, userContextData } = req.body;
+            // Convertimos a String para asegurar compatibilidad con la DB
+            const userId = String(req.body.userId);
+            const trainerId = req.body.trainerId ? String(req.body.trainerId) : null;
+            const userContextData = req.body.userContextData;
 
-            // 1. Verificación 15 días
-            const lastEval = await EvaluationControl.findOne({
-                userId: userId,
-                status: 'completed'
-            }).sort({ createdAt: -1 });
+            // 1. VERIFICACIÓN DE 15 DÍAS (SQL)
+            const lastEval = await EvaluationControl.findLastCompleted(userId);
 
             if (lastEval) {
-                const daysDiff = (new Date() - new Date(lastEval.createdAt)) / (1000 * 60 * 60 * 24);
+                const lastDate = new Date(lastEval.created_at);
+                const daysDiff = (new Date() - lastDate) / (1000 * 60 * 60 * 24);
+
                 if (daysDiff < 15) {
                     return res.status(429).json({
                         success: false,
-                        message: `Debes esperar 15 días entre evaluaciones. Faltan ${Math.ceil(15 - daysDiff)} días.`,
+                        message: `Debes esperar 15 días. Faltan ${Math.ceil(15 - daysDiff)} días.`,
                         canEvaluate: false
                     });
                 }
             }
 
-            // 2. Crear Pending
-            const newEval = new EvaluationControl({
-                userId,
-                trainerId,
+            // 2. CREAR REGISTRO "PENDING" (SQL)
+            const newEval = await EvaluationControl.create({
+                user_id: userId,
+                trainer_id: trainerId,
                 status: 'pending'
             });
-            await newEval.save();
 
-            // 3. Background Process
-            processGeminiAnalysis(newEval._id, userContextData).catch(err => {
-                console.error("Error en background process:", err);
-                EvaluationControl.findByIdAndUpdate(newEval._id, { status: 'failed' }).exec();
-            });
+            // Si tu DB devuelve el ID en un objeto (ej: { id: 50 })
+            const pollingId = newEval.id;
 
-            // 4. Respuesta Rápida
+            // 3. BACKGROUND PROCESS
+            // No usamos await para liberar la respuesta http
+            processGeminiAnalysis(pollingId, userContextData);
+
+            // 4. RESPUESTA RÁPIDA
             return res.status(202).json({
                 success: true,
                 message: "Análisis iniciado.",
-                pollingId: newEval._id,
+                pollingId: pollingId, // ID numérico de Postgres
                 status: 'pending'
             });
 
@@ -90,20 +94,27 @@ module.exports = {
             const { pollingId } = req.params;
             const evaluation = await EvaluationControl.findById(pollingId);
 
-            if (!evaluation) return res.status(404).json({ success: false, message: "No encontrado" });
+            if (!evaluation) {
+                return res.status(404).json({ success: false, message: "No encontrado" });
+            }
 
             if (evaluation.status === 'completed') {
-                return res.status(200).json({ success: true, status: 'completed', data: evaluation.result });
+                return res.status(200).json({
+                    success: true,
+                    status: 'completed',
+                    data: evaluation.result
+                });
             } else if (evaluation.status === 'failed') {
                 return res.status(500).json({ success: false, status: 'failed', message: "Falló la IA." });
             } else {
                 return res.status(200).json({ success: true, status: evaluation.status, message: "Procesando..." });
             }
+
         } catch (error) {
+            console.error(error);
             res.status(500).json({ success: false, error: error.message });
         }
     },
-
     /**
      * Crear una nueva rutina (AHORA SOPORTA CLIENTES GRATUITOS)
      */

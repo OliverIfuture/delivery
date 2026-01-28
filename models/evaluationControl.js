@@ -1,36 +1,48 @@
-const mongoose = require('mongoose');
+const db = require('../config/config'); // <--- TU CONEXIÓN A POSTGRES
 
-const evaluationControlSchema = new mongoose.Schema({
-    // CAMBIO IMPORTANTE:
-    // Quitamos "mongoose.Schema.Types.ObjectId" y ponemos "String".
-    // También quitamos "ref: 'User'" porque el usuario no vive en MongoDB, vive en tu SQL.
-    userId: {
-        type: String,
-        required: true,
-        index: true // Mantenemos el índice para búsquedas rápidas
-    },
-    trainerId: {
-        type: String,
-        required: false
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'processing', 'completed', 'failed'],
-        default: 'pending'
-    },
-    result: {
-        type: String,
-        default: null
-    },
-    lastEvaluationDate: {
-        type: Date,
-        default: Date.now
-    }
-}, {
-    timestamps: true
-});
+const EvaluationControl = {};
 
-// Índice compuesto para la validación de los 15 días
-evaluationControlSchema.index({ userId: 1, lastEvaluationDate: -1 });
+// Crear nueva evaluación
+EvaluationControl.create = (evalData) => {
+    const sql = `
+        INSERT INTO evaluation_control (user_id, trainer_id, status, created_at, updated_at)
+        VALUES ($1, $2, $3, NOW(), NOW())
+        RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        evalData.user_id,
+        evalData.trainer_id,
+        evalData.status
+    ]);
+};
 
-module.exports = mongoose.model('EvaluationControl', evaluationControlSchema);
+// Buscar la última completada (para la regla de 15 días)
+EvaluationControl.findLastCompleted = (userId) => {
+    const sql = `
+        SELECT * FROM evaluation_control 
+        WHERE user_id = $1 AND status = 'completed'
+        ORDER BY created_at DESC
+        LIMIT 1
+    `;
+    return db.oneOrNone(sql, [userId]);
+};
+
+// Actualizar estado y resultado
+EvaluationControl.updateStatus = (id, status, result = null) => {
+    const sql = `
+        UPDATE evaluation_control 
+        SET status = $1, result = $2, updated_at = NOW()
+        WHERE id = $3
+    `;
+    return db.none(sql, [status, result, id]);
+};
+
+// Buscar por ID (Polling)
+EvaluationControl.findById = (id) => {
+    const sql = `
+        SELECT * FROM evaluation_control WHERE id = $1
+    `;
+    return db.oneOrNone(sql, [id]);
+};
+
+module.exports = EvaluationControl;
