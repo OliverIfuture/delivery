@@ -89,6 +89,32 @@ module.exports = {
         }
     },
 
+    // Buscar la última evaluación (sin importar si es pending o completed)
+    async getLatestEvaluation(req, res) {
+        try {
+            const { userId } = req.params;
+            // Buscamos la más reciente
+            const sql = `SELECT * FROM evaluation_control WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`;
+            const evaluation = await db.oneOrNone(sql, [userId]);
+
+            if (!evaluation) {
+                return res.status(200).json({ success: true, data: null });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    id: evaluation.id,
+                    status: evaluation.status,
+                    result: evaluation.result,
+                    created_at: evaluation.created_at
+                }
+            });
+        } catch (error) {
+            return res.status(500).json({ success: false, error: error.message });
+        }
+    },
+
     async checkEvaluationStatus(req, res) {
         try {
             const { pollingId } = req.params;
