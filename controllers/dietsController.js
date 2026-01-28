@@ -630,24 +630,33 @@ module.exports = {
     /**
      * PASO 2: Recibe el PDF generado por Flutter -> Sube a Firebase -> Actualiza User
      */
+    /**
+         * PASO 2: Recibe el PDF generado por Flutter -> Sube a Firebase -> Actualiza User
+         */
     async uploadDietPdf(req, res, next) {
         try {
             const file = req.file;
             const id_client = req.user.id;
-            const id_company = null;
+
+            // --- CORRECCIÓN: EVITAR EL NULL ---
+            // Intentamos obtener el entrenador desde el token del usuario
+            // 1. Si soy entrenador, uso mi ID (req.user.mi_store)
+            // 2. Si soy cliente, uso el ID de mi entrenador (req.user.id_entrenador)
+            // 3. Si no hay nada, entonces sí dejamos null (pero esto es lo que queremos evitar)
+            let id_company = req.user.mi_store || req.user.id_entrenador || null;
 
             if (!file) {
                 return res.status(400).json({ success: false, message: 'No se recibió el PDF.' });
             }
 
-            console.log(`[STORAGE] Subiendo PDF final del cliente ${id_client}...`);
+            console.log(`[STORAGE] Subiendo PDF del cliente ${id_client} para el entrenador ${id_company}...`);
 
             const pathImage = `diet_files/ai_plan_${Date.now()}_${id_client}.pdf`;
             const pdfUrl = await storage(file, pathImage);
 
             if (pdfUrl) {
                 const newDiet = {
-                    id_company: id_company,
+                    id_company: id_company, // <--- AHORA SÍ TIENE VALOR REAL
                     id_client: id_client,
                     file_url: pdfUrl,
                     file_name: file.originalname || `Plan_IA_${Date.now()}.pdf`
