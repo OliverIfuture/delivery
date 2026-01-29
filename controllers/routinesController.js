@@ -435,4 +435,38 @@ module.exports = {
             });
         }
     },
+
+    // ACTUALIZAR RUTINA COMPLETA (Estrategia JSON Column)
+    async updateRoutine(req, res) {
+        try {
+            // Recibimos el ID de la rutina y el OBJETO COMPLETO de los días
+            // req.body espera: { id: 629, data: { "Lunes": [...], "Martes": [...] } }
+            const { id, data } = req.body;
+
+            if (!id || !data) {
+                return res.status(400).json({ success: false, message: "Faltan datos (id o routine data)." });
+            }
+
+            // Convertimos el objeto JSON a Texto para guardarlo en SQL
+            const jsonString = JSON.stringify(data);
+
+            // EJECUTAMOS EL UPDATE
+            // IMPORTANTE: Cambia 'routines' y 'data' por los nombres reales de tu tabla y columna
+            // Ejemplo: UPDATE routines SET plan_data = $1 WHERE id = $2
+            const sql = `
+                UPDATE routines 
+                SET data = $1, 
+                    updated_at = NOW()
+                WHERE id = $2
+            `;
+
+            await db.none(sql, [jsonString, id]);
+
+            return res.status(200).json({ success: true, message: "Plan actualizado correctamente." });
+
+        } catch (error) {
+            console.error("Error al guardar JSON de rutina:", error);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+    },
 };
