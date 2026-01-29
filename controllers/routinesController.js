@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const EvaluationControl = require('../models/evaluationControl.js'); // El modelo nuevo
 const Routine = require('../models/routine.js');
+const db = require('../config/config'); // <--- TU CONEXIÓN A POSTGRES
 
 const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
