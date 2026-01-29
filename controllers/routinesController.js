@@ -456,7 +456,7 @@ module.exports = {
             // Ejemplo: UPDATE routines SET plan_data = $1 WHERE id = $2
             const sql = `
                 UPDATE routines 
-                SET data = $1, 
+                SET plan_data = $1, 
                     updated_at = NOW()
                 WHERE id = $2
             `;
