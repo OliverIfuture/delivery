@@ -51,7 +51,7 @@ module.exports = (app) => {
     app.post('/api/routines/system/activate', passport.authenticate('jwt', { session: false }), routinesController.activateSystemTemplate);
     app.get('/api/routines/latest-evaluation/:userId', passport.authenticate('jwt', { session: false }), routinesController.getLatestEvaluation);
     app.put(
-        '/api/routines/update',
+        '/api/routines/update-ia',
         passport.authenticate('jwt', { session: false }),
         routinesController.updateRoutine
     );
