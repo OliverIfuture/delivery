@@ -214,34 +214,59 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Falta el archivo PDF o el ID de la dieta.' });
             }
 
-            console.log(`[AI] Iniciando análisis detallado (Plan Semanal) para dieta ${id_diet}...`);
+            console.log(`[AI] Iniciando análisis estricto (JSON Schema) para dieta ${id_diet}...`);
 
             const base64Data = file.buffer.toString("base64");
 
-            // --- PROMPT MAESTRO ---
+            // --- PROMPT BLINDADO PARA FLUTTER ---
             const promptText = `
-                Actúa como un nutricionista experto. Analiza este plan alimenticio (PDF).
+                ACTÚA COMO UN ANALISTA DE DATOS Y NUTRICIONISTA PARA UNA APP MÓVIL.
                 
-                Tareas:
-                1. Extrae TODOS los ingredientes para la lista de compras y consolida cantidades.
-                2. **EXTRAE EL MENÚ SEMANAL DETALLADO:** Necesito saber exactamente qué comer cada día, desglosado por tiempos de comida.
-                3. Calcula costos estimados y recomienda lugares.
-
-                IMPORTANTE: Responde SOLO con un JSON válido con esta estructura exacta:
+                TU TAREA:
+                Analiza el PDF adjunto y extrae los datos estructurados siguiendo ESTRICTAMENTE el esquema JSON solicitado.
+                
+                REGLAS DE FORMATO (CRÍTICAS PARA QUE LA APP NO FALLE):
+                1. **shopping_list**: DEBE ser una LISTA DE OBJETOS. NUNCA devuelvas strings simples.
+                   - Formato requerido: { "item": "Nombre", "quantity": "Cantidad exacta", "category": "Grupo (Frutas, Carnes, etc)" }
+                
+                2. **weekly_plan**: Array de 7 días.
+                   - "meals": DEBE ser una LISTA DE OBJETOS. NO uses claves como "Desayuno": "...".
+                   - Formato requerido: { "time": "Desayuno/Comida/Cena", "food": "Descripción del plato", "instructions": "Instrucción breve" }
+                
+                3. **economics**:
+                   - "estimated_cost": Calcula el costo en DÓLARES (USD/$).
+                   - NO recomiendes supermercados específicos (es una app global).
+                
+                EJEMPLO DE SALIDA JSON (Sigue esta estructura exactamente):
                 {
-                    "shopping_list": [...],
-                    "weekly_plan": [...],
-                    "economics": {...},
-                    "summary": "Resumen corto"
+                    "summary": "Plan alto en proteínas...",
+                    "shopping_list": [
+                        { "item": "Avena", "quantity": "500g", "category": "Cereales" },
+                        { "item": "Pollo", "quantity": "1kg", "category": "Carnes" }
+                    ],
+                    "weekly_plan": [
+                        {
+                            "day": "Lunes",
+                            "meals": [
+                                { "time": "Desayuno", "food": "Huevos revueltos", "instructions": "Batir 3 huevos..." },
+                                { "time": "Almuerzo", "food": "Pollo y arroz", "instructions": "A la plancha..." }
+                            ]
+                        }
+                    ],
+                    "economics": {
+                        "estimated_cost": "80-100 USD",
+                        "recommendations": "Compra a granel para ahorrar..."
+                    }
                 }
             `;
 
-            // 1. OBTENER INSTANCIA DEL MODELO (Igual que en processDietBackground)
+            // 1. OBTENER INSTANCIA DEL MODELO
             const model = aiClient.getGenerativeModel({
-                model: "gemini-2.0-flash" // Recomendado: usa 1.5-flash o 2.0-flash para rapidez con PDFs
+                model: "gemini-2.0-flash", // Recomendado para seguir instrucciones complejas
+                generationConfig: { responseMimeType: "application/json" } // FORZAMOS MODO JSON NATIVO
             });
 
-            // 2. GENERAR CONTENIDO (Multimodal: Texto + PDF Base64)
+            // 2. GENERAR CONTENIDO
             const result = await model.generateContent([
                 promptText,
                 {
@@ -257,7 +282,7 @@ module.exports = {
 
             if (!text) throw new Error("La IA no generó respuesta de texto.");
 
-            // Limpieza de JSON (Markdown removal)
+            // Limpieza de JSON (por si acaso manda markdown)
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
             let aiAnalysis;
@@ -289,7 +314,6 @@ module.exports = {
             return res.status(501).json({ success: false, message: 'Error al analizar', error: error.message });
         }
     },
-
     async getDietById(req, res, next) {
         try {
             const { id } = req.params;
