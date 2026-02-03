@@ -218,7 +218,7 @@ module.exports = {
 
             const base64Data = file.buffer.toString("base64");
 
-            // --- PROMPT MAESTRO ACTUALIZADO ---
+            // --- PROMPT MAESTRO ---
             const promptText = `
                 Actúa como un nutricionista experto. Analiza este plan alimenticio (PDF).
                 
@@ -236,26 +236,28 @@ module.exports = {
                 }
             `;
 
-            const response = await aiClient.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [
-                    {
-                        parts: [
-                            { text: promptText },
-                            { inlineData: { mimeType: 'application/pdf', data: base64Data } }
-                        ]
-                    }
-                ]
+            // 1. OBTENER INSTANCIA DEL MODELO (Igual que en processDietBackground)
+            const model = aiClient.getGenerativeModel({
+                model: "gemini-2.0-flash" // Recomendado: usa 1.5-flash o 2.0-flash para rapidez con PDFs
             });
 
-            // 4. Procesar Respuesta
-            let text;
-            if (response && response.response && response.response.candidates && response.response.candidates.length > 0) {
-                text = response.response.candidates[0].content.parts[0].text;
-            }
+            // 2. GENERAR CONTENIDO (Multimodal: Texto + PDF Base64)
+            const result = await model.generateContent([
+                promptText,
+                {
+                    inlineData: {
+                        mimeType: 'application/pdf',
+                        data: base64Data
+                    }
+                }
+            ]);
+
+            const response = await result.response;
+            let text = response.text();
 
             if (!text) throw new Error("La IA no generó respuesta de texto.");
 
+            // Limpieza de JSON (Markdown removal)
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
             let aiAnalysis;
@@ -266,6 +268,7 @@ module.exports = {
                 throw new Error("La IA no devolvió un JSON válido.");
             }
 
+            // Actualizar la base de datos
             const sqlUpdate = `
                 UPDATE diets
                 SET ai_analysis = $1
