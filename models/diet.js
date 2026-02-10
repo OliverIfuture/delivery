@@ -172,9 +172,8 @@ Diet.updateError = (id) => {
 
 // 4. Consultar Estado (Polling)
 Diet.findById = (id) => {
-    const sql = `SELECT * FROM diets WHERE id = $1`;
+    const sql = `SELECT * FROM ai_generated_diets WHERE id = $1`; // CORRECTO
     return db.oneOrNone(sql, id);
 };
-
 
 module.exports = Diet;
