@@ -7,7 +7,7 @@ const logger = require('morgan');
 const cors = require('cors');
 const multer = require('multer');
 const admin = require('firebase-admin');
-//const serviceAccount = require('./serviceAccountKey.json');
+const serviceAccount = require('./serviceAccountKey.json');
 const password = require('passport');
 const io = require('socket.io')(server);
 const mercadopago = require('mercadopago');
@@ -30,10 +30,10 @@ const orderDeliverySocket = require('./sockets/orders_delivery_socket.js');
 /**
  * * iniciar firebase admin
  * * */
-//admin.initializeApp({
-//    credential: admin.credential.cert(serviceAccount)
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
 
-//})
+})
 
 const upload = multer({
     storage: multer.memoryStorage()
@@ -83,7 +83,13 @@ app.use(express.json({
 app.use(express.urlencoded({
     extended: true
 }));
-app.use(cors());
+//app.use(cors());
+app.use(cors({
+    origin: '*', // Permite conexiones desde cualquier lugar (Flutter, Web, Postman)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport.js')(passport);
