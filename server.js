@@ -7,7 +7,7 @@ const logger = require('morgan');
 const cors = require('cors');
 const multer = require('multer');
 const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json');
+//const serviceAccount = require('./serviceAccountKey.json');
 const password = require('passport');
 const io = require('socket.io')(server);
 const mercadopago = require('mercadopago');
@@ -30,10 +30,10 @@ const orderDeliverySocket = require('./sockets/orders_delivery_socket.js');
 /**
  * * iniciar firebase admin
  * * */
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+//admin.initializeApp({
+//    credential: admin.credential.cert(serviceAccount)
 
-})
+//})
 
 const upload = multer({
     storage: multer.memoryStorage()
@@ -108,7 +108,7 @@ routines(app); // **NUEVA RUTA AÑADIDA**
 diets(app);
 workoutLogs(app);
 subscriptionPlans(app);
-clientSubscriptions(app); 
+clientSubscriptions(app);
 stripeConnect(app); // <-- AÑADE ESTA LÍNEA
 clientProgress(app);
 chat(app, upload);
