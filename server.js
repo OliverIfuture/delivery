@@ -9,7 +9,14 @@ const multer = require('multer');
 const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
 const password = require('passport');
-const io = require('socket.io')(server);
+//const io = require('socket.io')(server);
+// Configuración CORS específica para WebSockets
+const io = require('socket.io')(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 const mercadopago = require('mercadopago');
 /*
 * mercadopago config
@@ -80,16 +87,17 @@ app.use(express.json({
         req.rawBody = buf;
     }
 }));
+
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    credentials: true
+}));
 app.use(express.urlencoded({
     extended: true
 }));
 //app.use(cors());
-app.use(cors({
-    origin: '*', // Permite conexiones desde cualquier lugar (Flutter, Web, Postman)
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    credentials: true
-}));
 app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport.js')(passport);
@@ -125,8 +133,9 @@ gymRoutes(app);
 posRoutes(app);
 gymAdminRoutes(app);
 nutritionRoutes(app);
-server.listen(PORT, function () {
-    console.log('Aplicacion de NodeJs ' + process.pid + ' iniciada... : puerto asignado ' + PORT);
+// IMPORTANTE: '0.0.0.0' hace que el servidor escuche conexiones externas
+server.listen(PORT, '0.0.0.0', function () {
+    console.log('🚀 Servidor escuchando en puerto: ' + PORT);
 });
 
 
