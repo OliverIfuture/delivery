@@ -72,6 +72,7 @@ const gymRoutes = require('./routes/gymRoutes.js');
 const posRoutes = require('./routes/posRoutes.js');
 const gymAdminRoutes = require('./routes/gymAdminRoutes.js');
 const nutritionRoutes = require('./routes/nutritionRoutes.js');
+const walletRoutes = require('./routes/walletRoutes.js');
 
 const PORT = process.env.PORT || 4000
 
@@ -133,6 +134,8 @@ gymRoutes(app);
 posRoutes(app);
 gymAdminRoutes(app);
 nutritionRoutes(app);
+walletRoutes(app, upload);
+
 // IMPORTANTE: '0.0.0.0' hace que el servidor escuche conexiones externas
 server.listen(PORT, '0.0.0.0', function () {
     console.log('🚀 Servidor escuchando en puerto: ' + PORT);
