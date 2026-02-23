@@ -1,13 +1,13 @@
 // (Asegúrate de que estos 'imports' estén al inicio)
 const ClientSubscription = require('../models/clientSubscription.js');
-const User = require('../models/user.js'); 
-const Affiliate  = require('../models/affiliate.js'); 
-const keys = require('../config/keys.js'); 
+const User = require('../models/user.js');
+const Affiliate = require('../models/affiliate.js');
+const keys = require('../config/keys.js');
 const Gym = require('../models/gym.js'); // <-- Modelo clave para Gimnasios
 const Pos = require('../models/pos.js'); // <-- Modelo clave para el Webhook
 
-const endpointSecret = keys.stripeWebhookSecret; 
-const adminStripe = require('stripe')(keys.stripeAdminSecretKey); 
+const endpointSecret = keys.stripeWebhookSecret;
+const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 
 module.exports = {
 
@@ -19,14 +19,14 @@ module.exports = {
      * 2. Si el cliente SÍ tiene membresía, ignora el 'id_plan' y usa los datos
      * de su membresía activa (Extensión).
      */
-// (Esta es la función 'createExtensionIntent' en tu backend)
+    // (Esta es la función 'createExtensionIntent' en tu backend)
 
-async createSubscriptionIntent(req, res, next) {
+    async createSubscriptionIntent(req, res, next) {
         try {
             // Recibimos parámetros.
             const { id_plan, id_company, price_id, discount_percent } = req.body;
             const id_client = req.user.id;
-            
+
             // 1. Validación de compañía y Stripe Keys
             const company = await User.findCompanyById(id_company);
             if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
@@ -39,9 +39,9 @@ async createSubscriptionIntent(req, res, next) {
             // 2. OBTENER DATOS DEL PLAN DE LA BD (Precio y Días)
             const SubscriptionPlan = require('../models/subscriptionPlan');
             const planInfo = await ClientSubscription.findById(id_plan);
-            
+
             if (!planInfo) {
-                 return res.status(404).json({success: false, message: 'Plan no encontrado'});
+                return res.status(404).json({ success: false, message: 'Plan no encontrado' });
             }
 
             const durationDays = planInfo.durationInDays ? planInfo.durationInDays : 30;
@@ -64,7 +64,7 @@ async createSubscriptionIntent(req, res, next) {
 
             // --- 4. CÁLCULO MANUAL DEL PRECIO FINAL (PAGO ÚNICO) ---
             // Como es pago único, Stripe no aplica cupones automáticos. Lo calculamos aquí.
-            
+
             let finalAmount = originalPrice;
             let discountApplied = 'NO';
 
@@ -77,11 +77,11 @@ async createSubscriptionIntent(req, res, next) {
 
             // Convertir a centavos (Stripe siempre usa centavos)
             // Math.round es vital para evitar errores de decimales flotantes (ej. 199.999999)
-            const amountInCents = Math.round(finalAmount * 100); 
+            const amountInCents = Math.round(finalAmount * 100);
 
             // Seguridad: El monto mínimo en MXN suele ser 10 pesos (1000 centavos) aprox
-            if (amountInCents < 1000) { 
-                 // Manejo opcional si el descuento deja el precio muy bajo
+            if (amountInCents < 1000) {
+                // Manejo opcional si el descuento deja el precio muy bajo
             }
             // -------------------------------------------------------
 
@@ -92,12 +92,12 @@ async createSubscriptionIntent(req, res, next) {
                 currency: 'mxn',
                 customer: customer.id,
                 description: `Plan: ${planInfo.name} (${durationDays} días)`,
-                
+
                 // Configuración para transferir dinero al entrenador (Connect)
                 transfer_data: {
                     destination: company.stripeAccountId,
                 },
-                
+
                 // --- METADATA CRÍTICA PARA EL WEBHOOK ---
                 metadata: {
                     type: 'client_subscription_payment', // Cambiamos el tipo para identificarlo
@@ -120,7 +120,7 @@ async createSubscriptionIntent(req, res, next) {
                 paymentIntentId: paymentIntent.id, // ID del intento
                 clientSecret: paymentIntent.client_secret, // Lo que necesita Flutter
                 customerId: customer.id,
-                publishableKey: company.stripePublishableKey 
+                publishableKey: company.stripePublishableKey
             });
 
         } catch (error) {
@@ -132,13 +132,13 @@ async createSubscriptionIntent(req, res, next) {
             });
         }
     },
-	
+
     async createSubscriptionIntentAutom(req, res, next) {
         try {
             // Recibimos parámetros. 'discount_percent' puede venir null o undefined.
             const { id_plan, id_company, price_id, discount_percent } = req.body;
             const id_client = req.user.id;
-            
+
             // 1. Validación de compañía y Stripe Keys
             const company = await User.findCompanyById(id_company);
             if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
@@ -147,7 +147,7 @@ async createSubscriptionIntent(req, res, next) {
                     message: 'El entrenador no tiene pagos configurados.'
                 });
             }
-            
+
             const stripeInstance = require('stripe')(company.stripeSecretKey);
 
             // 2. Gestión del Cliente (Customer)
@@ -170,23 +170,23 @@ async createSubscriptionIntent(req, res, next) {
             if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
                 try {
                     console.log(`Intentando aplicar descuento del ${discount_percent}%...`);
-                    
+
                     // Crear cupón en Stripe
                     const coupon = await stripeInstance.coupons.create({
                         percent_off: parseFloat(discount_percent),
-                        duration: 'forever', 
+                        duration: 'forever',
                         name: `Descuento Especial ${discount_percent}%`,
                         metadata: { created_by: 'App_Promo' }
                     });
-                    
+
                     couponId = coupon.id; // Guardamos el ID si todo salió bien
                     console.log(`✅ Cupón creado: ${couponId}`);
-                    
+
                 } catch (e) {
                     // SAFETY CATCH: Si Stripe falla al crear el cupón, NO detenemos la venta.
                     // Simplemente logueamos el error y seguimos (se cobrará precio full).
                     console.error("⚠️ Error creando cupón (se cobrará precio normal):", e.message);
-                    couponId = null; 
+                    couponId = null;
                 }
             }
             // ----------------------------------------
@@ -198,11 +198,11 @@ async createSubscriptionIntent(req, res, next) {
                 transfer_data: {
                     destination: company.stripeAccountId,
                 },
-                payment_behavior: 'default_incomplete', 
+                payment_behavior: 'default_incomplete',
                 payment_settings: { save_default_payment_method: 'on_subscription' },
-                expand: ['latest_invoice.payment_intent'], 
+                expand: ['latest_invoice.payment_intent'],
                 metadata: {
-                    type: 'client_subscription', 
+                    type: 'client_subscription',
                     id_client: id_client,
                     id_company: id_company,
                     id_plan: id_plan,
@@ -222,9 +222,9 @@ async createSubscriptionIntent(req, res, next) {
             return res.status(200).json({
                 success: true,
                 subscriptionId: subscription.id,
-                clientSecret: subscription.latest_invoice.payment_intent.client_secret, 
+                clientSecret: subscription.latest_invoice.payment_intent.client_secret,
                 customerId: customer.id,
-                publishableKey: company.stripePublishableKey 
+                publishableKey: company.stripePublishableKey
             });
 
         } catch (error) {
@@ -236,8 +236,8 @@ async createSubscriptionIntent(req, res, next) {
             });
         }
     },
-async stripeWebhook(req, res, next) {
-        
+    async stripeWebhook(req, res, next) {
+
         const sig = req.headers['stripe-signature'];
         let event;
 
@@ -247,7 +247,7 @@ async stripeWebhook(req, res, next) {
                 return res.status(500).send('Error de configuración.');
             }
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
-        
+
         } catch (err) {
             console.log(`❌ Error en Webhook (constructEvent): ${err.message}`);
             return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -255,12 +255,12 @@ async stripeWebhook(req, res, next) {
 
         // Manejar el evento
         switch (event.type) {
-            
+
             // =================================================================
             // CASO PRINCIPAL: PAGOS ÚNICOS EXITOSOS (Entrenadores y Gym)
             // =================================================================
             case 'payment_intent.succeeded':
-                const paymentIntent = event.data.object; 
+                const paymentIntent = event.data.object;
                 const metadata = paymentIntent.metadata;
 
                 console.log(`🔔 Webhook PaymentIntent: Tipo ${metadata.type}`);
@@ -270,9 +270,9 @@ async stripeWebhook(req, res, next) {
                 // -------------------------------------------------------------
                 if (metadata.type === 'client_subscription_payment') {
                     console.log('✅ Procesando pago de Entrenador...');
-                    
+
                     const { id_client, id_company, id_plan, duration_days } = metadata;
-                    
+
                     // 1. Calcular Fecha de Vencimiento
                     const days = parseInt(duration_days) || 30; // Default 30 si falla
                     const expirationDate = new Date();
@@ -295,8 +295,8 @@ async stripeWebhook(req, res, next) {
 
                         // 3. Vincular Entrenador
                         if (id_client && id_company) {
-                             await User.updateTrainer(id_client, id_company);
-                             await User.transferClientData(id_client, id_company);
+                            await User.updateTrainer(id_client, id_company);
+                            await User.transferClientData(id_client, id_company);
                         }
                     } catch (e) {
                         console.log(`❌ Error creando suscripción local: ${e.message}`);
@@ -308,8 +308,8 @@ async stripeWebhook(req, res, next) {
                 // -------------------------------------------------------------
                 else if (metadata.type === 'membership_extension' || metadata.type === 'gym_membership_payment') {
                     console.log('✅ Procesando pago de Gimnasio...');
-                    
-                    const { id_client, id_membership_to_extend, id_plan, duration_days } = metadata; 
+
+                    const { id_client, id_membership_to_extend, id_plan, duration_days } = metadata;
                     // Usamos duration_days si viene, o duration_days_to_add para compatibilidad
                     const daysRaw = duration_days || metadata.duration_days_to_add;
                     const daysToAdd = parseInt(daysRaw) || 30;
@@ -321,7 +321,7 @@ async stripeWebhook(req, res, next) {
 
                         // 2. Calcular Fechas
                         let newEndDate = new Date();
-                        
+
                         // Si es extensión, sumamos a la fecha actual de la membresía vieja
                         if (id_membership_to_extend) {
                             const currentSub = await Gym.findMembershipById(id_membership_to_extend);
@@ -329,8 +329,8 @@ async stripeWebhook(req, res, next) {
                                 const today = new Date();
                                 const currentEnd = new Date(currentSub.end_date);
                                 // Si no ha vencido, extendemos desde su fecha fin. Si ya venció, desde hoy.
-                                const startDate = (currentEnd > today) ? currentEnd : today; 
-                                
+                                const startDate = (currentEnd > today) ? currentEnd : today;
+
                                 newEndDate = new Date(startDate);
                                 newEndDate.setDate(newEndDate.getDate() + daysToAdd);
 
@@ -374,12 +374,12 @@ async stripeWebhook(req, res, next) {
                     try {
                         await Affiliate.markAsPaid(id_vendor, id_affiliate);
                         console.log('✅ Comisión marcada como pagada.');
-                    } catch (e) { 
-                        console.log(`❌ Error Affiliate: ${e.message}`); 
+                    } catch (e) {
+                        console.log(`❌ Error Affiliate: ${e.message}`);
                     }
                 }
                 break;
-            
+
             case 'payment_intent.payment_failed':
                 console.log('❌ Webhook: Intento de pago fallido:', event.data.object.id);
                 break;
@@ -396,7 +396,7 @@ async stripeWebhook(req, res, next) {
      * (Esta función maneja TODAS las confirmaciones de pago)
      */
     async stripeWebhook12(req, res, next) {
-        
+
         const sig = req.headers['stripe-signature'];
         let event;
 
@@ -406,7 +406,7 @@ async stripeWebhook(req, res, next) {
                 return res.status(500).send('Error de configuración del webhook.');
             }
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
-        
+
         } catch (err) {
             console.log(`❌ Error en Webhook (constructEvent): ${err.message}`);
             return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -414,16 +414,16 @@ async stripeWebhook(req, res, next) {
 
         // Manejar el evento
         switch (event.type) {
-            
+
             // --- Caso 1: Suscripción de Entrenador Creada/Pagada (client_subscriptions) ---
             case 'payment_intent.succeeded':
-                const paymentIntent1 = event.data.object; 
+                const paymentIntent1 = event.data.object;
                 const metadata1 = paymentIntent1.metadata;
 
                 // --- A) PAGO DE ENTRENADOR (NUEVO FLUJO ÚNICO) ---
                 if (metadata1.type === 'client_subscription_payment') {
                     console.log('✅ Webhook: Pago Único de Entrenador Recibido.');
-                    
+
                     const { id_client, id_company, id_plan, duration_days } = metadata1;
                     console.log(`metadata1 de stripe: ${metadata1}`);
 
@@ -451,8 +451,8 @@ async stripeWebhook(req, res, next) {
 
                         // 3. Vincular Entrenador
                         if (id_client && id_company) {
-                             await User.updateTrainer(id_client, id_company);
-                             await User.transferClientData(id_client, id_company);
+                            await User.updateTrainer(id_client, id_company);
+                            await User.transferClientData(id_client, id_company);
                         }
                     } catch (e) {
                         console.log(`❌ Error creando suscripción local: ${e.message}`);
@@ -460,7 +460,7 @@ async stripeWebhook(req, res, next) {
                 }
 
                 break;
-            
+
             // --- Casos de Falla/Cancelación (client_subscriptions) ---
             case 'invoice.payment_failed':
                 const subscriptionId_failed = event.data.object.subscription;
@@ -475,15 +475,15 @@ async stripeWebhook(req, res, next) {
 
             // --- Caso 2: Onboarding de Entrenador (Stripe Connect) ---
             case 'account.updated':
-                 const account = event.data.object;
-                 const accountId = account.id;
-                 const chargesEnabled = account.charges_enabled;
-                 console.log(`Webhook 'account.updated': ${accountId}, charges_enabled: ${chargesEnabled}`);
-                 break;
+                const account = event.data.object;
+                const accountId = account.id;
+                const chargesEnabled = account.charges_enabled;
+                console.log(`Webhook 'account.updated': ${accountId}, charges_enabled: ${chargesEnabled}`);
+                break;
 
             // --- Caso 3: Pago de Comisión O Extensión de Membresía ---
             case 'payment_intent.succeeded':
-                const paymentIntent = event.data.object; 
+                const paymentIntent = event.data.object;
                 const metadata = paymentIntent.metadata;
 
                 // **Flujo A: Es un pago de comisión de Afiliado**
@@ -497,13 +497,13 @@ async stripeWebhook(req, res, next) {
                         console.log(`❌ Error al procesar Payout de Comisión: ${e.message}`);
                     }
                 }
-                
+
                 // --- ¡CAMBIO! LÓGICA DE WEBHOOK ACTUALIZADA ---
                 // **Flujo B: Es una extensión O COMPRA NUEVA de membresía (gym_memberships)**
                 else if (metadata.type === 'membership_extension') {
                     console.log('✅ Webhook: Detectado pago de GIMNASIO (membership_extension).');
-                    
-                    const { id_client, id_membership_to_extend, id_plan, duration_days_to_add } = metadata; 
+
+                    const { id_client, id_membership_to_extend, id_plan, duration_days_to_add } = metadata;
 
                     try {
                         // 1. Obtener los detalles del plan que se pagó
@@ -520,7 +520,7 @@ async stripeWebhook(req, res, next) {
 
                         // 3. Calcular la nueva fecha de vencimiento
                         let newEndDate = new Date();
-                        
+
                         // **¡NUEVA LÓGICA!**
                         // ¿Es una extensión o una compra nueva?
                         // Verificamos si la metadata 'id_membership_to_extend' existe
@@ -531,10 +531,10 @@ async stripeWebhook(req, res, next) {
                                 const today = new Date();
                                 const currentEndDate = new Date(currentSub.end_date);
                                 // Si la membresía actual sigue activa, extender desde el final
-                                const startDate = (currentEndDate > today) ? currentEndDate : today; 
+                                const startDate = (currentEndDate > today) ? currentEndDate : today;
                                 newEndDate = new Date(startDate);
                                 newEndDate.setDate(newEndDate.getDate() + parseInt(duration_days_to_add));
-                                
+
                                 // Desactivar la membresía vieja
                                 await Gym.deactivateMembership(id_membership_to_extend, 'extended');
                                 console.log(`[Webhook] Membresía ${id_membership_to_extend} extendida.`);
@@ -560,7 +560,7 @@ async stripeWebhook(req, res, next) {
                         };
 
                         await Gym.createMembership(newMembershipData);
-                        
+
                         console.log(`✅ Membresía registrada (con turno ${activeShift?.id}) para cliente ${id_client}`);
 
                     } catch (e) {
@@ -568,7 +568,35 @@ async stripeWebhook(req, res, next) {
                     }
                 }
                 break;
-            
+
+            // Asegúrate de importar el modelo Wallet arriba en tu archivo
+            // const Wallet = require('../models/wallet.js');
+
+            // ... dentro de tu switch (event.type) en stripeWebhook12 ...
+
+            case 'checkout.session.completed':
+                const session = event.data.object;
+                const metadataSession = session.metadata;
+
+                if (metadataSession && metadataSession.type === 'wallet_topup') {
+                    console.log('✅ Webhook: Recarga de Billetera detectada.');
+
+                    const id_client = metadataSession.id_client;
+                    const coins_to_add = parseFloat(metadataSession.coins_to_add);
+                    const reference_id = session.id;
+
+                    try {
+                        // Llamamos a nuestra transacción SQL mágica
+                        await Wallet.processTopUp(id_client, coins_to_add, reference_id);
+                        console.log(`✅ ${coins_to_add} Premium Coins agregadas al usuario ${id_client}.`);
+                    } catch (error) {
+                        console.log(`❌ Error al procesar recarga en BD: ${error.message}`);
+                    }
+                }
+                break;
+
+            // ... el resto de tus casos (payment_intent.succeeded, etc.)
+
             default:
                 console.log(`Evento de Webhook no manejado: ${event.type}`);
         }
@@ -581,9 +609,9 @@ async stripeWebhook(req, res, next) {
      */
     async getSubscriptionStatus(req, res, next) {
         try {
-            const id_client = req.user.id; 
-            const data = await Gym.findActiveByClientId(id_client); 
-            
+            const id_client = req.user.id;
+            const data = await Gym.findActiveByClientId(id_client);
+
             if (!data) {
                 return res.status(200).json({
                     success: true,
@@ -594,7 +622,7 @@ async stripeWebhook(req, res, next) {
 
             return res.status(200).json({
                 success: true,
-                status: data.status, 
+                status: data.status,
                 data: {
                     plan_name: data.plan_name,
                     end_date: data.end_date
@@ -611,10 +639,10 @@ async stripeWebhook(req, res, next) {
         }
     },
 
-        async getSubscriptionStatusTrainer(req, res, next) {
+    async getSubscriptionStatusTrainer(req, res, next) {
         try {
-            const id_client = req.user.id; 
-            const data = await ClientSubscription.findActiveByClient(id_client); 
+            const id_client = req.user.id;
+            const data = await ClientSubscription.findActiveByClient(id_client);
             console.log(`data de membresia: ${JSON.stringify(data)}`);
 
             if (!data) {
@@ -627,7 +655,7 @@ async stripeWebhook(req, res, next) {
 
             return res.status(200).json({
                 success: true,
-                status: data.status, 
+                status: data.status,
                 data: data // <--- ¡ASÍ DE SIMPLE!
 
             });
@@ -642,14 +670,14 @@ async stripeWebhook(req, res, next) {
         }
     },
 
-        async getFree(req, res, next) {
+    async getFree(req, res, next) {
         try {
-            const id_client = req.params.id; 
-            const data = await User.getFree(id_client); 
+            const id_client = req.params.id;
+            const data = await User.getFree(id_client);
 
             return res.status(200).json({
                 success: true,
-                message:'plan actualizado'
+                message: 'plan actualizado'
             });
 
         } catch (error) {
@@ -664,13 +692,13 @@ async stripeWebhook(req, res, next) {
 
 
 
-   async createExtensionIntent(req, res, next) {
+    async createExtensionIntent(req, res, next) {
         try {
             const id_client = req.user.id;
-            
+
             // 1. CORRECCIÓN DE NOMBRES: Leer exactamente lo que envía Flutter
             // Flutter envía: { 'id_plan': ..., 'id_company': ... }
-            const { id_plan, id_company: companyIdFromFront } = req.body; 
+            const { id_plan, id_company: companyIdFromFront } = req.body;
 
             console.log(`[Intent] Cliente: ${id_client} | Plan: ${id_plan} | Company (Front): ${companyIdFromFront}`);
 
@@ -680,7 +708,7 @@ async stripeWebhook(req, res, next) {
             let activeSub;
 
             // --- 2. LÓGICA DE VALIDACIÓN DE ID_PLAN (LO QUE PEDISTE) ---
-            
+
             // Validamos si id_plan es un valor real y útil
             const isPlanIdValid = (id_plan && id_plan !== 'undefined' && id_plan !== 'null' && id_plan !== '');
 
@@ -688,7 +716,7 @@ async stripeWebhook(req, res, next) {
                 // CASO A: Viene un ID de plan específico. 
                 // Buscamos si ya tiene ESE plan activo para extenderlo.
                 console.log(`[Intent] ID Plan válido. Buscando coincidencia exacta...`);
-                activeSub = await Gym.findActiveByClientId2(id_client, id_plan); 
+                activeSub = await Gym.findActiveByClientId2(id_client, id_plan);
             } else {
                 // CASO B: No viene ID (o es null/undefined).
                 // Asumimos que el usuario dio click en "Renovar" sin contexto de plan nuevo.
@@ -696,38 +724,38 @@ async stripeWebhook(req, res, next) {
                 console.log(`[id_client] ${id_client}...`);
                 console.log(`[companyId] ${companyIdFromFront}...`);
                 activeSub = await Gym.findActiveByClientId(id_client, companyIdFromFront);
-                 console.log(`entro en el caso B: ${JSON.stringify(activeSub)}`);
+                console.log(`entro en el caso B: ${JSON.stringify(activeSub)}`);
 
             }
             // ----------------------------------------------------------
-            
+
             if (activeSub) {
                 // --- CASO 1: TIENE MEMBRESÍA ACTIVA (RENOVACIÓN) ---
                 console.log(`[Intent] Encontrada suscripción activa ID: ${activeSub.id}. Extendiendo...`);
-                
+
                 membershipToExtend = activeSub;
                 companyId = activeSub.id_company; // Usamos la company de la BD
-                
+
                 // Intentamos buscar el plan original por nombre para saber el precio actual
                 planToPurchase = await Gym.findPlanByName(activeSub.plan_name, activeSub.id_company);
-                
+
                 // Fallback: Si no lo encuentra por nombre, intentamos por ID si existe en el registro
                 if (!planToPurchase && activeSub.id_plan) {
-                     planToPurchase = await Gym.findById(activeSub.id_plan);
+                    planToPurchase = await Gym.findById(activeSub.id_plan);
                 }
-                
+
             } else {
                 // --- CASO 2: COMPRA NUEVA (No tiene membresía activa) ---
                 console.log(`[Intent] No hay suscripción activa. Procesando como compra nueva.`);
-                
+
                 // Si es compra nueva, ES OBLIGATORIO tener el id_plan
                 if (!isPlanIdValid) {
-                    return res.status(400).json({ 
-                        success: false, 
-                        message: 'No tienes una membresía activa para renovar. Por favor selecciona un plan nuevo.' 
+                    return res.status(400).json({
+                        success: false,
+                        message: 'No tienes una membresía activa para renovar. Por favor selecciona un plan nuevo.'
                     });
                 }
-                
+
                 planToPurchase = await Gym.findById(id_plan);
                 if (planToPurchase) {
                     companyId = planToPurchase.id_company;
@@ -744,12 +772,12 @@ async stripeWebhook(req, res, next) {
             if (!planToPurchase) {
                 return res.status(400).json({ success: false, message: 'No se encontró la información del plan a pagar.' });
             }
-            
+
             if (!companyId) {
                 return res.status(400).json({ success: false, message: 'No se pudo identificar al gimnasio/entrenador.' });
             }
-            
-            const amountInCents = Math.round(planToPurchase.price * 100); 
+
+            const amountInCents = Math.round(planToPurchase.price * 100);
 
             // 4. Obtener credenciales de Stripe del Gimnasio
             const company = await User.findCompanyById(companyId);
@@ -774,7 +802,7 @@ async stripeWebhook(req, res, next) {
                     name: `${req.user.name} ${req.user.lastname}`,
                 });
             }
-            
+
             // 6. Ephemeral Key
             const ephemeralKey = await stripe.ephemeralKeys.create(
                 { customer: customer.id },
@@ -783,7 +811,7 @@ async stripeWebhook(req, res, next) {
 
             // 7. Payment Intent Metadata
             const metadata = {
-                type: 'membership_extension', 
+                type: 'membership_extension',
                 id_client: id_client,
                 id_plan: planToPurchase.id,
                 duration_days_to_add: planToPurchase.duration_days
@@ -794,20 +822,20 @@ async stripeWebhook(req, res, next) {
             }
 
             // 8. Crear Intento de Pago
-             const extensionIntent = await stripe.paymentIntents.create({
+            const extensionIntent = await stripe.paymentIntents.create({
                 amount: amountInCents,
                 currency: 'mxn',
                 customer: customer.id,
                 metadata: metadata,
                 transfer_data: {
-                    destination: company.stripeAccountId, 
+                    destination: company.stripeAccountId,
                 },
             });
 
             return res.status(200).json({
                 success: true,
-                message: 'Intención de pago creada', 
-                data: { 
+                message: 'Intención de pago creada',
+                data: {
                     clientSecret: extensionIntent.client_secret,
                     ephemeralKey: ephemeralKey.secret,
                     customerId: customer.id,
@@ -826,27 +854,27 @@ async stripeWebhook(req, res, next) {
         }
     },
 
-async createManualRequest(req, res, next) {
+    async createManualRequest(req, res, next) {
         try {
             const { id_plan, id_company } = req.body;
             const id_client = req.user.id;
 
             console.log(`[Manual Request] Cliente: ${id_client} -> Plan: ${id_plan}`);
-            
+
             // 0. VALIDACIÓN ANTI-SPAM
             // Verificamos si este cliente YA tiene este plan en estado 'PENDING'
             const existingRequest = await ClientSubscription.findPendingByClient(id_client, id_plan);
-            
+
             if (existingRequest) {
                 return res.status(409).json({ // 409 Conflict
-                    success: false, 
-                    message: 'Ya tienes una solicitud pendiente para este plan. Espera a que tu entrenador la apruebe.' 
+                    success: false,
+                    message: 'Ya tienes una solicitud pendiente para este plan. Espera a que tu entrenador la apruebe.'
                 });
             }
 
             // 1. VALIDACIÓN DE EXISTENCIA DEL PLAN Y OBTENCIÓN DE DÍAS
-            const plan = await ClientSubscription.findById(id_plan); 
-            
+            const plan = await ClientSubscription.findById(id_plan);
+
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'El plan seleccionado ya no existe.' });
             }
@@ -865,7 +893,7 @@ async createManualRequest(req, res, next) {
 
             // 4. VINCULACIÓN AUTOMÁTICA
             await User.updateTrainer(id_client, id_company);
-            
+
             return res.status(201).json({
                 success: true,
                 message: 'Solicitud enviada. Tu entrenador ha sido notificado.',
@@ -916,7 +944,7 @@ async createManualRequest(req, res, next) {
                 ORDER BY
                     S.created_at DESC
             `;
-            
+
             const db = require('../config/config');
             const data = await db.manyOrNone(sql, id_company);
 
@@ -929,9 +957,9 @@ async createManualRequest(req, res, next) {
     },
 
     // 2. APROBAR SOLICITUD (Activar Plan)
-// ... imports
+    // ... imports
 
-// ... dentro de la clase ClientSubscriptionsController ...
+    // ... dentro de la clase ClientSubscriptionsController ...
 
     async approveRequest(req, res, next) {
         try {
@@ -951,11 +979,11 @@ async createManualRequest(req, res, next) {
                 WHERE cs.id = $1 AND cs.id_plan = sp.id
                 RETURNING cs.id_client
             `;
-            
+
             const result = await db.oneOrNone(sql, [id_subscription]);
 
             if (!result) {
-                 return res.status(404).json({ success: false, message: 'Suscripción no encontrada o plan inválido.' });
+                return res.status(404).json({ success: false, message: 'Suscripción no encontrada o plan inválido.' });
             }
 
             return res.status(200).json({ success: true, message: 'Suscripción activada exitosamente.' });
@@ -966,5 +994,5 @@ async createManualRequest(req, res, next) {
         }
     },
 
-// ...
+    // ...
 };
