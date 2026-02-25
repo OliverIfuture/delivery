@@ -384,6 +384,27 @@ module.exports = {
                 console.log('❌ Webhook: Intento de pago fallido:', event.data.object.id);
                 break;
 
+            case 'checkout.session.completed':
+                const session = event.data.object;
+                const metadataSession = session.metadata;
+
+                if (metadataSession && metadataSession.type === 'wallet_topup') {
+                    console.log('✅ Webhook: Recarga de Billetera detectada.');
+
+                    const id_client = metadataSession.id_client;
+                    const coins_to_add = parseFloat(metadataSession.coins_to_add);
+                    const reference_id = session.id;
+
+                    try {
+                        // Llamamos a nuestra transacción SQL mágica
+                        await Wallet.processTopUp(id_client, coins_to_add, reference_id);
+                        console.log(`✅ ${coins_to_add} Premium Coins agregadas al usuario ${id_client}.`);
+                    } catch (error) {
+                        console.log(`❌ Error al procesar recarga en BD: ${error.message}`);
+                    }
+                }
+                break;
+
             default:
                 console.log(`Evento no manejado: ${event.type}`);
         }
