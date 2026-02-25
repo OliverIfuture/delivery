@@ -72,6 +72,28 @@ module.exports = {
             const id_client = req.user.id;
             const history = await Wallet.getHistoryByUser(id_client);
 
+            // --- NUEVO: Traemos el saldo fresco de la base de datos ---
+            const user = await Wallet.getBalance(id_client);
+
+            return res.status(200).json({
+                success: true,
+                balance: user ? parseFloat(user.balance) : 0, // Mandamos el saldo real
+                data: history // Mandamos la lista
+            });
+
+        } catch (error) {
+            console.log(`Error en getTransactionHistory: ${error}`);
+            return res.status(501).json({
+                success: false, message: 'Error al obtener el historial', error: error.message
+            });
+        }
+    },
+
+    async getTransactionHistory(req, res, next) {
+        try {
+            const id_client = req.user.id;
+            const history = await Wallet.getHistoryByUser(id_client);
+
             return res.status(200).json({
                 success: true,
                 data: history
