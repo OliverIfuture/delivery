@@ -33,7 +33,7 @@ Wallet.processTopUp = async (id_client, amount, reference_id) => {
         const insertSql = `
             INSERT INTO wallet_transactions(
                 id_user, amount, transaction_type, description, reference_id, created_at
-            ) VALUES ($1, $2, 'top_up_stripe', 'Recarga de Premium Coins', $3, $4)
+            ) VALUES ($1, $2, 'top_up_stripe', 'Recarga de SETS Coins', $3, $4)
             RETURNING id;
         `;
         const transaction = await t.one(insertSql, [parsedIdClient, parsedAmount, parsedRefId, new Date()]);

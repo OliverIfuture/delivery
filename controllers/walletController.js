@@ -26,8 +26,8 @@ module.exports = {
                         price_data: {
                             currency: 'mxn',
                             product_data: {
-                                name: `${amount_coins} Premium Coins`,
-                                description: 'Monedas virtuales para Trainer+ y Premium Supplements',
+                                name: `${amount_coins} SETS Coins`,
+                                description: 'Monedas virtuales para Trainer+',
                                 // images: ['https://tudominio.com/logo-moneda.png'], // Opcional
                             },
                             unit_amount: amountInCents,
