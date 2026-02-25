@@ -82,4 +82,56 @@ Wallet.getBalance = (id_client) => {
     return db.oneOrNone('SELECT balance FROM users WHERE id = $1', id_client);
 };
 
+Wallet.payWithReps = async (id_user, amount, transaction_type, description, reference_id) => {
+    const parsedId = parseInt(id_user, 10);
+    const parsedAmount = parseFloat(amount);
+    const parsedRefId = reference_id ? String(reference_id).trim() : null;
+
+    if (isNaN(parsedId) || isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new Error("Datos inválidos para el cobro.");
+    }
+
+    return db.tx(async t => {
+        // 1. Bloqueamos la fila del usuario temporalmente (FOR UPDATE) para evitar "doble gasto"
+        const user = await t.oneOrNone('SELECT balance FROM users WHERE id = $1 FOR UPDATE', [parsedId]);
+
+        if (!user) {
+            throw new Error("Usuario no encontrado.");
+        }
+        if (parseFloat(user.balance) < parsedAmount) {
+            throw new Error("Saldo insuficiente en la base de datos.");
+        }
+
+        // 2. Descontamos el balance
+        const updatedUser = await t.one(`
+            UPDATE users 
+            SET balance = balance - $1 
+            WHERE id = $2 
+            RETURNING balance
+        `, [parsedAmount, parsedId]);
+
+        // 3. Insertamos el movimiento en el Ledger (Guardamos el amount en NEGATIVO)
+        const insertSql = `
+            INSERT INTO wallet_transactions(
+                id_user, amount, transaction_type, description, reference_id, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id;
+        `;
+
+        const transaction = await t.one(insertSql, [
+            parsedId,
+            -parsedAmount, // <-- El signo menos es clave para los gastos
+            transaction_type,
+            description,
+            parsedRefId,
+            new Date()
+        ]);
+
+        return {
+            transactionId: transaction.id,
+            newBalance: parseFloat(updatedUser.balance)
+        };
+    });
+};
+
 module.exports = Wallet;

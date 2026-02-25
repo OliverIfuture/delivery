@@ -89,22 +89,31 @@ module.exports = {
         }
     },
 
-    async getTransactionHistory(req, res, next) {
+    async payWithReps(req, res, next) {
         try {
-            const id_client = req.user.id;
-            const history = await Wallet.getHistoryByUser(id_client);
+            // El ID viene del token JWT, súper seguro
+            const id_user = req.user.id;
+            const { amount, transaction_type, description, reference_id } = req.body;
+
+            const result = await Wallet.payWithReps(id_user, amount, transaction_type, description, reference_id);
 
             return res.status(200).json({
                 success: true,
-                data: history
+                message: 'Cobro realizado con éxito',
+                newBalance: result.newBalance,
+                transactionId: result.transactionId
             });
 
         } catch (error) {
-            console.log(`Error en getTransactionHistory: ${error}`);
+            console.log(`❌ Error en payWithReps: ${error.message}`);
+
+            // Si el error es de saldo, mandamos un código 400 (Bad Request)
+            if (error.message.includes("Saldo insuficiente")) {
+                return res.status(400).json({ success: false, message: error.message });
+            }
+
             return res.status(501).json({
-                success: false,
-                message: 'Error al obtener el historial',
-                error: error.message
+                success: false, message: 'Error procesando el pago', error: error.message
             });
         }
     }
