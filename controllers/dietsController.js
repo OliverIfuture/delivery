@@ -70,7 +70,7 @@ const processDietBackground = async (analysisId, physiologyData) => {
         ];
 
         const model = aiClient.getGenerativeModel({
-            model: "gemini-2.5-pro", // O gemini-1.5-pro si prefieres
+            model: "gemini-2.5-flash", // O gemini-1.5-pro si prefieres
             safetySettings: safetySettings
         });
 
