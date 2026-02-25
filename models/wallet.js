@@ -78,4 +78,8 @@ Wallet.getHistoryByUser = (id_client) => {
     return db.manyOrNone(sql, id_client);
 };
 
+Wallet.getBalance = (id_client) => {
+    return db.oneOrNone('SELECT balance FROM users WHERE id = $1', id_client);
+};
+
 module.exports = Wallet;
