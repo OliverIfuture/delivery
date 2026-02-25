@@ -12,5 +12,5 @@ module.exports = (app) => {
     // Obtiene el historial de transacciones del usuario
     app.get('/api/wallet/history', passport.authenticate('jwt', { session: false }), walletController.getTransactionHistory);
     // Agrega esta línea en tu archivo de rutas de wallet
-    app.post('api/pay-with-reps', passport.authenticate('jwt', { session: false }), walletController.payWithReps);
+    app.post('/api/wallet/pay-with-reps', passport.authenticate('jwt', { session: false }), walletController.payWithReps);
 };
