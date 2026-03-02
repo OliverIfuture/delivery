@@ -170,7 +170,7 @@ Routine.findAllByClient = (id_client) => {
  */
 Routine.getSystemTemplates = () => {
     const sql = `
-        SELECT id, name, description, image_url, duration, difficulty 
+        SELECT id, name, description, image_url, duration, difficulty, price
         FROM system_routines 
         ORDER BY id ASC
     `;
