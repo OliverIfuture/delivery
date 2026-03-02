@@ -6,7 +6,7 @@ const ClientSubscription = {};
  * Crea un nuevo registro de suscripción
  */
 ClientSubscription.create = (sub) => {
-    
+
     const sql = `
         INSERT INTO client_subscriptions(
             id_client,
@@ -74,7 +74,7 @@ ClientSubscription.findActiveByClient = (id_client) => {
             created_at DESC
         LIMIT 1
     `;
-    return db.oneOrNone(sql, id_client); 
+    return db.oneOrNone(sql, id_client);
 };
 
 // --- **NUEVAS FUNCIONES PARA EL SUPER-ADMIN** ---
@@ -111,10 +111,14 @@ ClientSubscription.createManual = (sub) => {
     const fakeSubId = `sub_MANUAL_${timestamp}`;
     const fakeCusId = `cus_MANUAL_${timestamp}`;
 
+    // --- LÓGICA DE ESTADO DINÁMICO (REPS vs EFECTIVO) ---
+    // Si Flutter nos manda un status (ej. 'active'), lo usamos. Si no, por defecto es 'PENDING'.
+    const finalStatus = sub.status ? sub.status : 'PENDING';
+
     // --- CÁLCULO DE FECHA DE VENCIMIENTO ---
     // 1. Obtener días del plan (o 30 por defecto si no viene)
     const durationDays = sub.duration_days ? parseInt(sub.duration_days) : 30;
-    
+
     // 2. Calcular fecha actual + días
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + durationDays);
@@ -125,25 +129,26 @@ ClientSubscription.createManual = (sub) => {
             id_client,
             id_company,
             id_plan,
-            stripe_subscription_id, -- Guardaremos 'MANUAL' para identificarlo
-            stripe_customer_id,     -- Guardaremos 'MANUAL'
-            status,                 -- Será 'PENDING' o 'ACTIVE' según tu flujo
-            current_period_end,     -- Fecha calculada
+            stripe_subscription_id, 
+            stripe_customer_id,     
+            status,                 -- Ahora recibe el parámetro dinámico ($8)
+            current_period_end,     
             created_at,
             updated_at
         )
-        VALUES($1, $2, $3, $6, $7, 'PENDING', $4, $5, $5)
+        VALUES($1, $2, $3, $6, $7, $8, $4, $5, $5)
         RETURNING id
     `;
 
     return db.one(sql, [
-        sub.id_client,
-        sub.id_company,
-        sub.id_plan,
+        sub.id_client,  // $1
+        sub.id_company, // $2
+        sub.id_plan,    // $3
         expirationDate, // $4: La fecha de vencimiento calculada
         new Date(),     // $5: created_at y updated_at
         fakeSubId,      // $6: ID falso de subscripción
-        fakeCusId       // $7: ID falso de cliente
+        fakeCusId,      // $7: ID falso de cliente
+        finalStatus     // $8: 'active' (REPS) o 'PENDING' (Efectivo)
     ]);
 };
 // Necesitarás esta para validar si ya existe una pendiente
