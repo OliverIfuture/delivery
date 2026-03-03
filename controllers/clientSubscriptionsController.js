@@ -908,7 +908,7 @@ module.exports = {
                 id_client: id_client,
                 id_company: id_company,
                 id_plan: id_plan,
-                duration_days: plan.durationInDays // <--- PASAMOS EL DATO AL MODELO
+                duration_days: plan.durationInDays, // <--- PASAMOS EL DATO AL MODELO
                 status: plan.status
             };
 
