@@ -881,6 +881,7 @@ module.exports = {
         try {
             const { id_plan, id_company } = req.body;
             const id_client = req.user.id;
+            const finalStatus = req.body.status;
 
             console.log(`[Manual Request] Cliente: ${id_client} -> Plan: ${id_plan}`);
 
@@ -909,39 +910,40 @@ module.exports = {
                 id_company: id_company,
                 id_plan: id_plan,
                 duration_days: plan.durationInDays, // <--- PASAMOS EL DATO AL MODELO
-                status: req.body.status // <--- ¡Asegúrate de que esto no falte!            };
+                status: finalStatus
+            };
 
             // 3. INSERTAR EN BD (El modelo calculará la fecha de vencimiento)
             const data = await ClientSubscription.createManual(subscriptionData);
 
-                // 4. VINCULACIÓN AUTOMÁTICA
-                await User.updateTrainer(id_client, id_company);
+            // 4. VINCULACIÓN AUTOMÁTICA
+            await User.updateTrainer(id_client, id_company);
 
-                return res.status(201).json({
-                    success: true,
-                    message: 'Solicitud enviada. Tu entrenador ha sido notificado.',
-                    data: { 'id': data.id }
-                });
+            return res.status(201).json({
+                success: true,
+                message: 'Solicitud enviada. Tu entrenador ha sido notificado.',
+                data: { 'id': data.id }
+            });
 
-            } catch (error) {
-                console.log(`Error en createManualRequest: ${error}`);
-                return res.status(501).json({
-                    success: false,
-                    message: 'Error al crear la solicitud',
-                    error: error.message
-                });
-            }
-        },
+        } catch (error) {
+            console.log(`Error en createManualRequest: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al crear la solicitud',
+                error: error.message
+            });
+        }
+    },
 
     // ... otras funciones ...
 
     // 1. OBTENER SOLICITUDES PENDIENTES (Para el Entrenador)
     async getPendingRequests(req, res, next) {
-            try {
-                const id_company = req.user.mi_store; // El ID del entrenador
+        try {
+            const id_company = req.user.mi_store; // El ID del entrenador
 
-                // Hacemos JOIN para traer datos del cliente y del plan
-                const sql = `
+            // Hacemos JOIN para traer datos del cliente y del plan
+            const sql = `
                 SELECT 
                     S.id,
                     S.id_client,
@@ -968,16 +970,16 @@ module.exports = {
                     S.created_at DESC
             `;
 
-                const db = require('../config/config');
-                const data = await db.manyOrNone(sql, id_company);
+            const db = require('../config/config');
+            const data = await db.manyOrNone(sql, id_company);
 
-                return res.status(200).json(data);
+            return res.status(200).json(data);
 
-            } catch (error) {
-                console.log(`Error en getPendingRequests: ${error}`);
-                return res.status(501).json({ success: false, message: 'Error al obtener solicitudes' });
-            }
-        },
+        } catch (error) {
+            console.log(`Error en getPendingRequests: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener solicitudes' });
+        }
+    },
 
     // 2. APROBAR SOLICITUD (Activar Plan)
     // ... imports
@@ -985,13 +987,13 @@ module.exports = {
     // ... dentro de la clase ClientSubscriptionsController ...
 
     async approveRequest(req, res, next) {
-            try {
-                const { id_subscription } = req.body;
-                const db = require('../config/config');
+        try {
+            const { id_subscription } = req.body;
+            const db = require('../config/config');
 
-                // Actualizamos estado a ACTIVE y reseteamos las fechas HOY + DÍAS DEL PLAN
-                // Hacemos un JOIN implícito (o subconsulta) para obtener la duración del plan
-                const sql = `
+            // Actualizamos estado a ACTIVE y reseteamos las fechas HOY + DÍAS DEL PLAN
+            // Hacemos un JOIN implícito (o subconsulta) para obtener la duración del plan
+            const sql = `
                 UPDATE client_subscriptions cs
                 SET 
                     status = 'active',
@@ -1003,19 +1005,19 @@ module.exports = {
                 RETURNING cs.id_client
             `;
 
-                const result = await db.oneOrNone(sql, [id_subscription]);
+            const result = await db.oneOrNone(sql, [id_subscription]);
 
-                if (!result) {
-                    return res.status(404).json({ success: false, message: 'Suscripción no encontrada o plan inválido.' });
-                }
-
-                return res.status(200).json({ success: true, message: 'Suscripción activada exitosamente.' });
-
-            } catch (error) {
-                console.log(`Error en approveRequest: ${error}`);
-                return res.status(501).json({ success: false, message: 'Error al activar', error: error.message });
+            if (!result) {
+                return res.status(404).json({ success: false, message: 'Suscripción no encontrada o plan inválido.' });
             }
-        },
 
-        // ...
-    };
+            return res.status(200).json({ success: true, message: 'Suscripción activada exitosamente.' });
+
+        } catch (error) {
+            console.log(`Error en approveRequest: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al activar', error: error.message });
+        }
+    },
+
+    // ...
+};
