@@ -909,6 +909,7 @@ module.exports = {
                 id_company: id_company,
                 id_plan: id_plan,
                 duration_days: plan.durationInDays // <--- PASAMOS EL DATO AL MODELO
+                status: plan.status
             };
 
             // 3. INSERTAR EN BD (El modelo calculará la fecha de vencimiento)
