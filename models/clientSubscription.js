@@ -106,6 +106,10 @@ ClientSubscription.getTotalRevenue = () => {
 };
 
 ClientSubscription.createManual = (sub) => {
+    // 🔍 --- LOGS DE DEPURACIÓN EXTREMA --- 🔍
+    console.log("\n=== ⚡ INICIANDO ClientSubscription.createManual ⚡ ===");
+    console.log("📦 Datos crudos recibidos (sub):", JSON.stringify(sub, null, 2));
+    console.log("🎯 Valor exacto de sub.status:", sub.status);
 
     const timestamp = Date.now();
     const fakeSubId = `sub_MANUAL_${timestamp}`;
@@ -114,6 +118,9 @@ ClientSubscription.createManual = (sub) => {
     // --- LÓGICA DE ESTADO DINÁMICO (REPS vs EFECTIVO) ---
     // Si Flutter nos manda un status (ej. 'active'), lo usamos. Si no, por defecto es 'PENDING'.
     const finalStatus = sub.status ? sub.status : 'PENDING';
+
+    console.log("✅ Status final que se insertará en BD:", finalStatus);
+    console.log("========================================================\n");
 
     // --- CÁLCULO DE FECHA DE VENCIMIENTO ---
     // 1. Obtener días del plan (o 30 por defecto si no viene)
