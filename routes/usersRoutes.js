@@ -113,7 +113,7 @@ module.exports = (app, upload) => {
 
 
     // --- NUEVA RUTA PARA CUESTIONARIO ---
-    app.post('/api/users/submitQuestionnaire', upload.fields([
+    app.post('/api/users/questionnaires/submit', upload.fields([
         { name: 'frontal', maxCount: 1 },
         { name: 'espalda', maxCount: 1 },
         { name: 'lateral_izq', maxCount: 1 },
