@@ -81,7 +81,7 @@ ClientProgress.getMetrics = (id_client) => {
 /**
  * Obtiene todas las fotos de progreso de un cliente
  */
-ClientProgress.getPhotos = (id_client) => {
+ClientProgress.getPhotosApp = (id_client) => {
     const sql = `
         SELECT
             id,
@@ -97,5 +97,25 @@ ClientProgress.getPhotos = (id_client) => {
     return db.manyOrNone(sql, id_client);
 };
 
+ClientProgress.getPhotos = (id_client) => {
+    const sql = `
+        SELECT
+            uq.id,
+            uq.photo_frontal,
+            uq.photo_espalda,
+            uq.photo_lateral_izq,
+            uq.photo_lateral_der,
+            uq.created_at AS date_taken
+        FROM
+            user_questionnaires uq
+        INNER JOIN
+            users u ON u.email = uq.user_email
+        WHERE
+            u.id = $1
+        ORDER BY
+            uq.created_at DESC
+    `;
+    return db.manyOrNone(sql, id_client);
+};
 
 module.exports = ClientProgress;
