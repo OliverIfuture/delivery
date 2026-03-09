@@ -86,7 +86,7 @@ module.exports = {
             const employed = req.params.employed;
 
             const data = await User.getShops(employed);
-           // console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -236,7 +236,7 @@ module.exports = {
             if (invitation) {
                 // Si se encontró una invitación pendiente, asignamos el ID
                 id_entrenador = invitation.id_company;
-               // console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
+                // console.log(`Usuario ${user.email} tiene una invitación pendiente. Asignando al entrenador ID: ${id_entrenador}`);
             }
             // --- FIN LÓGICA DE INVITACIÓN ---
 
@@ -285,16 +285,16 @@ module.exports = {
         }
     },
 
-async registerWithImage(req, res, next) {
+    async registerWithImage(req, res, next) {
         try {
             const user = JSON.parse(req.body.user);
-            
+
             // ---------------------------------------------------------
             // 1. DETECTAR ID DEL ENTRENADOR (LIMPIO)
             // ---------------------------------------------------------
             // Solo miramos id_entrenador. Ignoramos mi_store para evitar cruces.
             let trainerIdFromLink = null;
-            
+
             if (user.id_entrenador) {
                 trainerIdFromLink = user.id_entrenador;
             }
@@ -319,7 +319,7 @@ async registerWithImage(req, res, next) {
             // ---------------------------------------------------------
             // 5. LÓGICA DE INVITACIONES / REFERIDOS
             // ---------------------------------------------------------
-            
+
             if (!trainerIdFromLink) {
                 // CASO A: Registro sin enlace. Buscamos invitación por email.
                 const trainerIdFromEmail = await User.checkAndClaimInvitation(user.email, data.id);
@@ -327,21 +327,21 @@ async registerWithImage(req, res, next) {
                 if (trainerIdFromEmail) {
                     await User.updateTrainer(data.id, trainerIdFromEmail);
                     console.log(`🔗 Usuario ${user.email} vinculado por EMAIL al Entrenador ${trainerIdFromEmail}`);
-                    
+
                     // Actualizamos data para el response
                     // Nota: Si tu DB usa la columna 'mi_store' internamente para guardar el ID, 
                     // aquí se actualiza solo para visualización, pero la lógica sigue siendo de entrenador.
-                    data.mi_store = trainerIdFromEmail; 
+                    data.mi_store = trainerIdFromEmail;
                 }
             } else {
                 // CASO B: Registro por Enlace Mágico.
                 console.log(`🔗 Usuario ${user.email} vinculado por ENLACE DIRECTO (id_entrenador) al ID ${trainerIdFromLink}`);
-                
+
                 // Creamos el registro en la tabla de invitaciones para que cuente en las métricas
                 await User.createOrUpdateInvitation(
-                    user.email, 
-                    trainerIdFromLink, 
-                    data.id, 
+                    user.email,
+                    trainerIdFromLink,
+                    data.id,
                     `${user.name} ${user.lastname}`
                 );
             }
@@ -357,7 +357,7 @@ async registerWithImage(req, res, next) {
                 phone: user.phone,
                 image: user.image,
                 // Devolvemos el ID asignado (sea por link o por email)
-                id_entrenador: data.mi_store || trainerIdFromLink, 
+                id_entrenador: data.mi_store || trainerIdFromLink,
                 session_token: `JWT ${token}`
             };
 
@@ -516,7 +516,7 @@ async registerWithImage(req, res, next) {
         try {
 
             const user = JSON.parse(req.body.user);
-           // console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+            // console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
             if (files.length > 0) {
@@ -556,7 +556,7 @@ async registerWithImage(req, res, next) {
             const email = req.body.email;
             const password = req.body.password;
 
-           // console.log(`Email recibido: ${email}`);
+            // console.log(`Email recibido: ${email}`);
             //console.log(`Password recibido: ${password}`);
 
             const myUser = await User.findByEmail(email);
@@ -603,8 +603,8 @@ async registerWithImage(req, res, next) {
                 await User.updateToken(myUser.id, `JWT ${token}`);
 
                 // CORRECCIÓN: Usamos JSON.stringify con indentación (null, 2) para ver arrays legibles
-              //  console.log(`--- DATOS COMPLETOS DEL USUARIO ENVIADOS AL CLIENTE ---`);
-              //  console.log(JSON.stringify(data, null, 2));
+                //  console.log(`--- DATOS COMPLETOS DEL USUARIO ENVIADOS AL CLIENTE ---`);
+                //  console.log(JSON.stringify(data, null, 2));
 
                 // La línea anterior ya incluye roles y company.
                 // console.log(`DATA ENVIADA ${data.roles}`); // Comentamos esta línea ya que no es legible
@@ -646,11 +646,11 @@ async registerWithImage(req, res, next) {
                     success: false,
                     message: 'El email no fue encontrado'
                 });
-               // console.log(`password enviado ${myUser.password}`);
+                // console.log(`password enviado ${myUser.password}`);
 
             }
-           // console.log(`password enviado ${password}`);
-           // console.log(`password enviado ${myUser.password}`);
+            // console.log(`password enviado ${password}`);
+            // console.log(`password enviado ${myUser.password}`);
 
             if (password === myUser.password) {
                 const token = jwt.sign({ id: myUser.id, email: myUser.email }, keys.secretOrKey, {
@@ -680,7 +680,7 @@ async registerWithImage(req, res, next) {
                 await User.updateToken(myUser.id, `JWT ${token}`);
 
 
-               // console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
+                // console.log(`DATA ENVIADA ${data.roles}`); // AQUI PUEDES VER QUE DATOS ESTAS ENVIANDO
 
                 return res.status(201).json({
                     success: true,
@@ -712,7 +712,7 @@ async registerWithImage(req, res, next) {
         try {
 
             const body = req.body;
-           // console.log(`Nuevo balance: ${JSON.stringify(body)}`);
+            // console.log(`Nuevo balance: ${JSON.stringify(body)}`);
 
             await User.updateNotificationToken(body.id, body.notification_token);
 
@@ -764,7 +764,7 @@ async registerWithImage(req, res, next) {
             const userId = req.params.userId;
             // CLIENTE
             const data = await User.createtickets(name, active, amount, userId);
-         //   console.log(`Cupon creado: ${JSON.stringify(data)}`);
+            //   console.log(`Cupon creado: ${JSON.stringify(data)}`);
             return res.status(201).json({
 
                 success: true,
@@ -790,7 +790,7 @@ async registerWithImage(req, res, next) {
             const puntos = req.params.puntos;
             // CLIENTE
             const data = await User.updatePoints(id, puntos);
-           // console.log(`Nuevo balance: ${JSON.stringify(data)}`);
+            // console.log(`Nuevo balance: ${JSON.stringify(data)}`);
 
 
             return res.status(201).json({
@@ -811,13 +811,13 @@ async registerWithImage(req, res, next) {
         }
     },
 
-async sendInvitation(req, res, next) {
+    async sendInvitation(req, res, next) {
         try {
             // 1. Recibimos los datos desde Flutter
             const { email, clientName, trainerName, invitationLink } = req.body;
-            
+
             // 2. Obtenemos el ID de la tienda/entrenador (asegúrate que tu middleware de auth llene req.user)
-            const id_store = req.user.mi_store; 
+            const id_store = req.user.mi_store;
 
             // Validación de seguridad
             if (!email || !invitationLink || !id_store) {
@@ -1001,7 +1001,7 @@ async sendInvitation(req, res, next) {
             const password = req.params.password;
             // CLIENTE
             const data = await User.forgotPass(email, password);
-           // console.log(`Product to delete: ${JSON.stringify(data)}`);
+            // console.log(`Product to delete: ${JSON.stringify(data)}`);
 
 
             return res.status(201).json({
@@ -1026,10 +1026,10 @@ async sendInvitation(req, res, next) {
         try {
 
             const email = req.params.email;
-           // console.log(`id usuario a eliminar $idUser`);
+            // console.log(`id usuario a eliminar $idUser`);
 
             const data = await User.deleteAccout(email);
-           // console.log(`Address: ${JSON.stringify(data)}`);
+            // console.log(`Address: ${JSON.stringify(data)}`);
 
 
             return res.status(201).json({
@@ -1104,7 +1104,7 @@ async sendInvitation(req, res, next) {
             const id = req.params.id;
 
             const data = await User.selectToken(id);
-         //   console.log(`token enviado: ${JSON.stringify(data)}`);
+            //   console.log(`token enviado: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1126,7 +1126,7 @@ async sendInvitation(req, res, next) {
             const id = req.params.id;
 
             const data = await User.selectTokenByCompany(id);
-         //  console.log(`token enviado: ${JSON.stringify(data)}`);
+            //  console.log(`token enviado: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1272,7 +1272,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const body = req.body;
-          //  console.log(`updateNotificationToken_dealer: ${JSON.stringify(body)}`);
+            //  console.log(`updateNotificationToken_dealer: ${JSON.stringify(body)}`);
 
             await User.updateNotificationToken_dealer(body.id, body.notification_token);
 
@@ -1297,7 +1297,7 @@ async sendInvitation(req, res, next) {
             const id = req.params.id;
 
             const data = await User.findById_dealer(id);
-           // console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
 
             if (!data) {
                 return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
@@ -1321,7 +1321,7 @@ async sendInvitation(req, res, next) {
             const id = req.params.id;
 
             const data = await User.selectToken_dealer(id);
-           // console.log(`token enviado: ${JSON.stringify(data)}`);
+            // console.log(`token enviado: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1342,7 +1342,7 @@ async sendInvitation(req, res, next) {
 
             const id = req.params.id;
 
-           // const data = await User.findByUserIdPhone(id);
+            // const data = await User.findByUserIdPhone(id);
             console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
@@ -1389,7 +1389,7 @@ async sendInvitation(req, res, next) {
             const id = req.params.id;
 
             const data = await User.getCompanyById(id);
-           // console.log(`Datos enviados del getCompanyById: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados del getCompanyById: ${JSON.stringify(data)}`);
 
             if (!data) {
                 return res.status(404).json({ success: false, message: 'company no encontrado' });
@@ -1410,7 +1410,7 @@ async sendInvitation(req, res, next) {
             const id = req.params.id;
 
             const data = await User.getClients(id);
-           // console.log(`Datos enviados del getClients: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados del getClients: ${JSON.stringify(data)}`);
 
             if (!data) {
                 return res.status(404).json({ success: false, message: 'company no encontrado' });
@@ -1426,12 +1426,12 @@ async sendInvitation(req, res, next) {
         }
     },
 
-   async getMonthlyMemberships(req, res, next) {
+    async getMonthlyMemberships(req, res, next) {
         try {
             const id = req.params.id;
 
             const data = await User.getMonthlyMemberships(id);
-           // console.log(`Datos enviados del getMonthlyMemberships: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados del getMonthlyMemberships: ${JSON.stringify(data)}`);
 
             if (!data) {
                 return res.status(404).json({ success: false, message: 'company no encontrado' });
@@ -1447,13 +1447,13 @@ async sendInvitation(req, res, next) {
         }
     },
 
-    
-        async getTotalComision(req, res, next) {
+
+    async getTotalComision(req, res, next) {
         try {
             const id = req.params.id;
 
             const data = await User.getTotalComision(id);
-           // console.log(`Datos enviados del getTotalComision: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados del getTotalComision: ${JSON.stringify(data)}`);
 
             if (!data) {
                 return res.status(404).json({ success: false, message: 'company no encontrado' });
@@ -1474,7 +1474,7 @@ async sendInvitation(req, res, next) {
             const user = JSON.parse(req.body.user);
             const company = JSON.parse(req.body.company);
 
-           // console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
+            // console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             //console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
 
             const files = req.files;
@@ -1508,11 +1508,11 @@ async sendInvitation(req, res, next) {
 
             // 6. Asignación de Roles
             if (company.wantsappointments === true) {
-               // console.log('Asignando roles para negocio de SERVICIOS.');
+                // console.log('Asignando roles para negocio de SERVICIOS.');
                 await Rol.create(data.id, 1); // Cliente
                 await Rol.create(data.id, 4); // Servicio/Consultorio
             } else {
-               // console.log('Asignando roles para negocio de TIENDA.');
+                // console.log('Asignando roles para negocio de TIENDA.');
                 await Rol.create(data.id, 1); // Cliente
                 await Rol.create(data.id, 2); // Repartidor
                 await Rol.create(data.id, 3); // Tienda
@@ -1526,7 +1526,7 @@ async sendInvitation(req, res, next) {
 
         }
         catch (error) {
-           // console.log(`Error en createWithImageUserAndCompany: ${error}`);
+            // console.log(`Error en createWithImageUserAndCompany: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error con el registro del usuario y la compañía',
@@ -1574,7 +1574,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const company = req.body;
-          //  console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
+            //  console.log(`Datos enviados del company: ${JSON.stringify(company)}`);
             await User.renewMembership(company);
 
             return res.status(201).json({
@@ -1602,7 +1602,7 @@ async sendInvitation(req, res, next) {
 
             const companyId = req.params.companyId;
             const newStatus = req.params.newStatus;
-           // console.log(`datos de actualizacion:companyId = $companyId , newStatus: $newStatus`);
+            // console.log(`datos de actualizacion:companyId = $companyId , newStatus: $newStatus`);
 
             await User.updateCompanyStatus(companyId, newStatus);
 
@@ -1627,7 +1627,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const company = req.body;
-          //  console.log(`Datos enviados del updateCompanyPaymentMethods: ${JSON.stringify(company)}`);
+            //  console.log(`Datos enviados del updateCompanyPaymentMethods: ${JSON.stringify(company)}`);
             await User.updateCompanyPaymentMethods(company);
 
             return res.status(201).json({
@@ -1655,7 +1655,7 @@ async sendInvitation(req, res, next) {
             const companyId = req.params.companyId;
             const publishableKey = req.params.publishableKey;
             const secretKey = req.params.secretKey;
-           // console.log(`datos de actualizacion:companyId = ${companyId} ,publishableKey: ${publishableKey}, secretKey :${secretKey}`);
+            // console.log(`datos de actualizacion:companyId = ${companyId} ,publishableKey: ${publishableKey}, secretKey :${secretKey}`);
 
             await User.updateStripeKeys(companyId, publishableKey, secretKey);
 
@@ -1680,7 +1680,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const company = req.body;
-           // console.log(`Datos enviados del updateCompanyDetails: ${JSON.stringify(company)}`);
+            // console.log(`Datos enviados del updateCompanyDetails: ${JSON.stringify(company)}`);
             await User.updateCompanyDetails(company);
 
             return res.status(201).json({
@@ -1737,7 +1737,7 @@ async sendInvitation(req, res, next) {
 
             const companyId = req.params.companyId;
             const monthsToAdd = req.params.monthsToAdd;
-           // console.log(`datos de actualizacion:companyId = $companyId ,monthsToAdd: monthsToAdd`);
+            // console.log(`datos de actualizacion:companyId = $companyId ,monthsToAdd: monthsToAdd`);
 
             await User.extendMembership(companyId, monthsToAdd);
 
@@ -1762,7 +1762,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const user = JSON.parse(req.body.user);
-           // console.log(`Datos de usuario: ${user}`);
+            // console.log(`Datos de usuario: ${user}`);
             const files = req.files;
 
             if (files.length > 0) {
@@ -1805,7 +1805,7 @@ async sendInvitation(req, res, next) {
             const id = req.params.id;
 
             const data = await User.getByRole(id);
-           // console.log(`Datos enviados de los delivery: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados de los delivery: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1824,7 +1824,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const data = await User.getAgoraConfig();
-           // console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1843,7 +1843,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const data = await User.getUpcomingEvent();
-           // console.log(`Datos enviados de los getUpcomingEvent: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados de los getUpcomingEvent: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1858,13 +1858,13 @@ async sendInvitation(req, res, next) {
         }
     },
 
-    
+
 
     async getAgoraConfigall(req, res, next) {
         try {
 
             const data = await User.getAgoraConfigall();
-          //  console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
+            //  console.log(`Datos enviados de los getAgoraConfig: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -1884,7 +1884,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const agoraConfig = req.body;
-           // console.log(`Datos enviados del updateAgoraConfig: ${JSON.stringify(agoraConfig)}`);
+            // console.log(`Datos enviados del updateAgoraConfig: ${JSON.stringify(agoraConfig)}`);
             await User.updateAgoraConfig(agoraConfig);
 
             return res.status(201).json({
@@ -1929,7 +1929,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const id = req.params.id;
-           // console.log(`Nuevo balance: ${id}`);
+            // console.log(`Nuevo balance: ${id}`);
 
             await User.chageState(id);
 
@@ -1980,7 +1980,7 @@ async sendInvitation(req, res, next) {
 
             const id = req.params.id;
             const data = await User.getDiscountCodesByCompany(id);
-           // console.log(`Datos enviados de los getDiscountCodesByCompany: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados de los getDiscountCodesByCompany: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -2074,7 +2074,7 @@ async sendInvitation(req, res, next) {
         try {
 
             const user = req.body;
-           // console.log(`Datos de usuario: ${user}`);
+            // console.log(`Datos de usuario: ${user}`);
 
             const data = await User.createWholesaleUser(user);
             return res.status(201).json({
@@ -2105,7 +2105,7 @@ async sendInvitation(req, res, next) {
             const id = req.params.id;
 
             const data = await User.getWholesaleUsersByCompany(id);
-           // console.log(`Datos enviados de los mayoreo clientes: ${JSON.stringify(data)}`);
+            // console.log(`Datos enviados de los mayoreo clientes: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
@@ -2127,7 +2127,7 @@ async sendInvitation(req, res, next) {
         try {
             const id_company = req.params.id_company;
             const data = await User.getClientsByCompany(id_company);
-           // console.log(`getClientsByCompany: ${data}`);
+            // console.log(`getClientsByCompany: ${data}`);
             return res.status(201).json(data);
 
 
@@ -2413,16 +2413,16 @@ async sendInvitation(req, res, next) {
         }
     },
 
- async updateTrainerProfile(req, res, next) {
+    async updateTrainerProfile(req, res, next) {
         console.log("\n================== 🟢 INICIO REQUEST NODE: UPDATE TRAINER 🟢 ==================");
-        
+
         try {
             // ---------------------------------------------------------
             // 1. INSPECCIÓN DE DATOS CRUDOS
             // ---------------------------------------------------------
             console.log("1. Inspecting Request Body:");
             // No imprimimos todo el string JSON si es muy largo, solo confirmamos que llegó
-            console.log("   - req.body.user present?", req.body.user ? "YES" : "NO"); 
+            console.log("   - req.body.user present?", req.body.user ? "YES" : "NO");
             console.log("   - req.body.company present?", req.body.company ? "YES" : "NO");
 
             // 1. Parsear los datos de texto
@@ -2430,7 +2430,7 @@ async sendInvitation(req, res, next) {
             try {
                 user = JSON.parse(req.body.user);
                 company = JSON.parse(req.body.company);
-                
+
                 console.log("2. Data Parsed Successfully:");
                 console.log(`   - User ID: ${user.id} | Name: ${user.name}`);
                 console.log(`   - Company ID: ${company.id} | Name: ${company.name}`);
@@ -2439,7 +2439,7 @@ async sendInvitation(req, res, next) {
                 console.log("❌ Error parsing JSON body:", parseError);
                 throw new Error("Invalid JSON format in user or company fields");
             }
-            
+
             // ---------------------------------------------------------
             // 2. INSPECCIÓN DE ARCHIVOS
             // ---------------------------------------------------------
@@ -2457,15 +2457,15 @@ async sendInvitation(req, res, next) {
             // ---------------------------------------------------------
             // 3. SUBIDA DE IMÁGENES
             // ---------------------------------------------------------
-            
+
             // A. Foto de Perfil (campo 'image')
             if (files && files['image'] && files['image'].length > 0) {
                 console.log("   -> Uploading Profile Image...");
                 const path = `user_image_${Date.now()}`;
                 const url = await storage(files['image'][0], path);
                 console.log("      URL Generated:", url);
-                
-                if (url) user.image = url; 
+
+                if (url) user.image = url;
             }
 
             // B. Logo de Empresa (campo 'imageLogo')
@@ -2475,7 +2475,7 @@ async sendInvitation(req, res, next) {
                 const url = await storage(files['imageLogo'][0], path);
                 console.log("      URL Generated:", url);
 
-                if (url) company.logo = url; 
+                if (url) company.logo = url;
             }
 
             // C. Portada de Empresa (campo 'imageCard')
@@ -2486,7 +2486,7 @@ async sendInvitation(req, res, next) {
                 console.log("      URL Generated:", url);
 
                 // NOTA: Asegúrate de usar la propiedad correcta que espera tu Modelo SQL
-                if (url) company.image_card = url; 
+                if (url) company.image_card = url;
             }
 
             // ---------------------------------------------------------
@@ -2523,7 +2523,7 @@ async sendInvitation(req, res, next) {
             const id_store = req.params.id; // Recibe el ID de la URL
 
             if (!id_store) {
-                 return res.status(400).json({
+                return res.status(400).json({
                     success: false,
                     message: 'Falta el parámetro ID de la tienda.'
                 });
@@ -2540,6 +2540,57 @@ async sendInvitation(req, res, next) {
             return res.status(501).json({
                 success: false,
                 message: 'Error al obtener las invitaciones',
+                error: error
+            });
+        }
+    },
+
+    async submitQuestionnaire(req, res, next) {
+        try {
+            // 1. Parsear el JSON crudo que viene desde Flutter
+            const dataObj = JSON.parse(req.body.data);
+            const email = dataObj.user_email;
+
+            // 2. Manejo de Imágenes (Subida a Firebase/AWS)
+            const files = req.files || {};
+            const photosUrls = {
+                frontal: null,
+                espalda: null,
+                lateral_izq: null,
+                lateral_der: null
+            };
+
+            // Multer con upload.fields devuelve un objeto de arrays: { frontal: [file], espalda: [file] }
+            if (files['frontal'] && files['frontal'].length > 0) {
+                photosUrls.frontal = await storage(files['frontal'][0], `quest_front_${Date.now()}`);
+            }
+            if (files['espalda'] && files['espalda'].length > 0) {
+                photosUrls.espalda = await storage(files['espalda'][0], `quest_back_${Date.now()}`);
+            }
+            if (files['lateral_izq'] && files['lateral_izq'].length > 0) {
+                photosUrls.lateral_izq = await storage(files['lateral_izq'][0], `quest_left_${Date.now()}`);
+            }
+            if (files['lateral_der'] && files['lateral_der'].length > 0) {
+                photosUrls.lateral_der = await storage(files['lateral_der'][0], `quest_right_${Date.now()}`);
+            }
+
+            // 3. Limpiamos el nodo "photos" crudo del JSON para no guardar datos duplicados en la BD
+            delete dataObj.photos;
+
+            // 4. Guardar en Base de Datos usando el Modelo
+            const savedData = await User.createQuestionnaire(email, JSON.stringify(dataObj), photosUrls);
+
+            return res.status(201).json({
+                success: true,
+                message: 'El cuestionario se ha guardado exitosamente',
+                data: savedData.id
+            });
+
+        } catch (error) {
+            console.log(`Error en usersController.submitQuestionnaire: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al guardar el cuestionario',
                 error: error
             });
         }
