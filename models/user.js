@@ -1976,6 +1976,33 @@ User.checkAndClaimInvitation = async (email, newUserId) => {
     return invitation.store_id;
 }
 
+User.createQuestionnaire = (email, jsonData, photos) => {
+    const sql = `
+        INSERT INTO user_questionnaires(
+            user_email,
+            questionnaire_data,
+            photo_frontal,
+            photo_espalda,
+            photo_lateral_izq,
+            photo_lateral_der,
+            created_at,
+            updated_at
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+    `;
+
+    return db.one(sql, [
+        email,
+        jsonData,
+        photos.frontal || null,
+        photos.espalda || null,
+        photos.lateral_izq || null,
+        photos.lateral_der || null,
+        new Date(),
+        new Date()
+    ]);
+}
+
 
 User.updateTrainerProfileData = (user, company) => {
     return db.tx(async t => {
