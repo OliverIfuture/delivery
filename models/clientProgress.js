@@ -101,6 +101,7 @@ ClientProgress.getPhotos = (id_client) => {
     const sql = `
         SELECT
             uq.id,
+            uq.questionnaire_data,
             uq.photo_frontal,
             uq.photo_espalda,
             uq.photo_lateral_izq,
