@@ -24,7 +24,7 @@ User.getAllDealer = () => {
 
     return db.manyOrNone(sql);
 }
- 
+
 
 User.findByState = (state) => {
     const sql = `
@@ -34,7 +34,7 @@ User.findByState = (state) => {
         users
         WHERE state = $1
     `;
-    return db.manyOrNone(sql,[
+    return db.manyOrNone(sql, [
         state
     ]);
 }
@@ -68,7 +68,7 @@ User.findById = (id, callback) => {
         users
     WHERE
         id = $1`;
-    
+
     return db.oneOrNone(sql, id).then(user => { callback(null, user); })
 
 }
@@ -99,7 +99,7 @@ User.findByMail = (email, callback) => {
         users
     WHERE
         email = $1`;
-    
+
     return db.oneOrNone(sql, email)
 
 }
@@ -118,7 +118,7 @@ User.findByCode = (code, id) => {
         code = $1 and id_company = $2
 		
 		`;
-    
+
     return db.oneOrNone(sql, [code, id])
 
 }
@@ -144,7 +144,7 @@ User.getShops = (employed) => {
 	   inner join order_sales on sales.reference = order_sales.reference
 	   where sales.employed = $1
         `;
-    
+
     return db.manyOrNone(sql, employed)
 
 }
@@ -524,7 +524,7 @@ User.createOrUpdateInvitation = async (email, trainerId, clientId, fullName) => 
     }
 }
 
-User.create = (user, id_entrenador) => { 
+User.create = (user, id_entrenador) => {
 
     // 1. Encriptar contraseña
     const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
@@ -549,7 +549,7 @@ User.create = (user, id_entrenador) => {
         )
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
     `;
-    
+
     return db.one(sql, [
         user.email,
         user.name,
@@ -593,7 +593,7 @@ User.createWithImageDelivery = (user) => {
         user.password,
         new Date(),
         new Date(),
-		user.mi_store
+        user.mi_store
     ]);
 }
 
@@ -766,7 +766,7 @@ User.selectToken = (id) => {
 
     return db.oneOrNone(sql, [
         id
-        
+
     ]);
 }
 
@@ -784,7 +784,7 @@ User.selectTokenByCompany = (id) => {
 
     return db.oneOrNone(sql, [
         id
-        
+
     ]);
 }
 
@@ -799,11 +799,11 @@ User.deleteAccout = (email) => {
     WHERE email = $1
     `;
 
-    return db.none(sql,email);
+    return db.none(sql, email);
 }
 
 User.isPasswordMatched2 = (userPassword, hash) => {
-    const myPasswordHashed = myPasswordHashed ;
+    const myPasswordHashed = myPasswordHashed;
     if (myPasswordHashed === hash) {
         return true;
     }
@@ -908,14 +908,14 @@ User.create_dealer = (user) => {
         user.password,
         new Date(),
         new Date(),
-	user.balance,
-	false,
-	true    
+        user.balance,
+        false,
+        true
     ]);
 }
 
 
-User.findById_dealer =  (id, callback) => {
+User.findById_dealer = (id, callback) => {
     const sql = `
     SELECT
         id,
@@ -947,7 +947,7 @@ User.selectToken_dealer = (id) => {
 
     return db.oneOrNone(sql, [
         id
-        
+
     ]);
 }
 
@@ -1002,7 +1002,7 @@ User.createWithImageUserAndCompany = (user, company) => {
     // Calcular la fecha de expiración: Hoy + 7 días
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 20);
-    
+
     // Asignamos el estado de activación
     company.state = 'ACTIVE'; // Se asume que el estado de la compañía debe ser activo para el trial.
     // ---------------------------------
@@ -1027,14 +1027,14 @@ User.createWithImageUserAndCompany = (user, company) => {
         new Date(),
         new Date()
     ])
-    .then(userData => {
-        const newUserId = userData.id;
-        
-        // 2. Asignar el ID del usuario a la compañía
-        company.user_id = newUserId;
-        
-        // 3. Consulta para insertar la compañía (¡ACTUALIZADA CON TRIAL!)
-        const sqlCompany = `
+        .then(userData => {
+            const newUserId = userData.id;
+
+            // 2. Asignar el ID del usuario a la compañía
+            company.user_id = newUserId;
+
+            // 3. Consulta para insertar la compañía (¡ACTUALIZADA CON TRIAL!)
+            const sqlCompany = `
             INSERT INTO public.company(
                 name, addres, telephone, user_id, logo, 
                 state, available, type, lat, lng, wantsappointments, 
@@ -1060,49 +1060,49 @@ User.createWithImageUserAndCompany = (user, company) => {
 			)
             RETURNING id
         `;
-        
-        // Contamos los 17 parámetros estándar + el nuevo parámetro de fecha ($18)
-        return db.one(sqlCompany, [
-            company.name, // 1
-            company.addres, // 2
-            company.telephone, // 3
-            company.user_id, // 4
-            company.logo, // 5
-            company.state, // 6 (Será 'ACTIVE' desde la lógica de Trial)
-            company.available, // 7
-            company.type, // 8
-            company.lat, // 9
-            company.lng, // 10
-            company.wantsappointments, // 11
-            company.cashaccept, // 12
-            company.creditcardaccepted, // 13
-            company.code, // 14
-            company.points, // 15
-            company.image_card, // 16
-            company.description, // 17
-            sevenDaysFromNow, // 18: La fecha de expiración calculada
-			company.deliveryCost,
-			company.country
-        ])
-        .then(companyData => {
-            const newCompanyId = companyData.id;
 
-            // 4. Actualizar mi_store en el usuario (sin cambios)
-            const sqlUpdateUser = `
+            // Contamos los 17 parámetros estándar + el nuevo parámetro de fecha ($18)
+            return db.one(sqlCompany, [
+                company.name, // 1
+                company.addres, // 2
+                company.telephone, // 3
+                company.user_id, // 4
+                company.logo, // 5
+                company.state, // 6 (Será 'ACTIVE' desde la lógica de Trial)
+                company.available, // 7
+                company.type, // 8
+                company.lat, // 9
+                company.lng, // 10
+                company.wantsappointments, // 11
+                company.cashaccept, // 12
+                company.creditcardaccepted, // 13
+                company.code, // 14
+                company.points, // 15
+                company.image_card, // 16
+                company.description, // 17
+                sevenDaysFromNow, // 18: La fecha de expiración calculada
+                company.deliveryCost,
+                company.country
+            ])
+                .then(companyData => {
+                    const newCompanyId = companyData.id;
+
+                    // 4. Actualizar mi_store en el usuario (sin cambios)
+                    const sqlUpdateUser = `
                 UPDATE users
                 SET mi_store = $1
                 WHERE id = $2
             `;
-            
-            return db.none(sqlUpdateUser, [
-                newCompanyId,
-                newUserId
-            ])
-            .then(() => {
-                return { id: newUserId };
-            });
+
+                    return db.none(sqlUpdateUser, [
+                        newCompanyId,
+                        newUserId
+                    ])
+                        .then(() => {
+                            return { id: newUserId };
+                        });
+                });
         });
-    });
 };
 
 
@@ -1112,7 +1112,7 @@ User.getCompanyByUser = (id) => {
     const sql = `
     select * from company where user_id = $1
 		`;
-    
+
     return db.oneOrNone(sql, id)
 
 }
@@ -1149,7 +1149,7 @@ ORDER BY
     U.name ASC;
 
 		`;
-    
+
     return db.manyOrNone(sql, id)
 
 }
@@ -1162,7 +1162,7 @@ FROM affiliate_commissions
 WHERE id_company_affiliate = $1
 
 		`;
-    
+
     return db.oneOrNone(sql, id)
 
 }
@@ -1185,7 +1185,7 @@ GROUP BY month
 ORDER BY month ASC;
 
 		`;
-    
+
     return db.manyOrNone(sql, id)
 
 }
@@ -1235,7 +1235,7 @@ User.getCompanyById = (id) => {
 		inner join users as U on U.id = c.user_id
 	where c.id = $1
 		`;
-    
+
     return db.oneOrNone(sql, id)
 
 }
@@ -1272,9 +1272,9 @@ User.renewMembership = (company) => {
         company.id,
         company.state,
         company.membership_plan,
-		company.membership_expires_at,
-		company.membership_status,
-		company.available
+        company.membership_expires_at,
+        company.membership_status,
+        company.available
     ]);
 }
 
@@ -1301,8 +1301,8 @@ User.updateCompanyPaymentMethods = (company) => {
 
     return db.none(sql, [
         company.id,
-        company.cashaccept, 
-		company.creditcardaccepted
+        company.cashaccept,
+        company.creditcardaccepted
 
     ]);
 }
@@ -1317,7 +1317,7 @@ User.updateStripeKeys = (companyId, stripePublishableKey, stripeSecretKey) => {
     return db.none(sql, [
         companyId,
         stripePublishableKey,
-		stripeSecretKey
+        stripeSecretKey
     ]);
 }
 User.extendMembership = (companyId, monthsToAdd) => {
@@ -1384,26 +1384,26 @@ WHERE
     `;
 
     return db.none(sql, [
-		company.name,
-		company.addres,
-		company.telephone,
-		company.user_id,
-		company.logo,
-		company.state,
-		company.available,
-		company.type,
-		company.lat,
-		company.lng,
-		company.wantsappointments,
-		company.cashaccept,
-		company.creditcardaccepted,
-		company.stripeSecretKey,
-		company.stripePublishableKey,
-		company.membership_plan,
-		company.membership_expires_at,
-		company.membership_status,
-		company.stripe_subscription_id,
-		company.id
+        company.name,
+        company.addres,
+        company.telephone,
+        company.user_id,
+        company.logo,
+        company.state,
+        company.available,
+        company.type,
+        company.lat,
+        company.lng,
+        company.wantsappointments,
+        company.cashaccept,
+        company.creditcardaccepted,
+        company.stripeSecretKey,
+        company.stripePublishableKey,
+        company.membership_plan,
+        company.membership_expires_at,
+        company.membership_status,
+        company.stripe_subscription_id,
+        company.id
     ]);
 }
 
@@ -1424,18 +1424,18 @@ User.getAgoraConfig = () => {
     SELECT * FROM public.agora_config where on_live = true
     ORDER BY id DESC limit 1
 		`;
-    
+
     return db.oneOrNone(sql)
 
 }
 
-User.getUpcomingEvent  = () => {
+User.getUpcomingEvent = () => {
 
     const sql = `
     SELECT * FROM public.upcoming_events 
     ORDER BY id DESC limit 1
 		`;
-    
+
     return db.oneOrNone(sql)
 
 }
@@ -1446,7 +1446,7 @@ User.getAgoraConfigall = () => {
     SELECT * FROM public.agora_config
     ORDER BY id DESC
 		`;
-    
+
     return db.manyOrNone(sql)
 
 }
@@ -1484,13 +1484,13 @@ WHERE
 
     return db.none(sql, [
         agoraConfig.id,
-        agoraConfig.app_id, 
-		agoraConfig.token_test,
-		agoraConfig.channel_name,
-		agoraConfig.on_live,
-		agoraConfig.image_event,
-		agoraConfig.day,
-		agoraConfig.cost
+        agoraConfig.app_id,
+        agoraConfig.token_test,
+        agoraConfig.channel_name,
+        agoraConfig.on_live,
+        agoraConfig.image_event,
+        agoraConfig.day,
+        agoraConfig.cost
     ]);
 }
 
@@ -1503,7 +1503,7 @@ User.chageState = (id) => {
     WHERE
         id = $1
     `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 User.createDiscountCode = (newCode) => {
@@ -1513,10 +1513,10 @@ User.createDiscountCode = (newCode) => {
     VALUES($1, $2, $3, $4)	
     `;
     return db.oneOrNone(sql, [
-		newCode.code, 
-		newCode.active, 
-		newCode.amount, 
-		newCode.id_company]);
+        newCode.code,
+        newCode.active,
+        newCode.amount,
+        newCode.id_company]);
 }
 
 User.getDiscountCodesByCompany = (id) => {
@@ -1540,7 +1540,7 @@ User.deleteDiscountCode = (id) => {
     WHERE codes_id = $1
     `;
 
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 User.createWholesaleUser = (user) => {
@@ -1569,7 +1569,7 @@ User.createWholesaleUser = (user) => {
         user.password,
         new Date(),
         new Date(),
-		user.id_company
+        user.id_company
     ]);
 }
 
@@ -1703,8 +1703,8 @@ User.updateStripeDataFromAdmin = (id_company, chargesEnabled) => {
     `;
 
     return db.none(sql, [
-        id_company, 
-        chargesEnabled, 
+        id_company,
+        chargesEnabled,
         new Date()
     ]);
 };
@@ -1721,8 +1721,8 @@ User.updateStripeDataFromAdminId = (id_company, accountId) => {
     `;
 
     return db.none(sql, [
-        id_company, 
-        accountId, 
+        id_company,
+        accountId,
         new Date()
     ]);
 };
@@ -1867,7 +1867,7 @@ User.updateStreak = (id_user) => {
     return db.one(sql, id_user);
 };
 
-User.getFree = (id_client ) => {
+User.getFree = (id_client) => {
     const sql = `
 
 	        BEGIN;
@@ -1891,7 +1891,7 @@ User.getFree = (id_client ) => {
 
         COMMIT;
     `;
-    return db.none(sql,id_client);
+    return db.none(sql, id_client);
 }
 
 User.updateOtp = (id, otp) => {
@@ -1908,7 +1908,7 @@ User.updateOtp = (id, otp) => {
 
 // Actualizar Contraseña (CON HASHING MD5 INTERNO)
 User.updatePasswordByEmail = (email, password) => {
-    
+
     // 1. ENCRIPTAMOS AQUÍ (Dentro del Modelo)
     const myPasswordHashed = crypto.createHash('md5').update(password).digest('hex');
 
@@ -1920,7 +1920,7 @@ User.updatePasswordByEmail = (email, password) => {
     WHERE
         email = $1
     `;
-    
+
     // 2. Enviamos la contraseña ya encriptada a la base de datos
     return db.none(sql, [email, myPasswordHashed]);
 }
@@ -1979,7 +1979,7 @@ User.checkAndClaimInvitation = async (email, newUserId) => {
 
 User.updateTrainerProfileData = (user, company) => {
     return db.tx(async t => {
-        
+
         // --- QUERY 1: Actualizar Usuario ---
         const sqlUser = `
             UPDATE users
@@ -1990,7 +1990,7 @@ User.updateTrainerProfileData = (user, company) => {
                 updated_at = $4
             WHERE id = $5
         `;
-        
+
         await t.none(sqlUser, [
             user.name,
             user.phone,
@@ -2026,7 +2026,7 @@ User.updateTrainerProfileData = (user, company) => {
             new Date(),
             company.id // Ojo: Asegúrate de enviar el company.id correctamente desde Flutter o user.mi_store
         ]);
-        
+
         return true;
     });
 }
