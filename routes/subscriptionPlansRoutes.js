@@ -8,7 +8,7 @@ module.exports = (app) => {
     // --- GET ---
     // Obtener todos los planes creados por un entrenador
     app.get('/api/subscriptionPlans/findByCompany/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.findByCompany);
-    
+
     // --- POST ---
     // Crear un nuevo plan de suscripción
     app.post('/api/subscriptionPlans/create', passport.authenticate('jwt', { session: false }), subscriptionPlansController.create);
@@ -16,5 +16,7 @@ module.exports = (app) => {
     // --- DELETE ---
     // Eliminar (desactivar) un plan de suscripción
     app.put('/api/subscriptionPlans/delete/:id/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.delete);
-
+    // --- GET PÚBLICO ---
+    // Obtener un plan específico por su ID (Sin token, usado en el registro)
+    app.get('/api/subscriptionPlans/findById/:id', subscriptionPlansController.findByIdPublic);
 }

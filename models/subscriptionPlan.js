@@ -113,6 +113,30 @@ SubscriptionPlan.findManualByCompany = (id_company) => {
     return db.manyOrNone(sql, id_company);
 }
 
+/**
+ * Busca un plan por su ID (Público, no requiere id_company)
+ */
+SubscriptionPlan.findByIdPublic = (id_plan) => {
+    const sql = `
+        SELECT
+            id,
+            id_company,
+            name,
+            description,
+            price,
+            currency,
+            stripe_product_id,
+            stripe_price_id,
+            "durationInDays",
+            is_manual
+        FROM
+            subscription_plans
+        WHERE
+            id = $1 AND active = true
+    `;
+    return db.oneOrNone(sql, id_plan);
+}
+
 // 2. ACTUALIZAR PLAN CON IDS DE STRIPE (PARA LA MIGRACIÓN)
 SubscriptionPlan.updateStripeIds = (id, stripeProductId, stripePriceId) => {
     const sql = `
