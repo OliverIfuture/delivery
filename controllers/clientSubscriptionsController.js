@@ -239,15 +239,16 @@ module.exports = {
         }
     },
     async stripeWebhook(req, res, next) {
-
         const sig = req.headers['stripe-signature'];
         let event;
 
         try {
             if (!keys.stripeAdminSecretKey || !endpointSecret) {
-                console.log('❌ Error en Webhook: Faltan claves.');
+                console.log('❌ Error en Webhook: Faltan claves (stripeAdminSecretKey o stripeWebhookSecret).');
                 return res.status(500).send('Error de configuración.');
             }
+
+            // Verificamos que el evento venga realmente de Stripe
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
 
         } catch (err) {
@@ -255,99 +256,110 @@ module.exports = {
             return res.status(400).send(`Webhook Error: ${err.message}`);
         }
 
-        // Manejar el evento
+        // Manejar el evento según su tipo
         switch (event.type) {
 
             // =================================================================
-            // CASO PRINCIPAL: PAGOS ÚNICOS EXITOSOS (Entrenadores y Gym)
+            // 1. CASO SUSCRIPCIONES: Se dispara en el primer pago y renovaciones
+            // =================================================================
+            case 'invoice.paid':
+                const invoice = event.data.object;
+                const subMeta = invoice.metadata;
+
+                if (subMeta.type === 'client_subscription_payment') {
+                    const { id_company, id_plan, temp_email } = subMeta;
+                    const expirationDate = new Date(invoice.lines.data[0].period.end * 1000);
+
+                    // Intentar ver si el usuario ya existe
+                    const User = require('../models/user.js');
+                    const user = await User.findByEmail(temp_email);
+
+                    const subscriptionData = {
+                        id_client: user ? user.id : null, // Si no existe aún, queda nulo
+                        id_company,
+                        id_plan,
+                        stripe_subscription_id: invoice.subscription,
+                        stripe_customer_id: invoice.customer,
+                        current_period_end: expirationDate,
+                        temp_email: user ? null : temp_email // Si no hay usuario, guardamos el email
+                    };
+
+                    await ClientSubscription.create(subscriptionData);
+
+                    if (user) {
+                        await User.updateTrainer(user.id, id_company);
+                        await User.transferClientData(user.id, id_company);
+                    }
+                }
+                break;
+
+            // =================================================================
+            // 2. CASO PAGO ÚNICO: El que ya tenías funcionando
             // =================================================================
             case 'payment_intent.succeeded':
                 const paymentIntent = event.data.object;
                 const metadata = paymentIntent.metadata;
 
-                console.log(`🔔 Webhook PaymentIntent: Tipo ${metadata.type}`);
+                console.log(`🔔 Webhook PaymentIntent Succeeded: Tipo ${metadata.type}`);
 
-                // -------------------------------------------------------------
-                // A) PAGO DE ENTRENADOR (Plan de Entrenamiento)
-                // -------------------------------------------------------------
+                // A) Pago de Plan de Entrenamiento (Entrenador)
                 if (metadata.type === 'client_subscription_payment') {
-                    console.log('✅ Procesando pago de Entrenador...');
+                    console.log('✅ Procesando pago único de Entrenador...');
 
                     const { id_client, id_company, id_plan, duration_days } = metadata;
 
-                    // 1. Calcular Fecha de Vencimiento
-                    const days = parseInt(duration_days) || 30; // Default 30 si falla
+                    const days = parseInt(duration_days) || 30;
                     const expirationDate = new Date();
                     expirationDate.setDate(expirationDate.getDate() + days);
 
-                    // 2. Crear registro en BD
                     const subscriptionData = {
                         id_client: id_client,
                         id_company: id_company,
                         id_plan: id_plan,
-                        stripe_subscription_id: paymentIntent.id, // Guardamos el PI como ID
+                        stripe_subscription_id: paymentIntent.id, // Aquí usamos el PI como ID
                         stripe_customer_id: paymentIntent.customer,
-                        status: 'active', // Nace activa
+                        status: 'active',
                         current_period_end: expirationDate
                     };
 
                     try {
                         await ClientSubscription.create(subscriptionData);
-                        console.log(`✅ Suscripción creada para cliente ${id_client} hasta ${expirationDate.toISOString()}`);
-
-                        // 3. Vincular Entrenador
                         if (id_client && id_company) {
                             await User.updateTrainer(id_client, id_company);
                             await User.transferClientData(id_client, id_company);
                         }
+                        console.log(`✅ Pago único completado para ${id_client}`);
                     } catch (e) {
-                        console.log(`❌ Error creando suscripción local: ${e.message}`);
+                        console.log(`❌ Error guardando pago único en BD: ${e.message}`);
                     }
                 }
 
-                // -------------------------------------------------------------
-                // B) PAGO DE GIMNASIO (Membresía Física)
-                // -------------------------------------------------------------
+                // B) Pago de Gimnasio (Membresía Física)
                 else if (metadata.type === 'membership_extension' || metadata.type === 'gym_membership_payment') {
                     console.log('✅ Procesando pago de Gimnasio...');
-
                     const { id_client, id_membership_to_extend, id_plan, duration_days } = metadata;
-                    // Usamos duration_days si viene, o duration_days_to_add para compatibilidad
-                    const daysRaw = duration_days || metadata.duration_days_to_add;
-                    const daysToAdd = parseInt(daysRaw) || 30;
+                    const daysToAdd = parseInt(duration_days || metadata.duration_days_to_add) || 30;
 
                     try {
-                        // 1. Obtener datos del plan (para company_id)
                         const plan = await Gym.findById(id_plan);
                         if (!plan) throw new Error(`Plan ${id_plan} no encontrado`);
 
-                        // 2. Calcular Fechas
                         let newEndDate = new Date();
-
-                        // Si es extensión, sumamos a la fecha actual de la membresía vieja
                         if (id_membership_to_extend) {
                             const currentSub = await Gym.findMembershipById(id_membership_to_extend);
                             if (currentSub) {
                                 const today = new Date();
                                 const currentEnd = new Date(currentSub.end_date);
-                                // Si no ha vencido, extendemos desde su fecha fin. Si ya venció, desde hoy.
                                 const startDate = (currentEnd > today) ? currentEnd : today;
-
                                 newEndDate = new Date(startDate);
                                 newEndDate.setDate(newEndDate.getDate() + daysToAdd);
-
-                                // Desactivar la vieja
                                 await Gym.deactivateMembership(id_membership_to_extend, 'extended');
                             }
                         } else {
-                            // Compra nueva: Hoy + Días
                             newEndDate.setDate(newEndDate.getDate() + daysToAdd);
                         }
 
-                        // 3. Buscar Turno Activo (Caja) del Gym
                         const activeShift = await Pos.findActiveShiftByCompany(plan.id_company);
-
-                        // 4. Registrar Membresía
                         const newMembershipData = {
                             id_client: id_client,
                             id_company: plan.id_company,
@@ -360,57 +372,35 @@ module.exports = {
                         };
 
                         await Gym.createMembership(newMembershipData);
-                        console.log(`✅ Membresía Gym registrada para ${id_client} hasta ${newEndDate.toISOString()}`);
-
+                        console.log(`✅ Membresía Gym registrada para ${id_client}`);
                     } catch (e) {
                         console.log(`❌ Error procesando Gym Membership: ${e.message}`);
                     }
                 }
+                break;
 
-                // -------------------------------------------------------------
-                // C) PAGO DE COMISIÓN (Afiliados)
-                // -------------------------------------------------------------
-                else if (metadata.type === 'commission_payout') {
-                    console.log('✅ Procesando pago de Comisión...');
-                    const { id_vendor, id_affiliate } = metadata;
-                    try {
-                        await Affiliate.markAsPaid(id_vendor, id_affiliate);
-                        console.log('✅ Comisión marcada como pagada.');
-                    } catch (e) {
-                        console.log(`❌ Error Affiliate: ${e.message}`);
-                    }
+            // =================================================================
+            // 3. CASOS DE FALLA Y CANCELACIÓN
+            // =================================================================
+            case 'invoice.payment_failed':
+                const failedInvoice = event.data.object;
+                console.log(`⚠️ Pago fallido en factura: ${failedInvoice.id}`);
+                if (failedInvoice.subscription) {
+                    await ClientSubscription.updateStatus(failedInvoice.subscription, 'past_due');
                 }
                 break;
 
-            case 'payment_intent.payment_failed':
-                console.log('❌ Webhook: Intento de pago fallido:', event.data.object.id);
-                break;
-
-            case 'checkout.session.completed':
-                const session = event.data.object;
-                const metadataSession = session.metadata;
-
-                if (metadataSession && metadataSession.type === 'wallet_topup') {
-                    console.log('✅ Webhook: Recarga de Billetera detectada.');
-
-                    const id_client = metadataSession.id_client;
-                    const coins_to_add = parseFloat(metadataSession.coins_to_add);
-                    const reference_id = session.id;
-
-                    try {
-                        // Llamamos a nuestra transacción SQL mágica
-                        await Wallet.processTopUp(id_client, coins_to_add, reference_id);
-                        console.log(`✅ ${coins_to_add} Premium Coins agregadas al usuario ${id_client}.`);
-                    } catch (error) {
-                        console.log(`❌ Error al procesar recarga en BD: ${error.message}`);
-                    }
-                }
+            case 'customer.subscription.deleted':
+                const deletedSub = event.data.object;
+                console.log(`❌ Suscripción cancelada en Stripe: ${deletedSub.id}`);
+                await ClientSubscription.updateStatus(deletedSub.id, 'canceled');
                 break;
 
             default:
                 console.log(`Evento no manejado: ${event.type}`);
         }
 
+        // Responder a Stripe que recibimos el evento correctamente
         res.status(200).json({ received: true });
     },
 
@@ -1018,6 +1008,52 @@ module.exports = {
             return res.status(501).json({ success: false, message: 'Error al activar', error: error.message });
         }
     },
+
+    /**
+     * POST /api/subscriptions/create-recurring-registration
+     * Creado específicamente para el registro web (Flutter).
+     * Recibe los datos del plan directamente del frontend.
+     */
+    // Nueva función para el registro recurrente
+    async createRecurringRegistrationIntent(req, res, next) {
+        try {
+            const { id_plan, id_company, stripe_price_id, duration_days, customer_email } = req.body;
+
+            const User = require('../models/user.js');
+            const company = await User.findCompanyById(id_company);
+            const stripe = require('stripe')(company.stripeSecretKey);
+
+            // Crear Customer con el email que usará para registrarse
+            const customer = await stripe.customers.create({
+                email: customer_email.toLowerCase(),
+                metadata: { registration_email: customer_email.toLowerCase() }
+            });
+
+            const subscription = await stripe.subscriptions.create({
+                customer: customer.id,
+                items: [{ price: stripe_price_id }],
+                transfer_data: { destination: company.stripeAccountId },
+                payment_behavior: 'default_incomplete',
+                expand: ['latest_invoice.payment_intent'],
+                metadata: {
+                    type: 'client_subscription_payment',
+                    id_company: id_company,
+                    id_plan: id_plan,
+                    duration_days: duration_days || 30,
+                    temp_email: customer_email.toLowerCase() // Clave para el Webhook
+                }
+            });
+
+            return res.status(200).json({
+                success: true,
+                subscriptionId: subscription.id,
+                clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+                publishableKey: company.stripePublishableKey
+            });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
 
     // ...
 };

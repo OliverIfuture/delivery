@@ -4,15 +4,15 @@ const passport = require('passport');
 module.exports = (app) => {
 
     // PREFIJO: /api/subscriptions
-    
+
     // --- POST ---
-    
+
     /**
      * CAMBIO: Este endpoint ahora crea una intención de suscripción
      * y devuelve un 'clientSecret' para el SDK nativo, NO una URL.
      */
     app.post('/api/subscriptions/create-subscription-intent', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createSubscriptionIntent);
-    
+
     /**
      * WEBHOOK DE STRIPE
      * Esta ruta sigue siendo vital.
@@ -20,18 +20,18 @@ module.exports = (app) => {
     app.post('/api/subscriptions/webhook', clientSubscriptionsController.stripeWebhook);
     app.post('/api/subscriptions/create-extension-intent', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createExtensionIntent);
     app.put('/api/subscriptions/getFree/:id', clientSubscriptionsController.getFree);
-
+    app.post('/api/subscriptions/create-recurring-registration', clientSubscriptionsController.createRecurringRegistrationIntent);
 
     // --- GET ---
-    
+
     /**
      * Obtiene el estado de la suscripción del cliente.
      */
     app.get('/api/subscriptions/getStatus', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getSubscriptionStatus);
     app.get('/api/subscriptions/getStatusTrainer', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getSubscriptionStatusTrainer);
-    app.post('/api/subscriptions/create-manual', passport.authenticate('jwt', {session: false}), clientSubscriptionsController.createManualRequest);
+    app.post('/api/subscriptions/create-manual', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createManualRequest);
 
-    app.get('/api/subscriptions/pending', passport.authenticate('jwt', {session: false}), clientSubscriptionsController.getPendingRequests);
-    app.put('/api/subscriptions/approve', passport.authenticate('jwt', {session: false}), clientSubscriptionsController.approveRequest);
+    app.get('/api/subscriptions/pending', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getPendingRequests);
+    app.put('/api/subscriptions/approve', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.approveRequest);
 
 };

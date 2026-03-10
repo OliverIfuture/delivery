@@ -2,11 +2,8 @@ const db = require('../config/config.js');
 
 const ClientSubscription = {};
 
-/**
- * Crea un nuevo registro de suscripción
- */
-ClientSubscription.create = (sub) => {
-
+// 1. Crear suscripción (Puede recibir id_client como NULL si es registro nuevo)
+ClientSubscription.create = (data) => {
     const sql = `
         INSERT INTO client_subscriptions(
             id_client,
@@ -17,23 +14,33 @@ ClientSubscription.create = (sub) => {
             status,
             current_period_end,
             created_at,
-            updated_at
+            updated_at,
+            temp_email -- Columna temporal para vinculación
         )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-        RETURNING id
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
     `;
-
     return db.one(sql, [
-        sub.id_client,
-        sub.id_company,
-        sub.id_plan,
-        sub.stripe_subscription_id,
-        sub.stripe_customer_id,
-        sub.status,
-        sub.current_period_end, // $7: Usamos la fecha calculada aquí
-        new Date(),     // $8
-        new Date()      // $9
+        data.id_client || null,
+        data.id_company,
+        data.id_plan,
+        data.stripe_subscription_id,
+        data.stripe_customer_id,
+        data.status || 'active',
+        data.current_period_end,
+        new Date(),
+        new Date(),
+        data.temp_email || null
     ]);
+};
+
+// 2. Vincular suscripciones huérfanas al ID del nuevo usuario
+ClientSubscription.bindToUser = (email, id_client) => {
+    const sql = `
+        UPDATE client_subscriptions 
+        SET id_client = $2, temp_email = NULL
+        WHERE temp_email = $1 AND id_client IS NULL
+    `;
+    return db.none(sql, [email.toLowerCase(), id_client]);
 };
 /**
  * Actualiza el estado de una suscripción (usado por el Webhook)

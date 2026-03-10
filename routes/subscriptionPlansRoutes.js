@@ -19,4 +19,5 @@ module.exports = (app) => {
     // --- GET PÚBLICO ---
     // Obtener un plan específico por su ID (Sin token, usado en el registro)
     app.get('/api/subscriptionPlans/findById/:id', subscriptionPlansController.findByIdPublic);
+
 }

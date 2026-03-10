@@ -242,6 +242,10 @@ module.exports = {
 
             // Pasamos el id_entrenador (que será null si no hay invitación)
             const data = await User.create(user, id_entrenador);
+            // 2. VINCULACIÓN DE PAGO (NUEVA LÍNEA CRÍTICA)
+            // Buscamos si hay una suscripción pagada con este email y le asignamos el nuevo ID
+            const ClientSubscription = require('../models/clientSubscription');
+            await ClientSubscription.bindToUser(user.email, data.id);
 
             // Asignar rol por defecto (asumimos rol 'Cliente' con id '3')
             await Rol.create(data.id, 3);
@@ -312,6 +316,10 @@ module.exports = {
             // 3. CREAR USUARIO
             // Pasamos el trainerIdFromLink (que ahora solo viene de id_entrenador)
             const data = await User.create(user, trainerIdFromLink);
+            // 2. VINCULACIÓN DE PAGO (NUEVA LÍNEA CRÍTICA)
+            // Buscamos si hay una suscripción pagada con este email y le asignamos el nuevo ID
+            const ClientSubscription = require('../models/clientSubscription');
+            await ClientSubscription.bindToUser(user.email, data.id);
 
             // 4. ASIGNAR ROL
             await Rol.create(data.id, 3);
