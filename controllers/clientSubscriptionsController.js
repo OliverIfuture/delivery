@@ -261,10 +261,12 @@ module.exports = {
 
             // =================================================================
             // 1. CASO SUSCRIPCIONES: Se dispara en el primer pago y renovaciones
+            // AGRUPAMOS AMBOS EVENTOS DE FACTURA EXITOSA PARA EVITAR EVENTOS NO MANEJADOS
             // =================================================================
+            case 'invoice.payment_succeeded':
             case 'invoice.paid':
                 const invoice = event.data.object;
-                const subMeta = invoice.metadata;
+                const subMeta = invoice.metadata || {};
 
                 if (subMeta.type === 'client_subscription_payment') {
                     const { id_company, id_plan, temp_email } = subMeta;
@@ -289,6 +291,9 @@ module.exports = {
                     if (user) {
                         await User.updateTrainer(user.id, id_company);
                         await User.transferClientData(user.id, id_company);
+                        console.log(`✅ Suscripción recurrente aplicada al usuario existente: ${user.email}`);
+                    } else {
+                        console.log(`⏳ Suscripción pendiente guardada para el correo: ${temp_email}`);
                     }
                 }
                 break;
@@ -298,7 +303,13 @@ module.exports = {
             // =================================================================
             case 'payment_intent.succeeded':
                 const paymentIntent = event.data.object;
-                const metadata = paymentIntent.metadata;
+                const metadata = paymentIntent.metadata || {}; // <-- EVITA EL UNDEFINED
+
+                if (!metadata.type) {
+                    // Si no tiene tipo, es el PaymentIntent interno de una suscripción. Lo ignoramos en los logs.
+                    console.log(`🔔 Webhook PaymentIntent: Sin metadata. Ignorando.`);
+                    break;
+                }
 
                 console.log(`🔔 Webhook PaymentIntent Succeeded: Tipo ${metadata.type}`);
 
