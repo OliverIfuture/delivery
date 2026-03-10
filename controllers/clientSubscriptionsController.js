@@ -196,31 +196,41 @@ module.exports = {
             // 4. Configuración de la Suscripción
             const subscriptionConfig = {
                 customer: customer.id,
-                items: [{ price: price_id }],
-                transfer_data: {
-                    destination: company.stripeAccountId,
-                },
+                items: [{ price: stripe_price_id }],
+                transfer_data: { destination: company.stripeAccountId },
                 payment_behavior: 'default_incomplete',
-                payment_settings: { save_default_payment_method: 'on_subscription' },
                 expand: ['latest_invoice.payment_intent'],
+
+                // 1. METADATA PARA LA SUSCRIPCIÓN (Y LA FACTURA)
                 metadata: {
-                    type: 'client_subscription',
-                    id_client: id_client,
+                    type: 'client_subscription_payment',
                     id_company: id_company,
                     id_plan: id_plan,
-                    discount_applied: couponId ? 'YES' : 'NO' // Meta-data útil
+                    duration_days: duration_days || 30,
+                    temp_email: customer_email.toLowerCase()
+                },
+
+                // 2. FORZAR METADATA AL PAYMENT INTENT INTERNO (Para tu paz mental) 👇
+                payment_settings: {
+                    save_default_payment_method: 'on_subscription',
+                    payment_method_options: {
+                        card: {
+                            mandate_options: { amount_type: 'fixed' }
+                        }
+                    }
                 }
             };
 
-            // 5. INYECCIÓN SEGURA DEL CUPÓN
-            // Solo agregamos la propiedad 'coupon' si couponId tiene un valor real
-            if (couponId) {
-                subscriptionConfig.coupon = couponId;
+            // Stripe permite actualizar el PaymentIntent de la primera factura justo después de crearlo
+            const subscription = await stripe.subscriptions.create(subscriptionConfig);
+
+            // Inyectamos la metadata manualmente al PaymentIntent generado para que aparezca en el Webhook
+            if (subscription.latest_invoice && subscription.latest_invoice.payment_intent) {
+                await stripe.paymentIntents.update(
+                    subscription.latest_invoice.payment_intent.id,
+                    { metadata: subscriptionConfig.metadata }
+                );
             }
-
-            // Creación final
-            const subscription = await stripeInstance.subscriptions.create(subscriptionConfig);
-
             return res.status(200).json({
                 success: true,
                 subscriptionId: subscription.id,
