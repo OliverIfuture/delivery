@@ -271,12 +271,25 @@ module.exports = {
 
             // =================================================================
             // 1. CASO SUSCRIPCIONES: Se dispara en el primer pago y renovaciones
-            // AGRUPAMOS AMBOS EVENTOS DE FACTURA EXITOSA PARA EVITAR EVENTOS NO MANEJADOS
             // =================================================================
             case 'invoice.payment_succeeded':
             case 'invoice.paid':
                 const invoice = event.data.object;
-                const subMeta = invoice.metadata || {};
+
+                // Hacemos let porque podríamos necesitar reescribirla
+                let subMeta = invoice.metadata || {};
+
+                // 🚨 EL RESCATE DE METADATA QUE OMITÍ (¡AQUÍ ESTÁ LA MAGIA!) 🚨
+                // Como bien notaste, el invoice a veces no trae la metadata directa.
+                // Si no tiene el 'type', vamos y le preguntamos a la suscripción.
+                if (!subMeta.type && invoice.subscription) {
+                    try {
+                        const fullSub = await adminStripe.subscriptions.retrieve(invoice.subscription);
+                        subMeta = fullSub.metadata || {};
+                    } catch (e) {
+                        console.log(`⚠️ No se pudo recuperar metadata de la sub: ${invoice.subscription}`);
+                    }
+                }
 
                 if (subMeta.type === 'client_subscription_payment') {
                     const { id_company, id_plan, temp_email } = subMeta;
@@ -301,22 +314,25 @@ module.exports = {
                     if (user) {
                         await User.updateTrainer(user.id, id_company);
                         await User.transferClientData(user.id, id_company);
-                        console.log(`✅ Suscripción recurrente aplicada al usuario existente: ${user.email}`);
+                        console.log(`✅ Suscripción recurrente aplicada al usuario: ${temp_email}`);
                     } else {
                         console.log(`⏳ Suscripción pendiente guardada para el correo: ${temp_email}`);
                     }
+                } else {
+                    // Si llegamos aquí, es un pago de Stripe que no es de tu App (ej. otra prueba)
+                    console.log(`⚠️ Factura ignorada: No tiene metadata de la app. Metadata actual:`, subMeta);
                 }
                 break;
 
             // =================================================================
-            // 2. CASO PAGO ÚNICO: El que ya tenías funcionando
+            // 2. CASO PAGO ÚNICO: Planes y Membresías de Gym
             // =================================================================
             case 'payment_intent.succeeded':
                 const paymentIntent = event.data.object;
-                const metadata = paymentIntent.metadata || {}; // <-- EVITA EL UNDEFINED
+                const metadata = paymentIntent.metadata || {};
 
                 if (!metadata.type) {
-                    // Si no tiene tipo, es el PaymentIntent interno de una suscripción. Lo ignoramos en los logs.
+                    // Si no tiene tipo, es el PaymentIntent interno de la suscripción. 
                     console.log(`🔔 Webhook PaymentIntent: Sin metadata. Ignorando.`);
                     break;
                 }
@@ -337,7 +353,7 @@ module.exports = {
                         id_client: id_client,
                         id_company: id_company,
                         id_plan: id_plan,
-                        stripe_subscription_id: paymentIntent.id, // Aquí usamos el PI como ID
+                        stripe_subscription_id: paymentIntent.id,
                         stripe_customer_id: paymentIntent.customer,
                         status: 'active',
                         current_period_end: expirationDate
