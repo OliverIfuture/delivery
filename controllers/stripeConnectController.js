@@ -13,15 +13,15 @@ module.exports = {
     async createConnectAccount(req, res, next) {
         try {
             const id_company = req.user.mi_store;
-            
+
             // 1. Cargar datos del entrenador
             const company = await User.findCompanyById(id_company);
             if (!company) {
-                return res.status(404).json({ success: false, message: 'No se encontró la compañía del entrenador.'});
+                return res.status(404).json({ success: false, message: 'No se encontró la compañía del entrenador.' });
             }
 
             let accountId = company.stripeAccountId;
-            
+
             // Validar formato del ID
             const isValidStripeId = accountId && String(accountId).startsWith('acct_');
 
@@ -52,8 +52,8 @@ module.exports = {
             // 3. Crear Link de Onboarding
             const accountLink = await stripe.accountLinks.create({
                 account: accountId,
-                refresh_url: 'https://tu-app.com/stripe/reauth', // Ajusta a tus deep links reales
-                return_url: 'https://tu-app.com/stripe/success',
+                refresh_url: 'https://thetrainer-app.site/stripe/reauth', // Ajusta a tus deep links reales
+                return_url: 'https://thetrainer-app.site/stripe/success',
                 type: 'account_onboarding',
             });
 
@@ -64,9 +64,9 @@ module.exports = {
 
         } catch (error) {
             console.log(`Error en createConnectAccount: ${error}`);
-            
-            const errorMessage = error.message.includes("'false'") 
-                ? "Error de configuración: El ID de Stripe de la compañía es inválido." 
+
+            const errorMessage = error.message.includes("'false'")
+                ? "Error de configuración: El ID de Stripe de la compañía es inválido."
                 : error.message;
 
             return res.status(501).json({
@@ -76,7 +76,7 @@ module.exports = {
             });
         }
     },
-    
+
     /**
      * Verifica el estado de la cuenta y MIGRA PLANES si está activa
      */
@@ -84,9 +84,9 @@ module.exports = {
         try {
             const id_company = req.user.mi_store;
             const company = await User.findCompanyById(id_company);
-            
+
             if (!company || !company.stripeAccountId) {
-                return res.status(400).json({ success: false, message: 'Este entrenador no tiene una cuenta de Stripe vinculada.'});
+                return res.status(400).json({ success: false, message: 'Este entrenador no tiene una cuenta de Stripe vinculada.' });
             }
 
             // 1. Consultar a Stripe
@@ -126,7 +126,7 @@ module.exports = {
      * GET: Obtiene el historial de pagos de una Cuenta Conectada
      * Params: :id_account (El ID de Stripe del entrenador, ej. acct_12345...)
      */
-async getChargesList(req, res, next) {
+    async getChargesList(req, res, next) {
         try {
             const { id_account } = req.params;
 
@@ -139,14 +139,14 @@ async getChargesList(req, res, next) {
             // CAMBIO CLAVE: Usamos 'balanceTransactions' en lugar de 'paymentIntents'
             // Esto muestra el dinero que REALMENTE entró a la cuenta del entrenador.
             const transactions = await stripe.balanceTransactions.list(
-                { 
+                {
                     limit: 50,
                     // Filtramos para ver solo lo que suma dinero (pagos recibidos)
                     // type: 'payment' suele ser para Direct Charges.
                     // type: 'transfer' suele ser para Destination Charges (tu caso).
                     // Para ver todo, quitamos el filtro de tipo por ahora.
-                }, 
-                { 
+                },
+                {
                     stripeAccount: id_account // Consultamos A NOMBRE DEL ENTRENADOR
                 }
             );
@@ -164,7 +164,7 @@ async getChargesList(req, res, next) {
 
             return res.status(200).json({
                 success: true,
-                data: formattedData 
+                data: formattedData
             });
 
         } catch (error) {

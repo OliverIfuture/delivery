@@ -8,7 +8,7 @@ Routine.create = (routine) => {
         const isActive = routine.is_active ?? false;
 
         if (isActive) {
-            // ...buscamos cualquier rutina activa anterior de este cliente y la apagamos (is_active = false)
+            // ...buscamos cualquier rutina activa anterior de este cliente y la apagamos
             const sqlDeactivate = `
                 UPDATE routines 
                 SET is_active = false, updated_at = $2
@@ -17,7 +17,7 @@ Routine.create = (routine) => {
             await t.none(sqlDeactivate, [routine.id_client, new Date()]);
         }
 
-        // PASO 2: Ahora sí, insertamos la nueva rutina sin miedo al conflicto
+        // PASO 2: Ahora sí, insertamos la nueva rutina con TODOS LOS NUEVOS CAMPOS
         const sqlInsert = `
             INSERT INTO routines(
                 id_company,
@@ -26,9 +26,12 @@ Routine.create = (routine) => {
                 plan_data,
                 is_active,
                 created_at,
-                updated_at
+                updated_at,
+                description,
+                rest_time,
+                image
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
         `;
 
         return t.one(sqlInsert, [
@@ -38,7 +41,10 @@ Routine.create = (routine) => {
             routine.plan_data,
             isActive,
             new Date(),
-            new Date()
+            new Date(),
+            routine.description || null, // Guardamos el texto o NULL
+            routine.rest_time || 90,     // Guardamos el tiempo o 90s por defecto
+            routine.image || null        // Guardamos la imagen o NULL
         ]);
     });
 };
@@ -49,7 +55,10 @@ Routine.update = (routine) => {
         SET
             name = $1,
             plan_data = $2,
-            updated_at = $3
+            updated_at = $3,
+            description = $5,
+            rest_time = $6,
+            image = $7
         WHERE
             id = $4 
             -- Eliminamos la restricción de id_company aquí para permitir auto-edición
@@ -58,10 +67,12 @@ Routine.update = (routine) => {
         routine.name,
         routine.plan_data,
         new Date(),
-        routine.id
+        routine.id,
+        routine.description || null,
+        routine.rest_time || 90,
+        routine.image || null
     ]);
 };
-
 Routine.delete = (id_routine) => {
     const sql = `
         DELETE FROM routines

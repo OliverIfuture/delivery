@@ -205,12 +205,14 @@ module.exports = {
     /**
      * Crear una nueva rutina (AHORA SOPORTA CLIENTES GRATUITOS)
      */
+    /**
+       * Crear una nueva rutina (AHORA SOPORTA CLIENTES GRATUITOS Y NUEVOS METADATOS)
+       */
     async create(req, res, next) {
         try {
             const routine = req.body;
 
-            // --- NUEVA LÓGICA DE ASIGNACIÓN BLINDADA ---
-            // Verificamos explícitamente que NO sea '0' ni 0.
+            // --- LÓGICA DE ASIGNACIÓN BLINDADA ---
             let idCompany = req.user.mi_store;
             if (idCompany === 0 || idCompany === '0' || idCompany === '') {
                 idCompany = null;
@@ -221,15 +223,15 @@ module.exports = {
             if (routine.id_company === null) {
                 routine.id_client = req.user.id;
             }
-            // ----------------------------------
 
-            console.log('--- INTENTANDO CREAR RUTINA (CORREGIDO) ---');
-            console.log('ID Company final:', routine.id_company); // AHORA DEBE DECIR 'null'
-            console.log('ID Client final:', routine.id_client);
-
+            // VALIDACIÓN INMEDIATA ANTES DE PROCEDER
             if (!routine.id_client) {
                 return res.status(400).json({ success: false, message: 'Error: No se pudo identificar al cliente para esta rutina.' });
             }
+
+            console.log('--- INTENTANDO CREAR RUTINA ---');
+            console.log('ID Company final:', routine.id_company);
+            console.log('ID Client final:', routine.id_client);
 
             const data = await Routine.create(routine);
 
@@ -249,7 +251,6 @@ module.exports = {
         }
     },
 
-
     /**
      * Actualizar una rutina
      */
@@ -267,7 +268,7 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Error al actualizar la rutina',
-                error: error
+                error: error.message || error
             });
         }
     },
