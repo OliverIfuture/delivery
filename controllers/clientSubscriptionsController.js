@@ -248,13 +248,17 @@ module.exports = {
             });
         }
     },
+    /**
+         * 👑 WEBHOOK MAESTRO DE STRIPE
+         * Maneja Suscripciones, Planes Únicos, Gym, Wallet y Afiliados
+         */
     async stripeWebhook(req, res, next) {
         const sig = req.headers['stripe-signature'];
         let event;
 
         try {
             if (!keys.stripeAdminSecretKey || !endpointSecret) {
-                console.log('❌ Error en Webhook: Faltan claves.');
+                console.log('❌ Error en Webhook: Faltan claves (stripeAdminSecretKey o stripeWebhookSecret).');
                 return res.status(500).send('Error de configuración.');
             }
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
@@ -273,7 +277,7 @@ module.exports = {
                 const invoice = event.data.object;
                 let subMeta = invoice.metadata || {};
 
-                // Rescate de metadata
+                // Rescate de metadata: Si no viene directo, la buscamos en la suscripción
                 if (!subMeta.type && invoice.subscription) {
                     try {
                         const fullSub = await adminStripe.subscriptions.retrieve(invoice.subscription);
@@ -286,6 +290,8 @@ module.exports = {
                 if (subMeta.type === 'client_subscription_payment') {
                     const { id_company, id_plan, temp_email } = subMeta;
                     const expirationDate = new Date(invoice.lines.data[0].period.end * 1000);
+
+                    const User = require('../models/user.js');
                     const user = await User.findByEmail(temp_email);
 
                     const subscriptionData = {
@@ -324,8 +330,18 @@ module.exports = {
 
                 console.log(`🔔 Webhook PaymentIntent Succeeded: Tipo ${metadata.type}`);
 
-                // A) Pago de Entrenador
+                // A) Pago de Plan de Entrenamiento
                 if (metadata.type === 'client_subscription_payment') {
+
+                    // 👇 ¡EL ESCUDO PROTECTOR PARA EVITAR DUPLICADOS! 👇
+                    // Si trae 'temp_email', sabemos que es el pago inicial de una SUSCRIPCIÓN recurrente.
+                    // Lo ignoramos aquí porque el bloque 'invoice.paid' (arriba) ya se encargó de guardarlo.
+                    if (metadata.temp_email) {
+                        console.log(`🔔 Webhook: PaymentIntent inicial de suscripción detectado. Delegando a invoice.paid...`);
+                        break;
+                    }
+
+                    console.log('✅ Procesando pago único de Entrenador...');
                     const { id_client, id_company, id_plan, duration_days } = metadata;
                     const days = parseInt(duration_days) || 30;
                     const expirationDate = new Date();
@@ -339,21 +355,26 @@ module.exports = {
                             status: 'active', current_period_end: expirationDate
                         });
                         if (id_client && id_company) {
+                            const User = require('../models/user.js');
                             await User.updateTrainer(id_client, id_company);
                             await User.transferClientData(id_client, id_company);
                         }
+                        console.log(`✅ Pago único completado para ${id_client}`);
                     } catch (e) {
                         console.log(`❌ Error guardando pago único: ${e.message}`);
                     }
                 }
-                // B) Gimnasio
+
+                // B) Gimnasio (Membresías Físicas)
                 else if (metadata.type === 'membership_extension' || metadata.type === 'gym_membership_payment') {
+                    console.log('✅ Procesando pago de Gimnasio...');
                     const { id_client, id_membership_to_extend, id_plan, duration_days, duration_days_to_add } = metadata;
                     const daysToAdd = parseInt(duration_days || duration_days_to_add) || 30;
 
                     try {
                         const plan = await Gym.findById(id_plan);
                         let newEndDate = new Date();
+
                         if (id_membership_to_extend) {
                             const currentSub = await Gym.findMembershipById(id_membership_to_extend);
                             if (currentSub) {
@@ -372,11 +393,13 @@ module.exports = {
                             price: plan.price, end_date: newEndDate, payment_method: 'STRIPE_APP',
                             payment_id: paymentIntent.id, id_shift: activeShift ? activeShift.id : null
                         });
+                        console.log(`✅ Membresía Gym registrada para ${id_client}`);
                     } catch (e) {
                         console.log(`❌ Error procesando Gym Membership: ${e.message}`);
                     }
                 }
-                // C) Afiliados (Traído de tu Webhook viejo)
+
+                // C) Afiliados (Comisiones)
                 else if (metadata.type === 'commission_payout') {
                     const { id_vendor, id_affiliate } = metadata;
                     try {
@@ -389,7 +412,7 @@ module.exports = {
                 break;
 
             // =================================================================
-            // 3. RECARGA DE BILLETERA (Traído de tu Webhook viejo)
+            // 3. RECARGA DE BILLETERA (Premium Coins)
             // =================================================================
             case 'checkout.session.completed':
                 const session = event.data.object;
