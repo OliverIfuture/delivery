@@ -119,4 +119,29 @@ ClientProgress.getPhotos = (id_client) => {
     return db.manyOrNone(sql, id_client);
 };
 
+/**
+ * Guarda una nueva foto de progreso desde la app (Incluyendo el Ángulo)
+ */
+ClientProgress.logPhotoUserApp = (log) => {
+    const sql = `
+        INSERT INTO client_progress_photos(
+            id_client,
+            id_company,
+            image_url,
+            angle,
+            date_taken,
+            created_at
+        )
+        VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    `;
+    return db.one(sql, [
+        log.id_client,
+        log.id_company,
+        log.image_url,
+        log.angle, // 🔥 Insertamos el ángulo aquí 🔥
+        log.date_taken || new Date(),
+        new Date()
+    ]);
+};
+
 module.exports = ClientProgress;

@@ -135,6 +135,51 @@ module.exports = {
      */
 
 
+    /**
+     * Guarda la URL de una foto de progreso DESDE LA APP (Incluye el ángulo)
+     */
+    async logPhotoUserApp(req, res, next) {
+        try {
+            // Debe contener { image_url, date_taken, angle }
+            const photoLog = req.body;
+
+            // Asignar IDs desde el token
+            photoLog.id_client = req.user.id;
+            photoLog.id_company = req.user.id_entrenador;
+
+            // 💡 VERIFICACIÓN ROBUSTA: Si es falsy (null, undefined, '') O la cadena "null"
+            if (!photoLog.id_company || photoLog.id_company === 'null') {
+                photoLog.id_company = null;
+            }
+
+            if (!photoLog.image_url) {
+                return res.status(400).json({ success: false, message: 'No se recibió la URL de la imagen.' });
+            }
+
+            // Validar que sí venga el ángulo
+            if (!photoLog.angle) {
+                return res.status(400).json({ success: false, message: 'No se recibió el ángulo de la foto.' });
+            }
+
+            // Llamamos a la nueva función del modelo
+            const data = await ClientProgress.logPhotoUserApp(photoLog);
+
+            return res.status(201).json({
+                success: true,
+                message: `Foto ${photoLog.angle} guardada con éxito.`,
+                data: { 'id': data.id }
+            });
+        }
+        catch (error) {
+            console.log(`Error en clientProgressController.logPhotoUserApp: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al guardar la foto de progreso',
+                error: error
+            });
+        }
+    },
+
     async analyzeProgressAI(req, res, next) {
         try {
             // 1. VALIDACIÓN
