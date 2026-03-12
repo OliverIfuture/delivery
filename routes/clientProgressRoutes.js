@@ -19,6 +19,7 @@ module.exports = (app) => {
     // Guardar la URL de una foto de progreso (después de subirla a Firebase)
     app.post('/api/progress/logPhoto', passport.authenticate('jwt', { session: false }), clientProgressController.logPhoto);
     app.post('/api/progress/logPhotoUserApp', passport.authenticate('jwt', { session: false }), clientProgressController.logPhotoUserApp);
+    app.get('/api/progress/photosApp/:id_client', passport.authenticate('jwt', { session: false }), clientProgressController.getPhotosApp);
     app.post(
         '/api/progress/analyze-ai',
         passport.authenticate('jwt', { session: false }),

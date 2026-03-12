@@ -128,6 +128,21 @@ module.exports = {
         }
     },
 
+    async getPhotosApp(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const data = await ClientProgress.getPhotosApp(id_client);
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en clientProgressController.getPhotos: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener las fotos de progreso',
+                error: error
+            });
+        }
+    },
 
     /**
      * Analiza dos fotos (Antes y Después) usando Gemini Vision
