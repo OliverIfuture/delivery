@@ -64,22 +64,29 @@ module.exports = {
         }
     },
 
-    async castVote(req, res) {
+    async castVote(req, res, next) {
         try {
             const { id_post, option_id } = req.body;
-            const id_user = req.user.id; // Del token JWT
+            // Asegúrate de que el ID del usuario venga así en tu JWT. 
+            // A veces puede ser req.user.id_user dependiendo de cómo lo firmes.
+            const id_user = req.user.id;
 
-            const sql = `
-            INSERT INTO poll_votes (id_post, id_user, option_id)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (id_post, id_user) 
-            DO UPDATE SET option_id = EXCLUDED.option_id;
-        `;
-            await db.none(sql, [id_post, id_user, option_id]);
+            // Llamamos al modelo en lugar de hacer el SQL aquí
+            await Product.castVote(id_post, id_user, option_id);
 
-            return res.status(200).json({ success: true, message: 'Voto registrado' });
-        } catch (e) {
-            return res.status(500).json({ success: false, error: e.message });
+            return res.status(200).json({
+                success: true,
+                message: 'Voto registrado correctamente'
+            });
+
+        } catch (error) {
+            // Esto imprimirá el error real en los logs de Heroku
+            console.log(`Error en castVote: ${error}`);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al registrar el voto',
+                error: error.message
+            });
         }
     },
 

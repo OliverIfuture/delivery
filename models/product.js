@@ -220,6 +220,17 @@ Product.lookFollowersList = (id_profile) => {
 
 }
 
+Product.castVote = (id_post, id_user, option_id) => {
+    const sql = `
+        INSERT INTO poll_votes (id_post, id_user, option_id)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (id_post, id_user) 
+        DO UPDATE SET option_id = EXCLUDED.option_id;
+    `;
+    // Aquí sí existe 'db'
+    return db.none(sql, [id_post, id_user, option_id]);
+}
+
 
 Product.getPostAll = () => {
     const sql = `
