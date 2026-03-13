@@ -248,11 +248,12 @@ SELECT
     -- Contar votos totales
     (SELECT COUNT(*) FROM poll_votes WHERE id_post = P.id) AS total_votes,
     -- Detalle de votos para saber qué votó el usuario actual y mostrar avatares
-    (
+(
         SELECT json_agg(json_build_object(
             'id_user', pv.id_user,
             'option_id', pv.option_id,
-            'user_photo', u2.image
+            'user_photo', u2.image,
+            'user_name', u2.name -- 🔥 AGREGA ESTA LÍNEA AQUÍ
         ))
         FROM poll_votes pv
         INNER JOIN users u2 ON u2.id = pv.id_user
