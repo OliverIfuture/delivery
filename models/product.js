@@ -2,8 +2,8 @@ const db = require('../config/config');
 const Product = {};
 
 
-Product.getAll = () =>{
-	const sql = `
+Product.getAll = () => {
+    const sql = `
 SELECT
     P.id,
     P.name,
@@ -52,12 +52,12 @@ ORDER BY
  
  
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
-Product.getAllByStoregetAllByStore = (id_category_company) =>{
-	const sql = `
+Product.getAllByStoregetAllByStore = (id_category_company) => {
+    const sql = `
 SELECT
     P.id,
     P.name,
@@ -106,7 +106,7 @@ ORDER BY
  
  
  `;
-return db.manyOrNone(sql, id_category_company);
+    return db.manyOrNone(sql, id_category_company);
 
 }
 Product.deletePost = (id) => {
@@ -116,7 +116,7 @@ Product.deletePost = (id) => {
     WHERE  id = $1
     `;
 
-    return db.oneOrNone(sql,id);
+    return db.oneOrNone(sql, id);
 }
 Product.createPost = (id_user, description, url) => {
 
@@ -143,24 +143,24 @@ with rows as (
     return db.oneOrNone(sql, [
         id_user,
         description,
-	url,
-		1
+        url,
+        1
     ]);
 }
-Product.getUserProfile = (id) =>{
-	const sql = `
+Product.getUserProfile = (id) => {
+    const sql = `
 		select 
 id,
 name, 
 image from users  where id = $1
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
 
-Product.favoritesplatesProducts = (id) =>{
-	const sql = `
+Product.favoritesplatesProducts = (id) => {
+    const sql = `
 		select 
 			U.name,
 			U.image,
@@ -170,12 +170,12 @@ Product.favoritesplatesProducts = (id) =>{
 		inner join users as U on U.id = F.id_user
 		where id_product = $1
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
-Product.favoritesplates = (id) =>{
-	const sql = `
+Product.favoritesplates = (id) => {
+    const sql = `
 		select 
 			U.name,
 			U.image,
@@ -184,11 +184,11 @@ Product.favoritesplates = (id) =>{
 		inner join users as U on U.id = F.id_user
 		where id_plate = $1
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
-Product.lookFavoritesList = (id_profile) =>{
-	const sql = `
+Product.lookFavoritesList = (id_profile) => {
+    const sql = `
 		select 
 			U.name,
 			U.image,
@@ -197,12 +197,12 @@ Product.lookFavoritesList = (id_profile) =>{
 		inner join users as U on U.id = F.id_user
 		where id_profile = $1
  `;
-return db.manyOrNone(sql, id_profile);
+    return db.manyOrNone(sql, id_profile);
 
 }
 
-Product.lookFollowersList = (id_profile) =>{
-	const sql = `
+Product.lookFollowersList = (id_profile) => {
+    const sql = `
 		select 
 			U.name,
 			U.image,
@@ -211,44 +211,52 @@ Product.lookFollowersList = (id_profile) =>{
 		inner join users as U on U.id = F.id_user
 		where id_profile = $1
  `;
-return db.manyOrNone(sql, id_profile);
+    return db.manyOrNone(sql, id_profile);
 
 }
 
 
-Product.getPostAll = () =>{
-	const sql = `
-select 
-p.id,
-P.id_user,
-P.description,
-p.social,
-P.image_post,
-p.id_company,
-U.name,
-U.image as photo,
-  COALESCE(json_agg(
-           DISTINCT jsonb_build_object(
+Product.getPostAll = () => {
+    const sql = `
+SELECT
+    P.id,
+    P.id_user,
+    P.description,
+    P.social,
+    P.image_post,
+    P.id_company,
+    P.is_pinned, 
+    U.name,
+    U.image AS photo,
+    COALESCE(
+        json_agg(
+            DISTINCT jsonb_build_object(
                 'id', L.id,
-				'id_publish',L.id,
+                'id_publish', L.id,
                 'useremail', L.useremail,
-				'id_user',L.id_user
-		)
-		) FILTER (WHERE L.useremail != '0'), '[]') as likespost	
-		from post as P
-inner join users as U on U.id = P.id_user 
-inner join likes_publish as L on L.id_publish = P.id
-where p.id_company = 1
-group by p.id,U.name, U.image
-order by id desc
+                'id_user', L.id_user
+            )
+        ) FILTER (WHERE L.useremail != '0'), '[]'
+    ) AS likespost
+FROM post AS P
+INNER JOIN users AS U ON U.id = P.id_user
+INNER JOIN likes_publish AS L ON L.id_publish = P.id
+WHERE P.id_company = 1
+GROUP BY
+    P.id,
+    U.name,
+    U.image
+ORDER BY
+    P.is_pinned DESC, 
+    P.id DESC;       
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 }
 
 
 
-Product.getPost = (id_user) =>{
-	const sql = `
+Product.getPost = (id_user) => {
+    const sql = `
 select 
 p.id,
 P.id_user,
@@ -263,51 +271,51 @@ inner join users as U on U.id = P.id_user
 where id_user = $1
 order by P.id desc
  `;
-return db.manyOrNone(sql, id_user);
+    return db.manyOrNone(sql, id_user);
 }
 
-Product.getGiftsProducts = () =>{
-	const sql = `
+Product.getGiftsProducts = () => {
+    const sql = `
  	select * from products		 
  	where id_category = 24
 		order by id_category
 
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
-Product.populars = () =>{
-	const sql = `
+Product.populars = () => {
+    const sql = `
 	select * from products where id_category = 190
 
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
 
-Product.servings = () =>{
-	const sql = `
+Product.servings = () => {
+    const sql = `
 select * from plates where id_category = 4
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
 
-Product.findLast5 = () =>{
-	const sql = `
+Product.findLast5 = () => {
+    const sql = `
 	 SELECT * FROM plates
 	ORDER BY id desc
 	LIMIT 5
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
-Product.findPostComent = (id) =>{
-	const sql = `
+Product.findPostComent = (id) => {
+    const sql = `
 select 
 		R.id,
 		U.name as username,
@@ -335,13 +343,13 @@ select
 
 
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
 
-Product.findReviewProduct = (id) =>{
-	const sql = `
+Product.findReviewProduct = (id) => {
+    const sql = `
 select 
 		R.id,
 		U.name as username,
@@ -371,12 +379,12 @@ select
 
 
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
-Product.findReview = (id) =>{
-	const sql = `
+Product.findReview = (id) => {
+    const sql = `
 select 
 		R.id,
 		U.name as username,
@@ -405,12 +413,12 @@ select
 
 
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
-Product.findLikesComent = (id_post) =>{
-	const sql = `
+Product.findLikesComent = (id_post) => {
+    const sql = `
       select 
 		reviews.id,
 		JSON_AGG(
@@ -430,13 +438,13 @@ Product.findLikesComent = (id_post) =>{
 		
 		group by reviews.id
  `;
-return db.manyOrNone(sql, id_post);
+    return db.manyOrNone(sql, id_post);
 
 }
 
 
-Product.findLikes = (id_plate) =>{
-	const sql = `
+Product.findLikes = (id_plate) => {
+    const sql = `
       select 
 		reviews.id,
 		JSON_AGG(
@@ -456,7 +464,7 @@ Product.findLikes = (id_plate) =>{
 		
 		group by reviews.id
  `;
-return db.manyOrNone(sql, id_plate);
+    return db.manyOrNone(sql, id_plate);
 
 }
 
@@ -640,71 +648,71 @@ Product.findSaves = (id_plate, id_user) => {
         id_user
     ]);
 }
-Product.getProfileFavoriteIconSum = (id_profile) =>{
-	const sql = `
+Product.getProfileFavoriteIconSum = (id_profile) => {
+    const sql = `
 		SELECT 
   count(favorites_profile) as rate
 FROM 
   favorites_profile where id_profile = $1
  `;
-return db.manyOrNone(sql, id_profile);
+    return db.manyOrNone(sql, id_profile);
 
 }
 
-Product.getReviewPlateFavoriteIconProduct = (id_plate) =>{
-	const sql = `
+Product.getReviewPlateFavoriteIconProduct = (id_plate) => {
+    const sql = `
 		SELECT 
   count(favoritesproducts) as rate
 FROM 
   favoritesproducts where id_product = $1
  `;
-return db.manyOrNone(sql, id_plate);
+    return db.manyOrNone(sql, id_plate);
 
 }
 
-Product.getReviewPlateFavoriteIcon = (id_plate) =>{
-	const sql = `
+Product.getReviewPlateFavoriteIcon = (id_plate) => {
+    const sql = `
 		SELECT 
   count(favorites) as rate
 FROM 
   favorites where id_plate = $1
  `;
-return db.manyOrNone(sql, id_plate);
+    return db.manyOrNone(sql, id_plate);
 
 }
-Product.getProfilePlatesIconSumProfile = (id_profile) =>{
-	const sql = `
+Product.getProfilePlatesIconSumProfile = (id_profile) => {
+    const sql = `
 		SELECT 
   count(favorites) as rate
 FROM 
   favorites where id_user= $1
  `;
-return db.manyOrNone(sql, id_profile);
+    return db.manyOrNone(sql, id_profile);
 
 }
-Product.GgetProfileFollowersIconSumProfile = (id_profile) =>{
-	const sql = `
+Product.GgetProfileFollowersIconSumProfile = (id_profile) => {
+    const sql = `
 		SELECT 
   count(followers) as rate
 FROM 
   followers where id_profile= $1
  `;
-return db.manyOrNone(sql, id_profile);
+    return db.manyOrNone(sql, id_profile);
 
 }
-Product.getReviewPlateRate = (id_plate) =>{
-	const sql = `
+Product.getReviewPlateRate = (id_plate) => {
+    const sql = `
 		SELECT 
   SUM(calification) as rate,
   count(calification) as calification
 FROM 
   reviews where id_plate  = $1
  `;
-return db.manyOrNone(sql, id_plate);
+    return db.manyOrNone(sql, id_plate);
 
 }
-Product.getSaves = (id_user) =>{
-	const sql = `
+Product.getSaves = (id_user) => {
+    const sql = `
 		select 
 		plates.id,
 		plates.name,
@@ -726,12 +734,12 @@ Product.getSaves = (id_user) =>{
 		inner join saves as S on plates.id = S.id_plate
 		where id_user = $1
  `;
-return db.manyOrNone(sql, id_user);
+    return db.manyOrNone(sql, id_user);
 
 }
 
-Product.getFavorites = (id_user) =>{
-	const sql = `
+Product.getFavorites = (id_user) => {
+    const sql = `
 		select 
 		plates.id,
 		plates.name,
@@ -753,22 +761,22 @@ Product.getFavorites = (id_user) =>{
 		inner join favorites as F on plates.id = F.id_plate
 		where id_user = $1
  `;
-return db.manyOrNone(sql, id_user);
+    return db.manyOrNone(sql, id_user);
 
 }
 
-Product.getTickets = (userId) =>{
-	const sql = `
+Product.getTickets = (userId) => {
+    const sql = `
  		select * from tickets
 		where user_id = $1
   order by id desc
  `;
-return db.manyOrNone(sql, userId);
+    return db.manyOrNone(sql, userId);
 
 }
 
-Product.getAllStocks = (id_company, id_company_product) =>{
-	const sql = `
+Product.getAllStocks = (id_company, id_company_product) => {
+    const sql = `
 SELECT 
   products.id,
   categories.name AS nameCat,
@@ -785,7 +793,7 @@ ORDER BY products.id_category;
  
  
  `;
-return db.manyOrNone(sql, [id_company, id_company_product]);
+    return db.manyOrNone(sql, [id_company, id_company_product]);
 
 }
 
@@ -812,11 +820,11 @@ FROM rows
         comments.id_plate,
         comments.id_user,
         comments.review,
-	comments.calification,
-	'0'    
+        comments.calification,
+        '0'
 
-	    
-        
+
+
     ]);
 }
 
@@ -842,11 +850,11 @@ FROM rows
         comments.id_plate,
         comments.id_user,
         comments.review,
-	comments.calification,
-	'0'    
+        comments.calification,
+        '0'
 
-	    
-        
+
+
     ]);
 }
 Product.createComent = (comments) => {
@@ -872,10 +880,10 @@ FROM rows
         comments.id_plate,
         comments.id_user,
         comments.review,
-	'0'    
+        '0'
     ]);
 }
-Product.likePublish = (id_publish, username ,useremail, id_user) => {
+Product.likePublish = (id_publish, username, useremail, id_user) => {
     const sql = `
     INSERT INTO commentslikes(
 	id_publish, 
@@ -889,7 +897,7 @@ Product.likePublish = (id_publish, username ,useremail, id_user) => {
     return db.manyOrNone(sql, [id_publish, username, useremail, id_user]);
 }
 
-Product.createLikeComent = (id_coment, username ,useremail, id_user) => {
+Product.createLikeComent = (id_coment, username, useremail, id_user) => {
     const sql = `
     INSERT INTO commentslikes_post(
 	id_post, 
@@ -902,7 +910,7 @@ Product.createLikeComent = (id_coment, username ,useremail, id_user) => {
     `;
     return db.manyOrNone(sql, [id_coment, username, useremail, id_user]);
 }
-Product.createLikePost = (id_publish, username ,useremail, id_user) => {
+Product.createLikePost = (id_publish, username, useremail, id_user) => {
     const sql = `
     INSERT INTO likes_publish(
 	id_publish, 
@@ -923,11 +931,11 @@ Product.deleteLikePost = (id) => {
 
     WHERE id = $1
     `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 
-Product.createLikeProduct = (id_plate, username ,useremail, id_user) => {
+Product.createLikeProduct = (id_plate, username, useremail, id_user) => {
     const sql = `
     INSERT INTO commentsproducts(
 	id_product, 
@@ -942,7 +950,7 @@ Product.createLikeProduct = (id_plate, username ,useremail, id_user) => {
 }
 
 
-Product.createLike = (id_plate, username ,useremail, id_user) => {
+Product.createLike = (id_plate, username, useremail, id_user) => {
     const sql = `
     INSERT INTO commentslikes(
 	id_plate, 
@@ -956,7 +964,7 @@ Product.createLike = (id_plate, username ,useremail, id_user) => {
     return db.manyOrNone(sql, [id_plate, username, useremail, id_user]);
 }
 
-Product.createLikeAnswerComent = (id_answer, username ,useremail, id_user) => {
+Product.createLikeAnswerComent = (id_answer, username, useremail, id_user) => {
     const sql = `
     INSERT INTO answerslikes_post(
 	id_answer, 
@@ -971,7 +979,7 @@ Product.createLikeAnswerComent = (id_answer, username ,useremail, id_user) => {
 }
 
 
-Product.createLikeAnswerProduct = (id_answer, username ,useremail, id_user) => {
+Product.createLikeAnswerProduct = (id_answer, username, useremail, id_user) => {
     const sql = `
     INSERT INTO answerslikesproducts(
 	id_answer, 
@@ -985,7 +993,7 @@ Product.createLikeAnswerProduct = (id_answer, username ,useremail, id_user) => {
     return db.manyOrNone(sql, [id_answer, username, useremail, id_user]);
 }
 
-Product.createLikeAnswer = (id_answer, username ,useremail, id_user) => {
+Product.createLikeAnswer = (id_answer, username, useremail, id_user) => {
     const sql = `
     INSERT INTO answerslikes(
 	id_answer, 
@@ -1000,7 +1008,7 @@ Product.createLikeAnswer = (id_answer, username ,useremail, id_user) => {
 }
 
 
-Product.createAnswerPost = (id_coment, username , answer, responseto, id_user) => {
+Product.createAnswerPost = (id_coment, username, answer, responseto, id_user) => {
     const sql = `
 		with rows as (
 		    INSERT INTO answers_post(
@@ -1022,11 +1030,11 @@ Product.createAnswerPost = (id_coment, username , answer, responseto, id_user) =
 		FROM rows
 
     `;
-    return db.manyOrNone(sql, [id_coment, username, answer, responseto,id_user ]);
+    return db.manyOrNone(sql, [id_coment, username, answer, responseto, id_user]);
 }
 
 
-Product.createAnswerProduct = (id_review, username , answer, responseto, id_user) => {
+Product.createAnswerProduct = (id_review, username, answer, responseto, id_user) => {
     const sql = `
 		with rows as (
 		    INSERT INTO answersproducts(
@@ -1048,10 +1056,10 @@ Product.createAnswerProduct = (id_review, username , answer, responseto, id_user
 		FROM rows
 
     `;
-    return db.manyOrNone(sql, [id_review, username, answer, responseto,id_user ]);
+    return db.manyOrNone(sql, [id_review, username, answer, responseto, id_user]);
 }
 
-Product.createAnswer = (id_review, username , answer, responseto, id_user) => {
+Product.createAnswer = (id_review, username, answer, responseto, id_user) => {
     const sql = `
 		with rows as (
 		    INSERT INTO answers(
@@ -1073,7 +1081,7 @@ Product.createAnswer = (id_review, username , answer, responseto, id_user) => {
 		FROM rows
 
     `;
-    return db.manyOrNone(sql, [id_review, username, answer, responseto,id_user ]);
+    return db.manyOrNone(sql, [id_review, username, answer, responseto, id_user]);
 }
 
 Product.create = (product) => {
@@ -1110,13 +1118,13 @@ Product.create = (product) => {
         product.id_category,
         new Date(),
         new Date(),
-		product.stock,
-		product.state,
-		product.price_special,
-		product.price_buy,
-		product.id_company,
-		product.price_wholesale
-        
+        product.stock,
+        product.state,
+        product.price_special,
+        product.price_buy,
+        product.id_company,
+        product.price_wholesale
+
     ]);
 }
 
@@ -1145,21 +1153,21 @@ Product.createPLate = (plate) => {
     VALUES($1, $2, $3, $4, $5, $6, $7, $8,'true', $9, $10,'true', $11, $12, 13, $14) RETURNING id
     `;
     return db.oneOrNone(sql, [
-	   plate.id,
-	   plate.name,
-	   plate.description,
-	   plate.price,
-	   plate.image1,
-	   plate.image2,
-	   plate.image3,
-	   plate.id_category,
-	   plate.price_special,
-	   plate.price_buy,
-	   plate.price_wholesale,
-	   plate.carbs,
-	   plate.protein,
-	   plate.calorias
-        
+        plate.id,
+        plate.name,
+        plate.description,
+        plate.price,
+        plate.image1,
+        plate.image2,
+        plate.image3,
+        plate.id_category,
+        plate.price_special,
+        plate.price_buy,
+        plate.price_wholesale,
+        plate.carbs,
+        plate.protein,
+        plate.calorias
+
     ]);
 }
 
@@ -1177,7 +1185,7 @@ Product.setStock = (stock) => {
         stock.id_company,
         stock.stock,
         stock.id_product
-        
+
     ]);
 }
 
@@ -1290,7 +1298,7 @@ Product.deleteAnswerLikeComent = (id) => {
 
     WHERE id = $1
     `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 Product.deleteAnswerLikeProduct = (id) => {
@@ -1301,7 +1309,7 @@ Product.deleteAnswerLikeProduct = (id) => {
 
     WHERE id = $1
     `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 Product.deleteAnswerLike = (id) => {
@@ -1312,7 +1320,7 @@ Product.deleteAnswerLike = (id) => {
 
     WHERE id = $1
     `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 Product.deleteLikeCommentPost = (id) => {
     const sql = `
@@ -1322,7 +1330,7 @@ Product.deleteLikeCommentPost = (id) => {
 
     WHERE id = $1
     `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 
@@ -1334,7 +1342,7 @@ Product.deleteLikeCommentProduct = (id) => {
 
     WHERE id = $1
     `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 Product.deleteLikeComment = (id) => {
@@ -1345,7 +1353,7 @@ Product.deleteLikeComment = (id) => {
 
     WHERE id = $1
     `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 Product.deleteFavoritesProducts = (id_plate, id_user) => {
@@ -1451,11 +1459,11 @@ Product.createTab = (product) => {
         new Date(),
         new Date(),
         product.id_company,
-	product.price_special,
-	product.price_buy,
-	product.state,
-	product.price_wholesale    
-        
+        product.price_special,
+        product.price_buy,
+        product.state,
+        product.price_wholesale
+
     ]);
 }
 
@@ -1759,7 +1767,7 @@ Product.findByCategoryAndProductNameStocks = (id_category, product_name, id_comp
         C.id = $1 AND p.name ILIKE $2 and S.id_company = $3
     `;
 
-    return db.manyOrNone(sql, [id_category, `%${product_name}%` , id_company]);
+    return db.manyOrNone(sql, [id_category, `%${product_name}%`, id_company]);
 }
 Product.findByCategoryAndProductNameStocksNewApp = (id_category, product_name, id_company) => {
     const sql = `
@@ -1788,7 +1796,7 @@ Product.findByCategoryAndProductNameStocksNewApp = (id_category, product_name, i
         C.id = $1 AND P.name ILIKE $2 and P.id_company = $3
     `;
 
-    return db.manyOrNone(sql, [id_category, `%${product_name}%` , id_company]);
+    return db.manyOrNone(sql, [id_category, `%${product_name}%`, id_company]);
 }
 Product.updatePlate = (plate) => {
     const sql = `
@@ -1805,10 +1813,10 @@ Product.updatePlate = (plate) => {
         id = $1
         `;
     return db.none(sql, [
-           plate.id,	
-	   plate.image1,
-	   plate.image2,
-	   plate.image3
+        plate.id,
+        plate.image1,
+        plate.image2,
+        plate.image3
 
     ]);
 
@@ -1849,12 +1857,12 @@ Product.update = (product) => {
         product.image3,
         product.id_category,
         new Date(),
-	product.stock,
-	product.id_company,
+        product.stock,
+        product.id_company,
         product.price_special,
         product.price_buy,
-	product.state,
-	product.price_wholesale    
+        product.state,
+        product.price_wholesale
 
     ]);
 
@@ -1885,10 +1893,10 @@ Product.updateAdminApp = (product) => {
         product.description,
         product.price,
         product.id_category,
-		product.id_company,
+        product.id_company,
         product.price_special,
         product.price_buy,
-		product.price_special    
+        product.price_special
 
     ]);
 
@@ -1920,11 +1928,11 @@ Product.updateAdmin = (product) => {
         product.description,
         product.price,
         product.id_category,
-	product.id_company,
+        product.id_company,
         product.price_special,
         product.price_buy,
-	product.state,
-	product.price_wholesale    
+        product.state,
+        product.price_wholesale
 
     ]);
 
@@ -1942,7 +1950,7 @@ Product.delete = (id) => {
 
     return db.none(sql, [
         id
-        
+
     ]);
 }
 
@@ -1958,7 +1966,7 @@ Product.deleteSale = (id) => {
 
     return db.none(sql, [
         id
-        
+
     ]);
 }
 
@@ -1988,8 +1996,8 @@ Product.findMyProduct = (name) => {
     return db.manyOrNone(sql, name);
 }
 
-Product.getAllCompany = () =>{
-	const sql = `
+Product.getAllCompany = () => {
+    const sql = `
   select 
 	c.id,
 	c.name,
@@ -2031,27 +2039,27 @@ Product.getAllCompany = () =>{
         where c.available = 'true'
 
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
-Product.getGift = () =>{
-	const sql = `
+Product.getGift = () => {
+    const sql = `
         select * from 
 	gift 
         where active = 'true'
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
 
-Product.getGifts = () =>{
-	const sql = `
+Product.getGifts = () => {
+    const sql = `
         select * from 
 	gift order by active = 'true' desc
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
@@ -2111,17 +2119,17 @@ Product.createGift = (gift) => {
     ]);
 }
 
-Product.getExtras = (id_plate) =>{
-	const sql = `
+Product.getExtras = (id_plate) => {
+    const sql = `
 select *
 from extras where id_plate = $1 
 `;
-return db.manyOrNone(sql, id_plate);
+    return db.manyOrNone(sql, id_plate);
 
 }
 
-Product.getIngredients = (id_plate) =>{
-	const sql = `
+Product.getIngredients = (id_plate) => {
+    const sql = `
 select 
 I.id,
 I.id_plate,
@@ -2131,7 +2139,7 @@ P.image2
 from ingredients as I
 inner join plates as P on I.id_plate = P.id
 where I.id_plate = $1 `;
-return db.manyOrNone(sql, id_plate);
+    return db.manyOrNone(sql, id_plate);
 
 }
 
@@ -2158,14 +2166,14 @@ Product.createProductDealer = (product) => {
         product.name,
         product.price,
         product.price_buy,
-	product.price_sucursal,    
+        product.price_sucursal,
         product.image1,
         new Date(),
-	product.idSucursal,
-	product.id_dealer,
-	product.grms,
-	product.dispense
-        
+        product.idSucursal,
+        product.id_dealer,
+        product.grms,
+        product.dispense
+
     ]);
 }
 
@@ -2183,24 +2191,24 @@ Product.updateProductDealer = (product) => {
         id = $1
         `;
     return db.none(sql, [
-	product.id,
-        product.image1  
+        product.id,
+        product.image1
 
     ]);
 
 }
 
 
-Product.getAlldealers = (idsucursal,id_dealer) =>{
-	const sql = `
+Product.getAlldealers = (idsucursal, id_dealer) => {
+    const sql = `
            select * from 
 	   dealer_products where 
             idsucursal = $1 and id_dealer = $2 and state = 'available'
 	order by dispense asc	
  `;
-return db.manyOrNone(sql, [
-	idsucursal,id_dealer
-]);
+    return db.manyOrNone(sql, [
+        idsucursal, id_dealer
+    ]);
 }
 
 
@@ -2216,7 +2224,7 @@ Product.deleteDealer = (id) => {
 
     return db.none(sql, [
         id
-        
+
     ]);
 }
 
@@ -2249,12 +2257,12 @@ Product.createDealer = (dealer) => {
 	 $5
  );
     `;
-    return db.none(sql,[
-	    dealer.machine,
-	    dealer.name,
-	    dealer.sucursal_id,
-	    dealer.status,
-	    dealer.type
+    return db.none(sql, [
+        dealer.machine,
+        dealer.name,
+        dealer.sucursal_id,
+        dealer.status,
+        dealer.type
     ]);
 }
 
@@ -2265,7 +2273,7 @@ Product.deleteRepets = (idSucursal, dispense) => {
 	delete  from dealer_products
  where idSucursal = $1 and dispense = $2
     `;
-    return db.none(sql,[idSucursal, dispense]);
+    return db.none(sql, [idSucursal, dispense]);
 }
 
 
@@ -2274,7 +2282,7 @@ Product.selectColors = (idSucursal) => {
 
 	select * from colors where company_id = $1
     `;
-    return db.manyOrNone(sql,idSucursal);
+    return db.manyOrNone(sql, idSucursal);
 }
 
 Product.selectOcations = (idSucursal) => {
@@ -2282,30 +2290,30 @@ Product.selectOcations = (idSucursal) => {
 
 	select * from ocation where id_company = $1
     `;
-    return db.manyOrNone(sql,idSucursal);
+    return db.manyOrNone(sql, idSucursal);
 }
 Product.selectAroma = (idSucursal) => {
     const sql = `
 
 	select * from aroma where id_company = $1
     `;
-    return db.manyOrNone(sql,idSucursal);
+    return db.manyOrNone(sql, idSucursal);
 }
 
-Product.selectFlores = () =>{
-	const sql = `
+Product.selectFlores = () => {
+    const sql = `
 	select * from products where id_category = 124
 
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
-Product.selectSizes = () =>{
-	const sql = `
+Product.selectSizes = () => {
+    const sql = `
 	select * from products where id_category = 125
 
  `;
-return db.manyOrNone(sql);
+    return db.manyOrNone(sql);
 
 }
 
@@ -2336,7 +2344,7 @@ Product.deleteFlavor = (id) => {
     WHERE  id = $1
     `;
 
-    return db.oneOrNone(sql,id);
+    return db.oneOrNone(sql, id);
 }
 
 Product.updateFlavor = (id, activate) => {
@@ -2351,22 +2359,22 @@ Product.updateFlavor = (id, activate) => {
     return db.none(sql, [id, activate]);
 }
 
-Product.getAllServices = (id) =>{
-	const sql = `
+Product.getAllServices = (id) => {
+    const sql = `
 	select * from services 
 	where business_id = $1 and available = true
  
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
-Product.getSchedulesAvailable = (id, day) =>{
-	const sql = `
+Product.getSchedulesAvailable = (id, day) => {
+    const sql = `
 	select * from available_schedules 
 	where business_id = $1 and day_of_week = $2
  
  `;
-return db.manyOrNone(sql, [id, day]);
+    return db.manyOrNone(sql, [id, day]);
 
 }
 
@@ -2407,7 +2415,7 @@ Product.registerAppointment = (appointment) => {
         appointment.price,
         new Date(), // Correcto: Genera el timestamp actual para created_at
         new Date(),  // Correcto: Genera el timestamp actual para updated_at
-		appointment.payments_status
+        appointment.payments_status
     ]);
 }
 
@@ -2425,7 +2433,7 @@ WHERE
     AND start_datetime >= date_trunc('day', $2::timestamptz) -- Desde el inicio del día ($2)
     AND start_datetime < date_trunc('day', $2::timestamptz) + interval '1 day'; -- Hasta el final del día ($2)
     `;
-    return db.manyOrNone(sql,[id, startdatetime]);
+    return db.manyOrNone(sql, [id, startdatetime]);
 }
 
 Product.getCompanyByUser = (id) => {
@@ -2433,7 +2441,7 @@ Product.getCompanyByUser = (id) => {
     const sql = `
     select * from company where user_id = $1
 		`;
-    
+
     return db.oneOrNone(sql, id)
 
 }
@@ -2496,18 +2504,18 @@ Product.createSchedule = (schedule) => {
         schedule.day_of_week,
         schedule.start_time,
         schedule.end_time,
-		schedule.duration
+        schedule.duration
     ]);
 }
 
 
-Product.getAllServicesNotTrueOnly = (id) =>{
-	const sql = `
+Product.getAllServicesNotTrueOnly = (id) => {
+    const sql = `
 	select * from services 
 	where business_id = $1
  
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
@@ -2521,8 +2529,8 @@ Product.updateService = (services) => {
 	WHERE  service_id = $1
         `;
     return db.none(sql, [
-       services.service_id,	
-		services.available
+        services.service_id,
+        services.available
 
 
     ]);
@@ -2537,11 +2545,11 @@ Product.deleteService = (id) => {
     WHERE  service_id = $1
     `;
 
-    return db.oneOrNone(sql,id);
+    return db.oneOrNone(sql, id);
 }
 
-Product.getByCompany = (id) =>{
-	const sql = `
+Product.getByCompany = (id) => {
+    const sql = `
 SELECT
     P.id,
     P.name,
@@ -2591,7 +2599,7 @@ ORDER BY
  
  
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
@@ -2645,13 +2653,13 @@ Product.findById = (id_product) => {
     return db.oneOrNone(sql, id_product);
 };
 
-Product.getAllServicesGym = (id) =>{
-	const sql = `
+Product.getAllServicesGym = (id) => {
+    const sql = `
 	SELECT * FROM  gym_membership_plans  where id_company = $1
 ORDER BY id ASC 
  
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
