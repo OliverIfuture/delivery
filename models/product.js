@@ -254,6 +254,16 @@ ORDER BY
 }
 
 
+Product.togglePinPost = (id_post) => {
+    const sql = `
+        UPDATE post
+        SET is_pinned = NOT COALESCE(is_pinned, FALSE)
+        WHERE id = $1
+        RETURNING id, is_pinned;
+    `;
+    return db.oneOrNone(sql, id_post);
+}
+
 
 Product.getPost = (id_user) => {
     const sql = `

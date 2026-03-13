@@ -4,7 +4,7 @@ const asyncForEach = require('../utils/async_foreach');
 
 module.exports = {
 
- async getUserProfile(req, res, next) {
+    async getUserProfile(req, res, next) {
         try {
             const data = await Product.getUserProfile(id);
             console.log(`Favoritos obtenidos: ${data}`);
@@ -13,7 +13,7 @@ module.exports = {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -21,8 +21,8 @@ module.exports = {
             });
         }
     },
- 
- async deletePost (req, res, next) {
+
+    async deletePost(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -32,7 +32,7 @@ module.exports = {
                 message: 'El post se elimino correctamente',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -41,21 +41,21 @@ module.exports = {
                 error: error
             });
         }
-        
-},
 
-async getPostAll(req, res, next) {
-        try {            
-         
-         
+    },
+
+    async getPostAll(req, res, next) {
+        try {
+
+
             const data = await Product.getPostAll();
-          //  console.log(`Status: ${JSON.stringify(data)}`);
+            //  console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -63,12 +63,32 @@ async getPostAll(req, res, next) {
             });
         }
     },
- 
- async getPost(req, res, next) {
-        try {            
-         
-         
-           const id_user = req.params.id_user;    
+
+    async togglePinPost(req, res, next) {
+        try {
+            const id_post = req.params.id_post;
+            const data = await Product.togglePinPost(id_post);
+
+            return res.status(200).json({
+                success: true,
+                message: data.is_pinned ? 'Publicación fijada 📌' : 'Publicación desfijada',
+                data: data
+            });
+        }
+        catch (error) {
+            console.log(`error en togglePinPost: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al fijar/desfijar la publicación'
+            });
+        }
+    },
+
+    async getPost(req, res, next) {
+        try {
+
+
+            const id_user = req.params.id_user;
             const data = await Product.getPost(id_user);
             console.log(`post  obtenidos: ${data}`);
             return res.status(201).json(data);
@@ -76,7 +96,7 @@ async getPostAll(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -84,9 +104,9 @@ async getPostAll(req, res, next) {
             });
         }
     },
- async createPost(req, res, next) {
+    async createPost(req, res, next) {
         try {
-            
+
             const id_user = req.params.id_user;
             const description = req.params.description;
             const files = req.files;
@@ -95,7 +115,7 @@ async getPostAll(req, res, next) {
             if (files.length > 0) {
                 const pathImage = `image_${Date.now()}`;
                 const url = await storage(files[0], pathImage);
-                
+
                 if (url != undefined && url != null) {
                     image = url;
 
@@ -104,7 +124,7 @@ async getPostAll(req, res, next) {
 
 
             const data = await Product.createPost(id_user, description, image);
-           return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'El registro se ralizo correctamente',
@@ -122,9 +142,9 @@ async getPostAll(req, res, next) {
 
             });
         }
-    },        
+    },
 
-async setStock(req, res, next) {
+    async setStock(req, res, next) {
         try {
 
             const stock = req.body;
@@ -136,7 +156,7 @@ async setStock(req, res, next) {
                 message: ' el stock se actualizo  correctamente',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -145,130 +165,130 @@ async setStock(req, res, next) {
                 error: error
             });
         }
-        
-},
+
+    },
 
 
-     async getFavorites(req, res, next) {
+    async getFavorites(req, res, next) {
 
         try {
             const id_user = req.params.id_user;
             const data = await Product.getFavorites(id_user);
-             console.log(`stock enviada: ${data}`);
+            console.log(`stock enviada: ${data}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los productos por favoritos ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
-    },     
- 
-  async getTickets(req, res, next) {
+    },
+
+    async getTickets(req, res, next) {
 
         try {
             const userId = req.params.userId;
             const data = await Product.getTickets(userId);
-             console.log(`tickets de usuario: ${JSON.stringify(data)}`);
+            console.log(`tickets de usuario: ${JSON.stringify(data)}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los cupones ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
-    },  
- 
- async getSaves(req, res, next) {
+    },
+
+    async getSaves(req, res, next) {
 
         try {
             const id_user = req.params.id_user;
             const data = await Product.getSaves(id_user);
-             console.log(`stock enviada: ${data}`);
+            console.log(`stock enviada: ${data}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los productos por favoritos ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
-    },  
-       async GgetProfileFollowersIconSumProfile(req, res, next) {
+    },
+    async GgetProfileFollowersIconSumProfile(req, res, next) {
 
         try {
             const id_profile = req.params.id_profile;
             const data = await Product.GgetProfileFollowersIconSumProfile(id_profile);
-             console.log(`stock enviada: ${data}`);
+            console.log(`stock enviada: ${data}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los corazones de este platillo ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
     },
-       async getProfilePlatesIconSumProfile(req, res, next) {
+    async getProfilePlatesIconSumProfile(req, res, next) {
 
         try {
             const id_profile = req.params.id_profile;
             const data = await Product.getProfilePlatesIconSumProfile(id_profile);
-             console.log(`stock enviada: ${data}`);
+            console.log(`stock enviada: ${data}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los corazones de este platillo ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
     },
-        
-       async getProfileFavoriteIconSum(req, res, next) {
+
+    async getProfileFavoriteIconSum(req, res, next) {
 
         try {
             const id_profile = req.params.id_profile;
             const data = await Product.getProfileFavoriteIconSum(id_profile);
-             console.log(`stock enviada: ${data}`);
+            console.log(`stock enviada: ${data}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los corazones de este platillo ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
-    }, 
+    },
 
 
-       async getReviewPlateFavoriteIconProduct(req, res, next) {
+    async getReviewPlateFavoriteIconProduct(req, res, next) {
 
         try {
             const id_plate = req.params.id_plate;
@@ -277,171 +297,171 @@ async setStock(req, res, next) {
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los corazones de este platillo ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
-    },     
+    },
 
- 
-       async getReviewPlateFavoriteIcon(req, res, next) {
+
+    async getReviewPlateFavoriteIcon(req, res, next) {
 
         try {
             const id_plate = req.params.id_plate;
             const data = await Product.getReviewPlateFavoriteIcon(id_plate);
-             console.log(`stock enviada: ${data}`);
+            console.log(`stock enviada: ${data}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los corazones de este platillo ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
-    },     
+    },
 
     async getReviewPlateRate(req, res, next) {
 
         try {
             const id_plate = req.params.id_plate;
             const data = await Product.getReviewPlateRate(id_plate);
-             console.log(`stock enviada: ${data}`);
+            console.log(`stock enviada: ${data}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los review de este platillo ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
-    }, 
+    },
 
-     async findLikesComent(req, res, next) {
+    async findLikesComent(req, res, next) {
         try {
             const id_post = req.params.id_post;
 
             const data = await Product.findLikesComent(id_post);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener los favoritos',
                 error: error,
                 success: false
-            
+
 
             });
         }
     },
- 
 
-     async findLikes(req, res, next) {
+
+    async findLikes(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
 
             const data = await Product.findLikes(id_plate);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener los favoritos',
                 error: error,
                 success: false
-            
 
-            });
-        }
-    }, 
-
-
-     async getAnswersPost (req, res, next) {
-        try {
-            const id = req.params.id;
-
-            const data = await Product.getAnswersPost (id);
-            console.log(`Status: ${JSON.stringify(data)}`);
-            return res.status(201).json(data);
-            
-        } catch (error) {
-            
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
-                message: 'Hubo un error al tratar de obtener las respuestas',
-                error: error,
-                success: false
-            
 
             });
         }
     },
 
-  async getAnswersProducts(req, res, next) {
+
+    async getAnswersPost(req, res, next) {
+        try {
+            const id = req.params.id;
+
+            const data = await Product.getAnswersPost(id);
+            console.log(`Status: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+        } catch (error) {
+
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las respuestas',
+                error: error,
+                success: false
+
+
+            });
+        }
+    },
+
+    async getAnswersProducts(req, res, next) {
         try {
             const id = req.params.id;
 
             const data = await Product.getAnswersProducts(id);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las respuestas',
                 error: error,
                 success: false
-            
+
 
             });
         }
     },
- 
-     async getAnswers(req, res, next) {
+
+    async getAnswers(req, res, next) {
         try {
             const id = req.params.id;
 
             const data = await Product.getAnswers(id);
             console.log(`Status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
-            
+
         } catch (error) {
-            
+
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 message: 'Hubo un error al tratar de obtener las respuestas',
                 error: error,
                 success: false
-            
+
 
             });
         }
     },
 
-async findFollowersProfile(req, res, next) {
+    async findFollowersProfile(req, res, next) {
         try {
             const id_profile = req.params.id_profile;
-            const id_user = req.params.id_user;     
+            const id_user = req.params.id_user;
             const code = await Product.findFollowersProfile(id_profile, id_user);
-             console.log(`stock enviada: ${code}`);
+            console.log(`stock enviada: ${code}`);
 
             if (!code) {
                 return res.status(401).json({
@@ -450,15 +470,15 @@ async findFollowersProfile(req, res, next) {
                 });
             }
 
-            else{
+            else {
                 return res.status(201).json({
-                success: true,
-                message: 'codigo aplicado',
-            });
+                    success: true,
+                    message: 'codigo aplicado',
+                });
             }
 
- 
-        } 
+
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -467,13 +487,13 @@ async findFollowersProfile(req, res, next) {
                 error: error
             });
         }
-    },          
-async findFavoritesProfile(req, res, next) {
+    },
+    async findFavoritesProfile(req, res, next) {
         try {
             const id_profile = req.params.id_profile;
-            const id_user = req.params.id_user;     
+            const id_user = req.params.id_user;
             const code = await Product.findFavoritesProfile(id_profile, id_user);
-             console.log(`stock enviada: ${code}`);
+            console.log(`stock enviada: ${code}`);
 
             if (!code) {
                 return res.status(401).json({
@@ -482,15 +502,15 @@ async findFavoritesProfile(req, res, next) {
                 });
             }
 
-            else{
+            else {
                 return res.status(201).json({
-                success: true,
-                message: 'codigo aplicado',
-            });
+                    success: true,
+                    message: 'codigo aplicado',
+                });
             }
 
- 
-        } 
+
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -499,14 +519,14 @@ async findFavoritesProfile(req, res, next) {
                 error: error
             });
         }
-    },    
+    },
 
- async findFavoritesProduct(req, res, next) {
+    async findFavoritesProduct(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
-            const id_user = req.params.id_user;     
+            const id_user = req.params.id_user;
             const code = await Product.findFavoritesProduct(id_plate, id_user);
-             console.log(`stock enviada: ${code}`);
+            console.log(`stock enviada: ${code}`);
 
             if (!code) {
                 return res.status(401).json({
@@ -515,15 +535,15 @@ async findFavoritesProfile(req, res, next) {
                 });
             }
 
-            else{
+            else {
                 return res.status(201).json({
-                success: true,
-                message: 'codigo aplicado',
-            });
+                    success: true,
+                    message: 'codigo aplicado',
+                });
             }
 
- 
-        } 
+
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -533,13 +553,13 @@ async findFavoritesProfile(req, res, next) {
             });
         }
     },
- 
- async findFavorites(req, res, next) {
+
+    async findFavorites(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
-            const id_user = req.params.id_user;     
+            const id_user = req.params.id_user;
             const code = await Product.findFavorites(id_plate, id_user);
-             console.log(`stock enviada: ${code}`);
+            console.log(`stock enviada: ${code}`);
 
             if (!code) {
                 return res.status(401).json({
@@ -548,15 +568,15 @@ async findFavoritesProfile(req, res, next) {
                 });
             }
 
-            else{
+            else {
                 return res.status(201).json({
-                success: true,
-                message: 'codigo aplicado',
-            });
+                    success: true,
+                    message: 'codigo aplicado',
+                });
             }
 
- 
-        } 
+
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -568,12 +588,12 @@ async findFavoritesProfile(req, res, next) {
     },
 
 
- async findSaves(req, res, next) {
+    async findSaves(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
-            const id_user = req.params.id_user;     
+            const id_user = req.params.id_user;
             const code = await Product.findSaves(id_plate, id_user);
-             console.log(`stock enviada: ${code}`);
+            console.log(`stock enviada: ${code}`);
 
             if (!code) {
                 return res.status(401).json({
@@ -582,15 +602,15 @@ async findFavoritesProfile(req, res, next) {
                 });
             }
 
-            else{
+            else {
                 return res.status(201).json({
-                success: true,
-                message: 'codigo aplicado',
-            });
+                    success: true,
+                    message: 'codigo aplicado',
+                });
             }
 
- 
-        } 
+
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -600,7 +620,7 @@ async findFavoritesProfile(req, res, next) {
             });
         }
     },
-async findPostComent (req, res, next) {
+    async findPostComent(req, res, next) {
         try {
             const id = req.params.id;
             const data = await Product.findPostComent(id);
@@ -610,17 +630,17 @@ async findPostComent (req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al obtener'
             });
         }
-    },      
+    },
 
 
-async findReviewProduct(req, res, next) {
+    async findReviewProduct(req, res, next) {
         try {
             const id = req.params.id;
             const data = await Product.findReviewProduct(id);
@@ -630,17 +650,17 @@ async findReviewProduct(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al obtener'
             });
         }
-    },  
- 
- 
-async findReview(req, res, next) {
+    },
+
+
+    async findReview(req, res, next) {
         try {
             const id = req.params.id;
             const data = await Product.findReview(id);
@@ -650,29 +670,29 @@ async findReview(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al obtener'
             });
         }
-    }, 
+    },
 
 
 
-async setFavoritesProducts(req, res, next) {
+    async setFavoritesProducts(req, res, next) {
         try {
 
-            const id_plate = req.params.id_plate;             
-            const id_user = req.params.id_user; 
+            const id_plate = req.params.id_plate;
+            const id_user = req.params.id_user;
             const data = await Product.setFavoritesProducts(id_plate, id_user);
 
             return res.status(201).json({
                 message: 'agregado a favoritos',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -681,21 +701,21 @@ async setFavoritesProducts(req, res, next) {
                 error: error
             });
         }
-        
-}, 
 
-async setFavorites(req, res, next) {
+    },
+
+    async setFavorites(req, res, next) {
         try {
 
-            const id_plate = req.params.id_plate;             
-            const id_user = req.params.id_user; 
+            const id_plate = req.params.id_plate;
+            const id_user = req.params.id_user;
             const data = await Product.setFavorites(id_plate, id_user);
 
             return res.status(201).json({
                 message: 'agregado a favoritos',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -704,21 +724,21 @@ async setFavorites(req, res, next) {
                 error: error
             });
         }
-        
-},
 
-async setFollowersProfile(req, res, next) {
+    },
+
+    async setFollowersProfile(req, res, next) {
         try {
 
-            const id_profile = req.params.id_profile;             
-            const id_user = req.params.id_user; 
+            const id_profile = req.params.id_profile;
+            const id_user = req.params.id_user;
             const data = await Product.setFollowersProfile(id_profile, id_user);
 
             return res.status(201).json({
                 message: 'Me gusta',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -727,21 +747,21 @@ async setFollowersProfile(req, res, next) {
                 error: error
             });
         }
-        
-},
-        
-async setFavoritesProfile(req, res, next) {
+
+    },
+
+    async setFavoritesProfile(req, res, next) {
         try {
 
-            const id_profile = req.params.id_profile;             
-            const id_user = req.params.id_user; 
+            const id_profile = req.params.id_profile;
+            const id_user = req.params.id_user;
             const data = await Product.setFavoritesProfile(id_profile, id_user);
 
             return res.status(201).json({
                 message: 'Me gusta',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -750,21 +770,21 @@ async setFavoritesProfile(req, res, next) {
                 error: error
             });
         }
-        
-},
-        
-async setSave(req, res, next) {
+
+    },
+
+    async setSave(req, res, next) {
         try {
 
-            const id_plate = req.params.id_plate;             
-            const id_user = req.params.id_user; 
+            const id_plate = req.params.id_plate;
+            const id_user = req.params.id_user;
             const data = await Product.setSave(id_plate, id_user);
 
             return res.status(201).json({
                 message: 'agregado a guardados',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -773,21 +793,21 @@ async setSave(req, res, next) {
                 error: error
             });
         }
-        
-},
 
-async deleteFavoritesProducts (req, res, next) {
+    },
+
+    async deleteFavoritesProducts(req, res, next) {
         try {
 
-            const id_plate = req.params.id_plate;             
-            const id_user = req.params.id_user; 
+            const id_plate = req.params.id_plate;
+            const id_user = req.params.id_user;
             const data = await Product.deleteFavoritesProducts(id_plate, id_user);
 
             return res.status(201).json({
                 message: 'eliminado de favoritos',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -796,21 +816,21 @@ async deleteFavoritesProducts (req, res, next) {
                 error: error
             });
         }
-        
-},
- 
-async deleteFavorites (req, res, next) {
+
+    },
+
+    async deleteFavorites(req, res, next) {
         try {
 
-            const id_plate = req.params.id_plate;             
-            const id_user = req.params.id_user; 
-            const data = await Product.deleteFavorites (id_plate, id_user);
+            const id_plate = req.params.id_plate;
+            const id_user = req.params.id_user;
+            const data = await Product.deleteFavorites(id_plate, id_user);
 
             return res.status(201).json({
                 message: 'eliminado de favoritos',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -819,21 +839,21 @@ async deleteFavorites (req, res, next) {
                 error: error
             });
         }
-        
-},
 
-async deleteFollowersProfile (req, res, next) {
+    },
+
+    async deleteFollowersProfile(req, res, next) {
         try {
 
-            const id_profile = req.params.id_profile;             
-            const id_user = req.params.id_user; 
-            const data = await Product.deleteFollowersProfile (id_profile, id_user);
+            const id_profile = req.params.id_profile;
+            const id_user = req.params.id_user;
+            const data = await Product.deleteFollowersProfile(id_profile, id_user);
 
             return res.status(201).json({
                 message: 'eliminado de favoritos',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -842,20 +862,20 @@ async deleteFollowersProfile (req, res, next) {
                 error: error
             });
         }
-        
-},         
-async deleteFavoritesProfile (req, res, next) {
+
+    },
+    async deleteFavoritesProfile(req, res, next) {
         try {
 
-            const id_profile = req.params.id_profile;             
-            const id_user = req.params.id_user; 
-            const data = await Product.deleteFavoritesProfile (id_profile, id_user);
+            const id_profile = req.params.id_profile;
+            const id_user = req.params.id_user;
+            const data = await Product.deleteFavoritesProfile(id_profile, id_user);
 
             return res.status(201).json({
                 message: 'eliminado de favoritos',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -864,20 +884,20 @@ async deleteFavoritesProfile (req, res, next) {
                 error: error
             });
         }
-        
-}, 
 
-async deleteAnswerLikeComent(req, res, next) {
+    },
+
+    async deleteAnswerLikeComent(req, res, next) {
         try {
 
-            const id = req.params.id; 
+            const id = req.params.id;
             const data = await Product.deleteAnswerLikeComent(id);
 
             return res.status(201).json({
                 message: 'like eliminado',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -886,20 +906,20 @@ async deleteAnswerLikeComent(req, res, next) {
                 error: error
             });
         }
-        
-},   
 
-async deleteAnswerLikeProduct (req, res, next) {
+    },
+
+    async deleteAnswerLikeProduct(req, res, next) {
         try {
 
-            const id = req.params.id; 
-            const data = await Product.deleteAnswerLikeProduct (id);
+            const id = req.params.id;
+            const data = await Product.deleteAnswerLikeProduct(id);
 
             return res.status(201).json({
                 message: 'like eliminado',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -908,20 +928,20 @@ async deleteAnswerLikeProduct (req, res, next) {
                 error: error
             });
         }
-        
-},
- 
-async deleteAnswerLike (req, res, next) {
+
+    },
+
+    async deleteAnswerLike(req, res, next) {
         try {
 
-            const id = req.params.id; 
-            const data = await Product.deleteAnswerLike (id);
+            const id = req.params.id;
+            const data = await Product.deleteAnswerLike(id);
 
             return res.status(201).json({
                 message: 'like eliminado',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -930,19 +950,19 @@ async deleteAnswerLike (req, res, next) {
                 error: error
             });
         }
-        
-},  
- async deleteLikeCommentPost (req, res, next) {
+
+    },
+    async deleteLikeCommentPost(req, res, next) {
         try {
 
-            const id = req.params.id; 
+            const id = req.params.id;
             const data = await Product.deleteLikeCommentPost(id);
 
             return res.status(201).json({
                 message: 'like eliminado',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -951,20 +971,20 @@ async deleteAnswerLike (req, res, next) {
                 error: error
             });
         }
-        
-},  
 
-async deleteLikeCommentProduct (req, res, next) {
+    },
+
+    async deleteLikeCommentProduct(req, res, next) {
         try {
 
-            const id = req.params.id; 
-            const data = await Product.deleteLikeCommentProduct (id);
+            const id = req.params.id;
+            const data = await Product.deleteLikeCommentProduct(id);
 
             return res.status(201).json({
                 message: 'like eliminado',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -973,21 +993,21 @@ async deleteLikeCommentProduct (req, res, next) {
                 error: error
             });
         }
-        
-},  
-     
- 
-async deleteLikeComment (req, res, next) {
+
+    },
+
+
+    async deleteLikeComment(req, res, next) {
         try {
 
-            const id = req.params.id; 
-            const data = await Product.deleteLikeComment (id);
+            const id = req.params.id;
+            const data = await Product.deleteLikeComment(id);
 
             return res.status(201).json({
                 message: 'like eliminado',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -996,21 +1016,21 @@ async deleteLikeComment (req, res, next) {
                 error: error
             });
         }
-        
-},  
-        
-async deleteteSave (req, res, next) {
+
+    },
+
+    async deleteteSave(req, res, next) {
         try {
 
-            const id_plate = req.params.id_plate;             
-            const id_user = req.params.id_user; 
-            const data = await Product.deleteteSave (id_plate, id_user);
+            const id_plate = req.params.id_plate;
+            const id_user = req.params.id_user;
+            const data = await Product.deleteteSave(id_plate, id_user);
 
             return res.status(201).json({
                 message: 'eliminado de guardados',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1019,28 +1039,28 @@ async deleteteSave (req, res, next) {
                 error: error
             });
         }
-        
-},        
 
-async updateStockers (req, res, next) {
+    },
+
+    async updateStockers(req, res, next) {
         try {
 
-            const id_product = req.params.id_product;             
-            const stock = req.params.stock; 
-            const id_company = req.params.id_company; 
+            const id_product = req.params.id_product;
+            const stock = req.params.stock;
+            const id_company = req.params.id_company;
             console.log(`Nuevo stock: ${id_product} ${stock} ${id_company}`);
 
             const data = await Product.updateStockers(id_product, stock, id_company);
             console.log(`Nuevo stock: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Estock actualizado',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1050,28 +1070,28 @@ async updateStockers (req, res, next) {
                 error: error
             });
         }
-    },      
+    },
 
 
-async updateStockersNewApp (req, res, next) {
+    async updateStockersNewApp(req, res, next) {
         try {
 
-            const id_product = req.params.id_product;             
-            const stock = req.params.stock; 
-            const id_company = req.params.id_company; 
+            const id_product = req.params.id_product;
+            const stock = req.params.stock;
+            const id_company = req.params.id_company;
             console.log(`Nuevo stock: ${id_product} ${stock} ${id_company}`);
 
             const data = await Product.updateStockersNewApp(id_product, stock, id_company);
             console.log(`Nuevo stock updateStockersNewApp: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Estock actualizado',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1081,10 +1101,10 @@ async updateStockersNewApp (req, res, next) {
                 error: error
             });
         }
-    },      
- 
+    },
 
-      async getAll(req, res, next) {
+
+    async getAll(req, res, next) {
         try {
             const data = await Product.getAll();
             console.log(`Productos obtenidos: ${data}`);
@@ -1093,7 +1113,7 @@ async updateStockersNewApp (req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -1101,10 +1121,10 @@ async updateStockersNewApp (req, res, next) {
             });
         }
     },
-async lookFavoritesList(req, res, next) {
+    async lookFavoritesList(req, res, next) {
         try {
 
-            const id_profile = req.params.id_profile;    
+            const id_profile = req.params.id_profile;
             const data = await Product.lookFavoritesList(id_profile);
             console.log(`Favoritos obtenidos: ${data}`);
             return res.status(201).json(data);
@@ -1112,7 +1132,7 @@ async lookFavoritesList(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -1120,30 +1140,30 @@ async lookFavoritesList(req, res, next) {
             });
         }
     },
-async lookFollowersList (req, res, next) {
+    async lookFollowersList(req, res, next) {
         try {
 
-            const id_profile = req.params.id_profile;    
-            const data = await Product.lookFollowersList (id_profile);
+            const id_profile = req.params.id_profile;
+            const data = await Product.lookFollowersList(id_profile);
             console.log(`seguidores obtenidos: ${data}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al obtener'
             });
         }
-    },    
+    },
 
-async favoritesplatesProducts(req, res, next) {
+    async favoritesplatesProducts(req, res, next) {
         try {
 
-            const id = req.params.id;    
+            const id = req.params.id;
             const data = await Product.favoritesplatesProducts(id);
             console.log(`Favoritos obtenidos: ${data}`);
             return res.status(201).json(data);
@@ -1151,7 +1171,7 @@ async favoritesplatesProducts(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -1159,11 +1179,11 @@ async favoritesplatesProducts(req, res, next) {
             });
         }
     },
- 
-async favoritesplates(req, res, next) {
+
+    async favoritesplates(req, res, next) {
         try {
 
-            const id = req.params.id;    
+            const id = req.params.id;
             const data = await Product.favoritesplates(id);
             console.log(`Favoritos obtenidos: ${data}`);
             return res.status(201).json(data);
@@ -1171,7 +1191,7 @@ async favoritesplates(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -1181,7 +1201,7 @@ async favoritesplates(req, res, next) {
     },
 
 
-   async findServings(req, res, next) {
+    async findServings(req, res, next) {
         try {
             const data = await Product.servings();
             console.log(`products : ${JSON.stringify(data)}`);
@@ -1190,7 +1210,7 @@ async favoritesplates(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -1199,7 +1219,7 @@ async favoritesplates(req, res, next) {
         }
     },
 
-   async getGiftsProducts(req, res, next) {
+    async getGiftsProducts(req, res, next) {
         try {
             const data = await Product.getGiftsProducts();
             console.log(`products : ${JSON.stringify(data)}`);
@@ -1208,7 +1228,7 @@ async favoritesplates(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -1217,7 +1237,7 @@ async favoritesplates(req, res, next) {
         }
     },
 
-  async populars(req, res, next) {
+    async populars(req, res, next) {
         try {
             const data = await Product.populars();
             console.log(`products : ${JSON.stringify(data)}`);
@@ -1226,7 +1246,7 @@ async favoritesplates(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -1235,7 +1255,7 @@ async favoritesplates(req, res, next) {
         }
     },
 
- async findLast5(req, res, next) {
+    async findLast5(req, res, next) {
         try {
             const data = await Product.findLast5();
             console.log(`products : ${JSON.stringify(data)}`);
@@ -1244,7 +1264,7 @@ async favoritesplates(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -1252,41 +1272,41 @@ async favoritesplates(req, res, next) {
             });
         }
     },
-        
-async getAllStocks (req, res, next) {
+
+    async getAllStocks(req, res, next) {
 
         try {
             const id_company = req.params.id_company;//envia el vliente
             const id_company_product = req.params.id_company_product;
-            const data = await Product.getAllStocks (id_company, id_company_product);
+            const data = await Product.getAllStocks(id_company, id_company_product);
             console.log(`Productos obtenidos: ${data}`);
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los productos por categoria ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
     },
 
-      async upateProduct(req, res, next) {
+    async upateProduct(req, res, next) {
         try {
 
             let product = req.body;
-             await Product.update(product);
+            await Product.update(product);
             console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: 'El producto se actualizo correctamente',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1296,7 +1316,7 @@ async getAllStocks (req, res, next) {
                 error: error
             });
         }
-    },   
+    },
 
     async findByCategory(req, res, next) {
 
@@ -1306,18 +1326,18 @@ async getAllStocks (req, res, next) {
 
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los productos por categoria ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
     },
 
- async getByCtaegoryPlate(req, res, next) {
+    async getByCtaegoryPlate(req, res, next) {
 
         try {
             const id_category = req.params.id_category;//envia el vliente
@@ -1325,64 +1345,64 @@ async getAllStocks (req, res, next) {
             console.log(`Plato obtenido///////: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
-            
+
         } catch (error) {
-                console.log(`Error: ${error}`);
-                return res.status(500).json({
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
                 message: `Error al listar los productos por categoria ${error}`,
                 success: false,
                 error: error
-                 });
+            });
         }
     },
 
 
-async findByCategoryStocks (req, res, next) {
-    try {
-        const id_category = req.params.id_category;
-        const id_company = req.params.id_company;
-        const id_product_company = req.params.id_product_company ?? 4; // <= valor por defecto
+    async findByCategoryStocks(req, res, next) {
+        try {
+            const id_category = req.params.id_category;
+            const id_company = req.params.id_company;
+            const id_product_company = req.params.id_product_company ?? 4; // <= valor por defecto
 
-        const data = await Product.findByCategoryStocks(id_category, id_company, id_product_company);
+            const data = await Product.findByCategoryStocks(id_category, id_company, id_product_company);
 
-        return res.status(201).json(data);
-        
-    } catch (error) {
-        console.log(`Error: ${error}`);
-        return res.status(500).json({
-            message: `Error al listar los productos por categoria ${error}`,
-            success: false,
-            error: error
-        });
-    }
-},
+            return res.status(201).json(data);
 
- async findByCategoryStocksNewApp  (req, res, next) {
-    try {
-        const id_category = req.params.id_category;
-        const id_company = req.params.id_company;
-        const id_product_company = req.params.id_company; // <= valor por defecto
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
+                message: `Error al listar los productos por categoria ${error}`,
+                success: false,
+                error: error
+            });
+        }
+    },
 
-        const data = await Product.findByCategoryStocksNewApp (id_category, id_company, id_product_company);
+    async findByCategoryStocksNewApp(req, res, next) {
+        try {
+            const id_category = req.params.id_category;
+            const id_company = req.params.id_company;
+            const id_product_company = req.params.id_company; // <= valor por defecto
 
-        return res.status(201).json(data);
-        
-    } catch (error) {
-        console.log(`Error: ${error}`);
-        return res.status(500).json({
-            message: `Error al listar los productos por categoria ${error}`,
-            success: false,
-            error: error
-        });
-    }
-},
+            const data = await Product.findByCategoryStocksNewApp(id_category, id_company, id_product_company);
 
-   async getByCtaegoryAndProductNameSearch(req, res, next) {
+            return res.status(201).json(data);
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(500).json({
+                message: `Error al listar los productos por categoria ${error}`,
+                success: false,
+                error: error
+            });
+        }
+    },
+
+    async getByCtaegoryAndProductNameSearch(req, res, next) {
         try {
             const product_name = req.params.product_name; // CLIENTE
             const data = await Product.getByCtaegoryAndProductNameSearch(product_name);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1392,14 +1412,14 @@ async findByCategoryStocks (req, res, next) {
             });
         }
     },
- 
-        async findByCategoryAndProductName(req, res, next) {
+
+    async findByCategoryAndProductName(req, res, next) {
         try {
             const id_category = req.params.id_category; // CLIENTE
             const product_name = req.params.product_name; // CLIENTE
             const data = await Product.findByCategoryAndProductName(id_category, product_name);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1411,13 +1431,13 @@ async findByCategoryStocks (req, res, next) {
     },
 
 
- async getByCtaegoryAndProductNamePlate(req, res, next) {
+    async getByCtaegoryAndProductNamePlate(req, res, next) {
         try {
             const id_category = req.params.id_category; // CLIENTE
             const product_name = req.params.product_name; // CLIENTE
             const data = await Product.getByCtaegoryAndProductNamePlate(id_category, product_name);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1428,7 +1448,7 @@ async findByCategoryStocks (req, res, next) {
         }
     },
 
-async findByCategoryAndProductNameStocks (req, res, next) {
+    async findByCategoryAndProductNameStocks(req, res, next) {
         try {
             const id_category = req.params.id_category; // CLIENTE
             const product_name = req.params.product_name; // CLIENTE
@@ -1436,7 +1456,7 @@ async findByCategoryAndProductNameStocks (req, res, next) {
 
             const data = await Product.findByCategoryAndProductNameStocks(id_category, product_name, id_company);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1446,7 +1466,7 @@ async findByCategoryAndProductNameStocks (req, res, next) {
             });
         }
     },
-async findByCategoryAndProductNameStocksNewApp (req, res, next) {
+    async findByCategoryAndProductNameStocksNewApp(req, res, next) {
         try {
             const id_category = req.params.id_category; // CLIENTE
             const product_name = req.params.product_name; // CLIENTE
@@ -1454,7 +1474,7 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
 
             const data = await Product.findByCategoryAndProductNameStocksNewApp(id_category, product_name, id_company);
             return res.status(201).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1464,8 +1484,8 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
             });
         }
     },
-        async createTab(req, res, next) {
-        
+    async createTab(req, res, next) {
+
         let product = JSON.parse(req.body.product);
         console.log(`Producto: ${JSON.stringify(product)}`);
 
@@ -1480,7 +1500,7 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
             });
         }
 
-        else if (files.length > 0 && files.length <= 3 ){
+        else if (files.length > 0 && files.length <= 3) {
             try {
 
                 const data = await Product.createTab(product);//ALMACENANDO VARIOS PRODUCTOS
@@ -1500,13 +1520,13 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
                             else if (inserts == 1) {//imagen2
                                 product.image2 = url;
 
-                            
+
                             }
-                            
+
                             else if (inserts == 2) {//imagen3
                                 product.image3 = url;
 
-                            
+
                             }
                         }
 
@@ -1524,14 +1544,14 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
 
                 start();
 
-                
+
             } catch (error) {
                 console.log(`Error: ${error}`);
                 return res.status(500).json({
-                message: `Error al registrar el producto ${error}`,
-                success: false,
-                error:error
-                
+                    message: `Error al registrar el producto ${error}`,
+                    success: false,
+                    error: error
+
                 });
             }
 
@@ -1539,8 +1559,8 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
     },
 
 
-      async createPLate(req, res, next) {
-        
+    async createPLate(req, res, next) {
+
         let plate = JSON.parse(req.body.plate);
         console.log(`plate: ${JSON.stringify(plate)}`);
 
@@ -1555,7 +1575,7 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
             });
         }
 
-        else if (files.length > 0 && files.length <= 3 ){
+        else if (files.length > 0 && files.length <= 3) {
             try {
 
                 const data = await Product.createPLate(plate);//ALMACENANDO VARIOS PRODUCTOS
@@ -1575,16 +1595,16 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
                             else if (inserts == 1) {//imagen2
                                 plate.image2 = url;
 
-                            
+
                             }
-                            
+
                             else if (inserts == 2) {//imagen3
                                 plate.image3 = url;
 
-                            
+
                             }
                         }
-                 console.log(`plato numero 2: ${JSON.stringify(plate)}`);
+                        console.log(`plato numero 2: ${JSON.stringify(plate)}`);
 
 
                         await Product.updatePlate(plate);
@@ -1601,22 +1621,22 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
 
                 start();
 
-                
+
             } catch (error) {
                 console.log(`Error: ${error}`);
                 return res.status(500).json({
-                message: `Error al registrar el producto ${error}`,
-                success: false,
-                error:error
-                
+                    message: `Error al registrar el producto ${error}`,
+                    success: false,
+                    error: error
+
                 });
             }
 
         }
-    },    
+    },
 
     async create(req, res, next) {
-        
+
         let product = JSON.parse(req.body.product);
         console.log(`Producto: ${JSON.stringify(product)}`);
 
@@ -1631,7 +1651,7 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
             });
         }
 
-        else if (files.length > 0 && files.length <= 3 ){
+        else if (files.length > 0 && files.length <= 3) {
             try {
 
                 const data = await Product.create(product);//ALMACENANDO VARIOS PRODUCTOS
@@ -1651,13 +1671,13 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
                             else if (inserts == 1) {//imagen2
                                 product.image2 = url;
 
-                            
+
                             }
-                            
+
                             else if (inserts == 2) {//imagen3
                                 product.image3 = url;
 
-                            
+
                             }
                         }
 
@@ -1675,25 +1695,25 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
 
                 start();
 
-                
+
             } catch (error) {
                 console.log(`Error: ${error}`);
                 return res.status(500).json({
-                message: `Error al registrar el producto ${error}`,
-                success: false,
-                error:error
-                
+                    message: `Error al registrar el producto ${error}`,
+                    success: false,
+                    error: error
+
                 });
             }
 
         }
     },
-        async updateProduct(req, res, next) {
+    async updateProduct(req, res, next) {
         try {
-            
+
             const product = req.body;
             console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
-            
+
 
             await Product.updateStock(product);
 
@@ -1717,12 +1737,12 @@ async findByCategoryAndProductNameStocksNewApp (req, res, next) {
         }
     },
 
-async updateAdmin(req, res, next) {
+    async updateAdmin(req, res, next) {
         try {
-            
+
             const product = req.body;
             console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
-            
+
 
             await Product.updateAdmin(product);
 
@@ -1744,15 +1764,15 @@ async updateAdmin(req, res, next) {
 
             });
         }
-    },     
+    },
 
 
- async updateAdminApp(req, res, next) {
+    async updateAdminApp(req, res, next) {
         try {
-            
+
             const product = req.body;
             console.log(`Datos enviados del usuario: ${JSON.stringify(product)}`);
-            
+
 
             await Product.updateAdminApp(product);
 
@@ -1774,8 +1794,8 @@ async updateAdmin(req, res, next) {
 
             });
         }
-    },     
-       
+    },
+
     async delete(req, res, next) {
         try {
 
@@ -1785,13 +1805,13 @@ async updateAdmin(req, res, next) {
             console.log(`Product to delete: ${JSON.stringify(id)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'producto eliminado correctamente',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1802,7 +1822,7 @@ async updateAdmin(req, res, next) {
             });
         }
     },
-      
+
     async deleteSale(req, res, next) {
         try {
 
@@ -1812,13 +1832,13 @@ async updateAdmin(req, res, next) {
             console.log(`Product to delete: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'venta eliminada correctamente',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -1831,7 +1851,7 @@ async updateAdmin(req, res, next) {
     },
 
 
-async findMyProduct(req, res, next) {
+    async findMyProduct(req, res, next) {
         try {
 
             const name = req.params.name;
@@ -1843,35 +1863,35 @@ async findMyProduct(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al obtener el producto por nombre'
             });
         }
-    },      
+    },
 
 
-       async getAllCompany(req, res, next) {
+    async getAllCompany(req, res, next) {
         try {
             const data = await Product.getAllCompany();
-          //  console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+            //  console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al obtener'
             });
         }
-    },    
-       
-async getGift(req, res, next) {
+    },
+
+    async getGift(req, res, next) {
         try {
             const data = await Product.getGift();
             console.log(`Datos del Gift: ${JSON.stringify(data)}`);
@@ -1880,17 +1900,17 @@ async getGift(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al obtener'
             });
         }
-    },        
+    },
 
 
-async getGifts(req, res, next) {
+    async getGifts(req, res, next) {
         try {
             const data = await Product.getGifts();
             console.log(`Datos del Gift: ${JSON.stringify(data)}`);
@@ -1899,19 +1919,19 @@ async getGifts(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
                 message: 'error al obtener'
             });
         }
-    },  
+    },
 
-        
-async turnOff(req, res, next) {
+
+    async turnOff(req, res, next) {
         try {
-            
+
             await Product.turnOff();
 
             return res.status(201).json({
@@ -1932,10 +1952,10 @@ async turnOff(req, res, next) {
 
             });
         }
-    },      
+    },
 
 
-  async turnOn(req, res, next) {
+    async turnOn(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1959,9 +1979,9 @@ async turnOff(req, res, next) {
 
             });
         }
-    }, 
+    },
 
-  async setTicket(req, res, next) {
+    async setTicket(req, res, next) {
         try {
 
             const ticketId = req.params.ticketId;
@@ -1985,27 +2005,27 @@ async turnOff(req, res, next) {
 
             });
         }
-    }, 
- 
-  async createAnswerPost (req, res, next) {
+    },
+
+    async createAnswerPost(req, res, next) {
         try {
 
-            const id_coment = req.params.id_coment; 
-            const username = req.params.username;  
-            const answer = req.params.answer;  
+            const id_coment = req.params.id_coment;
+            const username = req.params.username;
+            const answer = req.params.answer;
             const responseto = req.params.responseto;
             const id_user = req.params.id_user;
 
-            const data = await Product.createAnswerPost(id_coment, username ,answer, responseto, id_user);
+            const data = await Product.createAnswerPost(id_coment, username, answer, responseto, id_user);
             console.log(`Status: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Respuesta  posteada',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2017,25 +2037,25 @@ async turnOff(req, res, next) {
         }
     },
 
- async createAnswerProduct(req, res, next) {
+    async createAnswerProduct(req, res, next) {
         try {
 
-            const id_review = req.params.id_review; 
-            const username = req.params.username;  
-            const answer = req.params.answer;  
+            const id_review = req.params.id_review;
+            const username = req.params.username;
+            const answer = req.params.answer;
             const responseto = req.params.responseto;
             const id_user = req.params.id_user;
 
-            const data = await Product.createAnswerProduct(id_review, username ,answer, responseto, id_user);
+            const data = await Product.createAnswerProduct(id_review, username, answer, responseto, id_user);
             console.log(`Status: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Respuesta  posteada',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2047,26 +2067,26 @@ async turnOff(req, res, next) {
         }
     },
 
- 
-  async createAnswer (req, res, next) {
+
+    async createAnswer(req, res, next) {
         try {
 
-            const id_review = req.params.id_review; 
-            const username = req.params.username;  
-            const answer = req.params.answer;  
+            const id_review = req.params.id_review;
+            const username = req.params.username;
+            const answer = req.params.answer;
             const responseto = req.params.responseto;
             const id_user = req.params.id_user;
 
-            const data = await Product.createAnswer(id_review, username ,answer, responseto, id_user);
+            const data = await Product.createAnswer(id_review, username, answer, responseto, id_user);
             console.log(`Status: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Respuesta  posteada',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2077,18 +2097,18 @@ async turnOff(req, res, next) {
             });
         }
     },
- 
-async deleteLikePost (req, res, next) {
+
+    async deleteLikePost(req, res, next) {
         try {
 
-            const id = req.params.id; 
+            const id = req.params.id;
             const data = await Product.deleteLikePost(id);
 
             return res.status(201).json({
                 message: 'like eliminado',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2097,28 +2117,28 @@ async deleteLikePost (req, res, next) {
                 error: error
             });
         }
-        
-},
+
+    },
 
 
-  async createLikeComent(req, res, next) {
+    async createLikeComent(req, res, next) {
         try {
 
-            const id_coment = req.params.id_coment; 
-            const username = req.params.username;  
-            const useremail = req.params.useremail;  
-            const id_user = req.params.id_user;  
+            const id_coment = req.params.id_coment;
+            const username = req.params.username;
+            const useremail = req.params.useremail;
+            const id_user = req.params.id_user;
 
-            const data = await Product.createLikeComent(id_coment, username ,useremail, id_user);
-        console.log(`Status: ${JSON.stringify(data)}`);
+            const data = await Product.createLikeComent(id_coment, username, useremail, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Like posteado',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2128,57 +2148,26 @@ async deleteLikePost (req, res, next) {
                 error: error
             });
         }
-    },  
- 
-     async createLikePost(req, res, next) {
+    },
+
+    async createLikePost(req, res, next) {
         try {
 
-            const id_publish = req.params.id_publish; 
-            const username = req.params.username;  
-            const useremail = req.params.useremail;  
-            const id_user = req.params.id_user;  
+            const id_publish = req.params.id_publish;
+            const username = req.params.username;
+            const useremail = req.params.useremail;
+            const id_user = req.params.id_user;
 
-            const data = await Product.createLikePost(id_publish, username ,useremail, id_user);
-        console.log(`Status: ${JSON.stringify(data)}`);
+            const data = await Product.createLikePost(id_publish, username, useremail, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Like posteado',
             });
-            
-        } catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
 
-                success: false,
-                message: 'Hubo un error liKe',
-                error: error
-            });
-        }
-    },  
-
-
-
-async likePublish(req, res, next) {
-        try {
-
-            const id_plate = req.params.id_publish; 
-            const username = req.params.username;  
-            const useremail = req.params.useremail;  
-            const id_user = req.params.id_user;  
-
-            const data = await Product.likePublish(id_publish, username ,useremail, id_user);
-        console.log(`Status: ${JSON.stringify(data)}`);
-
-
-                return res.status(201).json({
-
-                success: true,
-                message: 'Like posteado',
-            });
-            
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2191,86 +2180,25 @@ async likePublish(req, res, next) {
     },
 
 
-async createLikeProduct (req, res, next) {
+
+    async likePublish(req, res, next) {
         try {
 
-            const id_plate = req.params.id_plate; 
-            const username = req.params.username;  
-            const useremail = req.params.useremail;  
-            const id_user = req.params.id_user;  
+            const id_plate = req.params.id_publish;
+            const username = req.params.username;
+            const useremail = req.params.useremail;
+            const id_user = req.params.id_user;
 
-            const data = await Product.createLikeProduct(id_plate, username ,useremail, id_user);
-        console.log(`Status: ${JSON.stringify(data)}`);
+            const data = await Product.likePublish(id_publish, username, useremail, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Like posteado',
             });
-            
-        } catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
 
-                success: false,
-                message: 'Hubo un error liKe',
-                error: error
-            });
-        }
-    },  
-
-
-
-
- 
-  async createLike (req, res, next) {
-        try {
-
-            const id_plate = req.params.id_plate; 
-            const username = req.params.username;  
-            const useremail = req.params.useremail;  
-            const id_user = req.params.id_user;  
-
-            const data = await Product.createLike(id_plate, username ,useremail, id_user);
-        console.log(`Status: ${JSON.stringify(data)}`);
-
-
-                return res.status(201).json({
-
-                success: true,
-                message: 'Like posteado',
-            });
-            
-        } catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({
-
-                success: false,
-                message: 'Hubo un error liKe',
-                error: error
-            });
-        }
-    },  
-
-   async createLikeAnswerComent (req, res, next) {
-        try {
-
-            const id_answer = req.params.id_answer; 
-            const username = req.params.username;  
-            const useremail = req.params.useremail;  
-            const id_user = req.params.id_user;  
-
-            const data = await Product.createLikeAnswerComent(id_answer, username ,useremail, id_user);
-        console.log(`Status: ${JSON.stringify(data)}`);
-
-
-                return res.status(201).json({
-
-                success: true,
-                message: 'Like posteado',
-            });
-            
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2283,24 +2211,24 @@ async createLikeProduct (req, res, next) {
     },
 
 
-  async createLikeAnswerProduct (req, res, next) {
+    async createLikeProduct(req, res, next) {
         try {
 
-            const id_answer = req.params.id_answer; 
-            const username = req.params.username;  
-            const useremail = req.params.useremail;  
-            const id_user = req.params.id_user;  
+            const id_plate = req.params.id_plate;
+            const username = req.params.username;
+            const useremail = req.params.useremail;
+            const id_user = req.params.id_user;
 
-            const data = await Product.createLikeAnswerProduct(id_answer, username ,useremail, id_user);
-        console.log(`Status: ${JSON.stringify(data)}`);
+            const data = await Product.createLikeProduct(id_plate, username, useremail, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Like posteado',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2310,27 +2238,30 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },   
+    },
 
- 
-  async createLikeAnswer (req, res, next) {
+
+
+
+
+    async createLike(req, res, next) {
         try {
 
-            const id_answer = req.params.id_answer; 
-            const username = req.params.username;  
-            const useremail = req.params.useremail;  
-            const id_user = req.params.id_user;  
+            const id_plate = req.params.id_plate;
+            const username = req.params.username;
+            const useremail = req.params.useremail;
+            const id_user = req.params.id_user;
 
-            const data = await Product.createLikeAnswer(id_answer, username ,useremail, id_user);
-        console.log(`Status: ${JSON.stringify(data)}`);
+            const data = await Product.createLike(id_plate, username, useremail, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Like posteado',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2340,25 +2271,114 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },     
- 
- async createComent  (req, res, next) {
+    },
+
+    async createLikeAnswerComent(req, res, next) {
+        try {
+
+            const id_answer = req.params.id_answer;
+            const username = req.params.username;
+            const useremail = req.params.useremail;
+            const id_user = req.params.id_user;
+
+            const data = await Product.createLikeAnswerComent(id_answer, username, useremail, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
+
+
+            return res.status(201).json({
+
+                success: true,
+                message: 'Like posteado',
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error liKe',
+                error: error
+            });
+        }
+    },
+
+
+    async createLikeAnswerProduct(req, res, next) {
+        try {
+
+            const id_answer = req.params.id_answer;
+            const username = req.params.username;
+            const useremail = req.params.useremail;
+            const id_user = req.params.id_user;
+
+            const data = await Product.createLikeAnswerProduct(id_answer, username, useremail, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
+
+
+            return res.status(201).json({
+
+                success: true,
+                message: 'Like posteado',
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error liKe',
+                error: error
+            });
+        }
+    },
+
+
+    async createLikeAnswer(req, res, next) {
+        try {
+
+            const id_answer = req.params.id_answer;
+            const username = req.params.username;
+            const useremail = req.params.useremail;
+            const id_user = req.params.id_user;
+
+            const data = await Product.createLikeAnswer(id_answer, username, useremail, id_user);
+            console.log(`Status: ${JSON.stringify(data)}`);
+
+
+            return res.status(201).json({
+
+                success: true,
+                message: 'Like posteado',
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+
+                success: false,
+                message: 'Hubo un error liKe',
+                error: error
+            });
+        }
+    },
+
+    async createComent(req, res, next) {
         try {
 
             const comments = req.body;
-             console.log(`Status: ${JSON.stringify(comments)}`);
+            console.log(`Status: ${JSON.stringify(comments)}`);
 
 
-                
-            const data = await Product.createComent (comments);
-             console.log(`Status: ${JSON.stringify(comments)}`);
 
-                return res.status(201).json({
+            const data = await Product.createComent(comments);
+            console.log(`Status: ${JSON.stringify(comments)}`);
+
+            return res.status(201).json({
 
                 success: true,
                 message: 'comentario posteado',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2368,25 +2388,25 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },    
+    },
 
- async createReviewProduct (req, res, next) {
+    async createReviewProduct(req, res, next) {
         try {
 
             const comments = req.body;
-             console.log(`Status: ${JSON.stringify(comments)}`);
+            console.log(`Status: ${JSON.stringify(comments)}`);
 
 
-                
+
             const data = await Product.createReviewProduct(comments);
-             console.log(`Status: ${JSON.stringify(comments)}`);
+            console.log(`Status: ${JSON.stringify(comments)}`);
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'comentario posteado',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2398,24 +2418,24 @@ async createLikeProduct (req, res, next) {
         }
     },
 
- 
- async createReview (req, res, next) {
+
+    async createReview(req, res, next) {
         try {
 
             const comments = req.body;
-             console.log(`Status: ${JSON.stringify(comments)}`);
+            console.log(`Status: ${JSON.stringify(comments)}`);
 
 
-                
+
             const data = await Product.createReview(comments);
-             console.log(`Status: ${JSON.stringify(comments)}`);
+            console.log(`Status: ${JSON.stringify(comments)}`);
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'comentario posteado',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2425,9 +2445,9 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },   
+    },
 
-  async getExtras(req, res, next) {
+    async getExtras(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
             const data = await Product.getExtras(id_plate);
@@ -2437,7 +2457,7 @@ async createLikeProduct (req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2445,8 +2465,8 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
- 
-  async getIngredients(req, res, next) {
+
+    async getIngredients(req, res, next) {
         try {
             const id_plate = req.params.id_plate;
             const data = await Product.getIngredients(id_plate);
@@ -2456,7 +2476,7 @@ async createLikeProduct (req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2465,23 +2485,23 @@ async createLikeProduct (req, res, next) {
         }
     },
 
- async createGift (req, res, next) {
+    async createGift(req, res, next) {
         try {
 
             const gift = req.body;
-             console.log(`Status: ${JSON.stringify(gift)}`);
+            console.log(`Status: ${JSON.stringify(gift)}`);
 
 
-                
+
             const data = await Product.createGift(gift);
-             console.log(`Status: ${JSON.stringify(gift)}`);
+            console.log(`Status: ${JSON.stringify(gift)}`);
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'Cierre se realizo correctamente',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2491,12 +2511,12 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },       
+    },
 
 
 
-     async createProductDealer(req, res, next) {
-        
+    async createProductDealer(req, res, next) {
+
         let product = JSON.parse(req.body.product);
         console.log(`Producto: ${JSON.stringify(product)}`);
 
@@ -2511,7 +2531,7 @@ async createLikeProduct (req, res, next) {
             });
         }
 
-        else if (files.length > 0 && files.length <= 1 ){
+        else if (files.length > 0 && files.length <= 1) {
             try {
 
                 const data = await Product.createProductDealer(product);//ALMACENANDO VARIOS PRODUCTOS
@@ -2543,32 +2563,32 @@ async createLikeProduct (req, res, next) {
 
                 start();
 
-                
+
             } catch (error) {
                 console.log(`Error: ${error}`);
                 return res.status(500).json({
-                message: `Error al registrar el producto ${error}`,
-                success: false,
-                error:error
-                
+                    message: `Error al registrar el producto ${error}`,
+                    success: false,
+                    error: error
+
                 });
             }
 
         }
     },
 
-   async getAlldealers(req, res, next) {
+    async getAlldealers(req, res, next) {
         try {
             const idsucursal = req.params.idsucursal;
-            const id_dealer =  req.params.iddealer;
+            const id_dealer = req.params.iddealer;
             const data = await Product.getAlldealers(idsucursal, id_dealer);
-             console.log(`productos obtenidos: ${JSON.stringify(data)}`);
+            console.log(`productos obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2578,8 +2598,8 @@ async createLikeProduct (req, res, next) {
     },
 
 
-       
-   async deleteProductDealer(req, res, next) {
+
+    async deleteProductDealer(req, res, next) {
         try {
 
             const product = req.params;
@@ -2588,13 +2608,13 @@ async createLikeProduct (req, res, next) {
             console.log(`Product to delete: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'producto eliminado correctamente',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2604,15 +2624,15 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    }, 
+    },
 
 
 
     async updateDealerName(req, res, next) {
         try {
-            
+
             const dealerid = req.params.dealerid;
-            const name = req.params.name;            
+            const name = req.params.name;
 
             await Product.updateDealerName(dealerid, name);
 
@@ -2637,23 +2657,23 @@ async createLikeProduct (req, res, next) {
     },
 
 
-  async createDealer (req, res, next) {
+    async createDealer(req, res, next) {
         try {
 
             const dealer = req.body;
-             console.log(`dealer: ${JSON.stringify(dealer)}`);
+            console.log(`dealer: ${JSON.stringify(dealer)}`);
 
 
-                
+
             const data = await Product.createDealer(dealer);
-             console.log(`Status: ${JSON.stringify(dealer)}`);
+            console.log(`Status: ${JSON.stringify(dealer)}`);
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'maquina registrada correctamente',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2663,9 +2683,9 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },       
+    },
 
- async deleteRepets (req, res, next) {
+    async deleteRepets(req, res, next) {
         try {
 
             const idSucursal = req.params.idSucursal;
@@ -2676,7 +2696,7 @@ async createLikeProduct (req, res, next) {
                 message: 'El producto anterior se elimino correctamente',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2685,21 +2705,21 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-        
-},
 
-  async selectColors (req, res, next) {
+    },
+
+    async selectColors(req, res, next) {
         try {
 
-            const idSucursal = req.params.idSucursal;    
-            const data = await Product.selectColors (idSucursal);
-             console.log(`Colores obtenidos: ${JSON.stringify(data)}`);
+            const idSucursal = req.params.idSucursal;
+            const data = await Product.selectColors(idSucursal);
+            console.log(`Colores obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2707,18 +2727,18 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
-  async selectOcations(req, res, next) {
+    async selectOcations(req, res, next) {
         try {
 
-            const idSucursal = req.params.idSucursal;    
+            const idSucursal = req.params.idSucursal;
             const data = await Product.selectOcations(idSucursal);
-             console.log(`ocaciones obtenidos: ${JSON.stringify(data)}`);
+            console.log(`ocaciones obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2726,18 +2746,18 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
-  async selectAroma(req, res, next) {
+    async selectAroma(req, res, next) {
         try {
 
-            const idSucursal = req.params.idSucursal;    
+            const idSucursal = req.params.idSucursal;
             const data = await Product.selectAroma(idSucursal);
-             console.log(`aromas obtenidos: ${JSON.stringify(data)}`);
+            console.log(`aromas obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2747,7 +2767,7 @@ async createLikeProduct (req, res, next) {
     },
 
 
-   async selectFlores(req, res, next) {
+    async selectFlores(req, res, next) {
         try {
             const data = await Product.selectFlores();
             console.log(`flores individuales : ${JSON.stringify(data)}`);
@@ -2756,7 +2776,7 @@ async createLikeProduct (req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2764,7 +2784,7 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
-   async selectSizes(req, res, next) {
+    async selectSizes(req, res, next) {
         try {
             const data = await Product.selectSizes();
             console.log(`tamanios individuales : ${JSON.stringify(data)}`);
@@ -2773,7 +2793,7 @@ async createLikeProduct (req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2782,23 +2802,23 @@ async createLikeProduct (req, res, next) {
         }
     },
 
-  async createFlavor  (req, res, next) {
+    async createFlavor(req, res, next) {
         try {
 
             const flavor = req.body;
-             console.log(`Status: ${JSON.stringify(flavor)}`);
+            console.log(`Status: ${JSON.stringify(flavor)}`);
 
 
-                
-            const data = await Product.createFlavor (flavor);
-             console.log(`Status: ${JSON.stringify(flavor)}`);
 
-                return res.status(201).json({
+            const data = await Product.createFlavor(flavor);
+            console.log(`Status: ${JSON.stringify(flavor)}`);
+
+            return res.status(201).json({
 
                 success: true,
                 message: 'sabor creado',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2808,9 +2828,9 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },    
+    },
 
-  async deleteFlavor (req, res, next) {
+    async deleteFlavor(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -2820,7 +2840,7 @@ async createLikeProduct (req, res, next) {
                 message: 'El sabor se elimino correctamente',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2829,28 +2849,28 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-        
-},
 
- async updateFlavor (req, res, next) {
+    },
+
+    async updateFlavor(req, res, next) {
         try {
 
-            const id = req.params.id;             
-            const activate = req.params.activate; 
-         
+            const id = req.params.id;
+            const activate = req.params.activate;
+
             console.log(`Nuevo stock: ${id} ${activate}`);
 
             const data = await Product.updateFlavor(id, activate);
             console.log(`Nuevo stock: ${JSON.stringify(data)}`);
 
 
-                return res.status(201).json({
+            return res.status(201).json({
 
                 success: true,
                 message: 'sabor actualizado',
             });
-            
-            
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2860,20 +2880,20 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },      
+    },
 
- async getAllServices(req, res, next) {
+    async getAllServices(req, res, next) {
         try {
-            
+
             const id = req.params.id;
             const data = await Product.getAllServices(id);
-             console.log(`Servicios recibidos: ${JSON.stringify(data)}`);
-              return res.status(201).json(data);
+            console.log(`Servicios recibidos: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2881,19 +2901,19 @@ async createLikeProduct (req, res, next) {
             });
         }
     },
-  async getSchedulesAvailable(req, res, next) {
+    async getSchedulesAvailable(req, res, next) {
         try {
-            
+
             const id = req.params.id;
-         const day = req.params.day;
+            const day = req.params.day;
             const data = await Product.getSchedulesAvailable(id, day);
-             console.log(`getSchedulesAvailable recibidos: ${JSON.stringify(data)}`);
-              return res.status(201).json(data);
+            console.log(`getSchedulesAvailable recibidos: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2902,18 +2922,18 @@ async createLikeProduct (req, res, next) {
         }
     },
 
- async registerAppointment  (req, res, next) {
+    async registerAppointment(req, res, next) {
         try {
 
             const appointment = req.body;
-            const data = await Product.registerAppointment (appointment);
-             console.log(`appointments: ${JSON.stringify(appointment)}`);
+            const data = await Product.registerAppointment(appointment);
+            console.log(`appointments: ${JSON.stringify(appointment)}`);
 
-                return res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 message: 'cita creada con exito',
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -2923,22 +2943,22 @@ async createLikeProduct (req, res, next) {
                 error: error
             });
         }
-    },     
+    },
 
 
-   async selectAppoimentHour (req, res, next) {
+    async selectAppoimentHour(req, res, next) {
         try {
 
-            const id = req.params.id;    
-         const startdatetime = req.params.startdatetime;
-            const data = await Product.selectAppoimentHour (id, startdatetime);
-             console.log(`selectAppoimentHour obtenidos: ${JSON.stringify(data)}`);
+            const id = req.params.id;
+            const startdatetime = req.params.startdatetime;
+            const data = await Product.selectAppoimentHour(id, startdatetime);
+            console.log(`selectAppoimentHour obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2948,17 +2968,17 @@ async createLikeProduct (req, res, next) {
     },
 
 
-   async getCompanyByUser(req, res, next) {
+    async getCompanyByUser(req, res, next) {
         try {
             const id = req.params.id;
             const data = await Product.getCompanyByUser(id);
-             console.log(`compamy obtenidos: ${JSON.stringify(data)}`);
+            console.log(`compamy obtenidos: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -2967,62 +2987,62 @@ async createLikeProduct (req, res, next) {
         }
     },
 
-async createServiceWithSchedule(req, res, next) {
-    try {
-        // req.body es el objeto completo que enviaste desde Flutter.
-        // Contiene las llaves 'service' y 'schedules'.
-
-        // 1. Extraemos el objeto del servicio
-        const service = req.body.service;
-        
-        // 2. Extraemos el array de horarios
-        const schedules = req.body.schedules;
-
-        console.log(`Servicio recibido: ${JSON.stringify(service)}`);
-        console.log(`Horarios recibidos: ${JSON.stringify(schedules)}`);
-
-        // --- Lógica para guardar en la Base de Datos ---
-
-        // 3. Primero, insertas el servicio para obtener su ID.
-        //    (Asegúrate que tu función `createService` devuelva el objeto creado con su ID).
-        const data = await Product.createService(service);
-        const newServiceId = data.service_id; 
-
-        // 4. Luego, recorres el array de horarios y los insertas uno por uno,
-        //    asociándolos con el ID del servicio que acabas de crear.
-        for (const schedule of schedules) {
-            // A cada objeto de horario le asignas el ID del servicio recién creado.
-            schedule.service_id = newServiceId; 
-            await Product.createSchedule(schedule); // Asumiendo que tienes una función para crear horarios.
-        }
-
-        return res.status(201).json({
-            success: true,
-            message: 'Servicio y horarios registrados correctamente',
-        });
-        
-    } catch (error) {
-        console.log(`Error: ${error}`);
-        return res.status(501).json({
-            success: false,
-            message: 'Hubo un error al registrar el servicio con sus horarios',
-            error: error
-        });
-    }
-},  
- 
-  async getAllServicesNotTrueOnly(req, res, next) {
+    async createServiceWithSchedule(req, res, next) {
         try {
-            
+            // req.body es el objeto completo que enviaste desde Flutter.
+            // Contiene las llaves 'service' y 'schedules'.
+
+            // 1. Extraemos el objeto del servicio
+            const service = req.body.service;
+
+            // 2. Extraemos el array de horarios
+            const schedules = req.body.schedules;
+
+            console.log(`Servicio recibido: ${JSON.stringify(service)}`);
+            console.log(`Horarios recibidos: ${JSON.stringify(schedules)}`);
+
+            // --- Lógica para guardar en la Base de Datos ---
+
+            // 3. Primero, insertas el servicio para obtener su ID.
+            //    (Asegúrate que tu función `createService` devuelva el objeto creado con su ID).
+            const data = await Product.createService(service);
+            const newServiceId = data.service_id;
+
+            // 4. Luego, recorres el array de horarios y los insertas uno por uno,
+            //    asociándolos con el ID del servicio que acabas de crear.
+            for (const schedule of schedules) {
+                // A cada objeto de horario le asignas el ID del servicio recién creado.
+                schedule.service_id = newServiceId;
+                await Product.createSchedule(schedule); // Asumiendo que tienes una función para crear horarios.
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: 'Servicio y horarios registrados correctamente',
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al registrar el servicio con sus horarios',
+                error: error
+            });
+        }
+    },
+
+    async getAllServicesNotTrueOnly(req, res, next) {
+        try {
+
             const id = req.params.id;
             const data = await Product.getAllServicesNotTrueOnly(id);
-             console.log(`Servicios recibidos getAllServicesNotTrueOnly: ${JSON.stringify(data)}`);
-              return res.status(201).json(data);
+            console.log(`Servicios recibidos getAllServicesNotTrueOnly: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -3031,12 +3051,12 @@ async createServiceWithSchedule(req, res, next) {
         }
     },
 
-        async updateService(req, res, next) {
+    async updateService(req, res, next) {
         try {
-            
+
             const services = req.body;
             console.log(`Datos enviados del usuario: ${JSON.stringify(services)}`);
-            
+
 
             await Product.updateService(services);
 
@@ -3058,9 +3078,9 @@ async createServiceWithSchedule(req, res, next) {
 
             });
         }
-    }, 
+    },
 
-  async deleteService (req, res, next) {
+    async deleteService(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -3070,7 +3090,7 @@ async createServiceWithSchedule(req, res, next) {
                 message: 'servicio eliminado correctamente',
                 success: true
             });
-            
+
         } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
@@ -3079,10 +3099,10 @@ async createServiceWithSchedule(req, res, next) {
                 error: error
             });
         }
-        
-},
 
-       async getByCompany(req, res, next) {
+    },
+
+    async getByCompany(req, res, next) {
         try {
             const id = req.params.id;
             const data = await Product.getByCompany(id);
@@ -3091,7 +3111,7 @@ async createServiceWithSchedule(req, res, next) {
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 succes: false,
@@ -3115,15 +3135,15 @@ async createServiceWithSchedule(req, res, next) {
         }
     },
 
- async findById(req, res, next) {
+    async findById(req, res, next) {
         try {
             const id_product = req.params.id;
             const data = await Product.findById(id_product);
-            
+
             if (!data) {
                 return res.status(404).json({ success: false, message: 'Producto no encontrado' });
             }
-            
+
             return res.status(200).json(data);
         }
         catch (error) {
@@ -3136,18 +3156,18 @@ async createServiceWithSchedule(req, res, next) {
         }
     },
 
-  async getAllServicesGym(req, res, next) {
+    async getAllServicesGym(req, res, next) {
         try {
-            
+
             const id = req.params.id;
             const data = await Product.getAllServicesGym(id);
-             console.log(`Planes de gym recibidos: ${JSON.stringify(data)}`);
-              return res.status(201).json(data);
+            console.log(`Planes de gym recibidos: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
 
 
         }
         catch (error) {
-            
+
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
@@ -3155,5 +3175,5 @@ async createServiceWithSchedule(req, res, next) {
             });
         }
     },
- 
+
 }
