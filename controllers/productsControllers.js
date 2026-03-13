@@ -64,6 +64,25 @@ module.exports = {
         }
     },
 
+    async castVote(req, res) {
+        try {
+            const { id_post, option_id } = req.body;
+            const id_user = req.user.id; // Del token JWT
+
+            const sql = `
+            INSERT INTO poll_votes (id_post, id_user, option_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (id_post, id_user) 
+            DO UPDATE SET option_id = EXCLUDED.option_id;
+        `;
+            await db.none(sql, [id_post, id_user, option_id]);
+
+            return res.status(200).json({ success: true, message: 'Voto registrado' });
+        } catch (e) {
+            return res.status(500).json({ success: false, error: e.message });
+        }
+    },
+
     async togglePinPost(req, res, next) {
         try {
             const id_post = req.params.id_post;

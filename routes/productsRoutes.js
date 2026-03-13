@@ -12,7 +12,7 @@ module.exports = (app, upload) => {
   app.put('/api/products/togglePinPost/:id_post', passport.authenticate('jwt', { session: false }), productsControllers.togglePinPost);
   app.post('/api/products/createComent', passport.authenticate('jwt', { session: false }), productsControllers.createComent);
   app.post('/api/products/createFlavor', passport.authenticate('jwt', { session: false }), productsControllers.createFlavor);
-
+  app.post('/api/products/castVote', passport.authenticate('jwt', { session: false }), productsControllers.castVote);
   app.post('/api/products/createLike/:id_plate/:username/:useremail/:id_user', productsControllers.createLike);
   app.post('/api/products/createLikeProduct/:id_plate/:username/:useremail/:id_user', productsControllers.createLikeProduct);
 

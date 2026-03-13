@@ -118,35 +118,40 @@ Product.deletePost = (id) => {
 
     return db.oneOrNone(sql, id);
 }
-Product.createPost = (id_user, description, url) => {
 
+
+Product.createPost = (id_user, description, url, poll_options) => {
     const sql = `
-with rows as (
-  INSERT INTO
-        post(
-            id_user,
-            description,
-            image_post,
-			id_company
-        )
-    VALUES($1, $2, $3,$4) RETURNING id)
-		INSERT INTO likes_publish(
-			id_publish, 
-			username,
-			useremail,
-			id_user
-		 )
-		SELECT id, '0', '0', '0'
-		FROM rows
+    WITH rows AS (
+      INSERT INTO
+            post(
+                id_user,
+                description,
+                image_post,
+                id_company,
+                poll_options -- 🔥 NUEVO CAMPO
+            )
+        VALUES($1, $2, $3, $4, $5) RETURNING id
+    )
+    INSERT INTO likes_publish(
+        id_publish, 
+        username,
+        useremail,
+        id_user
+    )
+    SELECT id, '0', '0', '0'
+    FROM rows
     `;
 
     return db.oneOrNone(sql, [
         id_user,
         description,
         url,
-        1
+        1,
+        poll_options // Pasamos el JSON aquí (o null si no hay encuesta)
     ]);
 }
+
 Product.getUserProfile = (id) => {
     const sql = `
 		select 
@@ -222,34 +227,38 @@ SELECT
     P.id,
     P.id_user,
     P.description,
-    P.social,
     P.image_post,
+    P.social,
     P.id_company,
-    P.is_pinned, 
+    P.is_pinned,
+    P.poll_options, -- 🔥 Las opciones de la encuesta
     U.name,
     U.image AS photo,
-    COALESCE(
-        json_agg(
-            DISTINCT jsonb_build_object(
-                'id', L.id,
-                'id_publish', L.id,
-                'useremail', L.useremail,
-                'id_user', L.id_user
-            )
-        ) FILTER (WHERE L.useremail != '0'), '[]'
-    ) AS likespost
+    -- Contar votos totales
+    (SELECT COUNT(*) FROM poll_votes WHERE id_post = P.id) AS total_votes,
+    -- Detalle de votos para saber qué votó el usuario actual y mostrar avatares
+    (
+        SELECT json_agg(json_build_object(
+            'id_user', pv.id_user,
+            'option_id', pv.option_id,
+            'user_photo', u2.image
+        ))
+        FROM poll_votes pv
+        INNER JOIN users u2 ON u2.id = pv.id_user
+        WHERE pv.id_post = P.id
+    ) AS votes_detail,
+    COALESCE(json_agg(DISTINCT jsonb_build_object(
+        'id', L.id,
+        'useremail', L.useremail,
+        'id_user', L.id_user
+    )) FILTER (WHERE L.useremail != '0'), '[]') as likespost
 FROM post AS P
 INNER JOIN users AS U ON U.id = P.id_user
-INNER JOIN likes_publish AS L ON L.id_publish = P.id
+LEFT JOIN likes_publish AS L ON L.id_publish = P.id
 WHERE P.id_company = 1
-GROUP BY
-    P.id,
-    U.name,
-    U.image
-ORDER BY
-    P.is_pinned DESC, 
-    P.id DESC;       
- `;
+GROUP BY P.id, U.name, U.image, P.poll_options
+ORDER BY P.is_pinned DESC, P.id DESC;
+    `;
     return db.manyOrNone(sql);
 }
 
