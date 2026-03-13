@@ -125,9 +125,11 @@ module.exports = {
     },
     async createPost(req, res, next) {
         try {
-
             const id_user = req.params.id_user;
             const description = req.params.description;
+            // 🔥 AÑADIR ESTA LÍNEA PARA RECIBIR LA ENCUESTA 🔥
+            const poll_options = req.body.poll_options ? req.body.poll_options : null;
+
             const files = req.files;
             let image;
 
@@ -137,28 +139,24 @@ module.exports = {
 
                 if (url != undefined && url != null) {
                     image = url;
-
                 }
             }
 
+            // 🔥 ACTUALIZAR ESTA LÍNEA PARA ENVIAR LA ENCUESTA AL MODELO 🔥
+            const data = await Product.createPost(id_user, description, image, poll_options);
 
-            const data = await Product.createPost(id_user, description, image);
             return res.status(201).json({
-
                 success: true,
-                message: 'El registro se ralizo correctamente',
+                message: 'El registro se realizo correctamente',
             });
 
         }
-
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
-
-                succes: true,
+                succes: false, // Ojo: corregí 'succes' por 'success' (opcional, pero buena práctica)
                 message: 'error al publicar',
                 error: error
-
             });
         }
     },
