@@ -61,6 +61,7 @@ User.findById = (id, callback) => {
         keystore,
         balance,
 	mi_store,
+    access_level,
 	id_entrenador,
 	current_streak,
 	last_workout_date
@@ -94,6 +95,7 @@ User.findByMail = (email, callback) => {
         keystore,
         balance,
 	mi_store,
+    access_level,
 	id_entrenador
     FROM
         users
@@ -170,6 +172,7 @@ User.findByUserId = (id) => {
         U.keystore,
         U.balance,
 	U.mi_store,
+    U.access_level,
 	U.id_entrenador,
 	U.current_streak,
 	U.last_workout_date,
