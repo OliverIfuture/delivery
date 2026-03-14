@@ -152,6 +152,52 @@ Product.createPost = (id_user, description, url, poll_options) => {
     ]);
 }
 
+
+Product.createClassroomLesson = (lesson) => {
+    const sql = `
+        INSERT INTO classroom_modules (
+            title,
+            description,
+            cover_image,
+            video_url,
+            required_level,
+            created_at,
+            updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `;
+    return db.none(sql, [
+        lesson.title,
+        lesson.description,
+        lesson.cover_image,
+        lesson.video_url,
+        lesson.required_level,
+        new Date(),
+        new Date()
+    ]);
+};
+
+// --- OBTENER MÓDULOS (Filtrado por Nivel) ---
+Product.getClassroom = (user_level) => {
+    const sql = `
+        SELECT 
+            id,
+            title,
+            description,
+            cover_image,
+            video_url,
+            required_level,
+            (CASE WHEN required_level <= $1 THEN true ELSE false END) as is_unlocked
+        FROM 
+            classroom_modules
+        WHERE 
+            is_active = true
+        ORDER BY 
+            required_level ASC, id DESC
+    `;
+    return db.manyOrNone(sql, user_level);
+};
+
 Product.getUserProfile = (id) => {
     const sql = `
 		select 

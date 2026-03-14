@@ -2,6 +2,19 @@ const passport = require('passport');
 const productsControllers = require('../controllers/productsControllers');
 
 module.exports = (app, upload) => {
+
+
+  const classroomUpload = upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+  ]);
+
+  // Crear lección (Módulo de Classroom)
+  app.post('/api/products/createClassroomLesson', passport.authenticate('jwt', { session: false }), classroomUpload, productsControllers.createClassroomLesson);
+
+  // Obtener todos los módulos según el nivel del usuario
+  app.get('/api/products/getClassroom/:access_level', passport.authenticate('jwt', { session: false }), productsControllers.getClassroom);
+
   app.post('/api/products/createPost/:id_user/:description', upload.array('image', 1), productsControllers.createPost);
   app.post('/api/products/create', passport.authenticate('jwt', { session: false }), upload.array('image', 3), productsControllers.create);
   app.post('/api/products/createPLate', passport.authenticate('jwt', { session: false }), upload.array('image', 3), productsControllers.createPLate);

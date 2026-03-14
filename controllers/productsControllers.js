@@ -22,6 +22,59 @@ module.exports = {
         }
     },
 
+    async createClassroomLesson(req, res, next) {
+        try {
+            const lesson = req.body;
+            const files = req.files;
+
+            // 1. Subir Video (Obligatorio)
+            if (files['video']) {
+                const file = files['video'][0];
+                const path = `classroom/videos/${Date.now()}_video`;
+                const url = await storage(file, path);
+                lesson.video_url = url;
+            }
+
+            // 2. Subir Imagen de Portada (Opcional)
+            if (files['image']) {
+                const file = files['image'][0];
+                const path = `classroom/covers/${Date.now()}_cover`;
+                const url = await storage(file, path);
+                lesson.cover_image = url;
+            }
+
+            // 3. Guardar en DB usando el modelo
+            await Product.createClassroomLesson(lesson);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Lección creada exitosamente ✅',
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al crear la lección',
+                error: error
+            });
+        }
+    },
+
+    async getClassroom(req, res, next) {
+        try {
+            const access_level = req.params.access_level;
+            const data = await Product.getClassroom(access_level);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener el classroom'
+            });
+        }
+    },
+
     async deletePost(req, res, next) {
         try {
 
