@@ -251,6 +251,10 @@ module.exports = {
          * 👑 WEBHOOK MAESTRO DE STRIPE
          * Maneja Suscripciones, Planes Únicos, Gym, Wallet y Afiliados
          */
+    /**
+        * 👑 WEBHOOK MAESTRO DE STRIPE
+        * Maneja Suscripciones, Planes Únicos, Gym, Wallet y Afiliados
+        */
     async stripeWebhook(req, res, next) {
         const sig = req.headers['stripe-signature'];
         let event;
@@ -308,7 +312,15 @@ module.exports = {
                     if (user) {
                         await User.updateTrainer(user.id, id_company);
                         await User.transferClientData(user.id, id_company);
-                        console.log(`✅ Suscripción recurrente aplicada a: ${temp_email}`);
+
+                        // 🔥 ACTUALIZACIÓN DE NIVEL VIP (RECURRENTE) 🔥
+                        try {
+                            const db = require('../config/config');
+                            await db.none(`UPDATE users SET access_level = 2, updated_at = NOW() WHERE id = $1`, [user.id]);
+                            console.log(`✅ Suscripción recurrente aplicada y nivel VIP (2) otorgado a: ${temp_email}`);
+                        } catch (e) {
+                            console.log(`❌ Error al dar VIP en suscripción recurrente: ${e.message}`);
+                        }
                     } else {
                         console.log(`⏳ Suscripción pendiente guardada para: ${temp_email}`);
                     }
@@ -329,12 +341,10 @@ module.exports = {
 
                 console.log(`🔔 Webhook PaymentIntent Succeeded: Tipo ${metadata.type}`);
 
-                // A) Pago de Plan de Entrenamiento
+                // A) Pago de Plan de Entrenamiento (Pago Único)
                 if (metadata.type === 'client_subscription_payment') {
 
                     // 👇 ¡EL ESCUDO PROTECTOR PARA EVITAR DUPLICADOS! 👇
-                    // Si trae 'temp_email', sabemos que es el pago inicial de una SUSCRIPCIÓN recurrente.
-                    // Lo ignoramos aquí porque el bloque 'invoice.paid' (arriba) ya se encargó de guardarlo.
                     if (metadata.temp_email) {
                         console.log(`🔔 Webhook: PaymentIntent inicial de suscripción detectado. Delegando a invoice.paid...`);
                         break;
@@ -353,12 +363,17 @@ module.exports = {
                             stripe_customer_id: paymentIntent.customer,
                             status: 'active', current_period_end: expirationDate
                         });
+
                         if (id_client && id_company) {
                             const User = require('../models/user.js');
                             await User.updateTrainer(id_client, id_company);
                             await User.transferClientData(id_client, id_company);
+
+                            // 🔥 ACTUALIZACIÓN DE NIVEL VIP (PAGO ÚNICO) 🔥
+                            const db = require('../config/config');
+                            await db.none(`UPDATE users SET access_level = 2, updated_at = NOW() WHERE id = $1`, [id_client]);
                         }
-                        console.log(`✅ Pago único completado para ${id_client}`);
+                        console.log(`✅ Pago único completado y nivel VIP (2) otorgado para ${id_client}`);
                     } catch (e) {
                         console.log(`❌ Error guardando pago único: ${e.message}`);
                     }
@@ -429,7 +444,7 @@ module.exports = {
                 break;
 
             // =================================================================
-            // 4. ESTADOS DE CUENTA Y CANCELACIONES
+            // 4. ESTADOS DE CUENTA Y CANCELACIONES (¡PIERDEN EL VIP!)
             // =================================================================
             case 'account.updated':
                 console.log(`Webhook 'account.updated': ${event.data.object.id}`);
@@ -437,12 +452,38 @@ module.exports = {
 
             case 'invoice.payment_failed':
                 if (event.data.object.subscription) {
-                    await ClientSubscription.updateStatus(event.data.object.subscription, 'past_due');
+                    const failedSubId = event.data.object.subscription;
+                    await ClientSubscription.updateStatus(failedSubId, 'past_due');
+
+                    // 🔥 RETIRAR NIVEL VIP POR FALTA DE PAGO 🔥
+                    try {
+                        const db = require('../config/config');
+                        await db.none(`
+                            UPDATE users SET access_level = 1, updated_at = NOW()
+                            WHERE id = (SELECT id_client FROM client_subscriptions WHERE stripe_subscription_id = $1 LIMIT 1)
+                        `, [failedSubId]);
+                        console.log(`🚫 Nivel VIP retirado por pago fallido (Sub ID: ${failedSubId})`);
+                    } catch (e) {
+                        console.log(`❌ Error retirando VIP en invoice.payment_failed: ${e.message}`);
+                    }
                 }
                 break;
 
             case 'customer.subscription.deleted':
-                await ClientSubscription.updateStatus(event.data.object.id, 'canceled');
+                const deletedSubId = event.data.object.id;
+                await ClientSubscription.updateStatus(deletedSubId, 'canceled');
+
+                // 🔥 RETIRAR NIVEL VIP POR CANCELACIÓN 🔥
+                try {
+                    const db = require('../config/config');
+                    await db.none(`
+                        UPDATE users SET access_level = 1, updated_at = NOW()
+                        WHERE id = (SELECT id_client FROM client_subscriptions WHERE stripe_subscription_id = $1 LIMIT 1)
+                    `, [deletedSubId]);
+                    console.log(`🚫 Nivel VIP retirado por cancelación de suscripción (Sub ID: ${deletedSubId})`);
+                } catch (e) {
+                    console.log(`❌ Error retirando VIP en customer.subscription.deleted: ${e.message}`);
+                }
                 break;
 
             default:
@@ -1030,13 +1071,10 @@ async stripeWebhook12(req, res, next) {
             const { id_subscription } = req.body;
             const db = require('../config/config');
 
-            // Actualizamos estado a ACTIVE y reseteamos las fechas HOY + DÍAS DEL PLAN
-            // Hacemos un JOIN implícito (o subconsulta) para obtener la duración del plan
             const sql = `
                 UPDATE client_subscriptions cs
                 SET 
                     status = 'active',
-                    -- Calculamos la fecha final sumando los días del plan a la fecha actual (NOW())
                     current_period_end = NOW() + (sp."durationInDays" || ' days')::INTERVAL,
                     updated_at = NOW()
                 FROM subscription_plans sp
@@ -1050,6 +1088,10 @@ async stripeWebhook12(req, res, next) {
                 return res.status(404).json({ success: false, message: 'Suscripción no encontrada o plan inválido.' });
             }
 
+            // 🔥 NUEVO: Actualizamos el nivel del usuario a VIP (2) porque el entrenador aprobó el pago
+            const User = require('../models/user.js');
+            await User.updateAccessLevel(result.id_client, 2);
+
             return res.status(200).json({ success: true, message: 'Suscripción activada exitosamente.' });
 
         } catch (error) {
@@ -1057,7 +1099,6 @@ async stripeWebhook12(req, res, next) {
             return res.status(501).json({ success: false, message: 'Error al activar', error: error.message });
         }
     },
-
     /**
      * POST /api/subscriptions/create-recurring-registration
      * Creado específicamente para el registro web (Flutter).

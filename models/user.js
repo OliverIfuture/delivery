@@ -2006,6 +2006,15 @@ User.createQuestionnaire = (email, jsonData, photos) => {
     ]);
 }
 
+User.updateAccessLevel = (id_client, level) => {
+    const sql = `
+        UPDATE users 
+        SET access_level = $2, updated_at = NOW() 
+        WHERE id = $1
+    `;
+    return db.none(sql, [id_client, level]);
+};
+
 
 User.updateTrainerProfileData = (user, company) => {
     return db.tx(async t => {
