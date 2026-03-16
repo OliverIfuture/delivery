@@ -555,15 +555,13 @@ module.exports = {
             const promptText = `
             ACTÚA COMO UN PLANIFICADOR DE COMPRAS PROFESIONAL.
             
-            He aquí las recetas que comerá el cliente:
+            He aquí las recetas seleccionadas por el cliente:
             ${JSON.stringify(recipes)}
-            
-            El cliente comerá esto durante: ${days} días.
 
             TU TAREA:
-            1. Analiza los "ingredients" de estas recetas.
-            2. Multiplica las cantidades de cada ingrediente por ${days}.
-            3. Consolida ingredientes repetidos (ej: si pollo está en 2 recetas, suma los totales).
+            1. Analiza los "ingredients" de cada receta.
+            2. Multiplica la cantidad de cada ingrediente por el "multiplier" que viene en su respectivo objeto de receta.
+            3. Consolida ingredientes repetidos (ej: si pollo está en 2 recetas distintas, suma los totales finales).
             4. Categoriza obligatoriamente en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
 
             REGLAS CRÍTICAS (DEBES RESPONDER SOLO CON ESTE JSON ESTRICTO):
