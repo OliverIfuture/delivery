@@ -38,20 +38,13 @@ module.exports = {
                 });
             }
 
-            // 2. OBTENER DATOS DEL PLAN DE LA BD (Precio y Días)
-            const SubscriptionPlan = require('../models/subscriptionPlan');
-            const planInfo = await ClientSubscription.findById(id_plan);
-
-            if (!planInfo) {
-                return res.status(404).json({ success: false, message: 'Plan no encontrado' });
+            if (!price_id || price_id === 'MANUAL') {
+                return res.status(400).json({ success: false, message: 'El plan no tiene un ID de precio de Stripe válido.' });
             }
-
-            const durationDays = planInfo.durationInDays ? planInfo.durationInDays : 30;
-            const originalPrice = parseFloat(planInfo.price); // Precio base de la BD
 
             const stripeInstance = require('stripe')(company.stripeSecretKey);
 
-            // 3. Gestión del Cliente (Customer)
+            // 2. Gestión del Cliente (Customer)
             let customer;
             const existingCustomers = await stripeInstance.customers.list({ email: req.user.email, limit: 1 });
 
@@ -64,77 +57,83 @@ module.exports = {
                 });
             }
 
-            // --- 4. CÁLCULO MANUAL DEL PRECIO FINAL (PAGO ÚNICO) ---
-            // Como es pago único, Stripe no aplica cupones automáticos. Lo calculamos aquí.
-
-            let finalAmount = originalPrice;
-            let discountApplied = 'NO';
-
-            if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
-                const discountDecimal = parseFloat(discount_percent) / 100;
-                finalAmount = originalPrice - (originalPrice * discountDecimal);
-                discountApplied = 'YES';
-                console.log(`Aplicando descuento manual: ${originalPrice} - ${discount_percent}% = ${finalAmount}`);
-            }
-
-            // Convertir a centavos (Stripe siempre usa centavos)
-            // Math.round es vital para evitar errores de decimales flotantes (ej. 199.999999)
-            const amountInCents = Math.round(finalAmount * 100);
-
-            // Seguridad: El monto mínimo en MXN suele ser 10 pesos (1000 centavos) aprox
-            if (amountInCents < 1000) {
-                // Manejo opcional si el descuento deja el precio muy bajo
-            }
-            // -------------------------------------------------------
-
-
-            // 5. Crear el PaymentIntent (Pago Único)
-            const paymentIntent = await stripeInstance.paymentIntents.create({
-                amount: amountInCents,
-                currency: 'mxn',
+            // --- 3. LÓGICA DE SUSCRIPCIONES Y CUPONES DINÁMICOS ---
+            let subscriptionParams = {
                 customer: customer.id,
-                description: `Plan: ${planInfo.name} (${durationDays} días)`,
+                items: [{ price: price_id }], // Usamos el ID del precio mensual creado en Stripe
+                payment_behavior: 'default_incomplete',
+                payment_settings: { save_default_payment_method: 'on_subscription' },
+                expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
 
                 // Configuración para transferir dinero al entrenador (Connect)
                 transfer_data: {
                     destination: company.stripeAccountId,
                 },
 
-                // --- METADATA CRÍTICA PARA EL WEBHOOK ---
+                // Metadata para tu Webhook
                 metadata: {
-                    type: 'client_subscription_payment', // Cambiamos el tipo para identificarlo
+                    type: 'client_subscription',
                     id_client: id_client,
                     id_company: id_company,
-                    id_plan: id_plan,
-                    discount_applied: discountApplied,
-                    duration_days: durationDays // Días para calcular vencimiento
+                    id_plan: id_plan
                 }
-            });
+            };
 
+            // 🔥 Si hay descuento, creamos un cupón temporal en Stripe 🔥
+            if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
+                const discountValue = parseFloat(discount_percent);
 
+                // Creamos un cupón en Stripe de un solo uso (para el primer mes)
+                const coupon = await stripeInstance.coupons.create({
+                    percent_off: discountValue,
+                    duration: 'once', // Cámbialo a 'forever' si quieres que el descuento aplique todos los meses
+                    name: `Descuento ${discountValue}% App`,
+                });
 
-            // 6. (Opcional) Crear registro en BD como 'PENDING' ahora mismo
-            // Esto ayuda a tener un rastro antes de que el usuario pague
-            // Puedes usar ClientSubscription.createManual con status 'PENDING_PAYMENT' si quieres
+                subscriptionParams.coupon = coupon.id;
+                subscriptionParams.metadata.discount_applied = 'YES';
+                subscriptionParams.metadata.discount_percent = discountValue.toString();
+                console.log(`Cupón de Stripe creado y aplicado: ${coupon.id} (${discountValue}%)`);
+            } else {
+                subscriptionParams.metadata.discount_applied = 'NO';
+            }
 
+            // --- 4. CREAR LA SUSCRIPCIÓN EN STRIPE ---
+            const subscription = await stripeInstance.subscriptions.create(subscriptionParams);
+
+            // --- 5. EXTRAER EL SECRETO CORRECTO ---
+            // Si el cupón es del 100%, Stripe devuelve un SetupIntent (seti_). 
+            // Si hay que cobrar, devuelve un PaymentIntent (pi_).
+            let clientSecretStr = '';
+
+            if (subscription.pending_setup_intent) {
+                clientSecretStr = subscription.pending_setup_intent.client_secret;
+                console.log("Generado SetupIntent para suscripción (Cobro $0 o Trial)");
+            } else if (subscription.latest_invoice && subscription.latest_invoice.payment_intent) {
+                clientSecretStr = subscription.latest_invoice.payment_intent.client_secret;
+                console.log("Generado PaymentIntent para suscripción");
+            } else {
+                throw new Error("Stripe no devolvió un client_secret válido para la suscripción.");
+            }
+
+            // Retornamos los datos a Flutter
             return res.status(200).json({
                 success: true,
-                paymentIntentId: paymentIntent.id, // ID del intento
-                clientSecret: paymentIntent.client_secret, // Lo que necesita Flutter
+                subscriptionId: subscription.id,
+                clientSecret: clientSecretStr, // Esto es lo que lee tu app en Flutter
                 customerId: customer.id,
                 publishableKey: company.stripePublishableKey
             });
 
         } catch (error) {
-            console.log(`Error CRÍTICO en createSubscriptionIntent (Pago Único): ${error}`);
+            console.log(`Error CRÍTICO en createSubscriptionIntent: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al procesar el pago',
+                message: 'Error al procesar la suscripción en Stripe',
                 error: error.message
             });
         }
     },
-
     async createSubscriptionIntentAutom(req, res, next) {
         try {
             // Recibimos parámetros. 'discount_percent' puede venir null o undefined.
