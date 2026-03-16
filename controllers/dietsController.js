@@ -532,6 +532,82 @@ module.exports = {
         }
     },
 
+
+    /**
+     * 🛒 GENERAR LISTA DE COMPRAS CON IA
+     * Toma el plan asignado al cliente, consolida ingredientes y genera la lista.
+     */
+    /**
+         * 🛒 GENERAR LISTA DE COMPRAS CON IA (POST)
+         */
+    async generateShoppingList(req, res, next) {
+        try {
+            // Recibimos las recetas seleccionadas y los días a planificar
+            const { recipes, days } = req.body;
+
+            if (!recipes || recipes.length === 0) {
+                return res.status(400).json({ success: false, message: 'Faltan las recetas para analizar.' });
+            }
+
+            console.log(`[SHOPPING-LIST] Generando lista para ${days} días con ${recipes.length} recetas.`);
+
+            // PROMPT BLINDADO
+            const promptText = `
+            ACTÚA COMO UN PLANIFICADOR DE COMPRAS PROFESIONAL.
+            
+            He aquí las recetas que comerá el cliente:
+            ${JSON.stringify(recipes)}
+            
+            El cliente comerá esto durante: ${days} días.
+
+            TU TAREA:
+            1. Analiza los "ingredients" de estas recetas.
+            2. Multiplica las cantidades de cada ingrediente por ${days}.
+            3. Consolida ingredientes repetidos (ej: si pollo está en 2 recetas, suma los totales).
+            4. Categoriza obligatoriamente en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
+
+            REGLAS CRÍTICAS (DEBES RESPONDER SOLO CON ESTE JSON ESTRICTO):
+            {
+              "categories": [
+                {
+                  "name": "Carnes y aves",
+                  "items": [
+                    { "name": "Pechuga de pollo", "quantity": "1.5 kg", "isChecked": false }
+                  ]
+                }
+              ]
+            }
+            Asegúrate de que "isChecked" sea siempre false.
+            NO escribas markdown ni \`\`\`json. Solo el texto JSON puro.
+            `;
+
+            const model = aiClient.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                generationConfig: { responseMimeType: "application/json" }
+            });
+
+            const result = await model.generateContent(promptText);
+            const response = await result.response;
+            let text = response.text();
+
+            if (!text) throw new Error("La IA no generó respuesta.");
+
+            // Limpieza
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const shoppingListJSON = JSON.parse(text);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Lista generada',
+                data: shoppingListJSON
+            });
+
+        } catch (error) {
+            console.error(`[SHOPPING-LIST] Error: ${error.message}`);
+            return res.status(501).json({ success: false, message: 'Error IA', error: error.message });
+        }
+    },
+
     /**
      * PASO FINAL: Subida del PDF generado (Firebase -> Tabla 'diets')
      */

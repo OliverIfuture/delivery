@@ -10,7 +10,12 @@ module.exports = (app) => {
     // --- GET ---
     // Obtener todas las dietas asignadas por un entrenador
     app.get('/api/diets/findByTrainer/:id_company', passport.authenticate('jwt', { session: false }), dietsController.findByTrainer);
-
+    // --- NUEVA RUTA PARA LISTA DE COMPRAS ---
+    app.get(
+        '/api/diets/shopping-list',
+        passport.authenticate('jwt', { session: false }),
+        dietsController.generateShoppingList
+    );
     // Obtener la dieta ACTIVA de un cliente específico (para la app del cliente)
     app.get('/api/diets/findActiveByClient/:id_client', passport.authenticate('jwt', { session: false }), dietsController.findActiveByClient);
 
