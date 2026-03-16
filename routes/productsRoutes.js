@@ -11,7 +11,11 @@ module.exports = (app, upload) => {
 
   // Crear lección (Módulo de Classroom)
   app.post('/api/products/createClassroomLesson', passport.authenticate('jwt', { session: false }), classroomUpload, productsControllers.createClassroomLesson);
-
+  app.get(
+    '/api/diet/client-diet/:id_client',
+    passport.authenticate('jwt', { session: false }),
+    productsControllers.getDietByClient
+  );
   // Obtener todos los módulos según el nivel del usuario
   app.get('/api/products/getClassroom/:access_level', passport.authenticate('jwt', { session: false }), productsControllers.getClassroom);
   // --- RUTAS DE MODERACIÓN (Apple Guidelines) ---

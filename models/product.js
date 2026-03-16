@@ -2741,6 +2741,39 @@ Product.getAllForAffiliates = () => {
     return db.manyOrNone(sql);
 };
 
+Product.getDietByClient = (id_client) => {
+    // Traemos la asignación y los datos de la receta.
+    // Opcionalmente, agregamos un LEFT JOIN para saber si es favorita (si creaste esa tabla).
+    const sql = `
+        SELECT 
+            A.assigned_meal_category AS "mealCategory",
+            A.extra_info AS "extraInfo",
+            R.id,
+            R.title,
+            R.image_url AS "imageUrl",
+            R.prep_time_minutes AS "prepTimeMinutes",
+            R.calories,
+            R.satiety,
+            R.ingredients,
+            R.preparation_steps AS "preparationSteps",
+            R.allergens,
+            R.protein_grams AS "proteinGrams",
+            R.carbs_grams AS "carbsGrams",
+            R.fat_grams AS "fatGrams",
+            CASE 
+                WHEN F.id_recipe IS NOT NULL THEN true 
+                ELSE false 
+            END AS "isFavorite"
+        FROM client_diet_assignments A
+        INNER JOIN diet_recipes R ON A.id_recipe = R.id
+        LEFT JOIN user_favorite_recipes F ON R.id = F.id_recipe AND F.id_client = $1
+        WHERE A.id_client = $1
+        ORDER BY A.id ASC;
+    `;
+
+    return db.manyOrNone(sql, [id_client]);
+};
+
 Product.findById = (id_product) => {
     const sql = `
         SELECT

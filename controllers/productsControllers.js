@@ -3289,4 +3289,23 @@ module.exports = {
         }
     },
 
+    async getDietByClient(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+
+            const data = await Product.getDietByClient(id_client);
+
+            // Retornamos directamente el arreglo (data) para que Flutter lo parsee fácil
+            return res.status(200).json(data);
+
+        } catch (error) {
+            console.log(`Error en getDietByClient: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener la dieta del cliente',
+                error: error.message
+            });
+        }
+    }
+
 }
