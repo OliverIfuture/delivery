@@ -59,8 +59,8 @@ module.exports = (app, upload) => {
   app.get('/api/products/findServings', productsControllers.findServings);
 
   app.get('/api/products/getPost/:id_user', productsControllers.getPost);
-  app.get('/api/products/getPostAll', productsControllers.getPostAll);
-
+  // Pasamos el :id_user en la URL
+  app.get('/api/products/getPostAll/:id_user', passport.authenticate('jwt', { session: false }), productsControllers.getPostAll);
   app.get('/api/products/findReview/:id', productsControllers.findReview);
   app.get('/api/products/findReviewProduct/:id', productsControllers.findReviewProduct);
 

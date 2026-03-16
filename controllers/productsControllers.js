@@ -136,19 +136,18 @@ module.exports = {
 
     async getPostAll(req, res, next) {
         try {
+            // 🔥 1. Atrapamos el id del usuario que hace la petición
+            const id_user = req.params.id_user;
 
+            // 🔥 2. Se lo pasamos al modelo
+            const data = await Product.getPostAll(id_user);
 
-            const data = await Product.getPostAll();
-            //  console.log(`Status: ${JSON.stringify(data)}`);
-            return res.status(201).json(data);
-
-
+            return res.status(200).json(data); // 200 es el código correcto para GET
         }
         catch (error) {
-
             console.log(`error: ${error}`);
             return res.status(501).json({
-                succes: false,
+                success: false,
                 message: 'error al obtener posts'
             });
         }
