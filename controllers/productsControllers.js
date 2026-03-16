@@ -22,6 +22,43 @@ module.exports = {
         }
     },
 
+    // --- MODERACIÓN DE APPLE ---
+    async reportPost(req, res, next) {
+        try {
+            const { post_id, user_id } = req.body;
+            await Product.reportPost(post_id, user_id);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Publicación reportada exitosamente.'
+            });
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al reportar la publicación'
+            });
+        }
+    },
+
+    async blockUser(req, res, next) {
+        try {
+            const { blocker_id, blocked_id } = req.body;
+            await Product.blockUser(blocker_id, blocked_id);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Usuario bloqueado exitosamente.'
+            });
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al bloquear al usuario'
+            });
+        }
+    },
+
     async createClassroomLesson(req, res, next) {
         try {
             const lesson = req.body;

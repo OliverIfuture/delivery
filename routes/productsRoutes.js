@@ -14,7 +14,9 @@ module.exports = (app, upload) => {
 
   // Obtener todos los módulos según el nivel del usuario
   app.get('/api/products/getClassroom/:access_level', passport.authenticate('jwt', { session: false }), productsControllers.getClassroom);
-
+  // --- RUTAS DE MODERACIÓN (Apple Guidelines) ---
+  app.post('/api/products/reportPost', passport.authenticate('jwt', { session: false }), productsControllers.reportPost);
+  app.post('/api/products/blockUser', passport.authenticate('jwt', { session: false }), productsControllers.blockUser);
   app.post('/api/products/createPost/:id_user/:description', upload.array('image', 1), productsControllers.createPost);
   app.post('/api/products/create', passport.authenticate('jwt', { session: false }), upload.array('image', 3), productsControllers.create);
   app.post('/api/products/createPLate', passport.authenticate('jwt', { session: false }), upload.array('image', 3), productsControllers.createPLate);

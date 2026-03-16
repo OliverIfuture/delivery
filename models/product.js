@@ -198,6 +198,26 @@ Product.getClassroom = (user_level) => {
     return db.manyOrNone(sql, user_level);
 };
 
+// --- MODERACIÓN: REPORTAR POST ---
+Product.reportPost = (post_id, user_id) => {
+    const sql = `
+        INSERT INTO reported_posts (post_id, user_id, created_at)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (post_id, user_id) DO NOTHING
+    `;
+    return db.none(sql, [post_id, user_id, new Date()]);
+};
+
+// --- MODERACIÓN: BLOQUEAR USUARIO ---
+Product.blockUser = (blocker_id, blocked_id) => {
+    const sql = `
+        INSERT INTO blocked_users (blocker_id, blocked_id, created_at)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (blocker_id, blocked_id) DO NOTHING
+    `;
+    return db.none(sql, [blocker_id, blocked_id, new Date()]);
+};
+
 Product.getUserProfile = (id) => {
     const sql = `
 		select 
@@ -278,9 +298,9 @@ Product.castVote = (id_post, id_user, option_id) => {
 }
 
 
-Product.getPostAll = () => {
+Product.getPostAll = (id_user) => { // 🔥 Recibe el id_user
     const sql = `
-SELECT
+SELECT 
     P.id,
     P.id_user,
     P.description,
@@ -288,18 +308,16 @@ SELECT
     P.social,
     P.id_company,
     P.is_pinned,
-    P.poll_options, -- 🔥 Las opciones de la encuesta
+    P.poll_options, 
     U.name,
     U.image AS photo,
-    -- Contar votos totales
     (SELECT COUNT(*) FROM poll_votes WHERE id_post = P.id) AS total_votes,
-    -- Detalle de votos para saber qué votó el usuario actual y mostrar avatares
-(
+    (
         SELECT json_agg(json_build_object(
             'id_user', pv.id_user,
             'option_id', pv.option_id,
             'user_photo', u2.image,
-            'user_name', u2.name -- 🔥 AGREGA ESTA LÍNEA AQUÍ
+            'user_name', u2.name 
         ))
         FROM poll_votes pv
         INNER JOIN users u2 ON u2.id = pv.id_user
@@ -314,12 +332,23 @@ FROM post AS P
 INNER JOIN users AS U ON U.id = P.id_user
 LEFT JOIN likes_publish AS L ON L.id_publish = P.id
 WHERE P.id_company = 1
+
+  -- 🔥🔥🔥 FILTROS DE MODERACIÓN DE APPLE 🔥🔥🔥
+  
+  -- 1. Ocultar los posts que ESTE usuario ha reportado
+  AND P.id NOT IN (SELECT post_id FROM reported_posts WHERE user_id = $1)
+  
+  -- 2. Ocultar los posts de la gente que ESTE usuario bloqueó
+  AND P.id_user NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = $1)
+  
+  -- 3. (Opcional pero Pro) Ocultar los posts si el creador bloqueó a ESTE usuario
+  AND P.id_user NOT IN (SELECT blocker_id FROM blocked_users WHERE blocked_id = $1)
+
 GROUP BY P.id, U.name, U.image, P.poll_options
 ORDER BY P.is_pinned DESC, P.id DESC;
     `;
-    return db.manyOrNone(sql);
+    return db.manyOrNone(sql, [id_user]); // 🔥 Pasamos el parámetro $1
 }
-
 
 Product.togglePinPost = (id_post) => {
     const sql = `
