@@ -11,7 +11,7 @@ module.exports = (app) => {
     // Obtener todas las dietas asignadas por un entrenador
     app.get('/api/diets/findByTrainer/:id_company', passport.authenticate('jwt', { session: false }), dietsController.findByTrainer);
     // --- NUEVA RUTA PARA LISTA DE COMPRAS ---
-    app.get(
+    app.post(
         '/api/diets/shopping-list',
         passport.authenticate('jwt', { session: false }),
         dietsController.generateShoppingList
