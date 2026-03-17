@@ -67,18 +67,21 @@ ClientSubscription.updateStatus = (stripe_subscription_id, status) => {
 ClientSubscription.findActiveByClient = (id_client) => {
     const sql = `
         SELECT
-            id,
-            id_plan,
-            stripe_subscription_id,
-            status,
-            current_period_end
+            cs.id,
+            cs.id_plan,
+            cs.stripe_subscription_id,
+            cs.status,
+            cs.current_period_end,
+            p.name AS plan_name -- 🔥 Traemos el nombre del plan y lo llamamos 'plan_name'
         FROM
-            client_subscriptions
+            client_subscriptions cs
+        LEFT JOIN
+            subscription_plans p ON cs.id_plan = p.id -- 🔥 Unimos con la tabla de planes
         WHERE
-            id_client = $1 
-            AND (status = 'active' OR status = 'past_due' OR status = 'PENDING') -- Aún se considera "activo" si el pago está retrasado
+            cs.id_client = $1
+            AND (cs.status = 'active' OR cs.status = 'past_due' OR cs.status = 'PENDING')
         ORDER BY
-            created_at DESC
+            cs.created_at DESC
         LIMIT 1
     `;
     return db.oneOrNone(sql, id_client);
