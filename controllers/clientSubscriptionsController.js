@@ -26,6 +26,41 @@ module.exports = {
 
     // Asegúrate de poner esta función dentro de tu module.exports = { ... }
 
+
+    async getRetryPaymentLink(req, res) {
+        try {
+            const stripe_subscription_id = req.params.stripe_subscription_id;
+
+            if (!stripe_subscription_id || stripe_subscription_id === 'null') {
+                return res.status(400).json({ success: false, message: 'ID no válido' });
+            }
+
+            // Buscamos SOLO la última factura que esté "abierta" (open = no pagada/fallida)
+            const invoices = await adminStripe.invoices.list({
+                subscription: stripe_subscription_id,
+                status: 'open',
+                limit: 1,
+            });
+
+            if (invoices.data.length > 0) {
+                // Encontramos la factura pendiente, devolvemos el link mágico de Stripe
+                return res.status(200).json({
+                    success: true,
+                    url: invoices.data[0].hosted_invoice_url
+                });
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No hay pagos pendientes para esta suscripción'
+                });
+            }
+
+        } catch (error) {
+            console.log(`Error obteniendo link de reintento: ${error}`);
+            return res.status(501).json({ success: false, error: error.message });
+        }
+    },
+
     async getPaymentHistory(req, res) {
         try {
             const stripe_subscription_id = req.params.stripe_subscription_id;

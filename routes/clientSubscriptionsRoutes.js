@@ -12,7 +12,7 @@ module.exports = (app) => {
      * y devuelve un 'clientSecret' para el SDK nativo, NO una URL.
      */
     app.post('/api/subscriptions/create-subscription-intent', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createSubscriptionIntent);
-
+    app.get('/api/subscriptions/retry-link/:stripe_subscription_id', clientSubscriptionsController.getRetryPaymentLink);
     /**
      * WEBHOOK DE STRIPE
      * Esta ruta sigue siendo vital.
