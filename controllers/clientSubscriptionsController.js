@@ -23,6 +23,51 @@ module.exports = {
      */
     // (Esta es la función 'createExtensionIntent' en tu backend)
 
+
+    // Asegúrate de poner esta función dentro de tu module.exports = { ... }
+
+    async getPaymentHistory(req, res) {
+        try {
+            const stripe_subscription_id = req.params.stripe_subscription_id;
+
+            if (!stripe_subscription_id || stripe_subscription_id === 'null') {
+                return res.status(400).json({ success: false, message: 'ID de suscripción no válido' });
+            }
+
+            // 🔥 Usamos "adminStripe" que ya tienes declarado arriba 🔥
+            const invoices = await adminStripe.invoices.list({
+                subscription: stripe_subscription_id,
+                limit: 15,
+            });
+
+            // Mapeamos los datos para mandarle a Flutter solo lo que necesita
+            const historyData = invoices.data.map(invoice => {
+                return {
+                    id: invoice.id,
+                    amount: invoice.amount_paid / 100,
+                    currency: invoice.currency.toUpperCase(),
+                    status: invoice.status,
+                    date: new Date(invoice.created * 1000).toISOString(),
+                    receipt_url: invoice.hosted_invoice_url
+                };
+            });
+
+            return res.status(200).json({
+                success: true,
+                data: historyData,
+                message: 'Historial obtenido correctamente'
+            });
+
+        } catch (error) {
+            console.log(`Error obteniendo historial de Stripe: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener el historial de pagos',
+                error: error.message
+            });
+        }
+    },
+
     async createSubscriptionIntent(req, res, next) {
         try {
             // Recibimos parámetros.

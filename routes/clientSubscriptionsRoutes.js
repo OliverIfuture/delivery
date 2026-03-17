@@ -21,7 +21,7 @@ module.exports = (app) => {
     app.post('/api/subscriptions/create-extension-intent', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createExtensionIntent);
     app.put('/api/subscriptions/getFree/:id', clientSubscriptionsController.getFree);
     app.post('/api/subscriptions/create-recurring-registration', clientSubscriptionsController.createRecurringRegistrationIntent);
-
+    app.get('/api/subscriptions/history/:stripe_subscription_id', clientSubscriptionsController.getPaymentHistory);
     // --- GET ---
 
     /**
