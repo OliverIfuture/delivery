@@ -25,6 +25,31 @@ Diet.createAssignment = (diet) => {
         new Date()
     ]);
 };
+
+
+Diet.toggle = (id_user, id_recipe) => {
+    return db.task('toggle-favorite', async t => {
+        const sqlCheck = `
+            SELECT id FROM user_favorite_recipes 
+            WHERE id_user = $1 AND id_recipe = $2
+        `;
+        const existing = await t.oneOrNone(sqlCheck, [id_user, id_recipe]);
+
+        if (existing) {
+            const sqlDelete = `DELETE FROM user_favorite_recipes WHERE id = $1`;
+            await t.none(sqlDelete, existing.id);
+            return { action: 'removed', success: true };
+        } else {
+            const sqlInsert = `
+                INSERT INTO user_favorite_recipes (id_user, id_recipe, created_at)
+                VALUES ($1, $2, $3)
+            `;
+            await t.none(sqlInsert, [id_user, id_recipe, new Date()]);
+            return { action: 'added', success: true };
+        }
+    });
+};
+
 /**
  * Elimina una dieta.
  * Solo el entrenador que la creó puede eliminarla.

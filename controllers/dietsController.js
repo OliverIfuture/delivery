@@ -606,6 +606,43 @@ module.exports = {
         }
     },
 
+
+    async toggleFavorite(req, res) {
+        try {
+            const { id_user, id_recipe } = req.body;
+
+            if (!id_user || !id_recipe) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan datos (id_user o id_recipe)'
+                });
+            }
+
+            Diet.toggle(id_user, id_recipe, (err, data) => {
+                if (err) {
+                    return res.status(501).json({
+                        success: false,
+                        message: 'Error al procesar el favorito',
+                        error: err
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: data.action === 'added' ? 'Agregado a favoritos' : 'Eliminado de favoritos',
+                    action: data.action
+                });
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error inesperado en el servidor'
+            });
+        }
+    },
+
     /**
      * PASO FINAL: Subida del PDF generado (Firebase -> Tabla 'diets')
      */
