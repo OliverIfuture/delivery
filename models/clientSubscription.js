@@ -42,6 +42,26 @@ ClientSubscription.bindToUser = (email, id_client) => {
     `;
     return db.none(sql, [email.toLowerCase(), id_client]);
 };
+
+// Añade esto a tu modelo ClientSubscription
+
+// Buscar suscripción por su ID de Stripe
+ClientSubscription.findByStripeId = (stripe_subscription_id) => {
+    const sql = `SELECT * FROM client_subscriptions WHERE stripe_subscription_id = $1`;
+    return db.oneOrNone(sql, stripe_subscription_id);
+};
+
+// Actualizar el plan y fecha tras un upgrade/pago exitoso
+ClientSubscription.updatePlanAndDate = (stripe_subscription_id, id_plan, current_period_end) => {
+    const sql = `
+        UPDATE client_subscriptions
+        SET id_plan = $2,
+            current_period_end = $3,
+            updated_at = NOW()
+        WHERE stripe_subscription_id = $1
+    `;
+    return db.none(sql, [stripe_subscription_id, id_plan, current_period_end]);
+};
 /**
  * Actualiza el estado de una suscripción (usado por el Webhook)
  */

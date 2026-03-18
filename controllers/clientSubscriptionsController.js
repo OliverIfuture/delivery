@@ -61,6 +61,66 @@ module.exports = {
         }
     },
 
+
+    // Añade esta función dentro de module.exports = { ... }
+
+    async upgradeSubscription(req, res) {
+        try {
+            const id_client = req.user.id;
+            const { id_plan, id_company, new_stripe_price_id } = req.body;
+
+            // 1. Validar Compañía (Para usar sus credenciales de Stripe)
+            const User = require('../models/user.js');
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeSecretKey) {
+                return res.status(400).json({ success: false, message: 'El entrenador no tiene pagos configurados.' });
+            }
+
+            const stripeInstance = require('stripe')(company.stripeSecretKey);
+
+            // 2. Obtener la suscripción actual de la Base de Datos
+            const ClientSubscription = require('../models/clientSubscription.js');
+            const activeSub = await ClientSubscription.findActiveByClient(id_client);
+
+            if (!activeSub || !activeSub.stripe_subscription_id) {
+                return res.status(400).json({ success: false, message: 'No tienes un plan activo para mejorar.' });
+            }
+
+            const stripeSubId = activeSub.stripe_subscription_id;
+
+            // 3. Obtener la suscripción en Stripe para saber cuál es el "Item" actual
+            const subscription = await stripeInstance.subscriptions.retrieve(stripeSubId);
+            const currentItemId = subscription.items.data[0].id;
+
+            // 4. ¡EL PRORRATEO (UPGRADE EN STRIPE)!
+            const updatedSubscription = await stripeInstance.subscriptions.update(stripeSubId, {
+                items: [{
+                    id: currentItemId,
+                    price: new_stripe_price_id, // El nuevo precio
+                }],
+                proration_behavior: 'always_invoice', // Crea factura y cobra la diferencia AHORA MISMO
+                metadata: {
+                    id_plan: id_plan // Inyectamos el nuevo ID del plan a la metadata para que el webhook lo sepa
+                }
+            });
+
+            // Nota: No necesitamos actualizar la BD manualmente aquí, 
+            // porque 'always_invoice' dispara el Webhook (invoice.paid) al instante y él actualizará la BD.
+
+            return res.status(200).json({
+                success: true,
+                message: '¡Plan mejorado exitosamente! El prorrateo se ha aplicado.',
+            });
+
+        } catch (error) {
+            console.log(`Error CRÍTICO en upgradeSubscription: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: error.raw ? error.raw.message : 'Error al cambiar de plan',
+            });
+        }
+    },
+
     async getPaymentHistory(req, res) {
         try {
             const stripe_subscription_id = req.params.stripe_subscription_id;
@@ -335,6 +395,10 @@ module.exports = {
         * 👑 WEBHOOK MAESTRO DE STRIPE
         * Maneja Suscripciones, Planes Únicos, Gym, Wallet y Afiliados
         */
+    /**
+      * 👑 WEBHOOK MAESTRO DE STRIPE
+      * Maneja Suscripciones, Upgrades, Planes Únicos, Gym, Wallet y Afiliados
+      */
     async stripeWebhook(req, res, next) {
         const sig = req.headers['stripe-signature'];
         let event;
@@ -353,14 +417,14 @@ module.exports = {
         switch (event.type) {
 
             // =================================================================
-            // 1. SUSCRIPCIONES RECURRENTES (Primer pago y renovaciones)
+            // 1. SUSCRIPCIONES RECURRENTES (Primer pago, renovaciones y UPGRADES)
             // =================================================================
             case 'invoice.payment_succeeded':
             case 'invoice.paid':
                 const invoice = event.data.object;
                 let subMeta = invoice.metadata || {};
 
-                // Rescate de metadata: Si no viene directo, la buscamos en la suscripción
+                // Rescate de metadata: Si no viene directo en la factura, la buscamos en la suscripción
                 if (!subMeta.type && invoice.subscription) {
                     try {
                         const fullSub = await adminStripe.subscriptions.retrieve(invoice.subscription);
@@ -377,17 +441,35 @@ module.exports = {
                     const User = require('../models/user.js');
                     const user = await User.findByEmail(temp_email);
 
-                    const subscriptionData = {
-                        id_client: user ? user.id : null,
-                        id_company,
-                        id_plan,
-                        stripe_subscription_id: invoice.subscription,
-                        stripe_customer_id: invoice.customer,
-                        current_period_end: expirationDate,
-                        temp_email: user ? null : temp_email
-                    };
+                    // --- 🔥 MAGIA ANTI-DUPLICADOS Y UPGRADES 🔥 ---
+                    // Verificamos si esta suscripción ya existe en la base de datos
+                    const existingSub = await ClientSubscription.findByStripeId(invoice.subscription);
 
-                    await ClientSubscription.create(subscriptionData);
+                    if (existingSub) {
+                        // ES UN UPGRADE O UNA RENOVACIÓN AUTOMÁTICA
+                        console.log(`🔄 Webhook: Actualizando suscripción existente (Upgrade/Renovación): ${invoice.subscription}`);
+
+                        // Actualizamos el plan y la fecha (el id_plan viene fresco de la metadata actualizada)
+                        await ClientSubscription.updatePlanAndDate(invoice.subscription, id_plan, expirationDate);
+
+                        // Aseguramos que el estado esté activo (por si venía de past_due)
+                        await ClientSubscription.updateStatus(invoice.subscription, 'active');
+
+                    } else {
+                        // ES UNA COMPRA NUEVA (PRIMER MES)
+                        console.log(`✅ Webhook: Creando NUEVA suscripción: ${invoice.subscription}`);
+                        const subscriptionData = {
+                            id_client: user ? user.id : null,
+                            id_company,
+                            id_plan,
+                            stripe_subscription_id: invoice.subscription,
+                            stripe_customer_id: invoice.customer,
+                            current_period_end: expirationDate,
+                            temp_email: user ? null : temp_email
+                        };
+                        await ClientSubscription.create(subscriptionData);
+                    }
+                    // ------------------------------------------
 
                     if (user) {
                         await User.updateTrainer(user.id, id_company);
@@ -397,12 +479,12 @@ module.exports = {
                         try {
                             const db = require('../config/config');
                             await db.none(`UPDATE users SET access_level = 2, updated_at = NOW() WHERE id = $1`, [user.id]);
-                            console.log(`✅ Suscripción recurrente aplicada y nivel VIP (2) otorgado a: ${temp_email}`);
+                            console.log(`✅ Suscripción validada y nivel VIP (2) otorgado a: ${temp_email}`);
                         } catch (e) {
                             console.log(`❌ Error al dar VIP en suscripción recurrente: ${e.message}`);
                         }
                     } else {
-                        console.log(`⏳ Suscripción pendiente guardada para: ${temp_email}`);
+                        console.log(`⏳ Suscripción guardada para usuario no registrado aún: ${temp_email}`);
                     }
                 }
                 break;
@@ -421,12 +503,12 @@ module.exports = {
 
                 console.log(`🔔 Webhook PaymentIntent Succeeded: Tipo ${metadata.type}`);
 
-                // A) Pago de Plan de Entrenamiento (Pago Único)
+                // A) Pago de Plan de Entrenamiento (Pago Único sin recurrencia)
                 if (metadata.type === 'client_subscription_payment') {
 
-                    // 👇 ¡EL ESCUDO PROTECTOR PARA EVITAR DUPLICADOS! 👇
+                    // 👇 ¡EL ESCUDO PROTECTOR PARA EVITAR DUPLICADOS CON LAS SUSCRIPCIONES RECURRENTES! 👇
                     if (metadata.temp_email) {
-                        console.log(`🔔 Webhook: PaymentIntent inicial de suscripción detectado. Delegando a invoice.paid...`);
+                        console.log(`🔔 Webhook: PaymentIntent inicial de suscripción recurrente detectado. Delegando a invoice.paid...`);
                         break;
                     }
 
@@ -439,7 +521,7 @@ module.exports = {
                     try {
                         await ClientSubscription.create({
                             id_client, id_company, id_plan,
-                            stripe_subscription_id: paymentIntent.id,
+                            stripe_subscription_id: paymentIntent.id, // Guardamos PI como ID
                             stripe_customer_id: paymentIntent.customer,
                             status: 'active', current_period_end: expirationDate
                         });
@@ -515,6 +597,7 @@ module.exports = {
                 if (metadataSession.type === 'wallet_topup') {
                     const { id_client, coins_to_add } = metadataSession;
                     try {
+                        // Asegúrate de que el modelo Wallet esté importado arriba en tu archivo
                         await Wallet.processTopUp(id_client, parseFloat(coins_to_add), session.id);
                         console.log(`✅ ${coins_to_add} Premium Coins agregadas a ${id_client}.`);
                     } catch (error) {

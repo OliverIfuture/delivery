@@ -17,6 +17,8 @@ module.exports = (app) => {
      * WEBHOOK DE STRIPE
      * Esta ruta sigue siendo vital.
      */
+    app.post('/api/subscriptions/upgrade', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.upgradeSubscription);
+
     app.post('/api/subscriptions/webhook', clientSubscriptionsController.stripeWebhook);
     app.post('/api/subscriptions/create-extension-intent', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createExtensionIntent);
     app.put('/api/subscriptions/getFree/:id', clientSubscriptionsController.getFree);
