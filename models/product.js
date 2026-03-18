@@ -2725,16 +2725,16 @@ Product.getAllForAffiliates = () => {
         INNER JOIN
             company AS c ON p.id_company = c.id
         WHERE
-            c."acceptsAffiliates" = true
-            
+            c."acceptsAffiliates" = true and p.id_company = 859
+
             /* --- CORRECCIÓN --- */
             /* 1. Usamos 'p.state' (no 'p.stock') */
             /* 2. Verificamos que sea numérico antes de castear (para evitar errores si dice 'agotado') */
-            AND p.state ~ '^[0-9\.]+$' 
+            AND p.state ~ '^[0-9\.]+$'
             /* 3. Casteamos (convertimos) el string a número antes de comparar */
-            AND CAST(p.state AS INTEGER) > 0 
+            AND CAST(p.state AS INTEGER) > 0
             /* --- FIN DE CORRECCIÓN --- */
-            
+
         ORDER BY
             c.name, p.name
     `;
