@@ -69,7 +69,7 @@ module.exports = {
             const id_client = req.user.id;
             const { id_plan, id_company, new_stripe_price_id } = req.body;
 
-            // 1. Validar Compañía (Para usar sus credenciales de Stripe)
+            // 1. Validar Compañía
             const User = require('../models/user.js');
             const company = await User.findCompanyById(id_company);
             if (!company || !company.stripeSecretKey) {
@@ -78,7 +78,7 @@ module.exports = {
 
             const stripeInstance = require('stripe')(company.stripeSecretKey);
 
-            // 2. Obtener la suscripción actual de la Base de Datos
+            // 2. Obtener la suscripción actual de la BD
             const ClientSubscription = require('../models/clientSubscription.js');
             const activeSub = await ClientSubscription.findActiveByClient(id_client);
 
@@ -88,24 +88,38 @@ module.exports = {
 
             const stripeSubId = activeSub.stripe_subscription_id;
 
-            // 3. Obtener la suscripción en Stripe para saber cuál es el "Item" actual
+            // 3. Obtener la suscripción REAL en Stripe
             const subscription = await stripeInstance.subscriptions.retrieve(stripeSubId);
+
+            // 🔥 ¡NUEVA DEFENSA ANTI-CRASH! 🔥
+            // Si Stripe dice que ya está muerta, corregimos la BD y detenemos el proceso
+            if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
+
+                // Actualizamos nuestra BD para que ya no aparezca como activa
+                await ClientSubscription.updateStatus(stripeSubId, 'canceled');
+
+                // Si manejas el nivel VIP, se lo quitamos también por seguridad
+                await User.updateAccessLevel(id_client, 1);
+
+                return res.status(400).json({
+                    success: false,
+                    message: 'Tu suscripción anterior ya fue cancelada en el sistema. Por favor, recarga la página y realiza una compra nueva.'
+                });
+            }
+
             const currentItemId = subscription.items.data[0].id;
 
             // 4. ¡EL PRORRATEO (UPGRADE EN STRIPE)!
             const updatedSubscription = await stripeInstance.subscriptions.update(stripeSubId, {
                 items: [{
                     id: currentItemId,
-                    price: new_stripe_price_id, // El nuevo precio
+                    price: new_stripe_price_id,
                 }],
-                proration_behavior: 'always_invoice', // Crea factura y cobra la diferencia AHORA MISMO
+                proration_behavior: 'always_invoice',
                 metadata: {
-                    id_plan: id_plan // Inyectamos el nuevo ID del plan a la metadata para que el webhook lo sepa
+                    id_plan: id_plan
                 }
             });
-
-            // Nota: No necesitamos actualizar la BD manualmente aquí, 
-            // porque 'always_invoice' dispara el Webhook (invoice.paid) al instante y él actualizará la BD.
 
             return res.status(200).json({
                 success: true,
@@ -640,7 +654,7 @@ module.exports = {
                 try {
                     const db = require('../config/config');
                     await db.none(`
-                        UPDATE users SET access_level = 1, updated_at = NOW()
+                        UPDATE users SET access_level = 0, updated_at = NOW()
                         WHERE id = (SELECT id_client FROM client_subscriptions WHERE stripe_subscription_id = $1 LIMIT 1)
                     `, [deletedSubId]);
                     console.log(`🚫 Nivel VIP retirado por cancelación de suscripción (Sub ID: ${deletedSubId})`);

@@ -1575,7 +1575,7 @@ Product.createTab = (product) => {
 
 Product.findByCategory = (id_category) => {
     const sql = `
-SELECT 
+SELECT
 	P.id,
 	P.name,
 	P.description,
@@ -1597,14 +1597,14 @@ SELECT
 				'id_company',F.id_company,
 				'activate',F.activate
 		)
-		)FILTER (WHERE F.id IS NOT NULL), '[]') as flavor 
+		)FILTER (WHERE F.id IS NOT NULL), '[]') as flavor
 					 FROM products as P
-INNER JOIN 
+INNER JOIN
 	categories as C
 ON
 	p.id_category = C.id
-left JOIN flavor as F on P.id = F.id_product		
-WHERE C.id = $1
+left JOIN flavor as F on P.id = F.id_product
+WHERE C.id = 362 and p.id_company != 859
 group by p.id
 order by P.stock = 'true' desc
 
