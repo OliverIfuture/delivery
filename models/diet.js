@@ -201,4 +201,83 @@ Diet.findById = (id) => {
     return db.oneOrNone(sql, id);
 };
 
+/**
+ * OBTENER RECETAS DE LA EMPRESA
+ * Busca en la tabla diet_recipes por id_company
+ */
+Diet.getCompanyRecipes = (id_company) => {
+    const sql = `
+        SELECT * FROM diet_recipes 
+        WHERE id_company = $1 
+        ORDER BY created_at DESC
+    `;
+    return db.manyOrNone(sql, id_company);
+};
+
+/**
+ * OBTENER CUESTIONARIO DEL CLIENTE
+ * Extrae el JSON questionnaire_data de la tabla users
+ */
+Diet.getClientQuestionnaire = (id_client) => {
+    const sql = `
+        SELECT questionnaire_data 
+        FROM users 
+        WHERE id = $1
+    `;
+    return db.oneOrNone(sql, id_client);
+};
+
+/**
+ * ASIGNACIÓN MÚLTIPLE DE RECETAS (TRANSACCIÓN)
+ * Inserta un array de objetos en la tabla client_diets
+ */
+Diet.assignMultiple = (assignments) => {
+    // Usamos db.tx para asegurar que o se guardan todas, o ninguna (Transacción segura)
+    return db.tx('assign-multiple-diets', async t => {
+        const queries = assignments.map(a => {
+            return t.none(
+                `INSERT INTO client_diets(
+                    id_client, 
+                    id_recipe, 
+                    meal_time, 
+                    notes, 
+                    created_at
+                ) VALUES($1, $2, $3, $4, $5)`,
+                [
+                    a.id_client,
+                    a.id_recipe,
+                    a.meal_time,
+                    a.notes || '',
+                    new Date()
+                ]
+            );
+        });
+        return t.batch(queries); // Ejecuta todas las inserciones
+    });
+};
+
+/**
+ * HISTORIAL DE ASIGNACIONES (CLIENT_DIETS)
+ * Hace JOIN con users para filtrar por los clientes de este entrenador (mi_store)
+ */
+Diet.getAssignedHistory = (id_company) => {
+    const sql = `
+        SELECT 
+            cd.id, 
+            cd.id_client, 
+            cd.id_recipe, 
+            cd.meal_time, 
+            cd.notes, 
+            cd.created_at,
+            u.name as client_name,
+            r.name as recipe_name
+        FROM client_diets cd
+        INNER JOIN users u ON cd.id_client = u.id
+        INNER JOIN diet_recipes r ON cd.id_recipe = r.id
+        WHERE u.mi_store = $1 -- Filtra para que el entrenador solo vea a sus clientes
+        ORDER BY cd.created_at DESC
+    `;
+    return db.manyOrNone(sql, id_company);
+};
+
 module.exports = Diet;

@@ -41,6 +41,20 @@ module.exports = (app) => {
         dietsController.getDietById
     );
 
+    // --- NUEVAS RUTAS: BUILDER DINÁMICO DE DIETAS ---
+
+    // Obtener todas las recetas creadas por el entrenador/empresa
+    app.get('/api/diets/recipes/:id_company', passport.authenticate('jwt', { session: false }), dietsController.getCompanyRecipes);
+
+    // Obtener el cuestionario del cliente (JSON)
+    app.get('/api/diets/questionnaire/:id_client', passport.authenticate('jwt', { session: false }), dietsController.getClientQuestionnaire);
+
+    // Asignar múltiples recetas (Builder)
+    app.post('/api/diets/assign_multiple', passport.authenticate('jwt', { session: false }), dietsController.assignMultipleDiets);
+
+    // Historial de dietas dinámicas asignadas
+    app.get('/api/diets/history/:id_company', passport.authenticate('jwt', { session: false }), dietsController.getAssignedHistory);
+
     app.post('/api/diets/start', passport.authenticate('jwt', { session: false }), upload.array('images', 3), dietsController.startDietAnalysis);
 
     // Consultar estado (Polling)

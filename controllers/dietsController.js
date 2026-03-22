@@ -695,4 +695,90 @@ module.exports = {
             return res.status(501).json({ success: false, error: error.message });
         }
     },
+
+
+    // ==========================================================
+    // NUEVAS FUNCIONES PARA EL BUILDER DINÁMICO DE DIETAS
+    // ==========================================================
+
+    /**
+     * Obtiene las recetas creadas por el entrenador
+     */
+    async getCompanyRecipes(req, res, next) {
+        try {
+            const id_company = req.params.id_company;
+            const data = await Diet.getCompanyRecipes(id_company);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.error(`Error en getCompanyRecipes: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener recetas', error: error.message });
+        }
+    },
+
+    /**
+     * Obtiene el cuestionario (JSON) de un cliente específico
+     */
+    async getClientQuestionnaire(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const data = await Diet.getClientQuestionnaire(id_client);
+
+            if (data && data.questionnaire_data) {
+                // Parseamos si viene como string, o lo devolvemos directo si ya es objeto
+                let qData = typeof data.questionnaire_data === 'string'
+                    ? JSON.parse(data.questionnaire_data)
+                    : data.questionnaire_data;
+
+                return res.status(200).json(qData);
+            } else {
+                return res.status(200).json(null); // No ha llenado el cuestionario
+            }
+        } catch (error) {
+            console.error(`Error en getClientQuestionnaire: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener cuestionario', error: error.message });
+        }
+    },
+
+    /**
+     * Recibe un array de recetas y las asigna al cliente en batch
+     */
+    async assignMultipleDiets(req, res, next) {
+        try {
+            const assignments = req.body; // Array de objetos
+
+            if (!assignments || !Array.isArray(assignments) || assignments.length === 0) {
+                return res.status(400).json({ success: false, message: 'No se recibieron recetas para asignar.' });
+            }
+
+            console.log(`📦 [DEBUG] Insertando ${assignments.length} recetas para el cliente ${assignments[0].id_client}...`);
+
+            await Diet.assignMultiple(assignments);
+
+            return res.status(201).json({
+                success: true,
+                message: 'La dieta dinámica se ha asignado correctamente.'
+            });
+        } catch (error) {
+            console.error(`❌ Error en assignMultipleDiets: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al asignar las recetas al cliente.',
+                error: error.message
+            });
+        }
+    },
+
+    /**
+     * Obtiene el historial de recetas asignadas (Join con client_diets)
+     */
+    async getAssignedHistory(req, res, next) {
+        try {
+            const id_company = req.params.id_company;
+            const data = await Diet.getAssignedHistory(id_company);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.error(`Error en getAssignedHistory: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener historial', error: error.message });
+        }
+    },
 };
