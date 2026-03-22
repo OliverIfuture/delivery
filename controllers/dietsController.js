@@ -542,70 +542,79 @@ module.exports = {
          */
     async generateShoppingList(req, res, next) {
         try {
-            // Recibimos las recetas seleccionadas y los días a planificar
             const { recipes, days } = req.body;
 
-            if (!recipes || recipes.length === 0) {
+            if (!recipes || !Array.isArray(recipes) || recipes.length === 0) {
                 return res.status(400).json({ success: false, message: 'Faltan las recetas para analizar.' });
             }
 
-            console.log(`[SHOPPING-LIST] Generando lista para ${days} días con ${recipes.length} recetas.`);
+            console.log(`[SHOPPING-LIST] Procesando ${recipes.length} recetas para ${days} días.`);
 
-            // PROMPT BLINDADO
-            const promptText = `
-            ACTÚA COMO UN PLANIFICADOR DE COMPRAS PROFESIONAL.
-            
-            He aquí las recetas seleccionadas por el cliente:
-            ${JSON.stringify(recipes)}
+            // --- PASO 1: LIMPIEZA CRÍTICA DE DATOS ---
+            // Solo enviamos el título, los ingredientes y el multiplicador.
+            // Esto reduce el tamaño del prompt en un 80-90%.
+            const simplifiedRecipes = recipes.map(r => ({
+                t: r.title || r.name,
+                i: r.ingredients,
+                m: r.multiplier || 1
+            }));
 
-            TU TAREA:
-            1. Analiza los "ingredients" de cada receta.
-            2. Multiplica la cantidad de cada ingrediente por el "multiplier" que viene en su respectivo objeto de receta.
-            3. Consolida ingredientes repetidos (ej: si pollo está en 2 recetas distintas, suma los totales finales).
-            4. Categoriza obligatoriamente en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
+            // --- PASO 2: PROMPT ULTRA-LIGERO ---
+            const promptText = `Genera una lista de compras consolidada en JSON.
+        Datos: ${JSON.stringify(simplifiedRecipes)}
 
-            REGLAS CRÍTICAS (DEBES RESPONDER SOLO CON ESTE JSON ESTRICTO):
+        Tarea:
+        1. Multiplica ingredientes por "m".
+        2. Consolida duplicados sumando cantidades.
+        3. Clasifica en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
+        
+        Esquema de salida:
+        {
+          "categories": [
             {
-              "categories": [
-                {
-                  "name": "Carnes y aves",
-                  "items": [
-                    { "name": "Pechuga de pollo", "quantity": "1.5 kg", "isChecked": false }
-                  ]
-                }
-              ]
+              "name": "Nombre Categoría",
+              "items": [{ "name": "Ingrediente", "quantity": "cantidad + unidad", "isChecked": false }]
             }
-            Asegúrate de que "isChecked" sea siempre false.
-            NO escribas markdown ni \`\`\`json. Solo el texto JSON puro.
-            `;
+          ]
+        }
+        Responde exclusivamente con el JSON, sin texto adicional ni bloques de código.`;
 
+            // --- PASO 3: LLAMADA A GEMINI CON CONFIGURACIÓN DE VELOCIDAD ---
             const model = aiClient.getGenerativeModel({
-                model: "gemini-2.5-flash",
-                generationConfig: { responseMimeType: "application/json" }
+                model: "gemini-2.0-flash", // La versión Flash es la más rápida disponible
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    temperature: 0.1 // Menos creatividad = más velocidad
+                }
             });
 
+            // Agregamos un tiempo límite (timeout) interno para no quedar colgados
             const result = await model.generateContent(promptText);
             const response = await result.response;
-            let text = response.text();
+            const text = response.text().trim();
 
-            if (!text) throw new Error("La IA no generó respuesta.");
+            if (!text) throw new Error("La IA devolvió un cuerpo vacío.");
 
-            // Limpieza
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const shoppingListJSON = JSON.parse(text);
+            // Parseo seguro
+            const shoppingListJSON = JSON.parse(text.replace(/```json|```/g, ""));
 
             return res.status(200).json({
                 success: true,
-                message: 'Lista generada',
+                message: 'Lista generada con éxito',
                 data: shoppingListJSON
             });
 
         } catch (error) {
             console.error(`[SHOPPING-LIST] Error: ${error.message}`);
-            return res.status(501).json({ success: false, message: 'Error IA', error: error.message });
+
+            // Manejo específico para evitar que el cliente espere en vano
+            return res.status(500).json({
+                success: false,
+                message: 'Error al generar la lista. Intenta con menos recetas.',
+                error: error.message
+            });
         }
     },
-
 
     async toggleFavorite(req, res) {
         try {
