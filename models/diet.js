@@ -216,66 +216,69 @@ Diet.getCompanyRecipes = (id_company) => {
 
 /**
  * OBTENER CUESTIONARIO DEL CLIENTE
- * Extrae el JSON questionnaire_data de la tabla users
+ * Hace un JOIN con la tabla users para obtener el email del cliente, 
+ * y con ese email busca en user_questionnaires.
  */
 Diet.getClientQuestionnaire = (id_client) => {
     const sql = `
-        SELECT questionnaire_data 
-        FROM users 
-        WHERE id = $1
+        SELECT uq.questionnaire_data 
+        FROM user_questionnaires uq
+        INNER JOIN users u ON u.email = uq.user_email
+        WHERE u.id = $1
     `;
     return db.oneOrNone(sql, id_client);
 };
 
 /**
  * ASIGNACIÓN MÚLTIPLE DE RECETAS (TRANSACCIÓN)
- * Inserta un array de objetos en la tabla client_diets
+ * Inserta en tu tabla 'client_diet_assignments'
+ * Mapea 'meal_time' a 'assigned_meal_category' y 'notes' a 'extra_info'
  */
 Diet.assignMultiple = (assignments) => {
-    // Usamos db.tx para asegurar que o se guardan todas, o ninguna (Transacción segura)
     return db.tx('assign-multiple-diets', async t => {
         const queries = assignments.map(a => {
             return t.none(
-                `INSERT INTO client_diets(
+                `INSERT INTO client_diet_assignments(
                     id_client, 
                     id_recipe, 
-                    meal_time, 
-                    notes, 
+                    assigned_meal_category, 
+                    extra_info, 
                     created_at
                 ) VALUES($1, $2, $3, $4, $5)`,
                 [
                     a.id_client,
                     a.id_recipe,
-                    a.meal_time,
-                    a.notes || '',
+                    a.meal_time,       // Viene de Flutter como meal_time
+                    a.notes || '',     // Viene de Flutter como notes
                     new Date()
                 ]
             );
         });
-        return t.batch(queries); // Ejecuta todas las inserciones
+        return t.batch(queries);
     });
 };
 
 /**
- * HISTORIAL DE ASIGNACIONES (CLIENT_DIETS)
- * Hace JOIN con users para filtrar por los clientes de este entrenador (mi_store)
+ * HISTORIAL DE ASIGNACIONES
+ * Lee de client_diet_assignments y renombra las columnas (AS) para que 
+ * Flutter las reciba con los nombres que ya configuramos.
  */
 Diet.getAssignedHistory = (id_company) => {
     const sql = `
         SELECT 
-            cd.id, 
-            cd.id_client, 
-            cd.id_recipe, 
-            cd.meal_time, 
-            cd.notes, 
-            cd.created_at,
+            cda.id, 
+            cda.id_client, 
+            cda.id_recipe, 
+            cda.assigned_meal_category AS meal_time, 
+            cda.extra_info AS notes, 
+            cda.created_at,
             u.name as client_name,
             r.name as recipe_name
-        FROM client_diets cd
-        INNER JOIN users u ON cd.id_client = u.id
-        INNER JOIN diet_recipes r ON cd.id_recipe = r.id
+        FROM client_diet_assignments cda
+        INNER JOIN users u ON cda.id_client = u.id
+        INNER JOIN diet_recipes r ON cda.id_recipe = r.id
         WHERE u.mi_store = $1 -- Filtra para que el entrenador solo vea a sus clientes
-        ORDER BY cd.created_at DESC
+        ORDER BY cda.created_at DESC
     `;
     return db.manyOrNone(sql, id_company);
 };

@@ -41,20 +41,6 @@ module.exports = (app) => {
         dietsController.getDietById
     );
 
-    // --- NUEVAS RUTAS: BUILDER DINÁMICO DE DIETAS ---
-
-    // Obtener todas las recetas creadas por el entrenador/empresa
-    app.get('/api/diets/recipes/:id_company', passport.authenticate('jwt', { session: false }), dietsController.getCompanyRecipes);
-
-    // Obtener el cuestionario del cliente (JSON)
-    app.get('/api/diets/questionnaire/:id_client', passport.authenticate('jwt', { session: false }), dietsController.getClientQuestionnaire);
-
-    // Asignar múltiples recetas (Builder)
-    app.post('/api/diets/assign_multiple', passport.authenticate('jwt', { session: false }), dietsController.assignMultipleDiets);
-
-    // Historial de dietas dinámicas asignadas
-    app.get('/api/diets/history/:id_company', passport.authenticate('jwt', { session: false }), dietsController.getAssignedHistory);
-
     app.post('/api/diets/start', passport.authenticate('jwt', { session: false }), upload.array('images', 3), dietsController.startDietAnalysis);
 
     // Consultar estado (Polling)
@@ -64,6 +50,33 @@ module.exports = (app) => {
     app.post('/api/diets/favorites/toggle', passport.authenticate('jwt', { session: false }), dietsController.toggleFavorite);
     // 2. Subir PDF Final (Sigue igual)
     app.post('/api/diets/upload-pdf', passport.authenticate('jwt', { session: false }), upload.single('pdf'), dietsController.uploadDietPdf);
+    // 1. Obtener todas las recetas (Requiere el ID del entrenador/empresa en la URL)
+    app.get(
+        '/api/diets/recipes/:id_company',
+        passport.authenticate('jwt', { session: false }),
+        dietsController.getCompanyRecipes
+    );
+
+    // 2. Obtener el cuestionario del cliente (Requiere el ID del cliente en la URL)
+    app.get(
+        '/api/diets/questionnaire/:id_client',
+        passport.authenticate('jwt', { session: false }),
+        dietsController.getClientQuestionnaire
+    );
+
+    // 3. Asignación múltiple (Post: Los datos van en el Body, no en la URL)
+    app.post(
+        '/api/diets/assign_multiple',
+        passport.authenticate('jwt', { session: false }),
+        dietsController.assignMultipleDiets
+    );
+
+    // 4. Historial de dietas dinámicas (Requiere el ID del entrenador/empresa en la URL)
+    app.get(
+        '/api/diets/history/:id_company',
+        passport.authenticate('jwt', { session: false }),
+        dietsController.getAssignedHistory
+    );
 }
 
 

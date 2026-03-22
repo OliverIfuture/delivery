@@ -701,6 +701,10 @@ module.exports = {
     // NUEVAS FUNCIONES PARA EL BUILDER DINÁMICO DE DIETAS
     // ==========================================================
 
+    // ==========================================================
+    // NUEVAS FUNCIONES PARA EL BUILDER DINÁMICO DE DIETAS
+    // ==========================================================
+
     /**
      * Obtiene las recetas creadas por el entrenador
      */
@@ -716,7 +720,7 @@ module.exports = {
     },
 
     /**
-     * Obtiene el cuestionario (JSON) de un cliente específico
+     * Obtiene el cuestionario de un cliente por su ID (usando el email internamente en SQL)
      */
     async getClientQuestionnaire(req, res, next) {
         try {
@@ -724,14 +728,14 @@ module.exports = {
             const data = await Diet.getClientQuestionnaire(id_client);
 
             if (data && data.questionnaire_data) {
-                // Parseamos si viene como string, o lo devolvemos directo si ya es objeto
+                // Parseamos si viene como string en la BD
                 let qData = typeof data.questionnaire_data === 'string'
                     ? JSON.parse(data.questionnaire_data)
                     : data.questionnaire_data;
 
                 return res.status(200).json(qData);
             } else {
-                return res.status(200).json(null); // No ha llenado el cuestionario
+                return res.status(200).json(null); // No hay cuestionario
             }
         } catch (error) {
             console.error(`Error en getClientQuestionnaire: ${error}`);
@@ -740,17 +744,17 @@ module.exports = {
     },
 
     /**
-     * Recibe un array de recetas y las asigna al cliente en batch
+     * Recibe el array de recetas de Flutter y las asigna en batch
      */
     async assignMultipleDiets(req, res, next) {
         try {
-            const assignments = req.body; // Array de objetos
+            const assignments = req.body; // Array generado por Flutter
 
             if (!assignments || !Array.isArray(assignments) || assignments.length === 0) {
                 return res.status(400).json({ success: false, message: 'No se recibieron recetas para asignar.' });
             }
 
-            console.log(`📦 [DEBUG] Insertando ${assignments.length} recetas para el cliente ${assignments[0].id_client}...`);
+            console.log(`📦 [DEBUG] Insertando ${assignments.length} recetas en client_diet_assignments para el cliente ${assignments[0].id_client}...`);
 
             await Diet.assignMultiple(assignments);
 
@@ -769,7 +773,7 @@ module.exports = {
     },
 
     /**
-     * Obtiene el historial de recetas asignadas (Join con client_diets)
+     * Obtiene el historial de recetas asignadas mapeadas al modelo de Flutter
      */
     async getAssignedHistory(req, res, next) {
         try {
