@@ -273,7 +273,7 @@ Diet.getAssignedHistory = (id_company) => {
             cda.extra_info AS notes, 
             cda.created_at,
             u.name as client_name,
-            r.name as recipe_name
+            r.title as recipe_name
         FROM client_diet_assignments cda
         INNER JOIN users u ON cda.id_client = u.id
         INNER JOIN diet_recipes r ON cda.id_recipe = r.id
