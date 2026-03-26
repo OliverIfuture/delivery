@@ -234,22 +234,34 @@ Diet.getClientQuestionnaire = (id_client) => {
  * Inserta en tu tabla 'client_diet_assignments'
  * Mapea 'meal_time' a 'assigned_meal_category' y 'notes' a 'extra_info'
  */
+// EN TU MODELO DE NODE.JS
+
 Diet.assignMultiple = (assignments) => {
     return db.tx('assign-multiple-diets', async t => {
         const queries = assignments.map(a => {
             return t.none(
-                `INSERT INTO client_diet_assignments(
+                `INSERT INTO client_diets_v2 (
                     id_client, 
                     id_recipe, 
                     assigned_meal_category, 
-                    extra_info, 
+                    custom_ingredients, 
+                    final_calories, 
+                    final_protein, 
+                    final_carbs, 
+                    final_fats, 
+                    notes, 
                     created_at
-                ) VALUES($1, $2, $3, $4, $5)`,
+                ) VALUES($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10)`,
                 [
                     a.id_client,
                     a.id_recipe,
-                    a.meal_time,       // Viene de Flutter como meal_time
-                    a.notes || '',     // Viene de Flutter como notes
+                    a.assigned_meal_category || 'General', // <-- Corregido para leer lo que manda Flutter
+                    JSON.stringify(a.custom_ingredients || []), // Convertimos el array a string JSON para Postgres
+                    a.final_calories || 0,
+                    a.final_protein || 0,
+                    a.final_carbs || 0,
+                    a.final_fats || 0,
+                    a.notes || '',
                     new Date()
                 ]
             );
@@ -257,7 +269,6 @@ Diet.assignMultiple = (assignments) => {
         return t.batch(queries);
     });
 };
-
 /**
  * HISTORIAL DE ASIGNACIONES
  * Lee de client_diet_assignments y renombra las columnas (AS) para que 
