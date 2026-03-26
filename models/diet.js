@@ -300,6 +300,7 @@ Diet.getAssignedDietByClient = (id_client) => {
     const sql = `
     SELECT 
         cd.id AS id_assignment,
+        r.id AS id_recipe, -- 🔥 CRUCIAL: Necesitamos el ID original de la receta
         cd.assigned_meal_category,
         cd.notes,
         cd.final_calories AS calories,
@@ -311,12 +312,16 @@ Diet.getAssignedDietByClient = (id_client) => {
         r.image_url,
         r.preparation_steps,
         u.target_calories,
-        -- 🔥 EXTRAEMOS EL ARRAY DIRECTO DEL JSON DEL CUESTIONARIO
-        uq.questionnaire_data->'health_and_allergies'->>'special_conditions' AS medical_conditions
+        uq.questionnaire_data->'health_and_allergies'->>'special_conditions' AS medical_conditions,
+        -- 🔥 MAGIA: Devuelve true si el usuario ya le dio like a esta receta
+        EXISTS (
+            SELECT 1 FROM user_favorite_recipes ufr 
+            WHERE ufr.id_user = cd.id_client AND ufr.id_recipe = r.id
+        ) AS is_favorite
     FROM client_diets_v2 cd
     INNER JOIN diet_recipes_v2 r ON cd.id_recipe = r.id
     INNER JOIN users u ON cd.id_client = u.id
-    LEFT JOIN user_questionnaires uq ON u.email = uq.user_email -- Unimos por email
+    LEFT JOIN user_questionnaires uq ON u.email = uq.user_email
     WHERE cd.id_client = $1
     ORDER BY 
         CASE cd.assigned_meal_category 
@@ -328,7 +333,6 @@ Diet.getAssignedDietByClient = (id_client) => {
             ELSE 6
         END;
 `;
-
     return db.manyOrNone(sql, id_client);
 };
 
