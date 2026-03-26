@@ -627,27 +627,23 @@ module.exports = {
                 });
             }
 
-            Diet.toggle(id_user, id_recipe, (err, data) => {
-                if (err) {
-                    return res.status(501).json({
-                        success: false,
-                        message: 'Error al procesar el favorito',
-                        error: err
-                    });
-                }
+            // 🔥 LA MAGIA: Usamos await porque tu modelo devuelve una Promesa
+            const data = await Diet.toggle(id_user, id_recipe);
 
-                return res.status(200).json({
-                    success: true,
-                    message: data.action === 'added' ? 'Agregado a favoritos' : 'Eliminado de favoritos',
-                    action: data.action
-                });
+            // Como usamos await, el código sigue por aquí inmediatamente en milisegundos
+            return res.status(200).json({
+                success: true,
+                message: data.action === 'added' ? 'Agregado a favoritos' : 'Eliminado de favoritos',
+                action: data.action
             });
 
         } catch (error) {
-            console.log(`Error: ${error}`);
+            // Si PostgreSQL arroja un error, el try/catch lo atrapa automáticamente
+            console.log(`❌ Error en toggleFavorite: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error inesperado en el servidor'
+                message: 'Error al procesar el favorito',
+                error: error.message
             });
         }
     },
