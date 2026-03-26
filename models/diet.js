@@ -312,7 +312,7 @@ Diet.getAssignedDietByClient = (id_client) => {
         r.preparation_steps,
         u.target_calories,
         -- 🔥 EXTRAEMOS EL ARRAY DIRECTO DEL JSON DEL CUESTIONARIO
-        uq.data->'health_and_allergies'->>'special_conditions' AS medical_conditions
+        uq.questionnaire_data->'health_and_allergies'->>'special_conditions' AS medical_conditions
     FROM client_diets_v2 cd
     INNER JOIN diet_recipes_v2 r ON cd.id_recipe = r.id
     INNER JOIN users u ON cd.id_client = u.id
