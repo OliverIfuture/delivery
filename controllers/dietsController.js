@@ -752,6 +752,23 @@ module.exports = {
         }
     },
 
+    // En dietsController.js o dietsV2Controller.js
+    async getClientDietV2(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const diet = await DietV2.getAssignedDietByClient(id_client);
+
+            return res.status(200).json(diet);
+        } catch (error) {
+            console.error(`❌ Error en getClientDietV2: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener la dieta del cliente',
+                error: error.message
+            });
+        }
+    },
+
     /**
      * Recibe el array de recetas de Flutter y las asigna en batch
      */

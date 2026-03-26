@@ -294,6 +294,40 @@ Diet.getAssignedHistory = (id_company) => {
     return db.manyOrNone(sql, id_company);
 };
 
+
+Diet.getAssignedDietByClient = (id_client) => {
+    // Esta consulta trae la dieta personalizada exacta que el entrenador armó
+    const sql = `
+        SELECT 
+            cd.id AS id_assignment,
+            cd.assigned_meal_category,
+            cd.notes,
+            cd.final_calories AS calories,
+            cd.final_protein AS protein,
+            cd.final_carbs AS carbs,
+            cd.final_fats AS fats,
+            cd.custom_ingredients, -- El JSON con los gramos exactos que modificaste
+            r.title,
+            r.image_url,
+            r.preparation_steps
+        FROM client_diets_v2 cd
+        INNER JOIN diet_recipes_v2 r ON cd.id_recipe = r.id
+        WHERE cd.id_client = $1
+        ORDER BY 
+            -- Ordenar lógicamente por comida
+            CASE cd.assigned_meal_category 
+                WHEN 'Desayuno' THEN 1
+                WHEN 'Snack' THEN 2
+                WHEN 'Almuerzo' THEN 3
+                WHEN 'Merienda' THEN 4
+                WHEN 'Cena' THEN 5
+                ELSE 6
+            END;
+    `;
+
+    return db.manyOrNone(sql, id_client);
+};
+
 Diet.getRecipesByCompany = (id_company) => {
     // Esta consulta trae la receta y empaca todos sus ingredientes en un arreglo JSON
     const sql = `
