@@ -77,6 +77,8 @@ module.exports = (app) => {
         passport.authenticate('jwt', { session: false }),
         dietsController.getAssignedHistory
     );
+
+    app.get('/api/diets/findByTrainer/:id_company', passport.authenticate('jwt', { session: false }), dietsController.getRecipesWithIngredients);
 }
 
 

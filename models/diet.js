@@ -283,4 +283,44 @@ Diet.getAssignedHistory = (id_company) => {
     return db.manyOrNone(sql, id_company);
 };
 
+Diet.getRecipesByCompany = (id_company) => {
+    // Esta consulta trae la receta y empaca todos sus ingredientes en un arreglo JSON
+    const sql = `
+        SELECT 
+            r.id,
+            r.default_meal_category,
+            r.title,
+            r.image_url,
+            r.total_calories AS calories,
+            r.total_protein AS protein_grams,
+            r.total_carbs AS carbs_grams,
+            r.total_fats AS fat_grams,
+            r.preparation_steps,
+            (
+                SELECT COALESCE(json_agg(
+                    json_build_object(
+                        'id_map', m.id,
+                        'id_ingredient', i.id,
+                        'name', i.name,
+                        'unit', i.unit,
+                        'base_qty', i.base_qty,
+                        'prot_per_base', i.protein,
+                        'carb_per_base', i.carbs,
+                        'fat_per_base', i.fats,
+                        'cal_per_base', i.calories,
+                        'default_qty', m.default_qty
+                    )
+                ), '[]'::json)
+                FROM recipe_ingredients_map m
+                INNER JOIN master_ingredients i ON m.id_ingredient = i.id
+                WHERE m.id_recipe = r.id
+            ) AS intelligent_ingredients
+        FROM diet_recipes_v2 r
+        WHERE r.id_company = $1
+        ORDER BY r.id DESC;
+    `;
+
+    return db.manyOrNone(sql, id_company);
+};
+
 module.exports = Diet;

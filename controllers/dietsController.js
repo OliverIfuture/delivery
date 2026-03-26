@@ -794,4 +794,20 @@ module.exports = {
             return res.status(501).json({ success: false, message: 'Error al obtener historial', error: error.message });
         }
     },
+
+    async getRecipesWithIngredients(req, res, next) {
+        try {
+            const id_company = req.params.id_company;
+            const recipes = await Diet.getRecipesByCompany(id_company);
+
+            return res.status(200).json(recipes);
+        } catch (error) {
+            console.error(`❌ Error en getRecipesWithIngredients: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener las recetas',
+                error: error.message
+            });
+        }
+    },
 };
