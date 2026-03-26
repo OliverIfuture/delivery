@@ -316,7 +316,7 @@ Diet.getAssignedDietByClient = (id_client) => {
     FROM client_diets_v2 cd
     INNER JOIN diet_recipes_v2 r ON cd.id_recipe = r.id
     INNER JOIN users u ON cd.id_client = u.id
-    LEFT JOIN user_questionnaires uq ON u.email = uq.email -- Unimos por email
+    LEFT JOIN user_questionnaires uq ON u.email = uq.user_email -- Unimos por email
     WHERE cd.id_client = $1
     ORDER BY 
         CASE cd.assigned_meal_category 
