@@ -756,7 +756,7 @@ module.exports = {
     async getClientDietV2(req, res, next) {
         try {
             const id_client = req.params.id_client;
-            const diet = await DietV2.getAssignedDietByClient(id_client);
+            const diet = await Diet.getAssignedDietByClient(id_client);
 
             return res.status(200).json(diet);
         } catch (error) {
