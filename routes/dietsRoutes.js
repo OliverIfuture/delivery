@@ -61,6 +61,9 @@ module.exports = (app) => {
     app.get('/api/diets/questionnaire/:id_client', dietsController.getClientQuestionnaire
     );
 
+    app.get('/api/diets/getClientQuestionnaireWithEmail/:id_client', dietsController.getClientQuestionnaireWithEmail
+    );
+
     // 3. Asignación múltiple (Post: Los datos van en el Body, no en la URL)
     app.post(
         '/api/diets/assign_multiple',

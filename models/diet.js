@@ -229,6 +229,14 @@ Diet.getClientQuestionnaire = (id_client) => {
     return db.oneOrNone(sql, id_client);
 };
 
+Diet.getClientQuestionnaireWithEmail = (id_client) => {
+    const sql = `
+           SELECT questionnaire_data
+        FROM user_questionnaires where user_email = $1
+    `;
+    return db.oneOrNone(sql, id_client);
+};
+
 /**
  * ASIGNACIÓN MÚLTIPLE DE RECETAS (TRANSACCIÓN)
  * Inserta en tu tabla 'client_diet_assignments'
