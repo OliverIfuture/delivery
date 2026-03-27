@@ -120,6 +120,14 @@ module.exports = (app, upload) => {
         { name: 'lateral_der', maxCount: 1 }
     ]), UsersController.submitQuestionnaire);
 
+    // routes/userRoutes.js
+    app.post('/api/users/submitQuestionnairemovil/submit', upload.fields([
+        { name: 'frontal', maxCount: 1 },
+        { name: 'espalda', maxCount: 1 },
+        { name: 'lateral_izq', maxCount: 1 },
+        { name: 'lateral_der', maxCount: 1 }
+    ]), UsersController.submitQuestionnairemovil);
+
     app.put('/api/users/update_trainer_profile',
         upload.fields([
             { name: 'image', maxCount: 1 },     // Foto de perfil

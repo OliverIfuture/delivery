@@ -2553,6 +2553,73 @@ module.exports = {
         }
     },
 
+
+    async submitQuestionnairemovil(req, res, next) {
+        try {
+            // 1. Validar que el campo 'data' exista
+            if (!req.body.data) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se recibieron los datos del cuestionario'
+                });
+            }
+
+            // 2. Parsear el JSON que enviamos desde Flutter como request.fields['data']
+            const dataObj = JSON.parse(req.body.data);
+            const email = dataObj.user_email;
+
+            // 3. Manejo de Imágenes
+            const files = req.files;
+            const photosUrls = {
+                frontal: null,
+                espalda: null,
+                lateral_izq: null,
+                lateral_der: null
+            };
+
+            // Función auxiliar para subir si el archivo existe en la petición
+            const uploadIfExist = async (fieldName, fileNamePrefix) => {
+                if (files && files[fieldName] && files[fieldName].length > 0) {
+                    const path = `quest_${email}_${fileNamePrefix}_${Date.now()}`;
+                    const url = await storage(files[fieldName][0], path);
+                    return url;
+                }
+                return null;
+            };
+
+            // Subimos las 4 fotos en paralelo para mayor velocidad
+            [
+                photosUrls.frontal,
+                photosUrls.espalda,
+                photosUrls.lateral_izq,
+                photosUrls.lateral_der
+            ] = await Promise.all([
+                uploadIfExist('frontal', 'front'),
+                uploadIfExist('espalda', 'back'),
+                uploadIfExist('lateral_izq', 'left'),
+                uploadIfExist('lateral_der', 'right')
+            ]);
+
+            // 4. Guardar en Base de Datos
+            // Pasamos el email, el JSON (como string) y el objeto con las URLs de las fotos
+            const savedData = await User.createQuestionnaire(email, JSON.stringify(dataObj), photosUrls);
+
+            return res.status(201).json({
+                success: true,
+                message: 'El cuestionario se ha guardado exitosamente',
+                data: savedData.id
+            });
+
+        } catch (error) {
+            console.error(`Error en submitQuestionnaire: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al procesar el cuestionario',
+                error: error.message
+            });
+        }
+    },
+
     async submitQuestionnaire(req, res, next) {
         try {
             // 1. Parsear el JSON crudo que viene desde Flutter
