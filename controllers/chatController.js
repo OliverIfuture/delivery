@@ -1,5 +1,5 @@
-const User = require('../models/user.js'); 
-const admin = require('firebase-admin'); 
+const User = require('../models/user.js');
+const admin = require('firebase-admin');
 const storage = require('../utils/cloud_storage.js');
 
 // --- ¡LÓGICA DE INICIALIZACIÓN (LA DEJAREMOS IGUAL)! ---
@@ -8,38 +8,38 @@ let firestoreDb;
 let messaging;
 
 try {
-  // Leemos las 3 variables de Heroku
-  const projectId = process.env.FIREBASE_CHAT_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CHAT_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_CHAT_PRIVATE_KEY.replace(/\\n/g, '\n');
+    // Leemos las 3 variables de Heroku
+    const projectId = process.env.FIREBASE_CHAT_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CHAT_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_CHAT_PRIVATE_KEY.replace(/\\n/g, '\n');
 
-  if (!projectId || !clientEmail || !privateKey) {
-    throw new Error('Faltan las variables de entorno de Firebase Chat (PROJECT_ID, CLIENT_EMAIL, o PRIVATE_KEY).');
-  }
+    if (!projectId || !clientEmail || !privateKey) {
+        throw new Error('Faltan las variables de entorno de Firebase Chat (PROJECT_ID, CLIENT_EMAIL, o PRIVATE_KEY).');
+    }
 
-  serviceAccountChat = {
-    projectId: projectId,
-    clientEmail: clientEmail,
-    privateKey: privateKey
-  };
+    serviceAccountChat = {
+        projectId: projectId,
+        clientEmail: clientEmail,
+        privateKey: privateKey
+    };
 
-  let chatApp;
-  if (admin.apps.some(app => app.name === 'chatApp')) {
-      chatApp = admin.app('chatApp');
-  } else {
-      chatApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccountChat)
-      }, 'chatApp');
-  }
+    let chatApp;
+    if (admin.apps.some(app => app.name === 'chatApp')) {
+        chatApp = admin.app('chatApp');
+    } else {
+        chatApp = admin.initializeApp({
+            credential: admin.credential.cert(serviceAccountChat)
+        }, 'chatApp');
+    }
 
-  firestoreDb = chatApp.firestore();
-  messaging = chatApp.messaging();
-  
-  console.log(`--- chatApp de Firebase inicializada con ÉXITO para el proyecto: ${projectId} ---`);
+    firestoreDb = chatApp.firestore();
+    messaging = chatApp.messaging();
+
+    console.log(`--- chatApp de Firebase inicializada con ÉXITO para el proyecto: ${projectId} ---`);
 
 } catch (e) {
-  console.error('!!!!!!!!!! ERROR FATAL AL INICIALIZAR FIREBASE CHAT !!!!!!!!!!');
-  console.error(e);
+    console.error('!!!!!!!!!! ERROR FATAL AL INICIALIZAR FIREBASE CHAT !!!!!!!!!!');
+    console.error(e);
 }
 // --- FIN DE LA LÓGICA DE INICIALIZACIÓN ---
 
@@ -53,7 +53,7 @@ module.exports = {
         try {
             // 1. Obtener datos de la solicitud
             const { recipientId, messageContent, chatRoomId } = req.body;
-            
+
             // Datos del remitente (vienen del token JWT)
             const senderId = req.user.id;
             const senderName = req.user.name;
@@ -74,16 +74,17 @@ module.exports = {
                 content: messageContent,
                 timestamp: admin.firestore.Timestamp.now(), // Usar el timestamp del servidor
                 senderRole: senderRole,
+                isRead: false,
             };
 
             // 3. Guardar el mensaje en Firestore (Usando la NUEVA instancia de DB)
             await firestoreDb.collection('chats')
-                    .doc(chatRoomId)
-                    .collection('messages')
-                    .add(messageData);
+                .doc(chatRoomId)
+                .collection('messages')
+                .add(messageData);
 
             // --- **PRUEBA DE DEPURACIÓN: NOTIFICACIONES DESACTIVADAS TEMPORALMENTE** ---
-            
+
             // 4. Obtener el Token de Notificación del destinatario
             // const recipientToken = await User.findNotificationToken(recipientId);
 
@@ -102,13 +103,13 @@ module.exports = {
             //             'recipientId': recipientId
             //         }
             //     };
-                
+
             //     await messaging.sendToDevice(recipientToken, payload);
             //     console.log(`Notificación enviada a ${recipientId}`);
             // } else {
             //     console.log(`No se encontró token de notificación para el usuario ${recipientId}. Mensaje guardado pero no enviado.`);
             // }
-            
+
             console.log('Mensaje guardado en Firestore. Notificaciones omitidas para depuración.');
             // --- **FIN DE LA PRUEBA DE DEPURACIÓN** ---
 
@@ -130,7 +131,7 @@ module.exports = {
         }
     },
 
-  async uploadImage(req, res, next) {
+    async uploadImage(req, res, next) {
         try {
             const files = req.files;
 
@@ -144,7 +145,7 @@ module.exports = {
             // Generar un path único para la imagen del chat
             // Ej: chat_images/senderId_timestamp
             const path = `chat_images/user_${req.user.id}_${Date.now()}`;
-            
+
             // Usamos tu utilidad 'storage' existente
             const url = await storage(files[0], path);
 
@@ -171,7 +172,7 @@ module.exports = {
         }
     },
 
-  // ... otras funciones ...
+    // ... otras funciones ...
 
     async deleteMessage(req, res, next) {
         try {
@@ -179,9 +180,9 @@ module.exports = {
             const userId = req.user.id; // ID del usuario que solicita borrar
 
             const messageRef = firestoreDb.collection('chats')
-                                          .doc(chatRoomId)
-                                          .collection('messages')
-                                          .doc(messageId);
+                .doc(chatRoomId)
+                .collection('messages')
+                .doc(messageId);
 
             const doc = await messageRef.get();
 
