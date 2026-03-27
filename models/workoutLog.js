@@ -5,6 +5,17 @@ const WorkoutLog = {};
 /**
  * Crea un nuevo registro de progreso (un set)
  */
+
+WorkoutLog.delete = (id) => {
+    const sql = `
+        DELETE FROM workout_logs
+        WHERE id = $1 
+        RETURNING id
+    `;
+    // Usamos oneOrNone por si acaso el ID ya no existe en la base de datos
+    return db.oneOrNone(sql, id);
+};
+
 WorkoutLog.create = (log) => {
     const sql = `
         INSERT INTO workout_logs(

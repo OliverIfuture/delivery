@@ -63,6 +63,38 @@ module.exports = {
         }
     },
 
+    async delete(req, res, next) {
+        try {
+            // Obtenemos el ID desde los parámetros de la URL (:id)
+            const idLog = req.params.id;
+
+            const data = await WorkoutLog.delete(idLog);
+
+            // Validamos si realmente se eliminó algo
+            if (data) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'Serie eliminada correctamente.',
+                    data: { 'id': data.id }
+                });
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No se encontró el registro o ya fue eliminado.',
+                    data: null
+                });
+            }
+        }
+        catch (error) {
+            console.log(`Error en workoutLogsController.delete: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al eliminar el progreso',
+                error: error.message || error
+            });
+        }
+    },
+
     /**
      * Obtener todos los logs de una rutina
      */

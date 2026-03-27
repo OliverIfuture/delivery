@@ -27,7 +27,7 @@ module.exports = (app) => {
         passport.authenticate('jwt', { session: false }),
         workoutLogsController.findLogsForCurrentRoutine
     );
-
+    app.delete('/api/workoutlogs/delete/:id', passport.authenticate('jwt', { session: false }), workoutLogsController.delete);
     // Nueva ruta para las gráficas
     app.get('/api/workoutlogs/history-30days/:id_client/:exercise_identifier', passport.authenticate('jwt', { session: false }), workoutLogsController.getLogsLast30Days);
 
