@@ -58,10 +58,7 @@ module.exports = (app) => {
     );
 
     // 2. Obtener el cuestionario del cliente (Requiere el ID del cliente en la URL)
-    app.get(
-        '/api/diets/questionnaire/:id_client',
-        passport.authenticate('jwt', { session: false }),
-        dietsController.getClientQuestionnaire
+    app.get('/api/diets/questionnaire/:id_client', dietsController.getClientQuestionnaire
     );
 
     // 3. Asignación múltiple (Post: Los datos van en el Body, no en la URL)
