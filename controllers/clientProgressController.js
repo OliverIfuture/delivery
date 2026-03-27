@@ -144,6 +144,28 @@ module.exports = {
         }
     },
 
+    async getLastPhotoDate(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const data = await ClientProgress.getLastPhotoDate(id_client);
+
+            // 'data' devolverá un objeto con 'last_photo_date'. Puede ser null si el usuario no tiene registros.
+            return res.status(200).json({
+                success: true,
+                message: 'Fecha obtenida correctamente',
+                data: data ? data.last_photo_date : null
+            });
+        }
+        catch (error) {
+            console.log(`Error en clientProgressController.getLastPhotoDate: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener la fecha de la última foto',
+                error: error.message
+            });
+        }
+    },
+
     /**
      * Analiza dos fotos (Antes y Después) usando Gemini Vision
      * Recibe: { "image_before": "url...", "image_after": "url..." }

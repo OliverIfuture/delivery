@@ -11,7 +11,12 @@ module.exports = (app) => {
 
     // Obtener todas las fotos de progreso de un cliente
     app.get('/api/progress/photos/:id_client', passport.authenticate('jwt', { session: false }), clientProgressController.getPhotos);
-
+    // Obtener la fecha de la última foto subida (Cuestionario o App)
+    app.get(
+        '/api/progress/lastPhotoDate/:id_client',
+        passport.authenticate('jwt', { session: false }),
+        clientProgressController.getLastPhotoDate
+    );
     // --- POST ---
     // Guardar un nuevo log de métricas (peso, cintura, etc.)
     app.post('/api/progress/logMetric', passport.authenticate('jwt', { session: false }), clientProgressController.logMetric);

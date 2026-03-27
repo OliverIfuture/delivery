@@ -120,6 +120,33 @@ ClientProgress.getPhotos = (id_client) => {
 };
 
 /**
+ * Obtiene la fecha de la foto más reciente, buscando tanto en las actualizaciones
+ * como en el cuestionario inicial.
+ */
+ClientProgress.getLastPhotoDate = (id_client) => {
+    // Usamos UNION ALL para juntar las fechas de ambas tablas
+    // y luego sacamos el MAX (la más reciente)
+    const sql = `
+        SELECT MAX(date_taken) as last_photo_date
+        FROM (
+            -- 1. Fechas de las fotos subidas desde la app
+            SELECT date_taken 
+            FROM client_progress_photos 
+            WHERE id_client = $1
+            
+            UNION ALL
+            
+            -- 2. Fechas de los cuestionarios iniciales
+            SELECT uq.created_at as date_taken
+            FROM user_questionnaires uq
+            INNER JOIN users u ON u.email = uq.user_email
+            WHERE u.id = $1
+        ) as combined_dates;
+    `;
+    return db.oneOrNone(sql, id_client);
+};
+
+/**
  * Guarda una nueva foto de progreso desde la app (Incluyendo el Ángulo)
  */
 ClientProgress.logPhotoUserApp = (log) => {
