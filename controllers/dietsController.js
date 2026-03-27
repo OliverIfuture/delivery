@@ -780,7 +780,7 @@ module.exports = {
                 error: error.message
             });
         }
-    }
+    },
 
     // En dietsController.js o dietsV2Controller.js
     async getClientDietV2(req, res, next) {
