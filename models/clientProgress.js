@@ -124,10 +124,9 @@ ClientProgress.getPhotos = (id_client) => {
  * como en el cuestionario inicial.
  */
 ClientProgress.getLastPhotoDate = (id_client) => {
-    // Usamos UNION ALL para juntar las fechas de ambas tablas
-    // y luego sacamos el MAX (la más reciente)
+    // Usamos COALESCE para que si el MAX es NULL, devuelva la fecha antigua
     const sql = `
-        SELECT MAX(date_taken) as last_photo_date
+        SELECT COALESCE(MAX(date_taken), '1999-01-01 00:00:00'::timestamp) as last_photo_date
         FROM (
             -- 1. Fechas de las fotos subidas desde la app
             SELECT date_taken 
@@ -143,6 +142,7 @@ ClientProgress.getLastPhotoDate = (id_client) => {
             WHERE u.id = $1
         ) as combined_dates;
     `;
+
     return db.oneOrNone(sql, id_client);
 };
 
