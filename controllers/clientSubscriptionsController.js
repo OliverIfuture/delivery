@@ -462,13 +462,8 @@ module.exports = {
                     if (existingSub) {
                         // ES UN UPGRADE O UNA RENOVACIÓN AUTOMÁTICA
                         console.log(`🔄 Webhook: Actualizando suscripción existente (Upgrade/Renovación): ${invoice.subscription}`);
-
-                        // Actualizamos el plan y la fecha (el id_plan viene fresco de la metadata actualizada)
                         await ClientSubscription.updatePlanAndDate(invoice.subscription, id_plan, expirationDate);
-
-                        // Aseguramos que el estado esté activo (por si venía de past_due)
                         await ClientSubscription.updateStatus(invoice.subscription, 'active');
-
                     } else {
                         // ES UNA COMPRA NUEVA (PRIMER MES)
                         console.log(`✅ Webhook: Creando NUEVA suscripción: ${invoice.subscription}`);
@@ -482,6 +477,32 @@ module.exports = {
                             temp_email: user ? null : temp_email
                         };
                         await ClientSubscription.create(subscriptionData);
+                    }
+
+                    // 🔥 NUEVO: REGISTRO HISTÓRICO DE PAGOS (MRR) 🔥
+                    // Solo registramos si realmente se cobró dinero (evita registrar meses gratuitos al 100% de descuento si los tuvieras)
+                    if (invoice.amount_paid > 0) {
+                        try {
+                            const db = require('../config/config');
+                            const amountPaid = invoice.amount_paid / 100; // Convertir centavos a moneda real
+                            const paymentDate = new Date(invoice.created * 1000); // Fecha exacta del cobro
+
+                            await db.none(`
+                                INSERT INTO payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                            `, [
+                                id_company,
+                                user ? user.id : null,
+                                id_plan,
+                                invoice.subscription,
+                                invoice.id,
+                                amountPaid,
+                                paymentDate
+                            ]);
+                            console.log(`💰 Historial de pago (Recurrente) registrado: $${amountPaid} para la sub ${invoice.subscription}`);
+                        } catch (e) {
+                            console.log(`❌ Error guardando historial de pago (Recurrente): ${e.message}`);
+                        }
                     }
                     // ------------------------------------------
 

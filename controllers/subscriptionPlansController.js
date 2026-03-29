@@ -148,6 +148,40 @@ module.exports = {
         }
     },
 
+    // Traer historial de cobros reales (Stripe + Manuales)
+    async getPaymentHistory(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const { start, end } = req.query;
+
+            if (!id_company) return res.status(403).json({ success: false, message: 'Acceso denegado.' });
+
+            const db = require('../config/config');
+
+            // 🔥 LA MAGIA DE SQL: Unimos los pagos con los planes para obtener el nombre automáticamente
+            const sql = `
+            SELECT 
+                p.id,
+                p.payment_date as date,
+                p.amount as price,
+                COALESCE(s.name, 'Plan Eliminado/Manual') as plan_name
+            FROM payment_history p
+            LEFT JOIN subscription_plans s ON p.id_plan = s.id
+            WHERE p.id_company = $1 
+            AND DATE(p.payment_date) >= $2 
+            AND DATE(p.payment_date) <= $3
+            ORDER BY p.payment_date DESC
+        `;
+
+            const payments = await db.manyOrNone(sql, [id_company, start, end]);
+            return res.status(200).json(payments);
+
+        } catch (error) {
+            console.log(`Error en getPaymentHistory: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener historial de pagos' });
+        }
+    },
+
     async createExpense(req, res, next) {
         try {
             const expense = req.body;
