@@ -147,6 +147,89 @@ module.exports = {
         }
     },
 
+    async createExpense(req, res, next) {
+        try {
+            const expense = req.body;
+            // Obtenemos el ID de la compañía desde el token del usuario logueado
+            const id_company = req.user.mi_store;
+
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'No tienes una compañía asignada.' });
+            }
+
+            expense.id_company = id_company;
+
+            const data = await SubscriptionPlan.createExpense(expense);
+
+            return res.status(201).json({
+                success: true,
+                message: 'El gasto se ha registrado correctamente.',
+                data: { 'id': data.id }
+            });
+
+        } catch (error) {
+            console.log(`Error en SubscriptionPlan.create: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al registrar el gasto',
+                error: error.message
+            });
+        }
+    },
+
+    async findByDateRange(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const { start, end } = req.query; // Fechas vienen por la URL (query params)
+
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Acceso denegado.' });
+            }
+
+            if (!start || !end) {
+                return res.status(400).json({ success: false, message: 'Las fechas de inicio y fin son obligatorias.' });
+            }
+
+            const expenses = await SubscriptionPlan.findByCompanyAndDateRange(id_company, start, end);
+
+            return res.status(200).json(expenses);
+
+        } catch (error) {
+            console.log(`Error en SubscriptionPlan.findByDateRange: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener los gastos',
+                error: error.message
+            });
+        }
+    },
+
+    async deleteExpense(req, res, next) {
+        try {
+            const id_expense = req.params.id;
+            const id_company = req.user.mi_store;
+
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Acceso denegado.' });
+            }
+
+            await SubscriptionPlan.deleteExpense(id_expense, id_company);
+
+            return res.status(200).json({
+                success: true,
+                message: 'El gasto se ha eliminado correctamente.'
+            });
+
+        } catch (error) {
+            console.log(`Error en SubscriptionPlan.delete: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al eliminar el gasto',
+                error: error.message
+            });
+        }
+    },
+
     /**
      * Buscar un plan por ID (Público para el registro)
      */

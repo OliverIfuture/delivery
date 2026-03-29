@@ -20,4 +20,23 @@ module.exports = (app) => {
     // Obtener un plan específico por su ID (Sin token, usado en el registro)
     app.get('/api/subscriptionPlans/findById/:id', subscriptionPlansController.findByIdPublic);
 
+
+    // Crear un gasto
+    app.post('/api/subscriptionPlans/createExpense',
+        passport.authenticate('jwt', { session: false }),
+        subscriptionPlansController.createExpense
+    );
+
+    // Traer gastos por rango (ej: /api/expenses/range?start=2024-01-01&end=2024-01-31)
+    app.get('/api/subscriptionPlans/range',
+        passport.authenticate('jwt', { session: false }),
+        subscriptionPlansController.findByDateRange
+    );
+
+    // Eliminar un gasto
+    app.delete('/api/subscriptionPlans/deleteExpense/:id',
+        passport.authenticate('jwt', { session: false }),
+        subscriptionPlansController.deleteExpense
+    );
+
 }

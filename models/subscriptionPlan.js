@@ -49,6 +49,58 @@ SubscriptionPlan.delete = (id_plan, id_company) => {
     return db.none(sql, [id_plan, id_company]);
 };
 
+SubscriptionPlan.createExpense = (expense) => {
+    const sql = `
+        INSERT INTO company_expenses(
+            id_company,
+            description,
+            amount,
+            expense_date,
+            category,
+            created_at
+        )
+        VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    `;
+    return db.one(sql, [
+        expense.id_company,
+        expense.description,
+        expense.amount,
+        expense.expense_date,
+        expense.category || 'General',
+        new Date()
+    ]);
+};
+
+// 2. Traer Gastos por Compañía y Rango de Fechas
+SubscriptionPlan.findByCompanyAndDateRange = (id_company, startDate, endDate) => {
+    const sql = `
+        SELECT 
+            id,
+            id_company,
+            description,
+            amount,
+            expense_date,
+            category,
+            created_at
+        FROM company_expenses
+        WHERE id_company = $1 
+        AND expense_date >= $2 
+        AND expense_date <= $3
+        ORDER BY expense_date DESC
+    `;
+    return db.manyOrNone(sql, [id_company, startDate, endDate]);
+};
+
+// 3. Eliminar Gasto
+SubscriptionPlan.deleteExpense = (id_expense, id_company) => {
+    // Aquí hacemos un borrado físico, aunque podrías hacer un borrado lógico (active = false)
+    const sql = `
+        DELETE FROM company_expenses
+        WHERE id = $1 AND id_company = $2
+    `;
+    return db.none(sql, [id_expense, id_company]);
+};
+
 /**
  * Busca todos los planes de un entrenador
  */

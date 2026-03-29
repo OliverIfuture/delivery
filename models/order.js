@@ -531,17 +531,17 @@ Order.create = (order) => {
         new Date(),
         order.paymethod,
         order.hour_program,
-	    order.comments,    
+        order.comments,
         order.discounts,
-	    order.extra,    
-	    order.total_extra,
-	    order.drone_id,
-	    order.id_order_company,
-		order.lat,
-		order.lng,
+        order.extra,
+        order.total_extra,
+        order.drone_id,
+        order.id_order_company,
+        order.lat,
+        order.lng,
         order.affiliate_referral_id,
-		order.total,
-		order.code
+        order.total,
+        order.code
 
     ]);
 }
@@ -560,7 +560,7 @@ Order.updateCode = (id, code, delivery_name) => {
     return db.none(sql, [
         id,
         code,
-		delivery_name
+        delivery_name
     ]);
 }
 
@@ -666,26 +666,26 @@ sales(
     `;
 
     return db.oneOrNone(sql, [
-    sales.name_store,
-    sales.cash,
-    sales.credit_card,
-    sales.points,
-    sales.date,
-    sales.total,
-    sales.employed,
-    sales.is_trainer,
-    sales.image_client,
-    sales.reference,
-    sales.hour,
-    sales.shift_ref,
-	sales.client_name,
-	sales.client_id	,
-	sales.status,
-	sales.code	
+        sales.name_store,
+        sales.cash,
+        sales.credit_card,
+        sales.points,
+        sales.date,
+        sales.total,
+        sales.employed,
+        sales.is_trainer,
+        sales.image_client,
+        sales.reference,
+        sales.hour,
+        sales.shift_ref,
+        sales.client_name,
+        sales.client_id,
+        sales.status,
+        sales.code
     ]);
 }
 
-Order.selectOrder = (date, shift_ref ) => {
+Order.selectOrder = (date, shift_ref) => {
     const sql = `
  SELECT 
         S.id,
@@ -724,12 +724,12 @@ Order.selectOrder = (date, shift_ref ) => {
 	ORDER BY S.id ASC
     `;
     return db.manyOrNone(sql, [
-	    		  date, 
-			  shift_ref
-    			]);
+        date,
+        shift_ref
+    ]);
 }
 
-Order.selectOrderAll = (date ) => {
+Order.selectOrderAll = (date) => {
     const sql = `
  SELECT 
         S.id,
@@ -770,7 +770,7 @@ Order.selectOrderAll = (date ) => {
     return db.manyOrNone(sql, date);
 }
 
-Order.ClientOrdersGet = (shift_ref ) => {
+Order.ClientOrdersGet = (shift_ref) => {
     const sql = `
 SELECT 
         S.id,
@@ -819,7 +819,7 @@ SELECT
 }
 
 
-Order.ShiftOrders = (shift_ref ) => {
+Order.ShiftOrders = (shift_ref) => {
     const sql = `
  SELECT 
         S.id,
@@ -892,16 +892,16 @@ caja(
     return db.oneOrNone(sql, [
         new Date(),
         new Date(),
-    sales.income,
-    sales.expenses,
-    sales.change,
-    sales.id_user,
-    sales.total,
-    sales.state,
-    sales.id_close_shift,
-    sales.total_card,
-    sales.total_cash,
-    sales.id_company	    
+        sales.income,
+        sales.expenses,
+        sales.change,
+        sales.id_user,
+        sales.total,
+        sales.state,
+        sales.id_close_shift,
+        sales.total_card,
+        sales.total_cash,
+        sales.id_company
     ]);
 }
 
@@ -922,12 +922,12 @@ cash_income(
     `;
 
     return db.oneOrNone(sql, [
-    new Date(),
-    sales.amount,
-    sales.description,
-    sales.id_close_shift,
-    sales.id_company,
-    sales.user_id,	    
+        new Date(),
+        sales.amount,
+        sales.description,
+        sales.id_close_shift,
+        sales.id_company,
+        sales.user_id,
     ]);
 }
 Order.insertDateExpenses = (sales) => {
@@ -946,12 +946,12 @@ cash_expenses(
     `;
 
     return db.oneOrNone(sql, [
-    new Date(),
-    sales.amount,
-    sales.description,
-    sales.id_close_shift,
-    sales.id_company,
-    sales.user_id,	    
+        new Date(),
+        sales.amount,
+        sales.description,
+        sales.id_close_shift,
+        sales.id_company,
+        sales.user_id,
     ]);
 }
 
@@ -1002,7 +1002,7 @@ SELECT
         C.id, U.notification_token
 
     `;
-    return db.manyOrNone(sql,id_company);
+    return db.manyOrNone(sql, id_company);
 }
 Order.selectOpenShiftExpenses = (id_company) => {
     const sql = `
@@ -1050,7 +1050,7 @@ SELECT
 
 
     `;
-    return db.manyOrNone(sql,id_company);
+    return db.manyOrNone(sql, id_company);
 }
 
 
@@ -1066,7 +1066,7 @@ select
 
 from sales as totals where shift_ref = $1 and status = 'SUCCES'
     `;
-    return db.manyOrNone(sql,[
+    return db.manyOrNone(sql, [
         shift_ref
     ]);
 }
@@ -1078,7 +1078,7 @@ Order.selectExpenses = (shift_ref) => {
 		where id_close_shift = $1 and description != 'ENTRADA DE TURNO'
   
     `;
-    return db.manyOrNone(sql,[
+    return db.manyOrNone(sql, [
         shift_ref
     ]);
 }
@@ -1090,12 +1090,12 @@ Order.selectIncomes = (shift_ref) => {
 		where id_close_shift = $1 and description != 'ENTRADA DE TURNO'
   
     `;
-    return db.manyOrNone(sql,[
+    return db.manyOrNone(sql, [
         shift_ref
     ]);
 }
 
-Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_card, total_cash, final_cash ) => {
+Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_card, total_cash, final_cash) => {
     const sql = `
     UPDATE
         caja
@@ -1116,14 +1116,14 @@ Order.closeShiftClose = (id_Close_Shift, income, expenses, change, total, total_
 
     return db.none(sql, [
         id_Close_Shift,
-	new Date(),
-	income,
-	expenses,
-	change,
-	total,
-	total_card,
-	total_cash,
-	final_cash
+        new Date(),
+        income,
+        expenses,
+        change,
+        total,
+        total_card,
+        total_cash,
+        final_cash
     ]);
 }
 
@@ -1139,7 +1139,7 @@ Order.deleteExpenses = (id) => {
 
     return db.none(sql, [
         id
-        
+
     ]);
 }
 Order.deleteIncomes = (id) => {
@@ -1154,7 +1154,7 @@ Order.deleteIncomes = (id) => {
 
     return db.none(sql, [
         id
-        
+
     ]);
 }
 
@@ -1284,7 +1284,7 @@ order by R.id desc
     return db.manyOrNone(sql, [id_client]);
 }
 
-Order.findByClientDealerRechargeGym = (id_sucursal, shift_ref ) => {
+Order.findByClientDealerRechargeGym = (id_sucursal, shift_ref) => {
 
     const sql = `
 	select 
@@ -1351,12 +1351,12 @@ dealer_recharge(
     `;
 
     return db.oneOrNone(sql, [
-    recharge.id_client,
-    recharge.entity,
-    Date.now(),
-    recharge.amount,
-    recharge.logo,
-    recharge.reference
+        recharge.id_client,
+        recharge.entity,
+        Date.now(),
+        recharge.amount,
+        recharge.logo,
+        recharge.reference
     ]);
 }
 
@@ -1381,17 +1381,17 @@ dealer_shop(
     `;
 
     return db.oneOrNone(sql, [
-    order.reference,
-    order.method_pay,
-    order.machine,
-    order.quantity,
-    order.user_id,
-    order.sucursal_id,
-    order.product_id,
-    order.total,
-    Date.now(),
-    order.state,
-	order.shift_ref	    
+        order.reference,
+        order.method_pay,
+        order.machine,
+        order.quantity,
+        order.user_id,
+        order.sucursal_id,
+        order.product_id,
+        order.total,
+        Date.now(),
+        order.state,
+        order.shift_ref
     ]);
 }
 
@@ -1413,19 +1413,19 @@ dealer_recharge_gym(
     `;
 
     return db.oneOrNone(sql, [
-    recharge.id_client,
-    recharge.id_sucursal,
-    recharge.entity,
-    recharge.amount,
-    recharge.reference,
-    Date.now(),
-    recharge.shift_ref,
-    'EXITOSO'	    
+        recharge.id_client,
+        recharge.id_sucursal,
+        recharge.entity,
+        recharge.amount,
+        recharge.reference,
+        Date.now(),
+        recharge.shift_ref,
+        'EXITOSO'
     ]);
 }
 
-Order.getSumShift = (id_sucursal, shift_ref) =>{
-	const sql = `
+Order.getSumShift = (id_sucursal, shift_ref) => {
+    const sql = `
 SELECT 
   COALESCE((SELECT SUM(amount) FROM dealer_recharge_gym WHERE shift_ref = $2 AND id_sucursal = $1 AND state = 'EXITOSO'), 0) + 
   COALESCE((SELECT SUM(total) FROM dealer_shop WHERE sucursal_id = $1 and method_pay = 'EFECTIVO' and shift_ref = $2), 0) AS total_monto,
@@ -1435,12 +1435,12 @@ SELECT
 
 
  `;
-return db.manyOrNone(sql, [id_sucursal, shift_ref]);
+    return db.manyOrNone(sql, [id_sucursal, shift_ref]);
 
 }
 
-Order.getCortes = (id_sucursal, shift_ref) =>{
-	const sql = `
+Order.getCortes = (id_sucursal, shift_ref) => {
+    const sql = `
 SELECT 
   COALESCE((SELECT SUM(amount) FROM dealer_recharge_gym WHERE  id_sucursal = $1 AND state = 'EXITOSO'), 0) + 
   COALESCE((SELECT SUM(total) FROM dealer_shop WHERE sucursal_id = $1 and method_pay = 'EFECTIVO'), 0) AS total_monto,
@@ -1451,19 +1451,19 @@ SELECT
 
 
  `;
-return db.manyOrNone(sql, [id_sucursal, shift_ref]);
+    return db.manyOrNone(sql, [id_sucursal, shift_ref]);
 
 }
 
-Order.getShiftTurn = (id_sucursal) =>{
-	const sql = `
+Order.getShiftTurn = (id_sucursal) => {
+    const sql = `
 	select * from 
         dealer_recharge_shift_turn
 	where 
 	state = 'ACTIVE'
 	and id_sucursal = $1
  `;
-return db.oneOrNone(sql, id_sucursal);
+    return db.oneOrNone(sql, id_sucursal);
 
 }
 
@@ -1480,11 +1480,11 @@ Order.closeShiftGym = (shiftGym) => {
     `;
 
     return db.none(sql, [
-	shiftGym.id_sucursal,    
-	shiftGym.total,
-	shiftGym.total_recharges,
-	Date.now(),
-	shiftGym.shift_ref    
+        shiftGym.id_sucursal,
+        shiftGym.total,
+        shiftGym.total_recharges,
+        Date.now(),
+        shiftGym.shift_ref
     ]);
 }
 
@@ -1502,12 +1502,12 @@ Order.insertNewTurnGym = (shiftGym) => {
     `;
 
     return db.oneOrNone(sql, [
-    shiftGym.id_sucursal,
-    shiftGym.total,
-    shiftGym.total_recharges,
-	Date.now(),
-    shiftGym.shift_ref,
-    'ACTIVE'	    
+        shiftGym.id_sucursal,
+        shiftGym.total,
+        shiftGym.total_recharges,
+        Date.now(),
+        shiftGym.shift_ref,
+        'ACTIVE'
     ]);
 }
 
@@ -1531,27 +1531,27 @@ Order.updateToCancelClientToClient = (id, balance) => {
     return db.none(sql, [id, balance]);
 }
 
-Order.getDealers = (sucursalId) =>{
-	const sql = `
+Order.getDealers = (sucursalId) => {
+    const sql = `
 SELECT * FROM dealer_dealers
         where sucursal_id = $1
         ORDER BY id desc  
  `;
-return db.manyOrNone(sql, sucursalId);
+    return db.manyOrNone(sql, sucursalId);
 
 }
 
 
 
-Order.getNotifications = (userId) =>{
-	const sql = `
+Order.getNotifications = (userId) => {
+    const sql = `
 SELECT * 
 FROM notification
 WHERE id_user = $1
 ORDER BY id DESC
 LIMIT 10
  `;
-return db.manyOrNone(sql, userId);
+    return db.manyOrNone(sql, userId);
 
 }
 
@@ -1572,17 +1572,17 @@ notification(
     `;
 
     return db.oneOrNone(sql, [
-    notification.id_user,
-    notification.notification,
-    notification.body,
-    notification.icon,
-    notification.type,
-    new Date(),
+        notification.id_user,
+        notification.notification,
+        notification.body,
+        notification.icon,
+        notification.type,
+        new Date(),
     ]);
 }
 
-Order.getAppoiments = (userId) =>{
-	const sql = `
+Order.getAppoiments = (userId) => {
+    const sql = `
 SELECT
     a.appointment_id,
     a.start_datetime,
@@ -1606,12 +1606,12 @@ WHERE
 ORDER BY
     a.start_datetime DESC; -- Ordenando las más recientes primero
  `;
-return db.manyOrNone(sql, userId);
+    return db.manyOrNone(sql, userId);
 
 }
 
-Order.getAppoimentsByCompany = (id) =>{
-	const sql = `
+Order.getAppoimentsByCompany = (id) => {
+    const sql = `
    select 
 	a.business_id,
 	a.appointment_id,
@@ -1643,7 +1643,7 @@ WHERE
 ORDER BY
     a.start_datetime DESC; -- Ordenando las más recientes primero
  `;
-return db.manyOrNone(sql, id);
+    return db.manyOrNone(sql, id);
 
 }
 
@@ -1762,15 +1762,15 @@ Order.createCotization = (order) => {
         order.client_name,
         order.products,
         order.total,
-	    order.is_completed,    
+        order.is_completed,
         order.created_at,
-	   order.expires_at,    
-	   order.client_id
-    
+        order.expires_at,
+        order.client_id
+
     ]);
 }
 
-Order.getSavedCotizations  = (id ) => {
+Order.getSavedCotizations = (id) => {
     const sql = `
 select 
 c.id,
@@ -1805,13 +1805,13 @@ left join users_mayoreo as t on c.client_id = t.id
 Order.confirm = (id) => {
     // db.tx es la forma de pg-promise de manejar transacciones
     return db.tx(async t => {
-        
+
         console.log(`\n======================================================`);
         console.log(`[Order.confirm] Iniciando transacción para Cotización ID: ${id}`);
-        
+
         // 1. Obtener la cotización y bloquear la fila
         const quote = await t.oneOrNone(
-            'SELECT * FROM cotizaciones WHERE id = $1 FOR UPDATE', 
+            'SELECT * FROM cotizaciones WHERE id = $1 FOR UPDATE',
             [id]
         );
 
@@ -1833,23 +1833,23 @@ Order.confirm = (id) => {
         const availableProducts = [];
         const unavailableProducts = [];
         let newTotal = 0.0;
-        let stockWasSufficient = true; 
+        let stockWasSufficient = true;
 
         console.log(`[Order.confirm] Verificando stock para ${productsInQuote.length} productos...`);
 
         // 2. VERIFICAR STOCK (Producto por producto)
         for (const product of productsInQuote) {
-            
+
             console.log(`--- Verificando Producto ID: ${product.id} (Nombre: ${product.name}) ---`);
 
             // Obtenemos el stock actual (usando 'state') Y el precio
             const dbProduct = await t.oneOrNone(
-                'SELECT state, price_wholesale FROM products WHERE id = $1', 
+                'SELECT state, price_wholesale FROM products WHERE id = $1',
                 [product.id]
             );
-            
+
             let currentStock = 0; // Por defecto 0
-            
+
             // **CORRECCIÓN DE BUG CRÍTICO:**
             // Comprobar si el producto existe y si 'state' no es nulo
             if (dbProduct && dbProduct.state !== null && dbProduct.state !== undefined) {
@@ -1861,11 +1861,11 @@ Order.confirm = (id) => {
             const quantityNeeded = parseInt(product.quantity, 10); // Asegurarnos que la cantidad es int
 
             console.log(`[Order.confirm] Stock en BD (state): ${currentStock} | Cantidad Requerida: ${quantityNeeded}`);
-            
+
             if (currentStock >= quantityNeeded) {
                 // SÍ hay stock
                 console.log(`[Order.confirm] Stock: SUFICIENTE`);
-                product.price_wholesale = parseFloat(dbProduct.price_wholesale); 
+                product.price_wholesale = parseFloat(dbProduct.price_wholesale);
                 availableProducts.push(product);
                 newTotal += (product.price_wholesale * quantityNeeded);
             } else {
@@ -1877,12 +1877,12 @@ Order.confirm = (id) => {
         }
 
         // 3. DECIDIR EL CAMINO
-        
+
         // ---- Escenario A: TODO el stock estuvo disponible ----
         if (stockWasSufficient) {
-            
+
             console.log(`[Order.confirm] Escenario A: Stock SUFICIENTE para todo. Descontando...`);
-            
+
             // 4. DESCONTAR STOCK
             const updates = availableProducts.map(product => {
                 console.log(`[Order.confirm] Descontando ${product.quantity} de Producto ID: ${product.id}`);
@@ -1898,10 +1898,10 @@ Order.confirm = (id) => {
                 'UPDATE cotizaciones SET is_completed = true WHERE id = $1',
                 [id]
             );
-            
+
             console.log(`[Order.confirm] ¡ÉXITO! Cotización ID ${id} confirmada.`);
             console.log(`======================================================\n`);
-            
+
             return {
                 success: true,
                 statusCode: 200,
@@ -1909,12 +1909,12 @@ Order.confirm = (id) => {
                 data: { status: 'CONFIRMED' }
             };
         }
-        
+
         // ---- Escenario B: Faltó stock (Tu nueva lógica) ----
         else {
-            
+
             console.log(`[Order.confirm] Escenario B: Stock INSUFICIENTE para: ${unavailableProducts.join(', ')}`);
-            
+
             // 4. ACTUALIZAR LA COTIZACIÓN con los productos que SÍ están
             const newProductsJson = JSON.stringify(availableProducts);
 
@@ -1922,13 +1922,13 @@ Order.confirm = (id) => {
                 `UPDATE cotizaciones 
                  SET products = $1, total = $2 
                  WHERE id = $3
-                 RETURNING *`, 
+                 RETURNING *`,
                 [newProductsJson, newTotal, id]
             );
 
             console.log(`[Order.confirm] Cotización ID ${id} actualizada con productos disponibles.`);
             console.log(`======================================================\n`);
-            
+
             return {
                 success: false,
                 message: `Stock insuficiente para: ${unavailableProducts.join(', ')}. La cotización se actualizó.`,
@@ -1936,11 +1936,11 @@ Order.confirm = (id) => {
                 data: {
                     status: 'UPDATED',
                     unavailable: unavailableProducts,
-                    updatedQuote: updatedQuote 
+                    updatedQuote: updatedQuote
                 }
             };
         }
-        
+
     }); // Fin de la transacción db.tx
 }
 
@@ -1958,7 +1958,7 @@ Order.cancel = (id) => {
 
         // 1. Obtener la cotización y bloquear la fila
         const quote = await t.oneOrNone(
-            'SELECT * FROM cotizaciones WHERE id = $1 FOR UPDATE', 
+            'SELECT * FROM cotizaciones WHERE id = $1 FOR UPDATE',
             [id]
         );
 
@@ -1973,7 +1973,7 @@ Order.cancel = (id) => {
         }
 
         const productsToReturn = quote.products; // Array JSON de productos
-        
+
         console.log(`[Order.cancel] Devolviendo stock para ${productsToReturn.length} productos...`);
 
         // 2. CREAR LOTE DE DEVOLUCIÓN DE STOCK
@@ -1985,7 +1985,7 @@ Order.cancel = (id) => {
                 [product.quantity, product.id]
             );
         });
-        
+
         // 3. EJECUTAR LOTE DE DEVOLUCIÓN
         await t.batch(updates);
 
@@ -2012,6 +2012,33 @@ Order.findById = (id) => {
     const sql = `SELECT * FROM orders WHERE id = $1`;
     return db.oneOrNone(sql, id);
 }
+
+
+
+// 1. Crear un nuevo gasto
+Order.create = (expense) => {
+    const sql = `
+        INSERT INTO company_expenses (description, amount, expense_date, category)
+        VALUES ($1, $2, $3, $4) RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        expense.description,
+        expense.amount,
+        expense.expense_date,
+        expense.category || 'General'
+    ]);
+};
+
+// 2. Traer gastos por rango de fechas (La joya de la corona para tu Dashboard)
+Order.getByDateRange = (startDate, endDate) => {
+    const sql = `
+        SELECT id, description, amount, expense_date, category
+        FROM company_expenses
+        WHERE expense_date >= $1 AND expense_date <= $2
+        ORDER BY expense_date DESC
+    `;
+    return db.manyOrNone(sql, [startDate, endDate]);
+};
 
 
 module.exports = Order;
