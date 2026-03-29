@@ -39,4 +39,9 @@ module.exports = (app) => {
         subscriptionPlansController.deleteExpense
     );
 
+    app.get('/api/subscriptionPlans/subscriptionsRange',
+        passport.authenticate('jwt', { session: false }),
+        subscriptionPlansController.getSubscriptionsByDateRange
+    );
+
 }

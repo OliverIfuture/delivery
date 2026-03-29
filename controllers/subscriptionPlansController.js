@@ -274,4 +274,32 @@ module.exports = {
         }
     },
 
+    async getSubscriptionsByDateRange(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const { start, end } = req.query;
+
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Acceso denegado.' });
+            }
+
+            // Seleccionamos las suscripciones de los clientes de esa compañía
+            // Asegúrate de que tu tabla se llame 'client_subscriptions' y tenga 'created_at'
+            const sql = `
+            SELECT * FROM client_subscriptions 
+            WHERE id_company = $1 
+            AND DATE(created_at) >= $2 
+            AND DATE(created_at) <= $3
+            ORDER BY created_at DESC
+        `;
+
+            const subscriptions = await db.manyOrNone(sql, [id_company, start, end]);
+
+            return res.status(200).json(subscriptions);
+        } catch (error) {
+            console.log(`Error en getSubscriptionsByDateRange: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener ventas' });
+        }
+    }
+
 };
