@@ -41,7 +41,7 @@ module.exports = (app) => {
 
     app.get('/api/subscriptionPlans/subscriptionsRange',
         passport.authenticate('jwt', { session: false }),
-        subscriptionPlansController.getSubscriptionsByDateRange
+        subscriptionPlansController.getPaymentHistory
     );
 
 }
