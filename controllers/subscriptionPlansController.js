@@ -1,6 +1,7 @@
 const SubscriptionPlan = require('../models/subscriptionPlan.js');
 const User = require('../models/user.js');
 const keys = require('../config/keys.js');
+const db = require('../config/config.js');
 
 module.exports = {
 
