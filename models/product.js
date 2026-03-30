@@ -2742,37 +2742,52 @@ Product.getAllForAffiliates = () => {
 };
 
 Product.getDietByClient = (id_client) => {
+    // 🔥 IMPORTANTE: Ahora apuntamos a las tablas V2 (donde está la info real)
+    // Pero mantenemos los ALIAS que la versión de Apple espera recibir.
     const sql = `
         SELECT 
-            A.assigned_meal_category AS "mealCategory",
-            A.extra_info AS "extraInfo",
-            R.id,
-            R.title,
-            R.image_url AS "imageUrl",
-            R.prep_time_minutes AS "prepTimeMinutes",
-            R.calories,
-            R.satiety,
-            R.ingredients,
-            R.preparation_steps AS "preparationSteps",
-            R.allergens,
-            R.protein_grams AS "proteinGrams",
-            R.carbs_grams AS "carbsGrams",
-            R.fat_grams AS "fatGrams",
-            CASE 
-                WHEN F.id IS NOT NULL THEN true 
-                ELSE false 
-            END AS "isFavorite"
-        FROM client_diet_assignments A
-        INNER JOIN diet_recipes R ON A.id_recipe = R.id
-        -- 🔥 CAMBIO AQUÍ: Usamos id_user que es el nombre real en la tabla de favoritos
-        LEFT JOIN user_favorite_recipes F ON R.id = F.id_recipe AND F.id_user = $1
-        WHERE A.id_client = $1
-        ORDER BY A.id ASC;
+            cd.id AS "id_assignment",
+            r.id AS "id_recipe",
+            r.id AS "id", 
+            cd.assigned_meal_category AS "mealCategory", -- Para Apple viejo
+            cd.assigned_meal_category AS "assigned_meal_category", -- Para el factory nuevo
+            cd.notes AS "extraInfo",
+            cd.notes AS "notes",
+            cd.final_calories AS "calories",
+            cd.final_protein AS "protein",
+            cd.final_carbs AS "carbs",
+            cd.final_fats AS "fats",
+            cd.custom_ingredients AS "custom_ingredients",
+            r.title AS "title",
+            r.image_url AS "imageUrl",
+            r.image_url AS "image_url",
+            r.preparation_steps AS "preparationSteps",
+            r.preparation_steps AS "preparation_steps",
+            u.target_calories AS "target_calories",
+            uq.questionnaire_data->'health_and_allergies'->>'special_conditions' AS "medical_conditions",
+            -- Magia de favoritos
+            EXISTS (
+                SELECT 1 FROM user_favorite_recipes ufr 
+                WHERE ufr.id_user = cd.id_client AND ufr.id_recipe = r.id
+            ) AS "is_favorite"
+        FROM client_diets_v2 cd -- 👈 Tabla nueva
+        INNER JOIN diet_recipes_v2 r ON cd.id_recipe = r.id -- 👈 Recetas nuevas
+        INNER JOIN users u ON cd.id_client = u.id
+        LEFT JOIN user_questionnaires uq ON u.email = uq.user_email
+        WHERE cd.id_client = $1
+        ORDER BY 
+            CASE cd.assigned_meal_category 
+                WHEN 'Desayuno' THEN 1
+                WHEN 'Snack' THEN 2
+                WHEN 'Almuerzo' THEN 3
+                WHEN 'Merienda' THEN 4
+                WHEN 'Cena' THEN 5
+                ELSE 6
+            END;
     `;
 
     return db.manyOrNone(sql, [id_client]);
 };
-
 Product.findById = (id_product) => {
     const sql = `
         SELECT
