@@ -1994,13 +1994,16 @@ module.exports = {
             // 2. Buscamos el precio del plan para registrarlo en las ventas
             const plan = await db.oneOrNone('SELECT price FROM public.subscription_plans WHERE id = $1', [subscription.id_plan]);
 
-            // Verificamos si encontramos el plan y su precio (asumiendo que en tu BD el precio ya está en formato normal, ej: 29.99)
+            // Verificamos si encontramos el plan y su precio
             const amountPaid = plan && plan.price ? parseFloat(plan.price) : 0;
 
             // 3. Insertar en payment_history si el monto es mayor a 0
             if (amountPaid > 0) {
                 // Generamos un ID de factura ficticio para los cobros manuales
                 const manualInvoiceId = `manual_inv_${Date.now()}`;
+
+                // 🔥 Obtenemos la fecha y hora exacta en Tijuana (Baja California)
+                const tijuanaDateString = new Date().toLocaleString('en-US', { timeZone: 'America/Tijuana' });
 
                 await db.none(`
                     INSERT INTO public.payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
@@ -2012,9 +2015,9 @@ module.exports = {
                     subscription.stripe_subscription_id,
                     manualInvoiceId,
                     amountPaid,
-                    new Date() // Fecha actual del cobro manual
+                    tijuanaDateString // 🔥 Mandamos la fecha formateada en lugar de new Date()
                 ]);
-                console.log(`💰 Historial de pago (Manual) registrado: $${amountPaid} para la sub ${subscription.stripe_subscription_id}`);
+                console.log(`💰 Historial de pago (Manual) registrado: $${amountPaid} para la sub ${subscription.stripe_subscription_id} a las ${tijuanaDateString} (Hora Tijuana)`);
             }
 
             // 4. Respondemos al frontend que todo salió perfecto
