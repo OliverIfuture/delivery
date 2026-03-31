@@ -299,7 +299,7 @@ SELECT
         FROM client_diets_v2 cda
         INNER JOIN users u ON cda.id_client = u.id
         INNER JOIN diet_recipes r ON cda.id_recipe = r.id
-        WHERE u.mi_store = $1
+        WHERE u.id = $1
         ORDER BY cda.created_at DESC
     `;
     return db.manyOrNone(sql, id_company);
