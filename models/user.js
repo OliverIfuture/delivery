@@ -1594,18 +1594,24 @@ User.updateClientSubscription = (sub) => {
             current_period_end = $6,
             temp_email = $7,
             updated_at = $8
-        WHERE id = $1
+        WHERE id = $1;
+
+        UPDATE public.users SET
+            id_entrenador = 1,
+            access_level = 2
+        WHERE id = $9;
     `;
 
     return db.none(sql, [
-        sub.id,                     // $1 (Esencial para el WHERE)
+        sub.id,                     // $1 (Esencial para el WHERE de suscripciones)
         sub.id_plan,                // $2
         sub.stripe_subscription_id, // $3
         sub.stripe_customer_id,     // $4
         sub.status,                 // $5
         sub.current_period_end,     // $6
         sub.temp_email,             // $7
-        new Date()                  // $8 (updated_at)
+        new Date(),                 // $8 (updated_at)
+        sub.id_client               // $9 (Esencial para el WHERE de users)
     ]);
 };
 
