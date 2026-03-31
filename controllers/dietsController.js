@@ -842,24 +842,27 @@ module.exports = {
         }
     },
 
-    async deleteAssignedRecipe(req, res, next) {
+    async deleteByClientAndRecipe(req, res, next) {
         try {
-            const id_assignment = req.params.id; // El id de client_diets_v2 (cda.id)
-            await Diet.deleteAssignedRecipe(id_assignment);
+            // Obtenemos los dos IDs desde los parámetros de la URL
+            const id_client = req.params.id_client;
+            const id_recipe = req.params.id_recipe;
+
+            await Diet.deleteByClientAndRecipe(id_client, id_recipe);
 
             return res.status(200).json({
                 success: true,
-                message: 'Receta eliminada de la dieta'
+                message: 'Receta eliminada de la dieta del cliente correctamente'
             });
         } catch (error) {
-            console.error(`Error en deleteAssignedRecipe: ${error}`);
+            console.error(`Error en deleteByClientAndRecipe: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al eliminar',
+                message: 'Error al eliminar la receta',
                 error: error.message
             });
         }
-    },
+    }
 
     async getRecipesWithIngredients(req, res, next) {
         try {

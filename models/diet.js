@@ -313,14 +313,14 @@ SELECT
     return db.manyOrNone(sql, id_company);
 };
 
-Diet.deleteAssignedRecipe = (id_assignment) => {
+Diet.deleteByClientAndRecipe = (id_client, id_recipe) => {
     const sql = `
         DELETE FROM client_diets_v2 
-        WHERE id = $1 
-        RETURNING id;
+        WHERE id_client = $1 AND id_recipe = $2
     `;
-    return db.oneOrNone(sql, id_assignment);
+    return db.none(sql, [id_client, id_recipe]);
 };
+
 
 
 Diet.getAssignedDietByClient = (id_client) => {
