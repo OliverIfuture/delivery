@@ -284,19 +284,22 @@ Diet.assignMultiple = (assignments) => {
  */
 Diet.getAssignedHistory = (id_company) => {
     const sql = `
-        SELECT 
-            cda.id, 
-            cda.id_client, 
-            cda.id_recipe, 
-            cda.assigned_meal_category AS meal_time, 
-            cda.extra_info AS notes, 
+SELECT
+            cda.id,
+            cda.id_client,
+            cda.id_recipe,
+            cda.assigned_meal_category AS meal_time,
+            cda.final_protein,     -- 🔥 NECESARIO PARA FLUTTER
+            cda.final_carbs,       -- 🔥 NECESARIO PARA FLUTTER
+            cda.final_fats,        -- 🔥 NECESARIO PARA FLUTTER
+            cda.final_calories,    -- 🔥 NECESARIO PARA FLUTTER
             cda.created_at,
             u.name as client_name,
             r.title as recipe_name
-        FROM client_diet_assignments cda
+        FROM client_diets_v2 cda
         INNER JOIN users u ON cda.id_client = u.id
         INNER JOIN diet_recipes r ON cda.id_recipe = r.id
-        WHERE u.mi_store = $1 -- Filtra para que el entrenador solo vea a sus clientes
+        WHERE u.id = $1
         ORDER BY cda.created_at DESC
     `;
     return db.manyOrNone(sql, id_company);
