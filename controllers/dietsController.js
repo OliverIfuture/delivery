@@ -862,7 +862,7 @@ module.exports = {
                 error: error.message
             });
         }
-    }
+    },
 
     async getRecipesWithIngredients(req, res, next) {
         try {
