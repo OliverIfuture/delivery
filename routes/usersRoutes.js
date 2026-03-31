@@ -80,6 +80,11 @@ module.exports = (app, upload) => {
     app.post('/api/users/createDiscountCode', UsersController.createDiscountCode);
     app.get('/api/users/getDiscountCodesByCompany/:id', passport.authenticate('jwt', { session: false }), UsersController.getDiscountCodesByCompany);
     app.get('/api/users/getByClientRealSubs/:id_client', passport.authenticate('jwt', { session: false }), UsersController.getByClientRealSubs);
+    // CREAR nueva membresía manual
+    app.post('/api/users/createClientSubscription', passport.authenticate('jwt', { session: false }), UsersController.createClientSubscription);
+
+    // ACTUALIZAR membresía existente
+    app.put('/api/users/updateClientSubscription', passport.authenticate('jwt', { session: false }), UsersController.updateClientSubscription);
 
     app.post('/api/users/createWholesaleUser', UsersController.createWholesaleUser);
     app.get('/api/users/getWholesaleUsersByCompany/:id', passport.authenticate('jwt', { session: false }), UsersController.getWholesaleUsersByCompany);

@@ -1983,6 +1983,51 @@ module.exports = {
         }
     },
 
+    async createClientSubscription(req, res, next) {
+        try {
+            const subscription = req.body;
+
+            // Llamamos al modelo para insertar
+            const data = await User.createClientSubscription(subscription);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Membresía creada correctamente',
+                data: data // Contiene el ID generado
+            });
+
+        } catch (error) {
+            console.log(`Error en createClientSubscription: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al crear la membresía del cliente',
+                error: error.message
+            });
+        }
+    },
+
+    async updateClientSubscription(req, res, next) {
+        try {
+            const subscription = req.body;
+
+            // Llamamos al modelo para actualizar
+            await User.updateClientSubscription(subscription);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Membresía actualizada correctamente'
+            });
+
+        } catch (error) {
+            console.log(`Error en updateClientSubscription: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al actualizar la membresía del cliente',
+                error: error.message
+            });
+        }
+    },
+
     async getByClientRealSubs(req, res, next) {
         try {
             const id_client = req.params.id_client;

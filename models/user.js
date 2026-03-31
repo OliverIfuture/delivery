@@ -1542,6 +1542,62 @@ User.getByClientRealSubs = (id_client) => {
     return db.manyOrNone(sql, id_client);
 };
 
+User.createClientSubscription = (sub) => {
+    const sql = `
+        INSERT INTO public.client_subscriptions(
+            id_client,
+            id_company,
+            id_plan,
+            stripe_subscription_id,
+            stripe_customer_id,
+            status,
+            current_period_end,
+            temp_email,
+            created_at,
+            updated_at
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+    `;
+
+    return db.oneOrNone(sql, [
+        sub.id_client,
+        sub.id_company,
+        sub.id_plan,
+        sub.stripe_subscription_id,
+        sub.stripe_customer_id,
+        sub.status,
+        sub.current_period_end, // Puede ser null
+        sub.temp_email,
+        new Date(), // created_at
+        new Date()  // updated_at
+    ]);
+};
+
+User.updateClientSubscription = (sub) => {
+    const sql = `
+        UPDATE public.client_subscriptions SET
+            id_plan = $2,
+            stripe_subscription_id = $3,
+            stripe_customer_id = $4,
+            status = $5,
+            current_period_end = $6,
+            temp_email = $7,
+            updated_at = $8
+        WHERE id = $1
+    `;
+
+    return db.none(sql, [
+        sub.id,                     // $1 (Esencial para el WHERE)
+        sub.id_plan,                // $2
+        sub.stripe_subscription_id, // $3
+        sub.stripe_customer_id,     // $4
+        sub.status,                 // $5
+        sub.current_period_end,     // $6
+        sub.temp_email,             // $7
+        new Date()                  // $8 (updated_at)
+    ]);
+};
+
 
 User.deleteDiscountCode = (id) => {
     const sql = `
