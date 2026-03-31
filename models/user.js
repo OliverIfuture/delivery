@@ -1542,6 +1542,17 @@ User.getByClientRealSubs = (id_client) => {
     return db.manyOrNone(sql, id_client);
 };
 
+
+
+User.getAllUsers = () => {
+    const sql = `
+        SELECT * FROM public.users
+        ORDER BY id DESC
+    `;
+
+    return db.manyOrNone(sql);
+};
+
 User.createClientSubscription = (sub) => {
     const sql = `
         INSERT INTO public.client_subscriptions(

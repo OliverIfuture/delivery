@@ -79,6 +79,8 @@ module.exports = (app, upload) => {
     app.put('/api/users/chageState/:id', UsersController.chageState);
     app.post('/api/users/createDiscountCode', UsersController.createDiscountCode);
     app.get('/api/users/getDiscountCodesByCompany/:id', passport.authenticate('jwt', { session: false }), UsersController.getDiscountCodesByCompany);
+    app.get('/api/users/getAllUsers', passport.authenticate('jwt', { session: false }), UsersController.getAllUsers);
+
     app.get('/api/users/getByClientRealSubs/:id_client', passport.authenticate('jwt', { session: false }), UsersController.getByClientRealSubs);
     // CREAR nueva membresía manual
     app.post('/api/users/createClientSubscription', passport.authenticate('jwt', { session: false }), UsersController.createClientSubscription);

@@ -2026,7 +2026,31 @@ module.exports = {
                 error: error.message
             });
         }
+
     },
+
+
+
+
+    async getAllUsers(req, res, next) {
+        try {
+
+            // Llamamos al modelo
+            const data = await User.getAllUsers();
+
+            // Retornamos directamente los datos
+            return res.status(201).json(data);
+
+        } catch (error) {
+            console.log(`Error en getAllUsers: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener la getAllUsers del cliente',
+                error: error.message
+            });
+        }
+    },
+
 
     async getByClientRealSubs(req, res, next) {
         try {
