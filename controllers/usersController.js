@@ -1986,13 +1986,41 @@ module.exports = {
     async createClientSubscription(req, res, next) {
         try {
             const subscription = req.body;
+            const db = require('../config/config'); // Asegúrate de que esta ruta a tu config de BD sea correcta
 
-            // Llamamos al modelo para insertar
+            // 1. Llamamos al modelo para insertar la membresía (y la tabla users)
             const data = await User.createClientSubscription(subscription);
 
+            // 2. Buscamos el precio del plan para registrarlo en las ventas
+            const plan = await db.oneOrNone('SELECT price FROM public.subscription_plans WHERE id = $1', [subscription.id_plan]);
+
+            // Verificamos si encontramos el plan y su precio (asumiendo que en tu BD el precio ya está en formato normal, ej: 29.99)
+            const amountPaid = plan && plan.price ? parseFloat(plan.price) : 0;
+
+            // 3. Insertar en payment_history si el monto es mayor a 0
+            if (amountPaid > 0) {
+                // Generamos un ID de factura ficticio para los cobros manuales
+                const manualInvoiceId = `manual_inv_${Date.now()}`;
+
+                await db.none(`
+                    INSERT INTO public.payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `, [
+                    subscription.id_company,
+                    subscription.id_client,
+                    subscription.id_plan,
+                    subscription.stripe_subscription_id,
+                    manualInvoiceId,
+                    amountPaid,
+                    new Date() // Fecha actual del cobro manual
+                ]);
+                console.log(`💰 Historial de pago (Manual) registrado: $${amountPaid} para la sub ${subscription.stripe_subscription_id}`);
+            }
+
+            // 4. Respondemos al frontend que todo salió perfecto
             return res.status(201).json({
                 success: true,
-                message: 'Membresía creada correctamente',
+                message: 'Membresía creada y venta registrada correctamente',
                 data: data // Contiene el ID generado
             });
 
