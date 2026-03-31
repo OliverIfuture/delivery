@@ -259,18 +259,26 @@ Diet.assignMultiple = (assignments) => {
                     final_fats, 
                     notes, 
                     created_at
-                ) VALUES($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10)`,
+                ) VALUES($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10)
+                ON CONFLICT (id_client, id_recipe, assigned_meal_category) 
+                DO UPDATE SET
+                    custom_ingredients = EXCLUDED.custom_ingredients,
+                    final_calories = EXCLUDED.final_calories,
+                    final_protein = EXCLUDED.final_protein,
+                    final_carbs = EXCLUDED.final_carbs,
+                    final_fats = EXCLUDED.final_fats,
+                    notes = EXCLUDED.notes`,
                 [
                     a.id_client,
                     a.id_recipe,
-                    a.assigned_meal_category || 'General', // <-- Corregido para leer lo que manda Flutter
-                    JSON.stringify(a.custom_ingredients || []), // Convertimos el array a string JSON para Postgres
+                    a.assigned_meal_category || 'General',
+                    JSON.stringify(a.custom_ingredients || []),
                     a.final_calories || 0,
                     a.final_protein || 0,
                     a.final_carbs || 0,
                     a.final_fats || 0,
                     a.notes || '',
-                    new Date()
+                    new Date() // Ojo: en un UPDATE, esto no reescribe la fecha original, lo cual es correcto
                 ]
             );
         });
@@ -303,6 +311,15 @@ SELECT
         ORDER BY cda.created_at DESC
     `;
     return db.manyOrNone(sql, id_company);
+};
+
+Diet.deleteAssignedRecipe = (id_assignment) => {
+    const sql = `
+        DELETE FROM client_diets_v2 
+        WHERE id = $1 
+        RETURNING id;
+    `;
+    return db.oneOrNone(sql, id_assignment);
 };
 
 
