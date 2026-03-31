@@ -79,7 +79,7 @@ module.exports = (app, upload) => {
     app.put('/api/users/chageState/:id', UsersController.chageState);
     app.post('/api/users/createDiscountCode', UsersController.createDiscountCode);
     app.get('/api/users/getDiscountCodesByCompany/:id', passport.authenticate('jwt', { session: false }), UsersController.getDiscountCodesByCompany);
-
+    app.get('/api/users/getByClientRealSubs/:id_client', passport.authenticate('jwt', { session: false }), UsersController.getByClientRealSubs);
 
     app.post('/api/users/createWholesaleUser', UsersController.createWholesaleUser);
     app.get('/api/users/getWholesaleUsersByCompany/:id', passport.authenticate('jwt', { session: false }), UsersController.getWholesaleUsersByCompany);

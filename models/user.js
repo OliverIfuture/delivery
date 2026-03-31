@@ -1532,6 +1532,16 @@ ORDER BY codes_id desc
     return db.manyOrNone(sql, id);
 }
 
+User.getByClientRealSubs = (id_client) => {
+    const sql = `
+        SELECT * FROM public.client_subscriptions
+        WHERE id_client = $1
+        ORDER BY id DESC
+    `;
+
+    return db.manyOrNone(sql, id_client);
+};
+
 
 User.deleteDiscountCode = (id) => {
     const sql = `
