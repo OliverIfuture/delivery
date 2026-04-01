@@ -1043,6 +1043,26 @@ module.exports = {
 
     },
 
+    async deleteComment(req, res, next) {
+        try {
+            const id = req.params.id;
+            await Product.deleteComment(id);
+
+            return res.status(201).json({
+                message: 'Comentario eliminado correctamente',
+                success: true
+            });
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al eliminar el comentario',
+                success: false,
+                error: error
+            });
+        }
+    },
+
     async deleteAnswerLike(req, res, next) {
         try {
 

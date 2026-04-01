@@ -143,6 +143,9 @@ module.exports = (app, upload) => {
   app.put('/api/products/updateStockersNewApp/:id_product/:stock/:id_company', productsControllers.updateStockersNewApp);
   app.put('/api/products/updateFlavor/:id/:activate', productsControllers.updateFlavor);
 
+  // Ruta para eliminar un comentario
+  app.delete('/api/comments/delete/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteComment);
+
   app.delete('/api/products/deleteAnswerLike/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteAnswerLike);
   app.delete('/api/products/deleteAnswerLikeProduct/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteAnswerLikeProduct);
 
