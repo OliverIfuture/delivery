@@ -1423,8 +1423,8 @@ Product.deleteAnswerLikeProduct = (id) => {
 Product.deleteComment = (id) => {
     const sql = `
         DELETE FROM likes_publish WHERE id_publish = $1; -- Limpia likes si existen
-        DELETE FROM answers_post WHERE id_comment = $1; -- Limpia respuestas si existen
-        DELETE FROM comments WHERE id = $1;             -- Borra el comentario
+        DELETE FROM answers_post WHERE id_post = $1; -- Limpia respuestas si existen
+        DELETE FROM coments_post WHERE id = $1;             -- Borra el comentario
     `;
     return db.none(sql, id);
 }
