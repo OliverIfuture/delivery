@@ -18,7 +18,7 @@ module.exports = {
             console.log('Peso Completado:', log.completed_weight || log.completedWeight);
             console.log('====================================');
 
-            const data = await WorkoutLog.create(log);
+            const data = await WorkoutLog.create2(log);
 
             await User.updateStreak(log.id_client);
 
