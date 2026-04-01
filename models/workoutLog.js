@@ -31,53 +31,54 @@ WorkoutLog.create2 = (log) => {
         UPDATE routines
         SET content = (
             SELECT 
-                jsonb_object_agg(day_name, updated_day_data)
+                jsonb_object_agg(day_key, updated_day_val)
             FROM (
                 SELECT 
-                    day_name,
+                    day_key,
                     jsonb_set(
-                        day_data,
+                        day_val,
                         '{blocks}',
                         (
                             SELECT jsonb_agg(
                                 jsonb_set(
-                                    block,
+                                    block_obj,
                                     '{exercises}',
                                     (
                                         SELECT jsonb_agg(
                                             CASE 
-                                                WHEN (ex->>'name') = (SELECT exercise_name FROM inserted_log)
-                                                THEN jsonb_set(ex, '{weight}', to_jsonb((SELECT completed_weight FROM inserted_log)::text))
-                                                ELSE ex
+                                                -- 🎯 COMPARACIÓN BLINDADA: Compara nombres ignorando mayúsculas y espacios
+                                                WHEN LOWER(TRIM(ex_obj->>'name')) = LOWER(TRIM((SELECT exercise_name FROM inserted_log)))
+                                                THEN jsonb_set(ex_obj, '{weight}', to_jsonb((SELECT completed_weight FROM inserted_log)::text))
+                                                ELSE ex_obj
                                             END
                                         )
-                                        FROM jsonb_array_elements(block->'exercises') AS ex
+                                        FROM jsonb_array_elements(block_obj->'exercises') AS ex_obj
                                     )
                                 )
                             )
-                            FROM jsonb_array_elements(day_data->'blocks') AS block
+                            FROM jsonb_array_elements(day_val->'blocks') AS block_obj
                         )
-                    ) AS updated_day_data
-                FROM jsonb_each(content) AS days(day_name, day_data)
-            ) AS final_json
+                    ) AS updated_day_val
+                FROM jsonb_each((SELECT content FROM routines WHERE id = (SELECT id_routine FROM inserted_log))) AS days(day_key, day_val)
+            ) AS day_reconstruction
         )
         WHERE id = (SELECT id_routine FROM inserted_log)
         RETURNING (SELECT id FROM inserted_log);
     `;
 
     return db.one(sql, [
-        log.id_client,
-        log.id_company,
-        log.id_routine,
-        log.exercise_name,
-        log.set_number,
-        log.planned_reps,
-        log.planned_weight,
-        log.completed_reps,
-        log.completed_weight,
-        log.notes,
-        log.created_at,
-        log.created_at
+        log.idClient,       // $1
+        log.idCompany,      // $2
+        log.idRoutine,      // $3
+        log.exerciseName,   // $4
+        log.setNumber,      // $5
+        log.plannedReps,    // $6
+        log.plannedWeight,  // $7
+        log.completedReps,  // $8
+        log.completedWeight,// $9
+        log.notes,          // $10
+        log.createdAt,      // $11
+        log.createdAt       // $12
     ]);
 };
 
