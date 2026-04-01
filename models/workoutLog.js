@@ -18,9 +18,22 @@ WorkoutLog.delete = (id) => {
 
 
 WorkoutLog.create2 = (log) => {
-    // 💡 NOTA: Usamos los nombres que vienen del req.body de Flutter
+    // Aseguramos que las variables tengan valor sin importar el formato (camelCase o snake_case)
+    const idClient = log.id_client || log.idClient;
+    const idCompany = log.id_company || log.idCompany;
+    const idRoutine = log.id_routine || log.idRoutine;
+    const exerciseName = log.exercise_name || log.exerciseName;
+    const setNumber = log.set_number || log.setNumber;
+    const plannedReps = log.planned_reps || log.plannedReps;
+    const plannedWeight = log.planned_weight || log.plannedWeight;
+    const completedReps = log.completed_reps || log.completedReps;
+    const completedWeight = log.completed_weight || log.completedWeight;
+    const notes = log.notes || "";
+    const createdAt = log.created_at || log.createdAt || new Date();
+
     const sql = `
         WITH inserted_log AS (
+            -- 1. Insertamos el progreso en el historial
             INSERT INTO workout_logs(
                 id_client, id_company, id_routine, exercise_name, 
                 set_number, planned_reps, planned_weight, 
@@ -29,8 +42,9 @@ WorkoutLog.create2 = (log) => {
             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING id_client, id_routine, exercise_name, completed_weight
         )
+        -- 2. Actualizamos el peso en la rutina activa del cliente
         UPDATE routines
-        SET content = (
+        SET plan_data = (
             SELECT 
                 jsonb_object_agg(day_key, updated_day_val)
             FROM (
@@ -47,6 +61,7 @@ WorkoutLog.create2 = (log) => {
                                     (
                                         SELECT jsonb_agg(
                                             CASE 
+                                                -- 🎯 Buscamos el ejercicio por nombre (limpiando espacios y mayúsculas)
                                                 WHEN LOWER(TRIM(ex_obj->>'name')) = LOWER(TRIM((SELECT exercise_name FROM inserted_log)))
                                                 THEN ex_obj || jsonb_build_object('weight', (SELECT completed_weight FROM inserted_log)::text)
                                                 ELSE ex_obj
@@ -59,7 +74,7 @@ WorkoutLog.create2 = (log) => {
                             FROM jsonb_array_elements(day_val->'blocks') AS block_obj
                         )
                     ) AS updated_day_val
-                FROM jsonb_each((SELECT content FROM routines WHERE id = $3 AND id_client = $1)) AS days(day_key, day_val)
+                FROM jsonb_each((SELECT plan_data FROM routines WHERE id = $3 AND id_client = $1)) AS days(day_key, day_val)
             ) AS day_reconstruction
         )
         WHERE id = $3 AND id_client = $1
@@ -67,18 +82,18 @@ WorkoutLog.create2 = (log) => {
     `;
 
     return db.one(sql, [
-        log.idClient,        // $1
-        log.idCompany,       // $2
-        log.idRoutine,       // $3
-        log.exerciseName,    // $4
-        log.setNumber,       // $5
-        log.plannedReps,     // $6
-        log.plannedWeight,   // $7
-        log.completedReps,   // $8
-        log.completedWeight, // $9
-        log.notes,           // $10
-        log.createdAt,       // $11
-        log.createdAt        // $12
+        idClient,        // $1
+        idCompany,       // $2
+        idRoutine,       // $3
+        exerciseName,    // $4
+        setNumber,       // $5
+        plannedReps,     // $6
+        plannedWeight,   // $7
+        completedReps,   // $8
+        completedWeight, // $9
+        notes,           // $10
+        createdAt,       // $11
+        createdAt        // $12
     ]);
 };
 
