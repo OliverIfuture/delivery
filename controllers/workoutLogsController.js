@@ -8,35 +8,35 @@ module.exports = {
         try {
             const log = req.body;
             log.id_client = req.user.id;
-
-            // --- CORRECCIÓN FREEMIUM ---
-            // Si tiene entrenador, lo usamos. Si no, se queda en null.
-            // Y lo más importante: ¡QUITAMOS EL IF QUE BLOQUEABA!
             log.id_company = req.user.id_entrenador || null;
-            // ---------------------------
 
-            const data = await WorkoutLog.create2(log);
-            // 2. **NUEVO: Actualizar la Racha**
-            // No necesitamos esperar el resultado para responder al cliente,
-            // pero es bueno saber si funcionó.
-            const streakData = await User.updateStreak(log.id_client);
-            console.log(`🔥 Racha actualizada para usuario ${log.id_client}: ${streakData.current_streak} días`);
+            console.log('====================================');
+            console.log('🚀 NUEVO LOG RECIBIDO');
+            console.log('Usuario ID:', log.id_client);
+            console.log('Rutina ID:', log.id_routine || log.idRoutine);
+            console.log('Ejercicio:', `"${log.exercise_name || log.exerciseName}"`); // Las comillas ayudan a ver espacios invisibles
+            console.log('Peso Completado:', log.completed_weight || log.completedWeight);
+            console.log('====================================');
+
+            const data = await WorkoutLog.create(log);
+
+            await User.updateStreak(log.id_client);
 
             return res.status(201).json({
                 success: true,
-                message: 'Progreso registrado correctamente.',
+                message: 'Progreso registrado y rutina actualizada.',
                 data: { 'id': data.id }
             });
         }
         catch (error) {
-            console.log(`Error en workoutLogsController.create: ${error}`);
+            console.log('❌ ERROR EN CONTROLLER:', error);
             return res.status(501).json({
                 success: false,
                 message: 'Error al guardar el progreso',
                 error: error.message || error
             });
         }
-    },
+    }
     /**
      * Crear un nuevo registro (un set completado)
      */

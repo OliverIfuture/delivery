@@ -18,6 +18,15 @@ WorkoutLog.delete = (id) => {
 
 
 WorkoutLog.create2 = (log) => {
+    // Debug de parámetros antes de enviar a Postgres
+    console.log('--- ENVIANDO A POSTGRES ---');
+    console.log('Params:', [
+        log.idClient,
+        log.idRoutine,
+        log.exerciseName,
+        log.completedWeight
+    ]);
+
     const sql = `
         WITH inserted_log AS (
             INSERT INTO workout_logs(
@@ -26,7 +35,7 @@ WorkoutLog.create2 = (log) => {
                 completed_reps, completed_weight, notes, created_at, updated_at
             )
             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            RETURNING id_routine, exercise_name, completed_weight
+            RETURNING id_client, id_routine, exercise_name, completed_weight
         )
         UPDATE routines
         SET content = (
@@ -46,9 +55,9 @@ WorkoutLog.create2 = (log) => {
                                     (
                                         SELECT jsonb_agg(
                                             CASE 
-                                                -- 🎯 COMPARACIÓN BLINDADA: Compara nombres ignorando mayúsculas y espacios
+                                                -- 🎯 COMPARACIÓN FLEXIBLE (Ignora espacios y mayúsculas)
                                                 WHEN LOWER(TRIM(ex_obj->>'name')) = LOWER(TRIM((SELECT exercise_name FROM inserted_log)))
-                                                THEN jsonb_set(ex_obj, '{weight}', to_jsonb((SELECT completed_weight FROM inserted_log)::text))
+                                                THEN ex_obj || jsonb_build_object('weight', (SELECT completed_weight FROM inserted_log)::text)
                                                 ELSE ex_obj
                                             END
                                         )
@@ -59,26 +68,26 @@ WorkoutLog.create2 = (log) => {
                             FROM jsonb_array_elements(day_val->'blocks') AS block_obj
                         )
                     ) AS updated_day_val
-                FROM jsonb_each((SELECT content FROM routines WHERE id = (SELECT id_routine FROM inserted_log))) AS days(day_key, day_val)
+                FROM jsonb_each((SELECT content FROM routines WHERE id = $3 AND id_user = $1)) AS days(day_key, day_val)
             ) AS day_reconstruction
         )
-        WHERE id = (SELECT id_routine FROM inserted_log)
-        RETURNING (SELECT id FROM inserted_log);
+        WHERE id = $3 AND id_user = $1
+        RETURNING (SELECT id FROM inserted_log) AS id;
     `;
 
     return db.one(sql, [
-        log.idClient,       // $1
-        log.idCompany,      // $2
-        log.idRoutine,      // $3
-        log.exerciseName,   // $4
-        log.setNumber,      // $5
-        log.plannedReps,    // $6
-        log.plannedWeight,  // $7
-        log.completedReps,  // $8
-        log.completedWeight,// $9
-        log.notes,          // $10
-        log.createdAt,      // $11
-        log.createdAt       // $12
+        log.idClient,        // $1
+        log.idCompany,       // $2
+        log.idRoutine,       // $3
+        log.exerciseName,    // $4
+        log.setNumber,       // $5
+        log.plannedReps,     // $6
+        log.plannedWeight,   // $7
+        log.completedReps,   // $8
+        log.completedWeight, // $9
+        log.notes,           // $10
+        log.createdAt,       // $11
+        log.createdAt        // $12
     ]);
 };
 
