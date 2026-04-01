@@ -180,20 +180,44 @@ Product.createClassroomLesson = (lesson) => {
 // --- OBTENER MÓDULOS (Filtrado por Nivel) ---
 Product.getClassroom = (user_level) => {
     const sql = `
-        SELECT 
-            id,
-            title,
-            description,
-            cover_image,
-            video_url,
-            required_level,
-            (CASE WHEN required_level <= $1 THEN true ELSE false END) as is_unlocked
-        FROM 
-            classroom_modules
-        WHERE 
-            is_active = true
-        ORDER BY 
-            required_level ASC, id DESC
+SELECT
+            m.id,
+            m.title,
+            m.description,
+            m.cover_image,
+            m.video_url,
+            m.required_level,
+            (CASE WHEN m.required_level <= $1 THEN true ELSE false END) as is_unlocked,
+            m.is_active,
+            m.created_at,
+            m.updated_at,
+            COALESCE(
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', l.id,
+                            'module_id', l.module_id,
+                            'title', l.title,
+                            'description', l.description,
+                            'video_url', l.video_url,
+                            'thumbnail_url', l.thumbnail_url,
+                            'order_index', l.order_index,
+                            'is_free', l.is_free,
+                            'created_at', l.created_at,
+                            'updated_at', l.updated_at
+                        ) ORDER BY l.order_index ASC
+                    )
+                    FROM classroom_lessons l
+                    WHERE l.module_id = m.id
+                ),
+                '[]'::json
+            ) AS lessons
+        FROM
+            classroom_modules m
+        WHERE
+            m.is_active = true
+        ORDER BY
+            m.required_level ASC, m.id DESC;
     `;
     return db.manyOrNone(sql, user_level);
 };
