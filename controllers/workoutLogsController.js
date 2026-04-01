@@ -32,7 +32,7 @@ module.exports = {
                 error: error.message || error
             });
         }
-    }
+    },
     /**
      * Crear un nuevo registro (un set completado)
      */
