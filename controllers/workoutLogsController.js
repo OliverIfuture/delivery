@@ -3,6 +3,40 @@ const User = require('../models/user.js');
 
 module.exports = {
 
+
+    async create2(req, res, next) {
+        try {
+            const log = req.body;
+            log.id_client = req.user.id;
+
+            // --- CORRECCIÓN FREEMIUM ---
+            // Si tiene entrenador, lo usamos. Si no, se queda en null.
+            // Y lo más importante: ¡QUITAMOS EL IF QUE BLOQUEABA!
+            log.id_company = req.user.id_entrenador || null;
+            // ---------------------------
+
+            const data = await WorkoutLog.create2(log);
+            // 2. **NUEVO: Actualizar la Racha**
+            // No necesitamos esperar el resultado para responder al cliente,
+            // pero es bueno saber si funcionó.
+            const streakData = await User.updateStreak(log.id_client);
+            console.log(`🔥 Racha actualizada para usuario ${log.id_client}: ${streakData.current_streak} días`);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Progreso registrado correctamente.',
+                data: { 'id': data.id }
+            });
+        }
+        catch (error) {
+            console.log(`Error en workoutLogsController.create: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al guardar el progreso',
+                error: error.message || error
+            });
+        }
+    },
     /**
      * Crear un nuevo registro (un set completado)
      */

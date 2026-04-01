@@ -17,6 +17,9 @@ module.exports = (app) => {
 
     // --- POST ---
     // Crear un nuevo registro de serie (set)
+    app.post('/api/workoutlogs/create2', passport.authenticate('jwt', { session: false }), workoutLogsController.create);
+
+
     app.post('/api/workoutlogs/create', passport.authenticate('jwt', { session: false }), workoutLogsController.create);
 
     // **NUEVA RUTA: Obtener el feed para el dashboard del entrenador**

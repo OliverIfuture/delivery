@@ -16,6 +16,71 @@ WorkoutLog.delete = (id) => {
     return db.oneOrNone(sql, id);
 };
 
+
+WorkoutLog.create2 = (log) => {
+    const sql = `
+        WITH inserted_log AS (
+            INSERT INTO workout_logs(
+                id_client, id_company, id_routine, exercise_name, 
+                set_number, planned_reps, planned_weight, 
+                completed_reps, completed_weight, notes, created_at, updated_at
+            )
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING id_routine, exercise_name, completed_weight
+        )
+        UPDATE routines
+        SET content = (
+            SELECT 
+                jsonb_object_agg(day_name, updated_day_data)
+            FROM (
+                SELECT 
+                    day_name,
+                    jsonb_set(
+                        day_data,
+                        '{blocks}',
+                        (
+                            SELECT jsonb_agg(
+                                jsonb_set(
+                                    block,
+                                    '{exercises}',
+                                    (
+                                        SELECT jsonb_agg(
+                                            CASE 
+                                                WHEN (ex->>'name') = (SELECT exercise_name FROM inserted_log)
+                                                THEN jsonb_set(ex, '{weight}', to_jsonb((SELECT completed_weight FROM inserted_log)::text))
+                                                ELSE ex
+                                            END
+                                        )
+                                        FROM jsonb_array_elements(block->'exercises') AS ex
+                                    )
+                                )
+                            )
+                            FROM jsonb_array_elements(day_data->'blocks') AS block
+                        )
+                    ) AS updated_day_data
+                FROM jsonb_each(content) AS days(day_name, day_data)
+            ) AS final_json
+        )
+        WHERE id = (SELECT id_routine FROM inserted_log)
+        RETURNING (SELECT id FROM inserted_log);
+    `;
+
+    return db.one(sql, [
+        log.id_client,
+        log.id_company,
+        log.id_routine,
+        log.exercise_name,
+        log.set_number,
+        log.planned_reps,
+        log.planned_weight,
+        log.completed_reps,
+        log.completed_weight,
+        log.notes,
+        log.created_at,
+        log.created_at
+    ]);
+};
+
 WorkoutLog.create = (log) => {
     const sql = `
         INSERT INTO workout_logs(
