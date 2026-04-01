@@ -3,40 +3,36 @@ const User = require('../models/user.js');
 
 module.exports = {
 
-
     async create2(req, res, next) {
         try {
-            const log = req.body;
-            log.id_client = req.user.id;
-            log.id_company = req.user.id_entrenador || null;
+            const log = req.body; // Viene en camelCase desde Flutter (idClient, idRoutine, etc.)
 
-            console.log('====================================');
-            console.log('🚀 NUEVO LOG RECIBIDO');
-            console.log('Usuario ID:', log.id_client);
-            console.log('Rutina ID:', log.id_routine || log.idRoutine);
-            console.log('Ejercicio:', `"${log.exercise_name || log.exerciseName}"`); // Las comillas ayudan a ver espacios invisibles
-            console.log('Peso Completado:', log.completed_weight || log.completedWeight);
-            console.log('====================================');
+            // Sincronizamos las llaves por si acaso
+            log.idClient = req.user.id;
+            log.idCompany = req.user.id_entrenador || null;
+
+            console.log('🚀 PROCESANDO LOG PARA:', log.exerciseName);
 
             const data = await WorkoutLog.create2(log);
 
-            await User.updateStreak(log.id_client);
+            // Actualizar racha
+            await User.updateStreak(log.idClient);
 
             return res.status(201).json({
                 success: true,
-                message: 'Progreso registrado y rutina actualizada.',
+                message: 'Rutina actualizada y racha incrementada.',
                 data: { 'id': data.id }
             });
         }
         catch (error) {
-            console.log('❌ ERROR EN CONTROLLER:', error);
+            console.log('❌ ERROR FINAL:', error);
             return res.status(501).json({
                 success: false,
-                message: 'Error al guardar el progreso',
+                message: 'Error al procesar el entrenamiento',
                 error: error.message || error
             });
         }
-    },
+    }
     /**
      * Crear un nuevo registro (un set completado)
      */

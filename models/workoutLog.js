@@ -18,15 +18,7 @@ WorkoutLog.delete = (id) => {
 
 
 WorkoutLog.create2 = (log) => {
-    // Debug de parámetros antes de enviar a Postgres
-    console.log('--- ENVIANDO A POSTGRES ---');
-    console.log('Params:', [
-        log.idClient,
-        log.idRoutine,
-        log.exerciseName,
-        log.completedWeight
-    ]);
-
+    // 💡 NOTA: Usamos los nombres que vienen del req.body de Flutter
     const sql = `
         WITH inserted_log AS (
             INSERT INTO workout_logs(
@@ -55,7 +47,6 @@ WorkoutLog.create2 = (log) => {
                                     (
                                         SELECT jsonb_agg(
                                             CASE 
-                                                -- 🎯 COMPARACIÓN FLEXIBLE (Ignora espacios y mayúsculas)
                                                 WHEN LOWER(TRIM(ex_obj->>'name')) = LOWER(TRIM((SELECT exercise_name FROM inserted_log)))
                                                 THEN ex_obj || jsonb_build_object('weight', (SELECT completed_weight FROM inserted_log)::text)
                                                 ELSE ex_obj
@@ -68,10 +59,10 @@ WorkoutLog.create2 = (log) => {
                             FROM jsonb_array_elements(day_val->'blocks') AS block_obj
                         )
                     ) AS updated_day_val
-                FROM jsonb_each((SELECT content FROM routines WHERE id = $3 AND id_user = $1)) AS days(day_key, day_val)
+                FROM jsonb_each((SELECT content FROM routines WHERE id = $3 AND id_client = $1)) AS days(day_key, day_val)
             ) AS day_reconstruction
         )
-        WHERE id = $3 AND id_user = $1
+        WHERE id = $3 AND id_client = $1
         RETURNING (SELECT id FROM inserted_log) AS id;
     `;
 
