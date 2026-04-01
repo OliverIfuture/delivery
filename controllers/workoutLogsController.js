@@ -3,7 +3,7 @@ const User = require('../models/user.js');
 
 module.exports = {
 
-    async create2(req, res, next) {
+    async create(req, res, next) {
         try {
             const log = req.body; // Viene en camelCase desde Flutter (idClient, idRoutine, etc.)
 
@@ -13,7 +13,7 @@ module.exports = {
 
             console.log('🚀 PROCESANDO LOG PARA:', log.exerciseName);
 
-            const data = await WorkoutLog.create2(log);
+            const data = await WorkoutLog.create(log);
 
             // Actualizar racha
             await User.updateStreak(log.idClient);
@@ -36,7 +36,7 @@ module.exports = {
     /**
      * Crear un nuevo registro (un set completado)
      */
-    async create(req, res, next) {
+    async create3(req, res, next) {
         try {
             const log = req.body;
             log.id_client = req.user.id;
@@ -47,7 +47,7 @@ module.exports = {
             log.id_company = req.user.id_entrenador || null;
             // ---------------------------
 
-            const data = await WorkoutLog.create(log);
+            const data = await WorkoutLog.create3(log);
             // 2. **NUEVO: Actualizar la Racha**
             // No necesitamos esperar el resultado para responder al cliente,
             // pero es bueno saber si funcionó.

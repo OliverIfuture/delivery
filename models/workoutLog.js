@@ -17,7 +17,7 @@ WorkoutLog.delete = (id) => {
 };
 
 
-WorkoutLog.create2 = (log) => {
+WorkoutLog.create = (log) => {
     // Aseguramos que las variables tengan valor sin importar el formato (camelCase o snake_case)
     const idClient = log.id_client || log.idClient;
     const idCompany = log.id_company || log.idCompany;
@@ -97,7 +97,7 @@ WorkoutLog.create2 = (log) => {
     ]);
 };
 
-WorkoutLog.create = (log) => {
+WorkoutLog.create3 = (log) => {
     const sql = `
         INSERT INTO workout_logs(
             id_client,
