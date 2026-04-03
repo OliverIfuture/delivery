@@ -102,6 +102,47 @@ const processDietBackground = async (analysisId, physiologyData) => {
 
 module.exports = {
 
+    async createRecipeWithImage(req, res, next) {
+        try {
+            // Parseamos los datos que vienen en los fields del MultipartRequest
+            const recipe = JSON.parse(req.body.recipe);
+            const ingredientsArray = JSON.parse(req.body.ingredients_array);
+            const files = req.files;
+
+            // Si viene una imagen, la subimos a Firebase
+            if (files && files.length > 0) {
+                const pathImage = `recipes_${Date.now()}`;
+                const url = await storage(files[0], pathImage);
+
+                if (url != undefined && url != null) {
+                    recipe.image_url = url; // Asignamos la URL al objeto receta
+                }
+            }
+
+            // 1. Insertamos la receta y obtenemos el ID generado
+            const idRecipe = await Diet.createRecipe(recipe);
+
+            // 2. Insertamos los ingredientes en la tabla pivote
+            if (ingredientsArray && ingredientsArray.length > 0) {
+                await Diet.insertIngredientsMap(idRecipe, ingredientsArray);
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: 'Receta creada correctamente',
+                data: idRecipe
+            });
+
+        } catch (error) {
+            console.log(`❌ Error en createRecipeWithImage: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al registrar la receta',
+                error: error.message
+            });
+        }
+    },
+
     /**
      * Asignar una nueva dieta (MANUAL / DEL ENTRENADOR)
      */

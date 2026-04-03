@@ -387,6 +387,40 @@ Diet.getAssignedDietByClient = (id_client) => {
     return db.manyOrNone(sql, id_client);
 };
 
+Diet.createRecipe = async (recipe) => {
+    const sql = `
+        INSERT INTO diet_recipes_v2(
+            id_company, default_meal_category, title, image_url, 
+            prep_time_minutes, preparation_steps, total_calories, 
+            total_protein, total_carbs, total_fats, created_at
+        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id
+    `;
+
+    // Convertimos el array de pasos a JSON string para guardarlo en JSONB
+    const steps = JSON.stringify(recipe.preparation_steps || []);
+
+    const res = await db.one(sql, [
+        recipe.id_company, recipe.default_meal_category, recipe.title,
+        recipe.image_url, recipe.prep_time_minutes, steps,
+        recipe.total_calories, recipe.total_protein, recipe.total_carbs,
+        recipe.total_fats, new Date()
+    ]);
+    return res.id;
+};
+
+Diet.insertIngredientsMap = async (idRecipe, ingredientsArray) => {
+    // Usamos un bucle para insertar todos los ingredientes (o un pg-promise helpers.insert si prefieres bulk)
+    for (const ing of ingredientsArray) {
+        const sql = `
+            INSERT INTO recipe_ingredients_map(
+                id_recipe, id_ingredient, default_qty
+            ) VALUES($1, $2, $3)
+        `;
+        // Nota: en Flutter le pusimos "custom_qty", lo mapeamos aquí a "default_qty"
+        await db.none(sql, [idRecipe, ing.id_ingredient, ing.custom_qty]);
+    }
+};
+
 Diet.getRecipesByCompany = (id_company) => {
     // Esta consulta trae la receta y empaca todos sus ingredientes en un arreglo JSON
     const sql = `
