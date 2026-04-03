@@ -98,7 +98,7 @@ Diet.findByCompanyMasetr = (id_company) => {
             unit,
             base_qty,
             calories,
-            protein,
+            protein, 
             carbs,
             fats,
             created_at
