@@ -89,6 +89,29 @@ Diet.findByTrainer = (id_company) => {
     return db.manyOrNone(sql, id_company);
 };
 
+Diet.findByCompanyMasetr = (id_company) => {
+    const sql = `
+        SELECT 
+            id,
+            id_company,
+            name,
+            unit,
+            base_qty,
+            calories,
+            protein,
+            carbs,
+            fats,
+            created_at
+        FROM 
+            master_ingredients
+        WHERE 
+            id_company = $1 OR id_company IS NULL
+        ORDER BY 
+            name ASC
+    `;
+    return db.manyOrNone(sql, id_company);
+};
+
 /**
  * Busca la dieta activa de un cliente (la más reciente)
  */

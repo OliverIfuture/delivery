@@ -82,7 +82,7 @@ module.exports = (app) => {
         passport.authenticate('jwt', { session: false }),
         dietsController.deleteByClientAndRecipe
     );
-
+    app.get('/api/diets/findByCompanyMasetr/:id_company', passport.authenticate('jwt', { session: false }), dietsController.findByCompanyMasetr);
     app.get('/api/diets/findByTrainer_v2/:id_company', passport.authenticate('jwt', { session: false }), dietsController.getRecipesWithIngredients);
     app.get('/api/diets/client_v2/:id_client', passport.authenticate('jwt', { session: false }), dietsController.getClientDietV2);
 }

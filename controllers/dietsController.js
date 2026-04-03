@@ -864,6 +864,22 @@ module.exports = {
         }
     },
 
+    async findByCompanyMasetr(req, res, next) {
+        try {
+            const id_company = req.params.id_company;
+            const ingredients = await Diet.findByCompanyMasetr(id_company);
+
+            return res.status(200).json(ingredients);
+        } catch (error) {
+            console.error(`❌ Error en getIngredientsByCompany: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener los ingredientes',
+                error: error.message
+            });
+        }
+    },
+
     async getRecipesWithIngredients(req, res, next) {
         try {
             const id_company = req.params.id_company;
