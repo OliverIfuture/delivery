@@ -164,9 +164,11 @@ module.exports = {
                 p.id,
                 p.payment_date as date,
                 p.amount as price,
+                u.name,
                 COALESCE(s.name, 'Plan Eliminado/Manual') as plan_name
             FROM payment_history p
             LEFT JOIN subscription_plans s ON p.id_plan = s.id
+            LEFT JOIN users u ON u.id = p.id_client
             WHERE p.id_company = $1 
             AND DATE(p.payment_date) >= $2 
             AND DATE(p.payment_date) <= $3
