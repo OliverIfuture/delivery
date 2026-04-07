@@ -130,7 +130,7 @@ module.exports = (app, upload) => {
   app.get('/api/products/selectColors/:idSucursal', passport.authenticate('jwt', { session: false }), productsControllers.selectColors);
   app.get('/api/products/selectOcations/:idSucursal', passport.authenticate('jwt', { session: false }), productsControllers.selectOcations);
   app.get('/api/products/selectAroma/:idSucursal', passport.authenticate('jwt', { session: false }), productsControllers.selectAroma);
-
+  app.get('/api/products/modules/:idCompany', passport.authenticate('jwt', { session: false }), productsControllers.getModules);
   app.put('/api/products/updateStock', productsControllers.updateProduct);
   app.put('/api/products/update', productsControllers.upateProduct);
   app.put('/api/products/updateAdmin', productsControllers.updateAdmin);

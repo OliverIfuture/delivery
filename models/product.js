@@ -2851,4 +2851,38 @@ ORDER BY id ASC
 
 }
 
+
+Product.getModulesByCompany = (idCompany) => {
+    const sql = `
+        SELECT 
+            m.id,
+            m.title,
+            m.description,
+            m.cover_image,
+            m.required_level,
+            m.is_active,
+            m.video_url,
+            (
+                SELECT COALESCE(json_agg(
+                    json_build_object(
+                        'id', l.id,
+                        'module_id', l.module_id,
+                        'title', l.title,
+                        'description', l.description,
+                        'video_url', l.video_url,
+                        'thumbnail_url', l.thumbnail_url,
+                        'order_index', l.order_index,
+                        'is_free', l.is_free
+                    ) ORDER BY l.order_index ASC
+                ), '[]'::json)
+                FROM classroom_lessons l
+                WHERE l.module_id = m.id
+            ) AS lessons
+        FROM classroom_modules m
+        WHERE m.id_company = $1
+        ORDER BY m.id ASC;
+    `;
+    return db.manyOrNone(sql, idCompany);
+}
+
 module.exports = Product;
