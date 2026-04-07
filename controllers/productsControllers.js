@@ -101,6 +101,46 @@ module.exports = {
         }
     },
 
+    async updateLesson(req, res, next) {
+        try {
+            let lessonData = JSON.parse(req.body.lesson);
+            const files = req.files;
+
+            // 1. Si NO mandó un video nuevo, solo actualizamos los textos
+            if (!files || files.length === 0) {
+                await Product.updateLessonText(lessonData);
+                return res.status(201).json({ success: true, message: 'Datos actualizados correctamente' });
+            }
+
+            // 2. Si SÍ mandó un video nuevo, lo subimos a Storage
+            const file = files[0];
+            const pathVideo = `lesson_${lessonData.id}_video_${Date.now()}`;
+            const url = await storage(file, pathVideo);
+
+            if (url !== undefined && url !== null) {
+                // Actualizamos todo: textos y la URL del video nuevo
+                await Product.updateLessonFull(lessonData, url);
+                return res.status(201).json({ success: true, message: 'Lección y video actualizados' });
+            } else {
+                return res.status(500).json({ success: false, message: 'Error al subir el nuevo video' });
+            }
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({ success: false, message: `Error: ${error}` });
+        }
+    },
+
+    async deleteLesson(req, res, next) {
+        try {
+            const id = req.params.id;
+            await Product.deleteLesson(id);
+            return res.status(201).json({ success: true, message: 'Lección eliminada' });
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({ success: false, message: `Error: ${error}` });
+        }
+    },
+
     async createClassroomLesson(req, res, next) {
         try {
             const lesson = req.body;

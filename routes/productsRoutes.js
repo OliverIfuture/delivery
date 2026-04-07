@@ -10,7 +10,11 @@ module.exports = (app, upload) => {
   ]);
 
   app.post('/api/products/createLesson', passport.authenticate('jwt', { session: false }), upload.array('videos', 10), productsControllers.createLesson);
+  // Actualizar (soporta recibir 1 video opcional si el usuario decide cambiarlo)
+  app.put('/api/products/updateLesson', passport.authenticate('jwt', { session: false }), upload.array('videos', 1), productsControllers.updateLesson);
 
+  // Eliminar
+  app.delete('/api/products/deleteLesson/:id', passport.authenticate('jwt', { session: false }), productsControllers.deleteLesson);
   // Crear lección (Módulo de Classroom)
   app.post('/api/products/createClassroomLesson', passport.authenticate('jwt', { session: false }), classroomUpload, productsControllers.createClassroomLesson);
   app.get('/api/products/diet/client-diet/:id_client', passport.authenticate('jwt', { session: false }), productsControllers.getDietByClient);

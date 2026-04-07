@@ -2388,6 +2388,32 @@ Product.updateLessonVideo = (idLesson, videoUrl) => {
     return db.none(sql, [videoUrl, new Date(), idLesson]);
 }
 
+// Actualiza solo textos (cuando no cambian el video)
+Product.updateLessonText = (lessonData) => {
+    const sql = `
+    UPDATE classroom_lessons 
+    SET title = $1, description = $2, order_index = $3, is_free = $4, updated_at = $5 
+    WHERE id = $6
+    `;
+    return db.none(sql, [lessonData.title, lessonData.description, lessonData.order_index, lessonData.is_free, new Date(), lessonData.id]);
+}
+
+// Actualiza textos Y la URL del video nuevo
+Product.updateLessonFull = (lessonData, videoUrl) => {
+    const sql = `
+    UPDATE classroom_lessons 
+    SET title = $1, description = $2, order_index = $3, is_free = $4, video_url = $5, updated_at = $6 
+    WHERE id = $7
+    `;
+    return db.none(sql, [lessonData.title, lessonData.description, lessonData.order_index, lessonData.is_free, videoUrl, new Date(), lessonData.id]);
+}
+
+// Elimina la lección
+Product.deleteLesson = (idLesson) => {
+    const sql = `DELETE FROM classroom_lessons WHERE id = $1`;
+    return db.none(sql, [idLesson]);
+}
+
 
 Product.updateProductDealer = (product) => {
     const sql = `
