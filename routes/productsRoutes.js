@@ -9,6 +9,8 @@ module.exports = (app, upload) => {
     { name: 'video', maxCount: 1 }
   ]);
 
+  app.post('/api/products/createLesson', passport.authenticate('jwt', { session: false }), upload.array('videos', 10), productsControllers.createLesson);
+
   // Crear lección (Módulo de Classroom)
   app.post('/api/products/createClassroomLesson', passport.authenticate('jwt', { session: false }), classroomUpload, productsControllers.createClassroomLesson);
   app.get('/api/products/diet/client-diet/:id_client', passport.authenticate('jwt', { session: false }), productsControllers.getDietByClient);

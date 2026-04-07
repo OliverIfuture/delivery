@@ -2360,6 +2360,33 @@ Product.updateModuleImage = (idModule, coverUrl) => {
     ]);
 }
 
+// 🔥 CREAR LA LECCIÓN BASE
+Product.createLesson = (lessonData) => {
+    const sql = `
+    INSERT INTO classroom_lessons(module_id, title, description, order_index, is_free, created_at, updated_at)
+    VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        lessonData.module_id,
+        lessonData.title,
+        lessonData.description,
+        lessonData.order_index,
+        lessonData.is_free,
+        new Date(),
+        new Date()
+    ]);
+}
+
+// 🔥 ACTUALIZAR EL CAMPO VIDEO_URL CON EL JSON DE ENLACES
+Product.updateLessonVideos = (idLesson, urlsJsonString) => {
+    const sql = `
+    UPDATE classroom_lessons 
+    SET video_url = $1, updated_at = $2 
+    WHERE id = $3
+    `;
+    return db.none(sql, [urlsJsonString, new Date(), idLesson]);
+}
+
 
 Product.updateProductDealer = (product) => {
     const sql = `

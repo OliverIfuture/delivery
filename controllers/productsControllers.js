@@ -59,6 +59,55 @@ module.exports = {
         }
     },
 
+    async createLesson(req, res, next) {
+        try {
+            let lessonData = JSON.parse(req.body.lesson);
+            const files = req.files; // 👈 Aquí viene el arreglo de videos
+
+            // 1. Creamos la lección vacía en DB para obtener el ID
+            const data = await Product.createLesson(lessonData);
+            lessonData.id = data.id;
+
+            // 2. Si no mandó videos, respondemos éxito de inmediato
+            if (!files || files.length === 0) {
+                return res.status(201).json({ success: true, message: 'Lección creada sin videos' });
+            }
+
+            // 3. Subimos los videos uno por uno
+            let videoUrls = [];
+            let inserts = 0;
+
+            const start = async () => {
+                await asyncForEach(files, async (file) => {
+                    const pathVideo = `lesson_${lessonData.id}_video_${Date.now()}`;
+                    const url = await storage(file, pathVideo); // Sube el video a Firebase/AWS
+
+                    if (url !== undefined && url !== null) {
+                        videoUrls.push(url); // Lo metemos al arreglo de URLs
+                    }
+
+                    inserts = inserts + 1;
+
+                    // Cuando termine el último video...
+                    if (inserts == files.length) {
+                        // 4. Actualizamos la lección inyectando el JSON Array de URLs
+                        await Product.updateLessonVideos(lessonData.id, JSON.stringify(videoUrls));
+
+                        return res.status(201).json({
+                            success: true,
+                            message: 'Lección y videos guardados correctamente'
+                        });
+                    }
+                });
+            }
+            start();
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({ success: false, message: `Error: ${error}` });
+        }
+    },
+
     async createClassroomLesson(req, res, next) {
         try {
             const lesson = req.body;
