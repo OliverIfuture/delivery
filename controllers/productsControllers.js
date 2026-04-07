@@ -3342,6 +3342,63 @@ module.exports = {
                 message: 'Error al obtener los módulos de Classroom'
             });
         }
+    },
+
+
+    async createModule(req, res, next) {
+        try {
+            // 1. Parsear el String JSON a Objeto
+            let moduleData = JSON.parse(req.body.module);
+            console.log(`Módulo a crear: ${JSON.stringify(moduleData)}`);
+
+            const files = req.files;
+
+            // 2. Crear el registro base en PostgreSQL PRIMERO para obtener el ID
+            const data = await Product.createModule(moduleData);
+            moduleData.id = data.id;
+
+            // 3. Si NO hay imagen, simplemente respondemos éxito (La imagen es opcional)
+            if (!files || files.length === 0) {
+                return res.status(201).json({
+                    success: true,
+                    message: 'Módulo registrado correctamente (Sin portada)'
+                });
+            }
+
+            // 4. Si SÍ hay imagen, la subimos a Storage y actualizamos el registro
+            if (files.length > 0) {
+                let inserts = 0;
+
+                const start = async () => {
+                    await asyncForEach(files, async (file) => {
+                        const pathImage = `module_${Date.now()}`;
+                        const url = await storage(file, pathImage);
+
+                        if (url !== undefined && url !== null) {
+                            // Guardar la URL de la imagen en la base de datos
+                            await Classroom.updateModuleImage(moduleData.id, url);
+                        }
+
+                        inserts = inserts + 1;
+                        if (inserts == files.length) {
+                            return res.status(201).json({
+                                success: true,
+                                message: 'Módulo y portada registrados correctamente'
+                            });
+                        }
+                    });
+                }
+                start();
+            }
+
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                message: `Error al registrar el módulo: ${error}`,
+                success: false,
+                error: error
+            });
+        }
     }
 
 }

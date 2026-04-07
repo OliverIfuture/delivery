@@ -2318,6 +2318,48 @@ Product.createProductDealer = (product) => {
     ]);
 }
 
+Product.createModule = (moduleData) => {
+    const sql = `
+    INSERT INTO 
+        classroom_modules(
+            id_company,
+            title,
+            description,
+            required_level,
+            is_active,
+            created_at,
+            updated_at
+        )
+    VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
+    `;
+    return db.oneOrNone(sql, [
+        moduleData.id_company,
+        moduleData.title,
+        moduleData.description,
+        moduleData.required_level,
+        moduleData.is_active,
+        new Date(),
+        new Date()
+    ]);
+}
+
+Product.updateModuleImage = (idModule, coverUrl) => {
+    const sql = `
+    UPDATE 
+        classroom_modules 
+    SET 
+        cover_image = $1,
+        updated_at = $2
+    WHERE 
+        id = $3
+    `;
+    return db.none(sql, [
+        coverUrl,
+        new Date(),
+        idModule
+    ]);
+}
+
 
 Product.updateProductDealer = (product) => {
     const sql = `
