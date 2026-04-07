@@ -335,8 +335,13 @@ SELECT
     P.poll_options,
     U.name,
     U.image AS photo,
+    -- 1. Total de votos
     (SELECT COUNT(*) FROM poll_votes WHERE id_post = P.id) AS total_votes,
-    -- Detalle de Votos (Ya estaba bien)
+
+    -- 🔥 2. TOTAL DE COMENTARIOS (Solicitado) 🔥
+    (SELECT COUNT(*) FROM coments_post WHERE id_post = P.id) AS "C.countpost",
+
+    -- Detalle de Votos
     (
         SELECT json_agg(json_build_object(
             'id_user', pv.id_user,
@@ -348,7 +353,8 @@ SELECT
         INNER JOIN users u2 ON u2.id = pv.id_user
         WHERE pv.id_post = P.id
     ) AS votes_detail,
-    -- 🔥 DETALLE DE LIKES CORREGIDO 🔥
+
+    -- Detalle de Likes
     (
         SELECT COALESCE(json_agg(json_build_object(
             'id', lp.id,
@@ -361,11 +367,12 @@ SELECT
         INNER JOIN users u3 ON u3.id = lp.id_user
         WHERE lp.id_publish = P.id
     ) AS likespost
+
 FROM post AS P
 INNER JOIN users AS U ON U.id = P.id_user
 WHERE P.id_company = 1
 
-  -- 🔥 FILTROS DE MODERACIÓN 🔥
+  -- FILTROS DE MODERACIÓN
   AND P.id NOT IN (SELECT post_id FROM reported_posts WHERE user_id = $1)
   AND P.id_user NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = $1)
   AND P.id_user NOT IN (SELECT blocker_id FROM blocked_users WHERE blocked_id = $1)
