@@ -1173,17 +1173,13 @@ WHERE id_company_affiliate = $1
 User.getMonthlyMemberships = (id) => {
 
     const sql = `
-SELECT 
-    EXTRACT(MONTH FROM s.created_at) :: INTEGER as month, 
-    COALESCE(SUM(p.price), 0) as total
-FROM client_subscriptions s
-JOIN subscription_plans p ON s.id_plan = p.id
-WHERE 
-    s.id_company = $1  -- Filtra por la compañía actual
-    AND s.created_at >= '2026-01-01' -- Filtra por el año actual
-    AND s.created_at <= '2026-12-31'
-    -- Opcional: Si guardas estatus fallidos, descomenta la siguiente linea:
-    -- AND s.status IN ('active', 'paid') 
+SELECT
+    EXTRACT(MONTH FROM payment_date)::INTEGER AS month,
+    COALESCE(SUM(amount), 0) AS total
+FROM public.payment_history
+WHERE
+    id_company = $1
+    AND EXTRACT(YEAR FROM payment_date) = EXTRACT(YEAR FROM CURRENT_DATE)
 GROUP BY month
 ORDER BY month ASC;
 
