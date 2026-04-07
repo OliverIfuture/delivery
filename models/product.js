@@ -2414,6 +2414,11 @@ Product.deleteLesson = (idLesson) => {
     return db.none(sql, [idLesson]);
 }
 
+Product.delete = (id) => {
+    const sql = `DELETE FROM classroom_modules WHERE id = $1`;
+    return db.none(sql, [id]);
+}
+
 
 Product.updateProductDealer = (product) => {
     const sql = `

@@ -130,6 +130,20 @@ module.exports = {
         }
     },
 
+    async deleteModule(req, res, next) {
+        try {
+            const id = req.params.id;
+            await Product.delete(id); // Gracias al CASCADE de SQL, esto borra TODO
+            return res.status(201).json({
+                success: true,
+                message: 'Módulo y contenido eliminado correctamente'
+            });
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al eliminar' });
+        }
+    },
+
     async deleteLesson(req, res, next) {
         try {
             const id = req.params.id;
