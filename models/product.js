@@ -2378,13 +2378,14 @@ Product.createLesson = (lessonData) => {
 }
 
 // 🔥 ACTUALIZAR EL CAMPO VIDEO_URL CON EL JSON DE ENLACES
-Product.updateLessonVideos = (idLesson, urlsJsonString) => {
+// Le cambié el nombre a singular: updateLessonVideo
+Product.updateLessonVideo = (idLesson, videoUrl) => {
     const sql = `
     UPDATE classroom_lessons 
     SET video_url = $1, updated_at = $2 
     WHERE id = $3
     `;
-    return db.none(sql, [urlsJsonString, new Date(), idLesson]);
+    return db.none(sql, [videoUrl, new Date(), idLesson]);
 }
 
 

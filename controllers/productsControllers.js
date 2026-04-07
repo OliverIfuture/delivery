@@ -61,46 +61,39 @@ module.exports = {
 
     async createLesson(req, res, next) {
         try {
+            // Se mantiene el parse de req.body.lesson porque Flutter lo envía como String
             let lessonData = JSON.parse(req.body.lesson);
-            const files = req.files; // 👈 Aquí viene el arreglo de videos
+            const files = req.files;
 
             // 1. Creamos la lección vacía en DB para obtener el ID
+            // Nota: Usé 'Product' porque así lo pusiste en tu ejemplo, 
+            // pero asegúrate de que sea tu modelo correcto (ej. Classroom.createLesson)
             const data = await Product.createLesson(lessonData);
             lessonData.id = data.id;
 
-            // 2. Si no mandó videos, respondemos éxito de inmediato
+            // 2. Si no mandó video, respondemos éxito de inmediato
             if (!files || files.length === 0) {
-                return res.status(201).json({ success: true, message: 'Lección creada sin videos' });
+                return res.status(201).json({ success: true, message: 'Lección creada sin video' });
             }
 
-            // 3. Subimos los videos uno por uno
-            let videoUrls = [];
-            let inserts = 0;
+            // 3. Tomamos SOLO el primer video del arreglo
+            const file = files[0];
+            const pathVideo = `lesson_${lessonData.id}_video_${Date.now()}`;
 
-            const start = async () => {
-                await asyncForEach(files, async (file) => {
-                    const pathVideo = `lesson_${lessonData.id}_video_${Date.now()}`;
-                    const url = await storage(file, pathVideo); // Sube el video a Firebase/AWS
+            // Subimos el video a Firebase/AWS
+            const url = await storage(file, pathVideo);
 
-                    if (url !== undefined && url !== null) {
-                        videoUrls.push(url); // Lo metemos al arreglo de URLs
-                    }
+            if (url !== undefined && url !== null) {
+                // 4. Actualizamos la lección guardando la URL limpia (SIN JSON.stringify)
+                await Product.updateLessonVideo(lessonData.id, url);
 
-                    inserts = inserts + 1;
-
-                    // Cuando termine el último video...
-                    if (inserts == files.length) {
-                        // 4. Actualizamos la lección inyectando el JSON Array de URLs
-                        await Product.updateLessonVideos(lessonData.id, JSON.stringify(videoUrls));
-
-                        return res.status(201).json({
-                            success: true,
-                            message: 'Lección y videos guardados correctamente'
-                        });
-                    }
+                return res.status(201).json({
+                    success: true,
+                    message: 'Lección y video guardados correctamente'
                 });
+            } else {
+                return res.status(500).json({ success: false, message: 'Error al subir el video a la nube' });
             }
-            start();
 
         } catch (error) {
             console.log(`Error: ${error}`);
