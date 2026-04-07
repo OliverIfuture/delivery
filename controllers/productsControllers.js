@@ -3376,7 +3376,7 @@ module.exports = {
 
                         if (url !== undefined && url !== null) {
                             // Guardar la URL de la imagen en la base de datos
-                            await Classroom.updateModuleImage(moduleData.id, url);
+                            await Product.updateModuleImage(moduleData.id, url);
                         }
 
                         inserts = inserts + 1;
