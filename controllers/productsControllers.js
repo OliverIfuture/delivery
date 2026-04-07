@@ -133,7 +133,7 @@ module.exports = {
     async deleteModule(req, res, next) {
         try {
             const id = req.params.id;
-            await Product.delete(id); // Gracias al CASCADE de SQL, esto borra TODO
+            await Product.deleteModule(id); // Gracias al CASCADE de SQL, esto borra TODO
             return res.status(201).json({
                 success: true,
                 message: 'Módulo y contenido eliminado correctamente'
