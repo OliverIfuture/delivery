@@ -388,23 +388,38 @@ Diet.getAssignedDietByClient = (id_client) => {
 };
 
 Diet.createRecipe = async (recipe) => {
+    // 🔥 Agregamos ::jsonb en el $6 para forzar a PostgreSQL a guardarlo como un arreglo real
     const sql = `
         INSERT INTO diet_recipes_v2(
             id_company, default_meal_category, title, image_url, 
             prep_time_minutes, preparation_steps, total_calories, 
             total_protein, total_carbs, total_fats, created_at
-        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id
+        ) VALUES($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11) RETURNING id
     `;
 
-    // Convertimos el array de pasos a JSON string para guardarlo en JSONB
-    const steps = JSON.stringify(recipe.preparation_steps || []);
+    // 1. Limpiamos el dato entrante.
+    // Si Flutter mandó el arreglo ya como un texto (String), lo parseamos a un Array real de JavaScript.
+    let cleanSteps = recipe.preparation_steps || [];
+    if (typeof cleanSteps === 'string') {
+        try {
+            cleanSteps = JSON.parse(cleanSteps);
+        } catch (e) {
+            console.log("Error parseando steps:", e);
+            cleanSteps = []; // Fallback seguro
+        }
+    }
+
+    // 2. Ahora que estamos 100% seguros de que 'cleanSteps' es un Array limpio, 
+    // lo convertimos a String una sola vez para la base de datos.
+    const stepsForDB = JSON.stringify(cleanSteps);
 
     const res = await db.one(sql, [
         recipe.id_company, recipe.default_meal_category, recipe.title,
-        recipe.image_url, recipe.prep_time_minutes, steps,
+        recipe.image_url, recipe.prep_time_minutes, stepsForDB,
         recipe.total_calories, recipe.total_protein, recipe.total_carbs,
         recipe.total_fats, new Date()
     ]);
+
     return res.id;
 };
 
