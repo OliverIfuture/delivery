@@ -347,7 +347,7 @@ SELECT
             'id_user', pv.id_user,
             'option_id', pv.option_id,
             'user_photo', u2.image,
-            'user_name', u2.name
+            'user_name', u2.name 
         ))
         FROM poll_votes pv
         INNER JOIN users u2 ON u2.id = pv.id_user
