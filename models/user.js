@@ -156,51 +156,54 @@ User.getShops = (employed) => {
 
 User.findByUserId = (id) => {
     const sql = `
-    SELECT
-        U.id,
-        U.email,
-        U.name,
-        U.lastname,
-        U.image,
-        U.phone,
-        U.password,
-        U.session_token,
-        U.notification_token,
-        U.autenticated,
-        U.is_trainer,
-        U.document,
-        U.gym,
-        U.state,
-        U.credential,
-        U.keystore,
-        U.balance,
-	U.mi_store,
+   SELECT
+    U.id,
+    U.email,
+    U.name,
+    U.lastname,
+    U.image,
+    U.phone,
+    U.password,
+    U.session_token,
+    U.notification_token,
+    U.autenticated,
+    U.is_trainer,
+    U.document,
+    U.gym,
+    U.state,
+    U.credential,
+    U.keystore,
+    U.balance,
+    U.mi_store,
     U.access_level,
-	U.id_entrenador,
-	U.current_streak,
-	U.last_workout_date,
-        json_agg(
-            json_build_object(
-                'id', R.id,
-                'name', R.name,
-                'image', R.image,
-                'route', R.route
-            )
-        ) AS roles
-    FROM 
-        users AS U
-    INNER JOIN
-        user_has_roles AS UHR
-    ON
-        UHR.id_user = U.id
-    INNER JOIN
-        roles AS R
-    ON
-        R.id = UHR.id_rol
-    WHERE
-        U.id = $1
-    GROUP BY
-        U.id
+    U.id_entrenador,
+    U.current_streak,
+    U.last_workout_date,
+    U.target_protein, -- 🔥 AGREGADO
+    U.target_carbs,   -- 🔥 AGREGADO
+    U.target_fats,    -- 🔥 AGREGADO
+    json_agg(
+        json_build_object(
+            'id', R.id,
+            'name', R.name,
+            'image', R.image,
+            'route', R.route
+        )
+    ) AS roles
+FROM
+    users AS U
+INNER JOIN
+    user_has_roles AS UHR
+ON
+    UHR.id_user = U.id
+INNER JOIN
+    roles AS R
+ON
+    R.id = UHR.id_rol
+WHERE
+    U.id = $1
+GROUP BY
+    U.id;
     `
     return db.oneOrNone(sql, id);
 }
