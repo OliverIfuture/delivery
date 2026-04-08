@@ -42,33 +42,36 @@ User.findByState = (state) => {
 User.findById = (id, callback) => {
 
     const sql = `
-    SELECT
-        id,
-        email,
-        name,
-        lastname,
-        image,
-        phone,
-        password,
-        session_token,
-        notification_token,
-        autenticated,
-        is_trainer,
-        document,
-        gym,
-        state,
-        credential,
-        keystore,
-        balance,
-	mi_store,
+ SELECT
+    id,
+    email,
+    name,
+    lastname,
+    image,
+    phone,
+    password,
+    session_token,
+    notification_token,
+    autenticated,
+    is_trainer,
+    document,
+    gym,
+    state,
+    credential,
+    keystore,
+    balance,
+    mi_store,
     access_level,
-	id_entrenador,
-	current_streak,
-	last_workout_date
-    FROM
-        users
-    WHERE
-        id = $1`;
+    id_entrenador,
+    current_streak,
+    last_workout_date,
+    target_protein, 
+    target_carbs,   
+    target_fats     
+FROM
+    users
+WHERE
+    id = $1;`;
 
     return db.oneOrNone(sql, id).then(user => { callback(null, user); })
 
