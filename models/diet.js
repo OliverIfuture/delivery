@@ -269,6 +269,7 @@ Diet.getClientQuestionnaireWithEmail = (id_client) => {
 
 Diet.assignMultiple = (assignments) => {
     return db.tx('assign-multiple-diets', async t => {
+        // 1. Mapeamos todas las inserciones de las recetas
         const queries = assignments.map(a => {
             return t.none(
                 `INSERT INTO client_diets_v2 (
@@ -301,10 +302,33 @@ Diet.assignMultiple = (assignments) => {
                     a.final_carbs || 0,
                     a.final_fats || 0,
                     a.notes || '',
-                    new Date() // Ojo: en un UPDATE, esto no reescribe la fecha original, lo cual es correcto
+                    new Date()
                 ]
             );
         });
+
+        // 2. 🔥 NUEVO: Actualizamos las metas en la tabla del usuario
+        if (assignments.length > 0) {
+            const client = assignments[0];
+
+            queries.push(
+                t.none(
+                    `UPDATE users 
+                     SET target_protein = $1,
+                         target_carbs = $2,
+                         target_fats = $3
+                     WHERE id = $4`,
+                    [
+                        client.target_protein || 0,
+                        client.target_carbs || 0,
+                        client.target_fats || 0,
+                        client.id_client
+                    ]
+                )
+            );
+        }
+
+        // 3. Ejecutamos todo como una sola transacción
         return t.batch(queries);
     });
 };
