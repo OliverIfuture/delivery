@@ -845,13 +845,16 @@ module.exports = {
      */
     async assignMultipleDiets(req, res, next) {
         try {
-            const assignments = req.body; // Array generado por Flutter
+            const assignments = req.body;
 
             if (!assignments || !Array.isArray(assignments) || assignments.length === 0) {
                 return res.status(400).json({ success: false, message: 'No se recibieron recetas para asignar.' });
             }
 
             console.log(`📦 [DEBUG] Insertando ${assignments.length} recetas en client_diet_assignments para el cliente ${assignments[0].id_client}...`);
+
+            // 🔥 ESTE LOG NOS CONFIRMARÁ QUE FLUTTER SÍ MANDA LOS DATOS
+            console.log(`🎯 [DEBUG] Metas a guardar -> Cal: ${assignments[0].target_calories}, Prot: ${assignments[0].target_protein}, Carbs: ${assignments[0].target_carbs}, Grasas: ${assignments[0].target_fats}`);
 
             await Diet.assignMultiple(assignments);
 
