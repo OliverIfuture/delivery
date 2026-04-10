@@ -1677,7 +1677,7 @@ User.getWholesaleUsersByCompany = (id) => {
 // RECOMENDADO: Solo selecciona los datos seguros y necesarios.
 User.getClientsByCompany = (id_company) => {
     const sql = `
-SELECT 
+SELECT
     U.id,
     U.email,
     U.name,
@@ -1686,22 +1686,25 @@ SELECT
     U.image,
     U.notification_token,
     LastSub.status as status_plan,
-    LastSub.current_period_end as finaliza
-FROM 
+    LastSub.current_period_end as finaliza,
+    U.target_protein, -- 🔥 AGREGADO
+    U.target_carbs,   -- 🔥 AGREGADO
+    U.target_fats     -- 🔥 AGREGADO
+FROM
     users AS U
 INNER JOIN (
     -- Subconsulta: Trae solo la última suscripción por cada cliente
-    SELECT DISTINCT ON (id_client) 
-        id_client, 
-        status, 
+    SELECT DISTINCT ON (id_client)
+        id_client,
+        status,
         current_period_end
     FROM client_subscriptions
     -- Ordenamos por cliente y por fecha descendente para que la primera sea la más nueva
     ORDER BY id_client, current_period_end DESC
 ) AS LastSub ON U.id = LastSub.id_client
-WHERE 
+WHERE
     U.id_entrenador = $1
-ORDER BY 
+ORDER BY
     U.name ASC;
     `;
     return db.manyOrNone(sql, id_company);
