@@ -18,18 +18,25 @@ WorkoutLog.delete = (id) => {
 
 
 WorkoutLog.create = (log) => {
-    // Aseguramos que las variables tengan valor sin importar el formato (camelCase o snake_case)
-    const idClient = log.id_client || log.idClient;
-    const idCompany = log.id_company || log.idCompany;
-    const idRoutine = log.id_routine || log.idRoutine;
-    const exerciseName = log.exercise_name || log.exerciseName;
-    const setNumber = log.set_number || log.setNumber;
-    const plannedReps = log.planned_reps || log.plannedReps;
-    const plannedWeight = log.planned_weight || log.plannedWeight;
-    const completedReps = log.completed_reps || log.completedReps;
-    const completedWeight = log.completed_weight || log.completedWeight;
-    const notes = log.notes || "";
-    const createdAt = log.created_at || log.createdAt || new Date();
+    // 🔥 SANITIZACIÓN ESTRICTA (Evitamos la trampa del Falsy)
+    // Usamos ?? para que el 0 sea respetado y no se convierta en null
+    const idClient = log.idClient ?? log.id_client;
+    const idCompany = log.idCompany ?? log.id_company ?? null;
+    const idRoutine = log.idRoutine ?? log.id_routine;
+    const exerciseName = log.exerciseName ?? log.exercise_name ?? "";
+
+    const setNumber = parseInt(log.setNumber ?? log.set_number ?? 1) || 1;
+    const plannedReps = parseInt(log.plannedReps ?? log.planned_reps ?? 0) || 0;
+    const plannedWeight = parseFloat(log.plannedWeight ?? log.planned_weight ?? 0.0) || 0.0;
+
+    // Aquí moría el dato. Ahora forzamos a que sea un número siempre.
+    const completedReps = parseInt(log.completedReps ?? log.completed_reps ?? 0) || 0;
+
+    let completedWeight = parseFloat(log.completedWeight ?? log.completed_weight ?? 0.0);
+    if (isNaN(completedWeight)) completedWeight = 0.0; // Doble blindaje por si mandan basura ("")
+
+    const notes = log.notes ?? "";
+    const createdAt = log.createdAt ?? log.created_at ?? new Date();
 
     const sql = `
         WITH inserted_log AS (
@@ -40,7 +47,8 @@ WorkoutLog.create = (log) => {
                 completed_reps, completed_weight, notes, created_at, updated_at
             )
             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            RETURNING id_client, id_routine, exercise_name, completed_weight
+            -- Añadimos el 'id' al returning para que no falle el select final
+            RETURNING id, id_client, id_routine, exercise_name, completed_weight
         )
         -- 2. Actualizamos el peso en la rutina activa del cliente
         UPDATE routines
@@ -61,9 +69,9 @@ WorkoutLog.create = (log) => {
                                     (
                                         SELECT jsonb_agg(
                                             CASE 
-                                                -- 🎯 Buscamos el ejercicio por nombre (limpiando espacios y mayúsculas)
                                                 WHEN LOWER(TRIM(ex_obj->>'name')) = LOWER(TRIM((SELECT exercise_name FROM inserted_log)))
-                                                THEN ex_obj || jsonb_build_object('weight', (SELECT completed_weight FROM inserted_log)::text)
+                                                -- 🔥 TERCER BLINDAJE EN SQL: COALESCE asegura que nunca escriba "null" en el JSON
+                                                THEN ex_obj || jsonb_build_object('weight', COALESCE((SELECT completed_weight FROM inserted_log), 0)::text)
                                                 ELSE ex_obj
                                             END
                                         )
@@ -90,7 +98,7 @@ WorkoutLog.create = (log) => {
         plannedReps,     // $6
         plannedWeight,   // $7
         completedReps,   // $8
-        completedWeight, // $9
+        completedWeight, // $9 (AQUÍ YA VIAJA EL 0.0 SEGURO)
         notes,           // $10
         createdAt,       // $11
         createdAt        // $12

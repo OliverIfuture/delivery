@@ -5,13 +5,22 @@ module.exports = {
 
     async create(req, res, next) {
         try {
-            const log = req.body; // Viene en camelCase desde Flutter (idClient, idRoutine, etc.)
+            const log = req.body;
 
-            // Sincronizamos las llaves por si acaso
-            log.idClient = req.user.id;
-            log.idCompany = req.user.id_entrenador || null;
+            // 1. Sincronizamos las llaves de seguridad
+            log.idClient = req.user?.id || log.idClient;
+            log.idCompany = req.user?.id_entrenador || log.idCompany || null;
 
-            console.log('🚀 PROCESANDO LOG PARA:', log.exerciseName);
+            // 🔥 2. FILTRO DE ÚLTIMA MILLA EN EL CONTROLADOR 🔥
+            // Si por algún motivo nos llega vacío, nulo o texto, lo forzamos a cero.
+            if (log.completedWeight === null || log.completedWeight === undefined || log.completedWeight === "") {
+                log.completedWeight = 0.0;
+            }
+            if (log.completedReps === null || log.completedReps === undefined || log.completedReps === "") {
+                log.completedReps = 0;
+            }
+
+            console.log(`🚀 PROCESANDO LOG: ${log.exerciseName} | REPS: ${log.completedReps} | PESO: ${log.completedWeight}`);
 
             const data = await WorkoutLog.create(log);
 
@@ -25,7 +34,7 @@ module.exports = {
             });
         }
         catch (error) {
-            console.log('❌ ERROR FINAL:', error);
+            console.log('❌ ERROR FINAL AL CREAR LOG:', error);
             return res.status(501).json({
                 success: false,
                 message: 'Error al procesar el entrenamiento',
@@ -33,9 +42,7 @@ module.exports = {
             });
         }
     },
-    /**
-     * Crear un nuevo registro (un set completado)
-     */
+
     async create3(req, res, next) {
         try {
             const log = req.body;
