@@ -1687,6 +1687,7 @@ SELECT
     U.notification_token,
     LastSub.status as status_plan,
     LastSub.current_period_end as finaliza,
+    U.target_calories,
     U.target_protein, -- 🔥 AGREGADO
     U.target_carbs,   -- 🔥 AGREGADO
     U.target_fats     -- 🔥 AGREGADO
