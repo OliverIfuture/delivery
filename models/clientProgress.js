@@ -101,7 +101,7 @@ ClientProgress.getPhotos = (id_client) => {
     const sql = `
 SELECT * FROM (
     -- 1. FOTOS DEL CUESTIONARIO INICIAL
-    SELECT
+    SELECT 
         uq.id,
         uq.questionnaire_data,
         uq.photo_frontal,
@@ -109,39 +109,38 @@ SELECT * FROM (
         uq.photo_lateral_izq,
         uq.photo_lateral_der,
         uq.created_at AS date_taken,
-        'questionnaire' AS source -- Para que sepas de qué tabla viene
-    FROM
+        'questionnaire' AS source 
+    FROM 
         user_questionnaires uq
-    INNER JOIN
+    INNER JOIN 
         users u ON u.email = uq.user_email
-    WHERE
+    WHERE 
         u.id = $1
 
     UNION ALL
 
     -- 2. FOTOS LOGEADAS POSTERIORMENTE (Agrupadas por día)
-    SELECT
+    SELECT 
         MIN(cpp.id) AS id,
-        NULL::jsonb AS questionnaire_data, -- NULL porque esta tabla no tiene cuestionario
+        NULL::jsonb AS questionnaire_data, 
         MAX(CASE WHEN cpp.angle ILIKE '%frontal%' THEN cpp.image_url END) AS photo_frontal,
         MAX(CASE WHEN cpp.angle ILIKE '%espalda%' THEN cpp.image_url END) AS photo_espalda,
         MAX(CASE WHEN cpp.angle ILIKE '%izq%' THEN cpp.image_url END) AS photo_lateral_izq,
         MAX(CASE WHEN cpp.angle ILIKE '%der%' THEN cpp.image_url END) AS photo_lateral_der,
         MAX(cpp.created_at)::timestamp without time zone AS date_taken,
         'progress_log' AS source
-    FROM
+    FROM 
         client_progress_photos cpp
-    WHERE
-        cpp.id_client = 219
-    GROUP BY
-        cpp.date_taken -- Agrupamos por día para juntar las 4 fotos en un solo renglón
+    WHERE 
+        cpp.id_client = $1 -- ✅ CORREGIDO: Ahora usa la variable dinámica
+    GROUP BY 
+        cpp.date_taken 
 ) AS combined_photos
-ORDER BY
+ORDER BY 
     date_taken DESC;
     `;
     return db.manyOrNone(sql, id_client);
 };
-
 /**
  * Obtiene la fecha de la foto más reciente, buscando tanto en las actualizaciones
  * como en el cuestionario inicial.
