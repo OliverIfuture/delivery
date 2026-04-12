@@ -99,22 +99,45 @@ ClientProgress.getPhotosApp = (id_client) => {
 
 ClientProgress.getPhotos = (id_client) => {
     const sql = `
-        SELECT
-            uq.id,
-            uq.questionnaire_data,
-            uq.photo_frontal,
-            uq.photo_espalda,
-            uq.photo_lateral_izq,
-            uq.photo_lateral_der,
-            uq.created_at AS date_taken
-        FROM
-            user_questionnaires uq
-        INNER JOIN
-            users u ON u.email = uq.user_email
-        WHERE
-            u.id = $1
-        ORDER BY
-            uq.created_at DESC
+SELECT * FROM (
+    -- 1. FOTOS DEL CUESTIONARIO INICIAL
+    SELECT
+        uq.id,
+        uq.questionnaire_data,
+        uq.photo_frontal,
+        uq.photo_espalda,
+        uq.photo_lateral_izq,
+        uq.photo_lateral_der,
+        uq.created_at AS date_taken,
+        'questionnaire' AS source -- Para que sepas de qué tabla viene
+    FROM
+        user_questionnaires uq
+    INNER JOIN
+        users u ON u.email = uq.user_email
+    WHERE
+        u.id = $1
+
+    UNION ALL
+
+    -- 2. FOTOS LOGEADAS POSTERIORMENTE (Agrupadas por día)
+    SELECT
+        MIN(cpp.id) AS id,
+        NULL::jsonb AS questionnaire_data, -- NULL porque esta tabla no tiene cuestionario
+        MAX(CASE WHEN cpp.angle ILIKE '%frontal%' THEN cpp.image_url END) AS photo_frontal,
+        MAX(CASE WHEN cpp.angle ILIKE '%espalda%' THEN cpp.image_url END) AS photo_espalda,
+        MAX(CASE WHEN cpp.angle ILIKE '%izq%' THEN cpp.image_url END) AS photo_lateral_izq,
+        MAX(CASE WHEN cpp.angle ILIKE '%der%' THEN cpp.image_url END) AS photo_lateral_der,
+        MAX(cpp.created_at)::timestamp without time zone AS date_taken,
+        'progress_log' AS source
+    FROM
+        client_progress_photos cpp
+    WHERE
+        cpp.id_client = 219
+    GROUP BY
+        cpp.date_taken -- Agrupamos por día para juntar las 4 fotos en un solo renglón
+) AS combined_photos
+ORDER BY
+    date_taken DESC;
     `;
     return db.manyOrNone(sql, id_client);
 };
