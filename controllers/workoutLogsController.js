@@ -5,27 +5,57 @@ module.exports = {
 
     async create(req, res, next) {
         try {
+            console.log('\n======================================================');
+            console.log('📥 [CONTROLLER] INICIANDO CREATE WORKOUT LOG');
+            console.log('======================================================');
+
             const log = req.body;
+
+            // LOG 1: Ver el JSON crudo exactamente como lo manda Flutter.
+            // Esto revelará si las llaves se llaman diferente (ej. completed_weight vs completedWeight)
+            console.log('📦 RAW req.body recibido:\n', JSON.stringify(log, null, 2));
+
+            // LOG 2: Inspeccionar los valores y sus TIPOS de dato.
+            console.log(`\n🔍 Análisis de variables antes del filtro:`);
+            console.log(`   - completedReps: ${log.completedReps} (Tipo: ${typeof log.completedReps})`);
+            console.log(`   - completedWeight: ${log.completedWeight} (Tipo: ${typeof log.completedWeight})`);
+            console.log(`   - exerciseName: ${log.exerciseName}`);
 
             // 1. Sincronizamos las llaves de seguridad
             log.idClient = req.user?.id || log.idClient;
             log.idCompany = req.user?.id_entrenador || log.idCompany || null;
 
             // 🔥 2. FILTRO DE ÚLTIMA MILLA EN EL CONTROLADOR 🔥
-            // Si por algún motivo nos llega vacío, nulo o texto, lo forzamos a cero.
+            let filtroPesoActivado = false;
+            let filtroRepsActivado = false;
+
             if (log.completedWeight === null || log.completedWeight === undefined || log.completedWeight === "") {
                 log.completedWeight = 0.0;
+                filtroPesoActivado = true;
             }
             if (log.completedReps === null || log.completedReps === undefined || log.completedReps === "") {
                 log.completedReps = 0;
+                filtroRepsActivado = true;
             }
 
-            console.log(`🚀 PROCESANDO LOG: ${log.exerciseName} | REPS: ${log.completedReps} | PESO: ${log.completedWeight}`);
+            // LOG 3: Advertencias si tu filtro fue el que les puso el "0"
+            if (filtroPesoActivado) {
+                console.log('⚠️ ALERTA: completedWeight venía nulo/indefinido/vacío. El filtro lo forzó a 0.0');
+            }
+            if (filtroRepsActivado) {
+                console.log('⚠️ ALERTA: completedReps venía nulo/indefinido/vacío. El filtro lo forzó a 0');
+            }
+
+            console.log(`\n🚀 FINAL A GUARDAR EN BD: ${log.exerciseName} | REPS: ${log.completedReps} | PESO: ${log.completedWeight}`);
 
             const data = await WorkoutLog.create(log);
 
+            console.log(`✅ Registro guardado exitosamente con ID: ${data?.id}`);
+
             // Actualizar racha
             await User.updateStreak(log.idClient);
+
+            console.log('======================================================\n');
 
             return res.status(201).json({
                 success: true,
@@ -34,7 +64,8 @@ module.exports = {
             });
         }
         catch (error) {
-            console.log('❌ ERROR FINAL AL CREAR LOG:', error);
+            console.log('\n❌ ERROR FINAL AL CREAR LOG:', error);
+            console.log('======================================================\n');
             return res.status(501).json({
                 success: false,
                 message: 'Error al procesar el entrenamiento',
