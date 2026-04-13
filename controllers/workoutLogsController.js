@@ -11,49 +11,28 @@ module.exports = {
 
             const log = req.body;
 
-            // LOG 1: Ver el JSON crudo exactamente como lo manda Flutter.
-            // Esto revelará si las llaves se llaman diferente (ej. completed_weight vs completedWeight)
-            console.log('📦 RAW req.body recibido:\n', JSON.stringify(log, null, 2));
-
-            // LOG 2: Inspeccionar los valores y sus TIPOS de dato.
-            console.log(`\n🔍 Análisis de variables antes del filtro:`);
-            console.log(`   - completedReps: ${log.completedReps} (Tipo: ${typeof log.completedReps})`);
-            console.log(`   - completedWeight: ${log.completedWeight} (Tipo: ${typeof log.completedWeight})`);
-            console.log(`   - exerciseName: ${log.exerciseName}`);
-
-            // 1. Sincronizamos las llaves de seguridad
-            log.idClient = req.user?.id || log.idClient;
-            log.idCompany = req.user?.id_entrenador || log.idCompany || null;
+            // 1. Sincronizamos las llaves de seguridad leyendo en snake_case
+            log.id_client = req.user?.id || log.id_client;
+            log.id_company = req.user?.id_entrenador || log.id_company || null;
 
             // 🔥 2. FILTRO DE ÚLTIMA MILLA EN EL CONTROLADOR 🔥
-            let filtroPesoActivado = false;
-            let filtroRepsActivado = false;
-
-            if (log.completedWeight === null || log.completedWeight === undefined || log.completedWeight === "") {
-                log.completedWeight = 0.0;
-                filtroPesoActivado = true;
+            // Ahora leemos 'completed_weight' y 'completed_reps' con guión bajo
+            if (log.completed_weight === null || log.completed_weight === undefined || log.completed_weight === "") {
+                log.completed_weight = 0.0;
             }
-            if (log.completedReps === null || log.completedReps === undefined || log.completedReps === "") {
-                log.completedReps = 0;
-                filtroRepsActivado = true;
+            if (log.completed_reps === null || log.completed_reps === undefined || log.completed_reps === "") {
+                log.completed_reps = 0;
             }
 
-            // LOG 3: Advertencias si tu filtro fue el que les puso el "0"
-            if (filtroPesoActivado) {
-                console.log('⚠️ ALERTA: completedWeight venía nulo/indefinido/vacío. El filtro lo forzó a 0.0');
-            }
-            if (filtroRepsActivado) {
-                console.log('⚠️ ALERTA: completedReps venía nulo/indefinido/vacío. El filtro lo forzó a 0');
-            }
+            console.log(`🚀 FINAL A GUARDAR EN BD: ${log.exercise_name} | REPS: ${log.completed_reps} | PESO: ${log.completed_weight}`);
 
-            console.log(`\n🚀 FINAL A GUARDAR EN BD: ${log.exerciseName} | REPS: ${log.completedReps} | PESO: ${log.completedWeight}`);
-
+            // Enviamos el objeto 'log' (que ya viene en formato snake_case) directo a la BD
             const data = await WorkoutLog.create(log);
 
             console.log(`✅ Registro guardado exitosamente con ID: ${data?.id}`);
 
-            // Actualizar racha
-            await User.updateStreak(log.idClient);
+            // Actualizar racha usando el ID correcto
+            await User.updateStreak(log.id_client);
 
             console.log('======================================================\n');
 
