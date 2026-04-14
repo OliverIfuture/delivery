@@ -12,7 +12,7 @@ Category.getAll = (id_category_company) => {
             image, 
             id_category_company
         FROM
-            categories where name != 'SERVINGS' and id != 24 and id != 124 and id != 125 and id_category_company = $1
+            categories where name != 'SERVINGS' and id != 24 and id != 124 and id != 125 and id_category_company != 859 and id_category_company = $1
         ORDER BY 
             name 
         `;
@@ -50,7 +50,7 @@ Category.getAllPlates = () => {
     return db.manyOrNone(sql);
 }
 
-Category.create =  (category) => {
+Category.create = (category) => {
     const sql =
         `
     INSERT INTO
@@ -84,7 +84,7 @@ Category.delete = (id) => {
         `
  delete from categories where id = $1
         `;
-    return db.none(sql,id);
+    return db.none(sql, id);
 }
 
 module.exports = Category;
