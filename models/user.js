@@ -1711,8 +1711,8 @@ INNER JOIN (
 WHERE
     U.id_entrenador = $1
 ORDER BY
-    U.name ASC;
-    `;
+    LastSub.current_period_end ASC;
+        `;
     return db.manyOrNone(sql, id_company);
 }
 
