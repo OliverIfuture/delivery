@@ -8,8 +8,7 @@ User.getAll = () => {
     const sql = `
     SELECT 
         *
-    FROMgetCompanyById
-        users
+    FROM users
     `;
 
     return db.manyOrNone(sql);
