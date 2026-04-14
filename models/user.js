@@ -6,9 +6,15 @@ const User = {};
 
 User.getAll = () => {
     const sql = `
-    SELECT 
-        *
-    FROM users
+SELECT
+    u.*,
+    m.id AS membership_id,
+    m.status AS membership_status,
+    m.current_period_end
+FROM
+    users u
+LEFT JOIN
+    client_subscriptions m ON u.id = m.id_client;
     `;
 
     return db.manyOrNone(sql);
