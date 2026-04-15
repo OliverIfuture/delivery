@@ -177,230 +177,8 @@ module.exports = {
         }
     },
 
-    async createSubscriptionIntent(req, res, next) {
-        try {
-            // Recibimos parámetros.
-            const { id_plan, id_company, price_id, discount_percent } = req.body;
-            const id_client = req.user.id;
 
-            // 1. Validación de compañía y Stripe Keys
-            const company = await User.findCompanyById(id_company);
-            if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'El entrenador no tiene pagos configurados.'
-                });
-            }
 
-            if (!price_id || price_id === 'MANUAL') {
-                return res.status(400).json({ success: false, message: 'El plan no tiene un ID de precio de Stripe válido.' });
-            }
-
-            const stripeInstance = require('stripe')(company.stripeSecretKey);
-
-            // 2. Gestión del Cliente (Customer)
-            let customer;
-            const existingCustomers = await stripeInstance.customers.list({ email: req.user.email, limit: 1 });
-
-            if (existingCustomers.data.length > 0) {
-                customer = existingCustomers.data[0];
-            } else {
-                customer = await stripeInstance.customers.create({
-                    email: req.user.email,
-                    name: `${req.user.name} ${req.user.lastname}`,
-                });
-            }
-
-            // --- 3. LÓGICA DE SUSCRIPCIONES Y CUPONES DINÁMICOS ---
-            let subscriptionParams = {
-                customer: customer.id,
-                items: [{ price: price_id }], // Usamos el ID del precio mensual creado en Stripe
-                payment_behavior: 'default_incomplete',
-                payment_settings: { save_default_payment_method: 'on_subscription' },
-                expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
-
-                // Configuración para transferir dinero al entrenador (Connect)
-                transfer_data: {
-                    destination: company.stripeAccountId,
-                },
-
-                // Metadata para tu Webhook
-                metadata: {
-                    type: 'client_subscription',
-                    id_client: id_client,
-                    id_company: id_company,
-                    id_plan: id_plan
-                }
-            };
-
-            // 🔥 Si hay descuento, creamos un cupón temporal en Stripe 🔥
-            if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
-                const discountValue = parseFloat(discount_percent);
-
-                // Creamos un cupón en Stripe de un solo uso (para el primer mes)
-                const coupon = await stripeInstance.coupons.create({
-                    percent_off: discountValue,
-                    duration: 'once', // Cámbialo a 'forever' si quieres que el descuento aplique todos los meses
-                    name: `Descuento ${discountValue}% App`,
-                });
-
-                subscriptionParams.coupon = coupon.id;
-                subscriptionParams.metadata.discount_applied = 'YES';
-                subscriptionParams.metadata.discount_percent = discountValue.toString();
-                console.log(`Cupón de Stripe creado y aplicado: ${coupon.id} (${discountValue}%)`);
-            } else {
-                subscriptionParams.metadata.discount_applied = 'NO';
-            }
-
-            // --- 4. CREAR LA SUSCRIPCIÓN EN STRIPE ---
-            const subscription = await stripeInstance.subscriptions.create(subscriptionParams);
-
-            // --- 5. EXTRAER EL SECRETO CORRECTO ---
-            // Si el cupón es del 100%, Stripe devuelve un SetupIntent (seti_). 
-            // Si hay que cobrar, devuelve un PaymentIntent (pi_).
-            let clientSecretStr = '';
-
-            if (subscription.pending_setup_intent) {
-                clientSecretStr = subscription.pending_setup_intent.client_secret;
-                console.log("Generado SetupIntent para suscripción (Cobro $0 o Trial)");
-            } else if (subscription.latest_invoice && subscription.latest_invoice.payment_intent) {
-                clientSecretStr = subscription.latest_invoice.payment_intent.client_secret;
-                console.log("Generado PaymentIntent para suscripción");
-            } else {
-                throw new Error("Stripe no devolvió un client_secret válido para la suscripción.");
-            }
-
-            // Retornamos los datos a Flutter
-            return res.status(200).json({
-                success: true,
-                subscriptionId: subscription.id,
-                clientSecret: clientSecretStr, // Esto es lo que lee tu app en Flutter
-                customerId: customer.id,
-                publishableKey: company.stripePublishableKey
-            });
-
-        } catch (error) {
-            console.log(`Error CRÍTICO en createSubscriptionIntent: ${error}`);
-            return res.status(501).json({
-                success: false,
-                message: 'Error al procesar la suscripción en Stripe',
-                error: error.message
-            });
-        }
-    },
-    async createSubscriptionIntentAutom(req, res, next) {
-        try {
-            // Recibimos parámetros. 'discount_percent' puede venir null o undefined.
-            const { id_plan, id_company, price_id, discount_percent } = req.body;
-            const id_client = req.user.id;
-
-            // 1. Validación de compañía y Stripe Keys
-            const company = await User.findCompanyById(id_company);
-            if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'El entrenador no tiene pagos configurados.'
-                });
-            }
-
-            const stripeInstance = require('stripe')(company.stripeSecretKey);
-
-            // 2. Gestión del Cliente (Customer)
-            let customer;
-            const existingCustomers = await stripeInstance.customers.list({ email: req.user.email, limit: 1 });
-
-            if (existingCustomers.data.length > 0) {
-                customer = existingCustomers.data[0];
-            } else {
-                customer = await stripeInstance.customers.create({
-                    email: req.user.email,
-                    name: `${req.user.name} ${req.user.lastname}`,
-                });
-            }
-
-            // --- 3. LÓGICA DE CUPÓN SEGURA (VALIDACIÓN AGREGADA) ---
-            let couponId = null;
-
-            // VALIDACIÓN: Solo entramos si existe Y si al convertir a número es mayor a 0
-            if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
-                try {
-                    console.log(`Intentando aplicar descuento del ${discount_percent}%...`);
-
-                    // Crear cupón en Stripe
-                    const coupon = await stripeInstance.coupons.create({
-                        percent_off: parseFloat(discount_percent),
-                        duration: 'forever',
-                        name: `Descuento Especial ${discount_percent}%`,
-                        metadata: { created_by: 'App_Promo' }
-                    });
-
-                    couponId = coupon.id; // Guardamos el ID si todo salió bien
-                    console.log(`✅ Cupón creado: ${couponId}`);
-
-                } catch (e) {
-                    // SAFETY CATCH: Si Stripe falla al crear el cupón, NO detenemos la venta.
-                    // Simplemente logueamos el error y seguimos (se cobrará precio full).
-                    console.error("⚠️ Error creando cupón (se cobrará precio normal):", e.message);
-                    couponId = null;
-                }
-            }
-            // ----------------------------------------
-
-            // 4. Configuración de la Suscripción
-            const subscriptionConfig = {
-                customer: customer.id,
-                items: [{ price: stripe_price_id }],
-                transfer_data: { destination: company.stripeAccountId },
-                payment_behavior: 'default_incomplete',
-                expand: ['latest_invoice.payment_intent'],
-
-                // 1. METADATA PARA LA SUSCRIPCIÓN (Y LA FACTURA)
-                metadata: {
-                    type: 'client_subscription_payment',
-                    id_company: id_company,
-                    id_plan: id_plan,
-                    duration_days: duration_days || 30,
-                    temp_email: customer_email.toLowerCase()
-                },
-
-                // 2. FORZAR METADATA AL PAYMENT INTENT INTERNO (Para tu paz mental) 👇
-                payment_settings: {
-                    save_default_payment_method: 'on_subscription',
-                    payment_method_options: {
-                        card: {
-                            mandate_options: { amount_type: 'fixed' }
-                        }
-                    }
-                }
-            };
-
-            // Stripe permite actualizar el PaymentIntent de la primera factura justo después de crearlo
-            const subscription = await stripe.subscriptions.create(subscriptionConfig);
-
-            // Inyectamos la metadata manualmente al PaymentIntent generado para que aparezca en el Webhook
-            if (subscription.latest_invoice && subscription.latest_invoice.payment_intent) {
-                await stripe.paymentIntents.update(
-                    subscription.latest_invoice.payment_intent.id,
-                    { metadata: subscriptionConfig.metadata }
-                );
-            }
-            return res.status(200).json({
-                success: true,
-                subscriptionId: subscription.id,
-                clientSecret: subscription.latest_invoice.payment_intent.client_secret,
-                customerId: customer.id,
-                publishableKey: company.stripePublishableKey
-            });
-
-        } catch (error) {
-            console.log(`Error CRÍTICO en createSubscriptionIntent: ${error}`);
-            return res.status(501).json({
-                success: false,
-                message: 'Error al procesar la suscripción',
-                error: error.message
-            });
-        }
-    },
     /**
          * 👑 WEBHOOK MAESTRO DE STRIPE
          * Maneja Suscripciones, Planes Únicos, Gym, Wallet y Afiliados
@@ -993,167 +771,7 @@ async stripeWebhook12(req, res, next) {
 
 
 
-    async createExtensionIntent(req, res, next) {
-        try {
-            const id_client = req.user.id;
 
-            // 1. CORRECCIÓN DE NOMBRES: Leer exactamente lo que envía Flutter
-            // Flutter envía: { 'id_plan': ..., 'id_company': ... }
-            const { id_plan, id_company: companyIdFromFront } = req.body;
-
-            console.log(`[Intent] Cliente: ${id_client} | Plan: ${id_plan} | Company (Front): ${companyIdFromFront}`);
-
-            let planToPurchase;
-            let membershipToExtend;
-            let companyId; // El ID final que usaremos
-            let activeSub;
-
-            // --- 2. LÓGICA DE VALIDACIÓN DE ID_PLAN (LO QUE PEDISTE) ---
-
-            // Validamos si id_plan es un valor real y útil
-            const isPlanIdValid = (id_plan && id_plan !== 'undefined' && id_plan !== 'null' && id_plan !== '');
-
-            if (isPlanIdValid) {
-                // CASO A: Viene un ID de plan específico. 
-                // Buscamos si ya tiene ESE plan activo para extenderlo.
-                console.log(`[Intent] ID Plan válido. Buscando coincidencia exacta...`);
-                activeSub = await Gym.findActiveByClientId2(id_client, id_plan);
-            } else {
-                // CASO B: No viene ID (o es null/undefined).
-                // Asumimos que el usuario dio click en "Renovar" sin contexto de plan nuevo.
-                // Buscamos CUALQUIER membresía activa que tenga.
-                console.log(`[id_client] ${id_client}...`);
-                console.log(`[companyId] ${companyIdFromFront}...`);
-                activeSub = await Gym.findActiveByClientId(id_client, companyIdFromFront);
-                console.log(`entro en el caso B: ${JSON.stringify(activeSub)}`);
-
-            }
-            // ----------------------------------------------------------
-
-            if (activeSub) {
-                // --- CASO 1: TIENE MEMBRESÍA ACTIVA (RENOVACIÓN) ---
-                console.log(`[Intent] Encontrada suscripción activa ID: ${activeSub.id}. Extendiendo...`);
-
-                membershipToExtend = activeSub;
-                companyId = activeSub.id_company; // Usamos la company de la BD
-
-                // Intentamos buscar el plan original por nombre para saber el precio actual
-                planToPurchase = await Gym.findPlanByName(activeSub.plan_name, activeSub.id_company);
-
-                // Fallback: Si no lo encuentra por nombre, intentamos por ID si existe en el registro
-                if (!planToPurchase && activeSub.id_plan) {
-                    planToPurchase = await Gym.findById(activeSub.id_plan);
-                }
-
-            } else {
-                // --- CASO 2: COMPRA NUEVA (No tiene membresía activa) ---
-                console.log(`[Intent] No hay suscripción activa. Procesando como compra nueva.`);
-
-                // Si es compra nueva, ES OBLIGATORIO tener el id_plan
-                if (!isPlanIdValid) {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'No tienes una membresía activa para renovar. Por favor selecciona un plan nuevo.'
-                    });
-                }
-
-                planToPurchase = await Gym.findById(id_plan);
-                if (planToPurchase) {
-                    companyId = planToPurchase.id_company;
-                }
-            }
-
-            // --- 3. VALIDACIÓN FINAL DE DATOS ---
-
-            // Si companyId no salió de la BD, usamos el que vino del Frontend como respaldo
-            if (!companyId && companyIdFromFront) {
-                companyId = companyIdFromFront;
-            }
-
-            if (!planToPurchase) {
-                return res.status(400).json({ success: false, message: 'No se encontró la información del plan a pagar.' });
-            }
-
-            if (!companyId) {
-                return res.status(400).json({ success: false, message: 'No se pudo identificar al gimnasio/entrenador.' });
-            }
-
-            const amountInCents = Math.round(planToPurchase.price * 100);
-
-            // 4. Obtener credenciales de Stripe del Gimnasio
-            const company = await User.findCompanyById(companyId);
-            if (!company || !company.stripeSecretKey || !company.stripePublishableKey) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'El gimnasio no tiene configurados los pagos con Stripe.'
-                });
-            }
-
-            const stripe = require('stripe')(company.stripeSecretKey);
-
-            // 5. Gestión de Cliente Stripe
-            let customer;
-            const existingCustomers = await stripe.customers.list({ email: req.user.email, limit: 1 });
-
-            if (existingCustomers.data.length > 0) {
-                customer = existingCustomers.data[0];
-            } else {
-                customer = await stripe.customers.create({
-                    email: req.user.email,
-                    name: `${req.user.name} ${req.user.lastname}`,
-                });
-            }
-
-            // 6. Ephemeral Key
-            const ephemeralKey = await stripe.ephemeralKeys.create(
-                { customer: customer.id },
-                { apiVersion: '2020-08-27' }
-            );
-
-            // 7. Payment Intent Metadata
-            const metadata = {
-                type: 'membership_extension',
-                id_client: id_client,
-                id_plan: planToPurchase.id,
-                duration_days_to_add: planToPurchase.duration_days
-            };
-
-            if (membershipToExtend) {
-                metadata.id_membership_to_extend = membershipToExtend.id;
-            }
-
-            // 8. Crear Intento de Pago
-            const extensionIntent = await stripe.paymentIntents.create({
-                amount: amountInCents,
-                currency: 'mxn',
-                customer: customer.id,
-                metadata: metadata,
-                transfer_data: {
-                    destination: company.stripeAccountId,
-                },
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: 'Intención de pago creada',
-                data: {
-                    clientSecret: extensionIntent.client_secret,
-                    ephemeralKey: ephemeralKey.secret,
-                    customerId: customer.id,
-                    publishableKey: company.stripePublishableKey,
-                    gymName: company.name
-                }
-            });
-
-        } catch (error) {
-            console.log(`Error en createExtensionIntent: ${error}`);
-            return res.status(501).json({
-                success: false,
-                message: 'Error interno al procesar el pago',
-                error: error.message
-            });
-        }
-    },
 
     async createManualRequest(req, res, next) {
         try {
@@ -1297,12 +915,8 @@ async stripeWebhook12(req, res, next) {
             return res.status(501).json({ success: false, message: 'Error al activar', error: error.message });
         }
     },
-    /**
-     * POST /api/subscriptions/create-recurring-registration
-     * Creado específicamente para el registro web (Flutter).
-     * Recibe los datos del plan directamente del frontend.
-     */
-    // Nueva función para el registro recurrente
+
+
     async createRecurringRegistrationIntent(req, res, next) {
         try {
             const { id_plan, id_company, stripe_price_id, duration_days, customer_email } = req.body;
@@ -1320,6 +934,10 @@ async stripeWebhook12(req, res, next) {
                 customer: customer.id,
                 items: [{ price: stripe_price_id }],
                 transfer_data: { destination: company.stripeAccountId },
+
+                // 🔥 LA MAGIA: Retenemos el 4.5% para que Stripe se lo cobre de ahí 🔥
+                application_fee_percent: 4.5,
+
                 payment_behavior: 'default_incomplete',
                 expand: ['latest_invoice.payment_intent'],
                 metadata: {
@@ -1358,5 +976,366 @@ async stripeWebhook12(req, res, next) {
             res.status(500).json({ success: false, error: error.message });
         }
     },
+
+    async createExtensionIntent(req, res, next) {
+        try {
+            const id_client = req.user.id;
+
+            // 1. CORRECCIÓN DE NOMBRES: Leer exactamente lo que envía Flutter
+            const { id_plan, id_company: companyIdFromFront } = req.body;
+
+            console.log(`[Intent] Cliente: ${id_client} | Plan: ${id_plan} | Company (Front): ${companyIdFromFront}`);
+
+            let planToPurchase;
+            let membershipToExtend;
+            let companyId; // El ID final que usaremos
+            let activeSub;
+
+            // --- 2. LÓGICA DE VALIDACIÓN DE ID_PLAN ---
+            const isPlanIdValid = (id_plan && id_plan !== 'undefined' && id_plan !== 'null' && id_plan !== '');
+
+            if (isPlanIdValid) {
+                console.log(`[Intent] ID Plan válido. Buscando coincidencia exacta...`);
+                activeSub = await Gym.findActiveByClientId2(id_client, id_plan);
+            } else {
+                console.log(`[id_client] ${id_client}...`);
+                console.log(`[companyId] ${companyIdFromFront}...`);
+                activeSub = await Gym.findActiveByClientId(id_client, companyIdFromFront);
+                console.log(`entro en el caso B: ${JSON.stringify(activeSub)}`);
+            }
+
+            if (activeSub) {
+                // --- CASO 1: TIENE MEMBRESÍA ACTIVA (RENOVACIÓN) ---
+                console.log(`[Intent] Encontrada suscripción activa ID: ${activeSub.id}. Extendiendo...`);
+                membershipToExtend = activeSub;
+                companyId = activeSub.id_company;
+                planToPurchase = await Gym.findPlanByName(activeSub.plan_name, activeSub.id_company);
+
+                if (!planToPurchase && activeSub.id_plan) {
+                    planToPurchase = await Gym.findById(activeSub.id_plan);
+                }
+            } else {
+                // --- CASO 2: COMPRA NUEVA (No tiene membresía activa) ---
+                console.log(`[Intent] No hay suscripción activa. Procesando como compra nueva.`);
+                if (!isPlanIdValid) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'No tienes una membresía activa para renovar. Por favor selecciona un plan nuevo.'
+                    });
+                }
+                planToPurchase = await Gym.findById(id_plan);
+                if (planToPurchase) {
+                    companyId = planToPurchase.id_company;
+                }
+            }
+
+            // --- 3. VALIDACIÓN FINAL DE DATOS ---
+            if (!companyId && companyIdFromFront) {
+                companyId = companyIdFromFront;
+            }
+            if (!planToPurchase) {
+                return res.status(400).json({ success: false, message: 'No se encontró la información del plan a pagar.' });
+            }
+            if (!companyId) {
+                return res.status(400).json({ success: false, message: 'No se pudo identificar al gimnasio/entrenador.' });
+            }
+
+            const amountInCents = Math.round(planToPurchase.price * 100);
+
+            // 🔥 CALCULAMOS LA COMISIÓN EXACTA DE STRIPE (4.176% + $3.48 MXN) EN CENTAVOS 🔥
+            const feeInCents = Math.round((amountInCents * 0.04176) + 348);
+
+            // 4. Obtener credenciales de Stripe del Gimnasio
+            const company = await User.findCompanyById(companyId);
+            if (!company || !company.stripeSecretKey || !company.stripePublishableKey) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El gimnasio no tiene configurados los pagos con Stripe.'
+                });
+            }
+
+            const stripe = require('stripe')(company.stripeSecretKey);
+
+            // 5. Gestión de Cliente Stripe
+            let customer;
+            const existingCustomers = await stripe.customers.list({ email: req.user.email, limit: 1 });
+
+            if (existingCustomers.data.length > 0) {
+                customer = existingCustomers.data[0];
+            } else {
+                customer = await stripe.customers.create({
+                    email: req.user.email,
+                    name: `${req.user.name} ${req.user.lastname}`,
+                });
+            }
+
+            // 6. Ephemeral Key
+            const ephemeralKey = await stripe.ephemeralKeys.create(
+                { customer: customer.id },
+                { apiVersion: '2020-08-27' }
+            );
+
+            // 7. Payment Intent Metadata
+            const metadata = {
+                type: 'membership_extension',
+                id_client: id_client,
+                id_plan: planToPurchase.id,
+                duration_days_to_add: planToPurchase.duration_days
+            };
+
+            if (membershipToExtend) {
+                metadata.id_membership_to_extend = membershipToExtend.id;
+            }
+
+            // 8. Crear Intento de Pago
+            const extensionIntent = await stripe.paymentIntents.create({
+                amount: amountInCents,
+                currency: 'mxn',
+                customer: customer.id,
+                metadata: metadata,
+                transfer_data: {
+                    destination: company.stripeAccountId,
+                },
+                // 🔥 APLICAMOS LA RETENCIÓN EXACTA PARA PAGAR A STRIPE 🔥
+                application_fee_amount: feeInCents,
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: 'Intención de pago creada',
+                data: {
+                    clientSecret: extensionIntent.client_secret,
+                    ephemeralKey: ephemeralKey.secret,
+                    customerId: customer.id,
+                    publishableKey: company.stripePublishableKey,
+                    gymName: company.name
+                }
+            });
+
+        } catch (error) {
+            console.log(`Error en createExtensionIntent: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error interno al procesar el pago',
+                error: error.message
+            });
+        }
+    },
+
+    async createSubscriptionIntent(req, res, next) {
+        try {
+            const { id_plan, id_company, price_id, discount_percent } = req.body;
+            const id_client = req.user.id;
+
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El entrenador no tiene pagos configurados.'
+                });
+            }
+
+            if (!price_id || price_id === 'MANUAL') {
+                return res.status(400).json({ success: false, message: 'El plan no tiene un ID de precio de Stripe válido.' });
+            }
+
+            const stripeInstance = require('stripe')(company.stripeSecretKey);
+
+            let customer;
+            const existingCustomers = await stripeInstance.customers.list({ email: req.user.email, limit: 1 });
+
+            if (existingCustomers.data.length > 0) {
+                customer = existingCustomers.data[0];
+            } else {
+                customer = await stripeInstance.customers.create({
+                    email: req.user.email,
+                    name: `${req.user.name} ${req.user.lastname}`,
+                });
+            }
+
+            let subscriptionParams = {
+                customer: customer.id,
+                items: [{ price: price_id }],
+                payment_behavior: 'default_incomplete',
+                payment_settings: { save_default_payment_method: 'on_subscription' },
+                expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
+
+                // Configuración para transferir dinero al entrenador
+                transfer_data: {
+                    destination: company.stripeAccountId,
+                },
+
+                // 🔥 LA MAGIA: Retenemos el 4.5% para cubrir comisiones 🔥
+                application_fee_percent: 4.5,
+
+                metadata: {
+                    type: 'client_subscription',
+                    id_client: id_client,
+                    id_company: id_company,
+                    id_plan: id_plan
+                }
+            };
+
+            // 🔥 Si hay descuento, creamos un cupón temporal en Stripe 🔥
+            if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
+                const discountValue = parseFloat(discount_percent);
+                const coupon = await stripeInstance.coupons.create({
+                    percent_off: discountValue,
+                    duration: 'once',
+                    name: `Descuento ${discountValue}% App`,
+                });
+
+                subscriptionParams.coupon = coupon.id;
+                subscriptionParams.metadata.discount_applied = 'YES';
+                subscriptionParams.metadata.discount_percent = discountValue.toString();
+                console.log(`Cupón de Stripe creado y aplicado: ${coupon.id} (${discountValue}%)`);
+            } else {
+                subscriptionParams.metadata.discount_applied = 'NO';
+            }
+
+            const subscription = await stripeInstance.subscriptions.create(subscriptionParams);
+
+            let clientSecretStr = '';
+
+            if (subscription.pending_setup_intent) {
+                clientSecretStr = subscription.pending_setup_intent.client_secret;
+                console.log("Generado SetupIntent para suscripción (Cobro $0 o Trial)");
+            } else if (subscription.latest_invoice && subscription.latest_invoice.payment_intent) {
+                clientSecretStr = subscription.latest_invoice.payment_intent.client_secret;
+                console.log("Generado PaymentIntent para suscripción");
+            } else {
+                throw new Error("Stripe no devolvió un client_secret válido para la suscripción.");
+            }
+
+            return res.status(200).json({
+                success: true,
+                subscriptionId: subscription.id,
+                clientSecret: clientSecretStr,
+                customerId: customer.id,
+                publishableKey: company.stripePublishableKey
+            });
+
+        } catch (error) {
+            console.log(`Error CRÍTICO en createSubscriptionIntent: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al procesar la suscripción en Stripe',
+                error: error.message
+            });
+        }
+    },
+
+    async createSubscriptionIntentAutom(req, res, next) {
+        try {
+            const { id_plan, id_company, price_id, discount_percent } = req.body;
+            const id_client = req.user.id;
+
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El entrenador no tiene pagos configurados.'
+                });
+            }
+
+            const stripeInstance = require('stripe')(company.stripeSecretKey);
+
+            let customer;
+            const existingCustomers = await stripeInstance.customers.list({ email: req.user.email, limit: 1 });
+
+            if (existingCustomers.data.length > 0) {
+                customer = existingCustomers.data[0];
+            } else {
+                customer = await stripeInstance.customers.create({
+                    email: req.user.email,
+                    name: `${req.user.name} ${req.user.lastname}`,
+                });
+            }
+
+            let couponId = null;
+
+            if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
+                try {
+                    console.log(`Intentando aplicar descuento del ${discount_percent}%...`);
+                    const coupon = await stripeInstance.coupons.create({
+                        percent_off: parseFloat(discount_percent),
+                        duration: 'forever',
+                        name: `Descuento Especial ${discount_percent}%`,
+                        metadata: { created_by: 'App_Promo' }
+                    });
+                    couponId = coupon.id;
+                    console.log(`✅ Cupón creado: ${couponId}`);
+                } catch (e) {
+                    console.error("⚠️ Error creando cupón (se cobrará precio normal):", e.message);
+                    couponId = null;
+                }
+            }
+
+            // 4. Configuración de la Suscripción
+            const subscriptionConfig = {
+                customer: customer.id,
+                items: [{ price: price_id }], // <-- Asegúrate de que aquí vaya price_id, en tu código original decía stripe_price_id pero arriba desestructuraste price_id
+                transfer_data: { destination: company.stripeAccountId },
+
+                // 🔥 LA MAGIA: Retenemos el 4.5% para cubrir comisiones 🔥
+                application_fee_percent: 4.5,
+
+                payment_behavior: 'default_incomplete',
+                expand: ['latest_invoice.payment_intent'],
+                metadata: {
+                    type: 'client_subscription_payment',
+                    id_company: id_company,
+                    id_plan: id_plan,
+                    duration_days: 30, // Default asegurado
+                    temp_email: req.user.email.toLowerCase() // Protegido contra null
+                },
+                payment_settings: {
+                    save_default_payment_method: 'on_subscription',
+                    payment_method_options: {
+                        card: {
+                            mandate_options: { amount_type: 'fixed' }
+                        }
+                    }
+                }
+            };
+
+            // Si logramos crear el cupón sin errores, se lo asignamos
+            if (couponId) {
+                subscriptionConfig.coupon = couponId;
+            }
+
+            const subscription = await stripeInstance.subscriptions.create(subscriptionConfig);
+
+            if (subscription.latest_invoice && subscription.latest_invoice.payment_intent) {
+                await stripeInstance.paymentIntents.update(
+                    subscription.latest_invoice.payment_intent.id,
+                    { metadata: subscriptionConfig.metadata }
+                );
+            }
+
+            return res.status(200).json({
+                success: true,
+                subscriptionId: subscription.id,
+                clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+                customerId: customer.id,
+                publishableKey: company.stripePublishableKey
+            });
+
+        } catch (error) {
+            console.log(`Error CRÍTICO en createSubscriptionIntentAutom: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al procesar la suscripción',
+                error: error.message
+            });
+        }
+    },
+    /**
+     * POST /api/subscriptions/create-recurring-registration
+     * Creado específicamente para el registro web (Flutter).
+     * Recibe los datos del plan directamente del frontend.
+     */
+    // Nueva función para el registro recurrente
+
     // ...
 };
