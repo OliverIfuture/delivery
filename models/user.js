@@ -2168,7 +2168,7 @@ User.updateTrainerProfileData = (user, company) => {
 //////////////////          COBI    FUNCTIOS ////////////// 
 User.findById_cobi = (id) => {
     const sql = `
- SELECT
+        SELECT 
             u.id,
             u.company_id,
             u.first_name,
@@ -2203,14 +2203,16 @@ User.findById_cobi = (id) => {
                 'updated_at', c.updated_at
             ) AS company
 
-        FROM
+        FROM 
             cobi_users AS u
-        INNER JOIN
+        INNER JOIN 
             cobi_companies AS c ON u.company_id = c.id
-        WHERE
-            u.id = $1`;
+        WHERE 
+            u.id = $1
+    `;
 
-    return db.oneOrNone(sql, id).then(user => { callback(null, user); })
+    // Return the Promise directly. The controller's 'await' will handle it.
+    return db.oneOrNone(sql, [id]);
 };
 
 User.cobicreate = async (user, companyId) => {
