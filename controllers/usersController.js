@@ -2815,7 +2815,7 @@ module.exports = {
                 const path = `logo_${Date.now()}`;
                 const url = await storage(files[0], path);
                 if (url != undefined && url != null) {
-                    companyData.logoUrl = url; // Se lo asignamos al objeto de la empresa
+                    companyData.logo_url = url; // Se lo asignamos al objeto de la empresa
                 }
             }
 
