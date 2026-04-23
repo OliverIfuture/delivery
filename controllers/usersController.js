@@ -2791,4 +2791,85 @@ module.exports = {
         }
     },
 
+
+
+
+
+
+
+
+
+
+
+
+    //////////////   COBI FUNCTIONS /////////////
+    async cobiregisterCompanyAndUser(req, res, next) {
+        try {
+            // 1. Parseamos los datos que vienen del FormData de Flutter
+            const companyData = JSON.parse(req.body.company);
+            const userData = JSON.parse(req.body.user);
+
+            // 2. MANEJO DE IMAGEN (EL LOGO)
+            const files = req.files;
+            if (files && files.length > 0) {
+                const path = `logo_${Date.now()}`;
+                const url = await storage(files[0], path);
+                if (url != undefined && url != null) {
+                    companyData.logoUrl = url; // Se lo asignamos al objeto de la empresa
+                }
+            }
+
+            // 3. TRANSACCIÓN: Crear Empresa y Usuario
+            // Primero creamos la empresa para obtener su ID autogenerado (UUID)
+            const newCompany = await User.cobicreateCompany(companyData);
+
+            // Ahora creamos al usuario dueño pasándole el ID de su nueva empresa
+            const newUser = await User.cobicreate(userData, newCompany.id);
+
+            // 4. GENERAR TOKEN JWT
+            // Incluimos el company_id en el payload por si lo necesitas en el frontend
+            const token = jwt.sign(
+                { id: newUser.id, email: userData.email, company_id: newCompany.id },
+                keys.secretOrKey,
+                {} // Puedes agregar expiración aquí: { expiresIn: '30d' }
+            );
+
+            // 5. Preparar la data de respuesta (Idéntica a tu modelo User de Flutter)
+            const responseData = {
+                id: newUser.id,
+                company_id: newCompany.id,
+                first_name: newUser.first_name,
+                last_name: newUser.last_name,
+                email: newUser.email,
+                phone: newUser.phone,
+                role: newUser.role,
+                session_token: `JWT ${token}`
+            };
+
+            return res.status(201).json({
+                success: true,
+                message: '¡Tu cuenta y empresa han sido creadas exitosamente!',
+                data: responseData
+            });
+
+        } catch (error) {
+            console.log(`Error en authController.registerCompanyAndUser: ${error}`);
+
+            // Validar si el error es de correo duplicado en Postgres (código 23505)
+            if (error.code === '23505') {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Este correo electrónico ya está registrado.',
+                    error: error.detail
+                });
+            }
+
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error con el registro de la empresa',
+                error: error.message
+            });
+        }
+    },
+
 };

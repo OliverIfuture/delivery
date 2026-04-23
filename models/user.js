@@ -2165,7 +2165,7 @@ User.updateTrainerProfileData = (user, company) => {
 };
 
 
-
+//////////////////          COBI    FUNCTIOS ////////////// 
 User.findById_cobi = (id, callback) => {
     const sql = `
     SELECT
@@ -2190,6 +2190,91 @@ User.findById_cobi = (id, callback) => {
         id = $1`;
 
     return db.oneOrNone(sql, id).then(user => { callback(null, user); })
-}
+};
+
+User.cobicreate = async (user, companyId) => {
+    // 1. Encriptar contraseña exactamente como en tu proyecto anterior (MD5)
+    const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
+    user.password = myPasswordHashed;
+
+    const sql = `
+        INSERT INTO cobi_users(
+            company_id,
+            first_name,
+            last_name,
+            email,
+            phone,
+            password_hash,
+            role,
+            created_at,
+            updated_at
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+        RETURNING id, first_name, last_name, email, phone, role
+    `;
+
+    // 2. Insertar en Postgres
+    return db.one(sql, [
+        companyId,
+        user.firstName,
+        user.lastName,
+        user.email,
+        user.phone,
+        user.password, // Aquí ya va la contraseña hasheada con MD5
+        'ADMIN', // Rol por defecto para el que registra la empresa
+        new Date(),
+        new Date()
+    ]);
+};
+
+User.cobicreateCompany = (company) => {
+    const sql = `
+        INSERT INTO cobi_companies(
+            trade_name,
+            rfc,
+            industry,
+            logo_url,
+            country,                -- NUEVO: País
+            address,
+            latitude,               -- NUEVO: Geolocalización
+            longitude,              -- NUEVO: Geolocalización
+            pickup_notes,
+            default_vehicle,
+            accepts_credit_cards,   -- NUEVO: Finanzas
+            stripe_account_id,      -- NUEVO: Stripe Connect
+            stripe_charges_enabled, -- NUEVO: Stripe Connect
+            created_at,
+            updated_at
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id
+    `;
+
+    return db.one(sql, [
+        company.tradeName,
+        company.rfc,
+        company.industry,
+        company.logoUrl || null,
+
+        // Asignamos un valor por defecto ('MX') si el frontend no envía el país
+        company.country || 'MX',
+
+        company.address,
+
+        // Coordenadas pueden ser nulas al inicio si decides obtenerlas después
+        company.latitude || null,
+        company.longitude || null,
+
+        company.pickupNotes || '',
+        company.defaultVehicle || 'Moto',
+
+        // Valores por defecto financieros (Falsos y Nulos al momento del registro)
+        company.acceptsCreditCards || false,
+        company.stripeAccountId || null,
+        company.stripeChargesEnabled || false,
+
+        new Date(),
+        new Date()
+    ]);
+};
 
 module.exports = User;

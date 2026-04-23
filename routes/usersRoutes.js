@@ -1,3 +1,4 @@
+const usersController = require('../controllers/usersController.js');
 const UsersController = require('../controllers/usersController.js');
 const passport = require('passport');
 module.exports = (app, upload) => {
@@ -144,5 +145,10 @@ module.exports = (app, upload) => {
         passport.authenticate('jwt', { session: false }),
         UsersController.updateTrainerProfile
     );
+
+    //''''''   COBI RUTAS  '''''''' ///
+    // Asegúrate de importar el controlador correcto
+    app.post('/cobi/api/users/register', upload.array('logo', 1), UsersController.cobiregisterCompanyAndUser);
+
 }
 
