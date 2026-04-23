@@ -2168,26 +2168,47 @@ User.updateTrainerProfileData = (user, company) => {
 //////////////////          COBI    FUNCTIOS ////////////// 
 User.findById_cobi = (id, callback) => {
     const sql = `
-    SELECT
-        id,
-        company_id,
-        first_name,
-        last_name,
-        email,
-        phone,
-        password_hash,
-        role,
-        is_available,
-        is_authenticated,
-        session_token,
-        fcm_token,
-        status,
-        created_at,
-        updated_at
-    FROM
-        cobi_users
-    WHERE
-        id = $1`;
+ SELECT
+            u.id,
+            u.company_id,
+            u.first_name,
+            u.last_name,
+            u.email,
+            u.phone,
+            u.password_hash,
+            u.role,
+            u.is_available,
+            u.is_authenticated,
+            u.session_token,
+            u.fcm_token,
+            u.status,
+            u.created_at,
+            u.updated_at,
+            json_build_object(
+                'id', c.id,
+                'trade_name', c.trade_name,
+                'rfc', c.rfc,
+                'industry', c.industry,
+                'logo_url', c.logo_url,
+                'country', c.country,
+                'address', c.address,
+                'latitude', c.latitude,
+                'longitude', c.longitude,
+                'pickup_notes', c.pickup_notes,
+                'default_vehicle', c.default_vehicle,
+                'accepts_credit_cards', c.accepts_credit_cards,
+                'stripe_account_id', c.stripe_account_id,
+                'stripe_charges_enabled', c.stripe_charges_enabled,
+                'created_at', c.created_at,
+                'updated_at', c.updated_at
+            ) AS company
+
+        FROM
+            cobi_users AS u
+        INNER JOIN
+            cobi_companies AS c ON u.company_id = c.id
+        WHERE
+            u.id = $1`;
 
     return db.oneOrNone(sql, id).then(user => { callback(null, user); })
 };

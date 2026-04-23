@@ -2803,6 +2803,29 @@ module.exports = {
 
 
     //////////////   COBI FUNCTIONS /////////////
+
+    async cobifindById(req, res, next) {
+        try {
+
+            const id = req.params.id;
+
+            const data = await User.findById_cobi(id);
+            //console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
+            return res.status(201).json(data);
+
+
+        }
+        catch (error) {
+
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'error al obtener el usuario por ID'
+            });
+        }
+    },
+
+
     async cobiregisterCompanyAndUser(req, res, next) {
         try {
             // 1. Parseamos los datos que vienen del FormData de Flutter
