@@ -2216,8 +2216,8 @@ User.cobicreate = async (user, companyId) => {
     // 2. Insertar en Postgres
     return db.one(sql, [
         companyId,
-        user.firstName,
-        user.lastName,
+        user.first_name, // 🔥 CORREGIDO
+        user.last_name,  // 🔥 CORREGIDO
         user.email,
         user.phone,
         user.password, // Aquí ya va la contraseña hasheada con MD5
@@ -2234,15 +2234,15 @@ User.cobicreateCompany = (company) => {
             rfc,
             industry,
             logo_url,
-            country,                -- NUEVO: País
+            country,
             address,
-            latitude,               -- NUEVO: Geolocalización
-            longitude,              -- NUEVO: Geolocalización
+            latitude,
+            longitude,
             pickup_notes,
             default_vehicle,
-            accepts_credit_cards,   -- NUEVO: Finanzas
-            stripe_account_id,      -- NUEVO: Stripe Connect
-            stripe_charges_enabled, -- NUEVO: Stripe Connect
+            accepts_credit_cards,
+            stripe_account_id,
+            stripe_charges_enabled,
             created_at,
             updated_at
         )
@@ -2250,28 +2250,19 @@ User.cobicreateCompany = (company) => {
     `;
 
     return db.one(sql, [
-        company.tradeName,
+        company.trade_name,             // 🔥 CORREGIDO
         company.rfc,
         company.industry,
-        company.logoUrl || null,
-
-        // Asignamos un valor por defecto ('MX') si el frontend no envía el país
+        company.logo_url || null,       // 🔥 CORREGIDO
         company.country || 'MX',
-
         company.address,
-
-        // Coordenadas pueden ser nulas al inicio si decides obtenerlas después
         company.latitude || null,
         company.longitude || null,
-
-        company.pickupNotes || '',
-        company.defaultVehicle || 'Moto',
-
-        // Valores por defecto financieros (Falsos y Nulos al momento del registro)
-        company.acceptsCreditCards || false,
-        company.stripeAccountId || null,
-        company.stripeChargesEnabled || false,
-
+        company.pickup_notes || '',     // 🔥 CORREGIDO
+        company.default_vehicle || 'Moto', // 🔥 CORREGIDO
+        company.accepts_credit_cards || false, // 🔥 CORREGIDO
+        company.stripe_account_id || null,     // 🔥 CORREGIDO
+        company.stripe_charges_enabled || false, // 🔥 CORREGIDO
         new Date(),
         new Date()
     ]);
