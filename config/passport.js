@@ -28,17 +28,20 @@ module.exports = function (passport) {
     optsCobi.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
     optsCobi.secretOrKey = Keys.secretOrKey;
 
-    // Estrategia para dealers
-    passport.use('cobi-jwt', new JwtStrategy(optsCobi, (jwt_payload, done) => {
-        User.findById_cobi(jwt_payload.id, (err, cobi) => {
-            if (err) {
-                return done(err, false);
-            }
+    // Estrategia para COBI (Actualizada a Async/Await)
+    passport.use('cobi-jwt', new JwtStrategy(optsCobi, async (jwt_payload, done) => {
+        try {
+            // Como findById_cobi ahora devuelve una Promesa, usamos 'await'
+            const cobi = await User.findById_cobi(jwt_payload.id);
+
             if (cobi) {
-                return done(null, cobi);
+                return done(null, cobi); // Autenticación exitosa, pasa al controlador
             } else {
-                return done(null, false);
+                return done(null, false); // El token es válido, pero el usuario ya no existe
             }
-        });
+        } catch (error) {
+            console.log("Error en Passport strategy:", error);
+            return done(error, false); // Ocurrió un error en la base de datos
+        }
     }));
 };
