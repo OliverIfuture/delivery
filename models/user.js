@@ -2162,6 +2162,34 @@ User.updateTrainerProfileData = (user, company) => {
 
         return true;
     });
+};
+
+
+
+User.findById_cobi = (id, callback) => {
+    const sql = `
+    SELECT
+        id,
+        company_id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        password_hash,
+        role,
+        is_available,
+        is_authenticated,
+        session_token,
+        fcm_token,
+        status,
+        created_at,
+        updated_at
+    FROM
+        cobi_users
+    WHERE
+        id = $1`;
+
+    return db.oneOrNone(sql, id).then(user => { callback(null, user); })
 }
 
 module.exports = User;
