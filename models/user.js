@@ -2268,4 +2268,62 @@ User.cobicreateCompany = (company) => {
     ]);
 };
 
+
+User.cobifindByEmail = (email) => {
+    const sql = `
+    SELECT 
+        u.id,
+        u.company_id,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.phone,
+        u.password_hash,
+        u.role,
+        u.is_available,
+        u.is_authenticated,
+        u.status,
+        -- Agrupamos todos los datos de la empresa en un objeto JSON llamado "company"
+        json_build_object(
+            'id', c.id,
+            'trade_name', c.trade_name,
+            'rfc', c.rfc,
+            'industry', c.industry,
+            'logo_url', c.logo_url,
+            'country', c.country,
+            'address', c.address,
+            'latitude', c.latitude,
+            'longitude', c.longitude,
+            'accepts_credit_cards', c.accepts_credit_cards,
+            'stripe_account_id', c.stripe_account_id,
+            'stripe_charges_enabled', c.stripe_charges_enabled
+        ) AS company
+    FROM 
+        cobi_users AS u
+    INNER JOIN 
+        cobi_companies AS c ON u.company_id = c.id
+    WHERE 
+        u.email = $1
+    `;
+
+    // Usamos db.oneOrNone porque puede que el email no exista
+    return db.oneOrNone(sql, [email]);
+};
+
+// Y tu función de validación de password (manteniendo MD5)
+User.cobiisPasswordMatched = (userPassword, hash) => {
+    const myPasswordHashed = crypto.createHash('md5').update(userPassword).digest('hex');
+    return myPasswordHashed === hash;
+};
+
+// Función para actualizar el token de sesión
+User.cobiupdateToken = (id, token) => {
+    const sql = `
+        UPDATE cobi_users
+        SET session_token = $2
+        WHERE id = $1
+    `;
+    return db.none(sql, [id, token]);
+};
+
 module.exports = User;

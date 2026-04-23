@@ -149,6 +149,8 @@ module.exports = (app, upload) => {
     //''''''   COBI RUTAS  '''''''' ///
     // Asegúrate de importar el controlador correcto
     app.post('/cobi/api/users/register', upload.array('logo', 1), UsersController.cobiregisterCompanyAndUser);
+    app.post('/cobi/api/users/login', UsersController.cobilogin);
+
 
 }
 

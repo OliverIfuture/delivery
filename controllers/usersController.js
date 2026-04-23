@@ -2872,4 +2872,80 @@ module.exports = {
         }
     },
 
+    async cobilogin(req, res, next) {
+        try {
+            const email = req.body.email;
+            const password = req.body.password;
+
+            // 1. Buscar al usuario por email (y traer la info de su empresa)
+            const myUser = await User.cobifindByEmail(email);
+
+            if (!myUser) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'El email no fue encontrado'
+                });
+            }
+
+            // 2. Verificar la contraseña
+            // Asumiendo que tu modelo User tiene la misma función isPasswordMatched con MD5
+            if (User.cobiisPasswordMatched(password, myUser.password_hash)) {
+
+                // 3. Crear el Token JWT
+                // Inyectamos el ID del usuario y el ID de su empresa
+                const token = jwt.sign(
+                    {
+                        id: myUser.id,
+                        email: myUser.email,
+                        company_id: myUser.company_id
+                    }, keys.secretOrKey, {
+                    // expiresIn: (60*60*24) // Opcional: expira en 24h
+                });
+
+                // 4. Armar el objeto de respuesta
+                // Debe coincidir con tu modelo User de Flutter
+                const data = {
+                    id: myUser.id,
+                    company_id: myUser.company_id,
+                    first_name: myUser.first_name,
+                    last_name: myUser.last_name,
+                    email: myUser.email,
+                    phone: myUser.phone,
+                    role: myUser.role,
+                    is_available: myUser.is_available,
+                    is_authenticated: myUser.is_authenticated,
+                    status: myUser.status,
+                    session_token: `JWT ${token}`,
+
+                    // 🔥 Aquí anidamos el objeto de la empresa que vino del JOIN en Postgres 🔥
+                    company: myUser.company
+                }
+
+                // 5. Guardar el nuevo token en la base de datos
+                await User.cobiupdateToken(myUser.id, `JWT ${token}`);
+
+                return res.status(201).json({
+                    success: true,
+                    data: data,
+                    message: '¡Bienvenido a COBI!'
+                });
+            }
+            else {
+                return res.status(401).json({
+                    success: false,
+                    message: 'La contraseña es incorrecta'
+                });
+            }
+
+        }
+        catch (error) {
+            console.log(`Error en authController.login: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al momento de hacer login',
+                error: error.message
+            });
+        }
+    },
+
 };
