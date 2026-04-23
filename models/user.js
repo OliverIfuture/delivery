@@ -2166,7 +2166,7 @@ User.updateTrainerProfileData = (user, company) => {
 
 
 //////////////////          COBI    FUNCTIOS ////////////// 
-User.findById_cobi = (id, callback) => {
+User.findById_cobi = (id) => {
     const sql = `
  SELECT
             u.id,
