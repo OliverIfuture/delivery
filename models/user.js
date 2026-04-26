@@ -2382,7 +2382,7 @@ User.cobiupdate = (company) => {
         company.latitude,             // $9  (Asegúrate de mandar esto como número desde Flutter)
         company.longitude,             // $10
         company.telephone,  // $11
-        company.isMatriz,   // $12 (Booleano)
+        company.is_matriz,   // $12 (Booleano)
         new Date()               // $11
     ]);
 }
