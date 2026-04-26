@@ -2370,12 +2370,12 @@ User.cobiupdate = (company) => {
     // ideal para un UPDATE simple.
     return db.none(sql, [
         company.id,              // $1
-        company.tradeName,       // $2
+        company.trade_name,       // $2
         company.rfc,             // $3
         company.industry,        // $4 (Si manejas la industria/giro)
         company.address,         // $5
-        company.pickupNotes,     // $6
-        company.defaultVehicle,  // $7
+        company.pickup_notes,     // $6
+        company.default_vehicle,  // $7
         company.logo_url,         // $8 (Asegúrate de que el controlador le asigne este nombre a la imagen)
         new Date()               // $9
     ]);
