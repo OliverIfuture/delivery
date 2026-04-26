@@ -2352,7 +2352,7 @@ User.cobiupdateToken = (id, token) => {
 User.cobiupdate = (company) => {
     const sql = `
     UPDATE
-        companies
+        cobi_companies
     SET
         trade_name = $2,
         rfc = $3,
@@ -2361,8 +2361,8 @@ User.cobiupdate = (company) => {
         pickup_notes = $6,
         default_vehicle = $7,
         logo_url = $8,
-        lat = $9,           -- 🔥 NUEVO
-        lng = $10,          -- 🔥 NUEVO
+        latitude = $9,           -- 🔥 NUEVO
+        longitude = $10,          -- 🔥 NUEVO
         updated_at = $11
     WHERE
         id = $1
