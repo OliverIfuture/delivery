@@ -2349,4 +2349,36 @@ User.cobiupdateToken = (id, token) => {
     return db.none(sql, [id, token]);
 };
 
+User.cobiupdate = (company) => {
+    const sql = `
+    UPDATE
+        companies
+    SET
+        trade_name = $2,
+        rfc = $3,
+        industry = $4,
+        address = $5,
+        pickup_notes = $6,
+        default_vehicle = $7,
+        logo_url = $8,
+        updated_at = $9
+    WHERE
+        id = $1
+    `;
+
+    // db.none ejecuta la consulta y no espera que la BD devuelva filas,
+    // ideal para un UPDATE simple.
+    return db.none(sql, [
+        company.id,              // $1
+        company.tradeName,       // $2
+        company.rfc,             // $3
+        company.industry,        // $4 (Si manejas la industria/giro)
+        company.address,         // $5
+        company.pickupNotes,     // $6
+        company.defaultVehicle,  // $7
+        company.logo_url,         // $8 (Asegúrate de que el controlador le asigne este nombre a la imagen)
+        new Date()               // $9
+    ]);
+}
+
 module.exports = User;

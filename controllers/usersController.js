@@ -2971,4 +2971,46 @@ module.exports = {
         }
     },
 
+    async cobiupdateCompany(req, res, next) {
+        try {
+            const company = JSON.parse(req.body.company);
+            const files = req.files;
+
+            // 1. Manejo de la subida de imagen
+            if (files.length > 0) {
+                // Tip: Cambié pathImage a 'logo_' para que en tu bucket/storage sea más fácil de identificar
+                const pathImage = `logo_cobi_${Date.now()}`;
+                const url = await storage(files[0], pathImage);
+
+                if (url != undefined && url != null) {
+                    // Asegúrate de que este nombre (logoUrl) coincida EXACTAMENTE con la columna de tu BD
+                    // y con el modelo de Flutter.
+                    company.logo_url = url;
+                }
+            }
+
+            // 2. Ejecutar la actualización en la Base de Datos
+            // (Asegúrate de que este método guarde los datos correctamente)
+            await User.cobiupdate(company);
+
+            // 3. RESPUESTA BLINDADA (El paso crítico)
+            // Retornamos 200 (OK) y mandamos el objeto 'company' de regreso en el nodo 'data'
+            return res.status(200).json({
+                success: true,
+                message: 'Los datos de la empresa se actualizaron correctamente',
+                data: company // <--- 🔥 ESTO ES LO QUE FLUTTER NECESITA PARA ACTUALIZAR LA PANTALLA
+            });
+
+        }
+        catch (error) {
+            console.log(`Error: ${error}`);
+            // 501 es "Not Implemented". Un error de servidor genérico o falla de BD debería ser 500.
+            return res.status(500).json({
+                success: false,
+                message: 'Hubo un error con la actualización de datos de la empresa',
+                error: error.message || error // Mejor enviar solo el mensaje para no filtrar trazas enteras
+            });
+        }
+    },
+
 };
