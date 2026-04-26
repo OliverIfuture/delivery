@@ -2365,7 +2365,7 @@ User.cobiupdate = (company) => {
         longitude = $10,          -- 🔥 NUEVO
         telephone = $11,    -- 🔥 NUEVO
         is_matriz = $12,    -- 🔥 NUEVO
-        updated_at = $11
+        updated_at = $13
     WHERE
         id = $1
     `;
