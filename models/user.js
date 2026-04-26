@@ -2352,7 +2352,7 @@ User.cobiupdateToken = (id, token) => {
 User.cobiupdate = (company) => {
     const sql = `
     UPDATE
-        companies
+        cobi_companies
     SET
         trade_name = $2,
         rfc = $3,
