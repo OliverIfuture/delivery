@@ -2376,9 +2376,9 @@ User.cobiupdate = (company) => {
         company.address,         // $5
         company.pickup_notes,     // $6
         company.default_vehicle,  // $7
-        company.logoUrl,         // $8
-        company.lat,             // $9  (Asegúrate de mandar esto como número desde Flutter)
-        company.lng,             // $10
+        company.logo_url,         // $8
+        company.latitude,             // $9  (Asegúrate de mandar esto como número desde Flutter)
+        company.longitude,             // $10
         new Date()               // $11
     ]);
 }
