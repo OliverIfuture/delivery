@@ -2352,7 +2352,7 @@ User.cobiupdateToken = (id, token) => {
 User.cobiupdate = (company) => {
     const sql = `
     UPDATE
-        cobi_companies
+        companies
     SET
         trade_name = $2,
         rfc = $3,
@@ -2361,23 +2361,25 @@ User.cobiupdate = (company) => {
         pickup_notes = $6,
         default_vehicle = $7,
         logo_url = $8,
-        updated_at = $9
+        lat = $9,           -- 🔥 NUEVO
+        lng = $10,          -- 🔥 NUEVO
+        updated_at = $11
     WHERE
         id = $1
     `;
 
-    // db.none ejecuta la consulta y no espera que la BD devuelva filas,
-    // ideal para un UPDATE simple.
     return db.none(sql, [
         company.id,              // $1
         company.trade_name,       // $2
         company.rfc,             // $3
-        company.industry,        // $4 (Si manejas la industria/giro)
+        company.industry,        // $4
         company.address,         // $5
         company.pickup_notes,     // $6
         company.default_vehicle,  // $7
-        company.logo_url,         // $8 (Asegúrate de que el controlador le asigne este nombre a la imagen)
-        new Date()               // $9
+        company.logoUrl,         // $8
+        company.lat,             // $9  (Asegúrate de mandar esto como número desde Flutter)
+        company.lng,             // $10
+        new Date()               // $11
     ]);
 }
 
