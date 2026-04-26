@@ -2363,6 +2363,8 @@ User.cobiupdate = (company) => {
         logo_url = $8,
         latitude = $9,           -- 🔥 NUEVO
         longitude = $10,          -- 🔥 NUEVO
+        telephone = $11,    -- 🔥 NUEVO
+        is_matriz = $12,    -- 🔥 NUEVO
         updated_at = $11
     WHERE
         id = $1
@@ -2379,6 +2381,8 @@ User.cobiupdate = (company) => {
         company.logo_url,         // $8
         company.latitude,             // $9  (Asegúrate de mandar esto como número desde Flutter)
         company.longitude,             // $10
+        company.telephone,  // $11
+        company.isMatriz,   // $12 (Booleano)
         new Date()               // $11
     ]);
 }
