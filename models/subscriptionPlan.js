@@ -121,8 +121,8 @@ FROM
 WHERE
     id_company = $1 AND id IN (331, 464)
 ORDER BY
-    price ASC;
-    `;
+    price desc;
+        `;
     return db.manyOrNone(sql, id_company);
 };
 
