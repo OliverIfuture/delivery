@@ -219,7 +219,7 @@ module.exports = {
                 accountId = account.id;
 
                 // 3. Guardar el acct_XXXX en cobi_companies (Pasamos el ID de la empresa real)
-                await Company.updateCobiStripeAccountId(companyId, accountId);
+                await User.updateCobiStripeAccountId(companyId, accountId);
             } else {
                 console.log(`[Stripe COBI] Usando cuenta existente: ${accountId}`);
             }
@@ -265,7 +265,7 @@ module.exports = {
             const chargesEnabled = account.charges_enabled;
 
             // 2. Actualizar BD de COBI (campo stripe_charges_enabled)
-            await Company.updateCobiStripeChargesStatus(id_company, chargesEnabled);
+            await User.updateCobiStripeChargesStatus(id_company, chargesEnabled);
 
             return res.status(200).json({
                 success: true,

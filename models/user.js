@@ -2387,4 +2387,45 @@ User.cobiupdate = (company) => {
     ]);
 }
 
+
+User.updateCobiStripeAccountId = (id, stripeAccountId) => {
+    const sql = `
+    UPDATE
+        cobi_companies
+    SET
+        stripe_account_id = $2,
+        updated_at = $3
+    WHERE
+        id = $1
+    `;
+
+    // Usamos db.none porque es una actualización y no esperamos devolver filas
+    return db.none(sql, [
+        id,                // $1: UUID de la empresa
+        stripeAccountId,   // $2: ID acct_... de Stripe
+        new Date()         // $3
+    ]);
+};
+
+/**
+ * Actualiza si la cuenta ya tiene permiso para realizar cobros
+ */
+User.updateCobiStripeChargesStatus = (id, isEnabled) => {
+    const sql = `
+    UPDATE
+        cobi_companies
+    SET
+        stripe_charges_enabled = $2,
+        updated_at = $3
+    WHERE
+        id = $1
+    `;
+
+    return db.none(sql, [
+        id,                // $1: UUID de la empresa
+        isEnabled,         // $2: Booleano (true/false)
+        new Date()         // $3
+    ]);
+};
+
 module.exports = User;
