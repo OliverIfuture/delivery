@@ -176,6 +176,155 @@ module.exports = {
             });
         }
     },
+
+    async cobiCreateConnectAccount(req, res, next) {
+        try {
+            // 🔥 CORRECCIÓN 1: Le pasamos el ID del USUARIO (porque tu SQL hace WHERE u.id = $1)
+            const id_user = req.user.id;
+
+            // 1. Cargar datos del Usuario + su Empresa
+            const userData = await User.findById_cobi(id_user);
+
+            // Validamos que exista el usuario y que tenga el nodo 'company'
+            if (!userData || !userData.company) {
+                return res.status(404).json({ success: false, message: 'Usuario o Compañía de COBI no encontrada.' });
+            }
+
+            // 🔥 CORRECCIÓN 2: Extraemos los datos navegando dentro del objeto JSON 'company'
+            const companyId = userData.company.id;
+            const tradeName = userData.company.trade_name;
+            let accountId = userData.company.stripe_account_id;
+
+            // El email lo sacamos directo del nivel del usuario
+            const userEmail = userData.email;
+
+            const isValidStripeId = accountId && String(accountId).startsWith('acct_');
+
+            // 2. Crear cuenta si no existe
+            if (!isValidStripeId) {
+                console.log(`[Stripe COBI] Creando nueva cuenta Express para ${tradeName}`);
+
+                const account = await stripe.accounts.create({
+                    type: 'express',
+                    email: userEmail, // Usamos el correo real del usuario
+                    business_type: 'company',
+                    company: {
+                        name: tradeName,
+                    },
+                    capabilities: {
+                        card_payments: { requested: true },
+                        transfers: { requested: true },
+                    },
+                });
+                accountId = account.id;
+
+                // 3. Guardar el acct_XXXX en cobi_companies (Pasamos el ID de la empresa real)
+                await Company.updateCobiStripeAccountId(companyId, accountId);
+            } else {
+                console.log(`[Stripe COBI] Usando cuenta existente: ${accountId}`);
+            }
+
+            // 4. Crear Link de Onboarding para el WebView
+            const accountLink = await stripe.accountLinks.create({
+                account: accountId,
+                // 🔥 URLs de retorno de COBI
+                refresh_url: 'https://cobi-app.com/stripe/reauth',
+                return_url: 'https://cobi-app.com/stripe/success',
+                type: 'account_onboarding',
+            });
+
+            return res.status(200).json({
+                success: true,
+                url: accountLink.url
+            });
+
+        } catch (error) {
+            console.log(`Error cobiCreateConnectAccount: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al iniciar vinculación con Stripe para COBI',
+                error: error.message
+            });
+        }
+    },
+
+    /**
+     * 2. VERIFICA EL ESTADO DE LA CUENTA COBI
+     */
+    async cobiGetAccountStatus(req, res, next) {
+        try {
+            const id_company = req.user.company_id || req.body.id_company;
+            const company = await Company.findById(id_company);
+
+            if (!company || !company.stripe_account_id) {
+                return res.status(400).json({ success: false, message: 'Esta empresa no tiene una cuenta de Stripe vinculada.' });
+            }
+
+            // 1. Consultar a Stripe directamente
+            const account = await stripe.accounts.retrieve(company.stripe_account_id);
+            const chargesEnabled = account.charges_enabled;
+
+            // 2. Actualizar BD de COBI (campo stripe_charges_enabled)
+            await Company.updateCobiStripeChargesStatus(id_company, chargesEnabled);
+
+            return res.status(200).json({
+                success: true,
+                chargesEnabled: chargesEnabled,
+                detailsSubmitted: account.details_submitted
+            });
+
+        } catch (error) {
+            console.log(`Error cobiGetAccountStatus: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al verificar la cuenta de COBI',
+                error: error.message
+            });
+        }
+    },
+
+    /**
+     * 3. HISTORIAL DE TRANSFERENCIAS/PAGOS (COBI)
+     */
+    async cobiGetTransactionsList(req, res, next) {
+        try {
+            const { id_account } = req.params;
+
+            if (!id_account) {
+                return res.status(400).json({ success: false, message: 'Falta el ID de la cuenta de Stripe.' });
+            }
+
+            console.log(`[Stripe COBI] Obteniendo balance para cuenta: ${id_account}`);
+
+            const transactions = await stripe.balanceTransactions.list(
+                { limit: 50 },
+                { stripeAccount: id_account } // Consulta delegada a la cuenta de la empresa
+            );
+
+            const formattedData = transactions.data.map(tx => ({
+                id: tx.id,
+                amount: tx.amount, // Monto en centavos
+                currency: tx.currency,
+                created: tx.created,
+                status: tx.status,
+                type: tx.type,
+                description: tx.description || 'Transferencia de Plataforma COBI'
+            }));
+
+            return res.status(200).json({
+                success: true,
+                data: formattedData
+            });
+
+        } catch (error) {
+            console.log(`Error cobiGetTransactionsList: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener historial financiero',
+                error: error.message
+            });
+        }
+    }
 };
 
 // --- FUNCIÓN AUXILIAR: MIGRACIÓN A CONNECT ---

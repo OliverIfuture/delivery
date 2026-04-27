@@ -4,7 +4,7 @@ const passport = require('passport');
 module.exports = (app) => {
 
     // PREFIJO: /api/stripe
-    
+
     /**
      * POST: /api/stripe/connect/onboard-account
      * * Inicia el proceso de onboarding.
@@ -14,9 +14,15 @@ module.exports = (app) => {
      * La app de Flutter abrirá esta URL en un WebView.
      */
     app.post(
-        '/api/stripe/connect/onboard-account', 
-        passport.authenticate('jwt', { session: false }), 
+        '/api/stripe/connect/onboard-account',
+        passport.authenticate('jwt', { session: false }),
         stripeConnectController.createConnectAccount
+    );
+
+    app.post(
+        '/api/cobi/stripe/connect/onboard',
+        passport.authenticate('jwt', { session: false }),
+        stripeConnectController.cobiCreateConnectAccount
     );
 
     /**
@@ -30,6 +36,12 @@ module.exports = (app) => {
         stripeConnectController.getAccountStatus
     );
 
+    app.get(
+        '/api/cobi/stripe/connect/status',
+        passport.authenticate('jwt', { session: false }),
+        stripeConnectController.cobiGetAccountStatus
+    );
+
     /**
      * GET: /api/stripe/connect/charges/:id_account
      * * Obtiene la lista de transacciones de una cuenta conectada
@@ -38,6 +50,12 @@ module.exports = (app) => {
         '/api/stripe/connect/charges/:id_account',
         passport.authenticate('jwt', { session: false }),
         stripeConnectController.getChargesList
+    );
+
+    app.get(
+        '/api/cobi/stripe/connect/transactions/:id_account',
+        passport.authenticate('jwt', { session: false }),
+        stripeConnectController.cobiGetTransactionsList
     );
 
 }
