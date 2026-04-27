@@ -126,6 +126,28 @@ ORDER BY
     return db.manyOrNone(sql, id_company);
 };
 
+SubscriptionPlan.findByCompanyDash = (id_company) => {
+    const sql = `
+        SELECT
+            id,
+            id_company,
+            name,
+            description,
+            price,
+            currency,
+            stripe_product_id,
+            stripe_price_id,
+            "durationInDays"
+            FROM
+            subscription_plans
+        WHERE
+            id_company = $1 and active = true
+        ORDER BY
+            price ASC
+        `;
+    return db.manyOrNone(sql, id_company);
+};
+
 /**
  * Busca un plan por su ID (usado en el delete)
  */

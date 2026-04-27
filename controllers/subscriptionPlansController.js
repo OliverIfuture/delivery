@@ -311,6 +311,22 @@ module.exports = {
         }
     },
 
+    async findByCompanyDash(req, res, next) {
+        try {
+            const id_company = req.params.id_company;
+            const data = await SubscriptionPlan.findByCompanyDash(id_company);
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en subscriptionPlansController.findByCompany: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al buscar los planes',
+                error: error
+            });
+        }
+    },
+
     async getSubscriptionsByDateRange(req, res, next) {
         try {
             const id_company = req.user.mi_store;

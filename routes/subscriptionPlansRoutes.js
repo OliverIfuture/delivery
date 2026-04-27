@@ -8,6 +8,7 @@ module.exports = (app) => {
     // --- GET ---
     // Obtener todos los planes creados por un entrenador
     app.get('/api/subscriptionPlans/findByCompany/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.findByCompany);
+    app.get('/api/subscriptionPlans/findByCompanyDash/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.findByCompanyDash);
 
     // --- POST ---
     // Crear un nuevo plan de suscripción
