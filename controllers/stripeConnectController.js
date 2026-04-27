@@ -235,7 +235,10 @@ module.exports = {
 
             return res.status(200).json({
                 success: true,
-                url: accountLink.url
+                message: 'Enlace generado correctamente', // Por si falla algo en Flutter, no salga vacío
+                data: {
+                    url: accountLink.url
+                }
             });
 
         } catch (error) {
