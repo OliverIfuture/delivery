@@ -257,7 +257,7 @@ module.exports = {
     async cobiGetAccountStatus(req, res, next) {
         try {
             const id_company = req.user.company_id || req.body.id_company;
-            const company = await Company.findById(id_company);
+            const company = await User.findById(id_company);
 
             if (!company || !company.stripe_account_id) {
                 return res.status(400).json({ success: false, message: 'Esta empresa no tiene una cuenta de Stripe vinculada.' });
