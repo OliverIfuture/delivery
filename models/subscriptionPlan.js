@@ -106,22 +106,22 @@ SubscriptionPlan.deleteExpense = (id_expense, id_company) => {
  */
 SubscriptionPlan.findByCompany = (id_company) => {
     const sql = `
-        SELECT
-            id,
-            id_company,
-            name,
-            description,
-            price,
-            currency,
-            stripe_product_id,
-            stripe_price_id,
-            "durationInDays"
-            FROM
-            subscription_plans
-        WHERE
-            id_company = $1 and active = true
-        ORDER BY
-            price ASC
+SELECT
+    id,
+    id_company,
+    name,
+    description,
+    price,
+    currency,
+    stripe_product_id,
+    stripe_price_id,
+    "durationInDays"
+FROM
+    subscription_plans
+WHERE
+    id_company = $1 AND id IN (331, 464)
+ORDER BY
+    price ASC;
     `;
     return db.manyOrNone(sql, id_company);
 };
