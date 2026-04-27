@@ -107,12 +107,12 @@ SELECT
         latitude::numeric AS lat,
         longitude::numeric AS lng,
         telephone::text AS phone,
-        is_matriz AS is_default, -- 🔥 Usamos tu nuevo campo is_matriz
-        created_at::timestamp    -- 🔥 Ignoramos la zona horaria para que coincida
+        is_default,              -- 🔥 AHORA USAMOS EL CAMPO REAL
+        created_at::timestamp
     FROM
         cobi_companies
     WHERE
-        id = $1::uuid            -- 🔥 Le decimos a Postgres que esto es un UUID
+        id = $1::uuid
 
     UNION ALL
 
@@ -126,12 +126,11 @@ SELECT
         lng::numeric,
         phone::text,
         is_default,
-        created_at::timestamp    -- 🔥 Coincide perfecto con la de arriba
+        created_at::timestamp
     FROM
         company_locations
     WHERE
-        company_id = $1::text    -- 🔥 Le decimos a Postgres que esto es un Texto
-        -- Quitamos el "AND is_default = false" para que traiga TODO
+        company_id = $1::text
 
     ORDER BY
         is_default DESC, created_at DESC
@@ -163,13 +162,18 @@ Address.cobicreate = (location) => {
 };
 
 Address.setDefault = async (locationId, companyId) => {
-    // 1. Quitamos el default a todas las sucursales de esta empresa
-    const sqlRemoveAll = `UPDATE company_locations SET is_default = false WHERE company_id = $1`;
-    await db.none(sqlRemoveAll, [companyId]);
+    // 1. Apagamos TODOS los defaults en ambas tablas para esta empresa
+    await db.none('UPDATE company_locations SET is_default = false WHERE company_id = $1', [companyId]);
+    await db.none('UPDATE cobi_companies SET is_default = false WHERE id = $1', [companyId]);
 
-    // 2. Le ponemos default solo a la seleccionada
-    const sqlSetNew = `UPDATE company_locations SET is_default = true WHERE id = $1`;
-    return db.none(sqlSetNew, [locationId]);
+    // 2. Encendemos el correcto. 
+    // Si el locationId es exactamente igual al companyId, significa que seleccionaron la Matriz.
+    if (locationId === companyId) {
+        return db.none('UPDATE cobi_companies SET is_default = true WHERE id = $1', [companyId]);
+    } else {
+        // Si es diferente, seleccionaron una sucursal (cuyo ID es numérico en company_locations)
+        return db.none('UPDATE company_locations SET is_default = true WHERE id = $1', [locationId]);
+    }
 };
 
 
