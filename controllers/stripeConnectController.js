@@ -277,7 +277,7 @@ module.exports = {
 
             // 2. Actualizar BD de COBI (campo stripe_charges_enabled)
             // Asegúrate de llamarlo desde el modelo donde creaste la función (Company)
-            await Company.updateCobiStripeChargesStatus(companyId, chargesEnabled);
+            await User.updateCobiStripeChargesStatus(companyId, chargesEnabled);
 
             return res.status(200).json({
                 success: true,
