@@ -21,16 +21,16 @@ module.exports = (app) => {
 
     //////////// COBI ////////////////
     // Obtener todas las sucursales de una empresa en específico
-    app.get('/api/locations/findByCompany/:company_id', passport.authenticate('jwt', { session: false }), addressControllers.findByCompany);
+    app.get('/api/locations/findByCompany/:company_id', passport.authenticate('cobi-jwt', { session: false }), addressControllers.findByCompany);
 
     /* * POST ROUTES
      */
     // Crear una nueva sucursal/ubicación
-    app.post('/api/locations/create', passport.authenticate('jwt', { session: false }), addressControllers.create);
+    app.post('/api/locations/create', passport.authenticate('cobi-jwt', { session: false }), addressControllers.create);
 
     /* * PUT ROUTES
      */
     // Marcar una ubicación como la predeterminada (Usa PUT porque estamos actualizando un estado)
-    app.put('/api/locations/setDefault', passport.authenticate('jwt', { session: false }), addressControllers.setDefault);
+    app.put('/api/locations/setDefault', passport.authenticate('cobi-jwt', { session: false }), addressControllers.setDefault);
 
 }
