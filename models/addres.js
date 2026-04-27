@@ -114,7 +114,7 @@ Address.cobicreate = (location) => {
     ) RETURNING id
     `;
     return db.oneOrNone(sql, [
-        location.companyId, // Asegúrate de mandar camelCase desde Flutter
+        location.company_id, // Asegúrate de mandar camelCase desde Flutter
         location.name,
         location.address,
         location.apt,
