@@ -98,9 +98,43 @@ Address.findPromoByGym = (id_company) => {
 
 Address.findByCompany = (companyId) => {
     const sql = `
-    SELECT * FROM company_locations 
-    WHERE company_id = $1
-    ORDER BY is_default DESC, created_at DESC
+SELECT
+        id::text,
+        trade_name::text AS name,
+        address::text,
+        ''::text AS apt,
+        pickup_notes::text AS notes,
+        latitude::numeric AS lat,
+        longitude::numeric AS lng,
+        telephone::text AS phone,
+        is_matriz AS is_default, -- 🔥 Usamos tu nuevo campo is_matriz
+        created_at::timestamp    -- 🔥 Ignoramos la zona horaria para que coincida
+    FROM
+        cobi_companies
+    WHERE
+        id = $1::uuid            -- 🔥 Le decimos a Postgres que esto es un UUID
+
+    UNION ALL
+
+    SELECT
+        id::text,
+        name::text,
+        address::text,
+        apt::text,
+        notes::text,
+        lat::numeric,
+        lng::numeric,
+        phone::text,
+        is_default,
+        created_at::timestamp    -- 🔥 Coincide perfecto con la de arriba
+    FROM
+        company_locations
+    WHERE
+        company_id = $1::text    -- 🔥 Le decimos a Postgres que esto es un Texto
+        -- Quitamos el "AND is_default = false" para que traiga TODO
+
+    ORDER BY
+        is_default DESC, created_at DESC
     `;
     return db.manyOrNone(sql, [companyId]);
 };
