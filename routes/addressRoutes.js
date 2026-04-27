@@ -26,7 +26,7 @@ module.exports = (app) => {
     /* * POST ROUTES
      */
     // Crear una nueva sucursal/ubicación
-    app.post('/api/locations/create', passport.authenticate('cobi-jwt', { session: false }), addressControllers.create);
+    app.post('/api/locations/create', passport.authenticate('cobi-jwt', { session: false }), addressControllers.cobicreate);
 
     /* * PUT ROUTES
      */

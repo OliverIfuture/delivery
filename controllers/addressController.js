@@ -121,10 +121,10 @@ module.exports = {
         }
     },
 
-    async create(req, res, next) {
+    async cobicreate(req, res, next) {
         try {
             const location = req.body;
-            const data = await Address.create(location);
+            const data = await Address.cobicreate(location);
 
             return res.status(201).json({
                 success: true,

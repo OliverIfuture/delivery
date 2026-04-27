@@ -105,7 +105,7 @@ Address.findByCompany = (companyId) => {
     return db.manyOrNone(sql, [companyId]);
 };
 
-Address.create = (location) => {
+Address.cobicreate = (location) => {
     const sql = `
     INSERT INTO company_locations(
         company_id, name, address, apt, notes, lat, lng, phone, is_default, created_at, updated_at
