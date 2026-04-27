@@ -21,7 +21,7 @@ module.exports = (app) => {
 
     app.post(
         '/api/cobi/stripe/connect/onboard',
-        passport.authenticate('jwt', { session: false }),
+        passport.authenticate('cobi-jwt', { session: false }),
         stripeConnectController.cobiCreateConnectAccount
     );
 
@@ -38,7 +38,7 @@ module.exports = (app) => {
 
     app.get(
         '/api/cobi/stripe/connect/status',
-        passport.authenticate('jwt', { session: false }),
+        passport.authenticate('cobi-jwt', { session: false }),
         stripeConnectController.cobiGetAccountStatus
     );
 
@@ -54,7 +54,7 @@ module.exports = (app) => {
 
     app.get(
         '/api/cobi/stripe/connect/transactions/:id_account',
-        passport.authenticate('jwt', { session: false }),
+        passport.authenticate('cobi-jwt', { session: false }),
         stripeConnectController.cobiGetTransactionsList
     );
 
