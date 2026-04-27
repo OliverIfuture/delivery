@@ -256,19 +256,28 @@ module.exports = {
      */
     async cobiGetAccountStatus(req, res, next) {
         try {
-            const id_company = req.user.company_id || req.body.id_company;
-            const company = await User.findById(id_company);
+            // 🔥 CORRECCIÓN 1: Usamos el ID del usuario porque tu SQL hace WHERE u.id = $1
+            const id_user = req.user.id;
 
-            if (!company || !company.stripe_account_id) {
+            // Cargar datos del Usuario + su Empresa (objeto anidado)
+            const userData = await User.findById_cobi(id_user);
+
+            // 🔥 CORRECCIÓN 2: Validamos navegando hacia el nodo .company
+            if (!userData || !userData.company || !userData.company.stripe_account_id) {
                 return res.status(400).json({ success: false, message: 'Esta empresa no tiene una cuenta de Stripe vinculada.' });
             }
 
-            // 1. Consultar a Stripe directamente
-            const account = await stripe.accounts.retrieve(company.stripe_account_id);
+            // Extraemos los datos exactos que necesitamos
+            const stripeAccountId = userData.company.stripe_account_id;
+            const companyId = userData.company.id; // El ID real de cobi_companies
+
+            // 1. Consultar a Stripe directamente usando el ID extraído
+            const account = await stripe.accounts.retrieve(stripeAccountId);
             const chargesEnabled = account.charges_enabled;
 
             // 2. Actualizar BD de COBI (campo stripe_charges_enabled)
-            await User.updateCobiStripeChargesStatus(id_company, chargesEnabled);
+            // Asegúrate de llamarlo desde el modelo donde creaste la función (Company)
+            await Company.updateCobiStripeChargesStatus(companyId, chargesEnabled);
 
             return res.status(200).json({
                 success: true,
@@ -285,7 +294,6 @@ module.exports = {
             });
         }
     },
-
     /**
      * 3. HISTORIAL DE TRANSFERENCIAS/PAGOS (COBI)
      */
