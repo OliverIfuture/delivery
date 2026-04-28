@@ -177,4 +177,78 @@ Address.setDefault = async (locationId, companyId) => {
 };
 
 
+// 1. OBTENER TODAS LAS PREFERENCIAS (Matriz + Sucursales)
+Address.findByCompanyPref = (companyId) => {
+    // 🪄 MAGIA SQL: Unimos la Matriz y las Sucursales, y luego cruzamos sus preferencias.
+    // Usamos COALESCE para que, si no hay preferencias guardadas, envíe los valores por defecto.
+    const sql = `
+        WITH AllLocations AS (
+            -- Obtenemos la Matriz
+            SELECT 
+                id::text AS location_id, 
+                trade_name AS location_name, 
+                true AS is_matriz, 
+                id AS company_id
+            FROM cobi_companies
+            WHERE id = $1
+            
+            UNION ALL
+            
+            -- Obtenemos las Sucursales extras
+            SELECT 
+                id::text AS location_id, 
+                name AS location_name, 
+                false AS is_matriz, 
+                company_id
+            FROM company_locations
+            WHERE company_id = $1
+        )
+        SELECT 
+            al.location_id,
+            al.location_name,
+            al.is_matriz,
+            al.company_id,
+            sp.id,
+            COALESCE(sp.default_vehicle, 'moto') as default_vehicle,
+            COALESCE(sp.preparation_time_minutes, 15) as preparation_time_minutes,
+            COALESCE(sp.auto_dispatch, true) as auto_dispatch,
+            COALESCE(sp.pickup_notes, '') as pickup_notes
+        FROM AllLocations al
+        LEFT JOIN cobi_shipping_preferences sp 
+            ON al.location_id = sp.location_id AND al.company_id = sp.company_id
+        ORDER BY al.is_matriz DESC, al.location_name ASC;
+    `;
+
+    return db.manyOrNone(sql, [companyId]);
+};
+
+// 2. UPSERT: Guardar o Actualizar Preferencias
+Address.upsert = (pref) => {
+    // ON CONFLICT nos salva la vida aquí. Si ya existe la preferencia para esa sucursal, solo la actualiza.
+    const sql = `
+        INSERT INTO cobi_shipping_preferences (
+            company_id, location_id, is_matriz, default_vehicle, 
+            preparation_time_minutes, auto_dispatch, pickup_notes
+        ) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (company_id, location_id) 
+        DO UPDATE SET 
+            default_vehicle = EXCLUDED.default_vehicle,
+            preparation_time_minutes = EXCLUDED.preparation_time_minutes,
+            auto_dispatch = EXCLUDED.auto_dispatch,
+            pickup_notes = EXCLUDED.pickup_notes,
+            updated_at = CURRENT_TIMESTAMP;
+    `;
+
+    return db.none(sql, [
+        pref.company_id,
+        pref.location_id,
+        pref.is_matriz,
+        pref.default_vehicle,
+        pref.preparation_time_minutes,
+        pref.auto_dispatch,
+        pref.pickup_notes
+    ]);
+};
+
 module.exports = Address;

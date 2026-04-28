@@ -33,4 +33,14 @@ module.exports = (app) => {
     // Marcar una ubicación como la predeterminada (Usa PUT porque estamos actualizando un estado)
     app.put('/api/locations/setDefault', passport.authenticate('cobi-jwt', { session: false }), addressControllers.setDefault);
 
+
+    // Obtener todas las preferencias de una empresa (Matriz y Sucursales)
+    app.get('/api/locations/findByCompanyPref/:id_company', passport.authenticate('cobi-jwt', { session: false }), addressControllers.findByCompanyPref);
+
+    /*
+    * POST ROUTES
+    */
+    // Guardar o actualizar las preferencias de una sucursal específica (UPSERT)
+    app.post('/api/locations/upsert', passport.authenticate('cobi-jwt', { session: false }), addressControllers.upsert);
+
 }

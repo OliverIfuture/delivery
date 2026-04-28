@@ -154,4 +154,53 @@ module.exports = {
         }
     },
 
+    async findByCompanyPref(req, res, next) {
+        try {
+            const companyId = req.params.id_company;
+            const data = await Address.findByCompanyPref(companyId);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Preferencias obtenidas correctamente',
+                data: data // Este Array es el que nuestro Provider de Flutter convertirá en Lista
+            });
+        } catch (error) {
+            console.log(`Error en findByCompany prefs: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener preferencias de envío',
+                error: error.message
+            });
+        }
+    },
+
+    async upsert(req, res, next) {
+        try {
+            const prefData = req.body;
+
+            // Verificación básica
+            if (!prefData.company_id || !prefData.location_id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan IDs para guardar la preferencia'
+                });
+            }
+
+            // Ejecutamos el modelo
+            await Address.upsert(prefData);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Preferencias de envío guardadas con éxito'
+            });
+        } catch (error) {
+            console.log(`Error al guardar prefs: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al guardar preferencias',
+                error: error.message
+            });
+        }
+    }
+
 }
