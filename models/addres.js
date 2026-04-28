@@ -262,8 +262,8 @@ Address.update = (location) => {
                 trade_name = $1,
                 address = $2,
                 telephone = $3,
-                lat = $4,
-                lng = $5,
+                latitude = $4,
+                longitude = $5,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $6
         `;
