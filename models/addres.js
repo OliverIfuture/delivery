@@ -261,7 +261,7 @@ Address.update = (location) => {
             SET 
                 trade_name = $1,
                 address = $2,
-                phone = $3,
+                telephone = $3,
                 lat = $4,
                 lng = $5,
                 updated_at = CURRENT_TIMESTAMP
