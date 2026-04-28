@@ -2194,6 +2194,7 @@ User.findById_cobi = (id) => {
                 'address', c.address,
                 'latitude', c.latitude,
                 'longitude', c.longitude,
+                'telephone', c.telephone,
                 'pickup_notes', c.pickup_notes,
                 'default_vehicle', c.default_vehicle,
                 'accepts_credit_cards', c.accepts_credit_cards,
