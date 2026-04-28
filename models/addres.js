@@ -252,40 +252,70 @@ Address.upsert = (pref) => {
 };
 
 Address.update = (location) => {
-    // Usamos el ID y el CompanyID por seguridad, para asegurarnos de que 
-    // una empresa no modifique la ubicación de otra por error.
-    const sql = `
-        UPDATE company_locations
-        SET 
-            name = $1,
-            address = $2,
-            apt = $3,
-            notes = $4,
-            phone = $5,
-            lat = $6,
-            lng = $7,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $8 AND company_id = $9
-    `;
+    if (location.id === location.company_id) {
 
-    return db.none(sql, [
-        location.name,
-        location.address,
-        location.apt,
-        location.notes,
-        location.phone,
-        location.lat,
-        location.lng,
-        location.id,
-        location.company_id
-    ]);
+        // CAMINO 1: Es la Matriz (Actualizamos cobi_companies)
+        // Nota: Usamos 'trade_name' porque así se llama la columna en esta tabla
+        const sql = `
+            UPDATE cobi_companies
+            SET 
+                trade_name = $1,
+                address = $2,
+                phone = $3,
+                lat = $4,
+                lng = $5,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $6
+        `;
+        return db.none(sql, [
+            location.name,
+            location.address,
+            location.phone,
+            location.lat,
+            location.lng,
+            location.id // Es el UUID
+        ]);
+
+    } else {
+
+        // CAMINO 2: Es una Sucursal (Actualizamos company_locations)
+        const sql = `
+            UPDATE company_locations
+            SET 
+                name = $1,
+                address = $2,
+                apt = $3,
+                notes = $4,
+                phone = $5,
+                lat = $6,
+                lng = $7,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $8 AND company_id = $9
+        `;
+        return db.none(sql, [
+            location.name,
+            location.address,
+            location.apt,
+            location.notes,
+            location.phone,
+            location.lat,
+            location.lng,
+            location.id, // Aquí ya es un número entero (Ej. 5)
+            location.company_id
+        ]);
+    }
 };
 
 // ==========================================
 // ELIMINAR UBICACIÓN
 // ==========================================
 Address.cobidelete = (idLocation) => {
-    // ON DELETE CASCADE en la BD se encargará de borrar sus preferencias de envío si las hay.
+    // 🔥 PROTECCIÓN: Si el ID contiene guiones, es un UUID (La Matriz). 
+    // No permitimos que borren la empresa matriz desde esta pantalla.
+    if (String(idLocation).includes('-')) {
+        throw new Error('No puedes eliminar la sucursal principal (Matriz).');
+    }
+
     const sql = `
         DELETE FROM company_locations
         WHERE id = $1
