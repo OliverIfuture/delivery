@@ -251,4 +251,47 @@ Address.upsert = (pref) => {
     ]);
 };
 
+Address.update = (location) => {
+    // Usamos el ID y el CompanyID por seguridad, para asegurarnos de que 
+    // una empresa no modifique la ubicación de otra por error.
+    const sql = `
+        UPDATE company_locations
+        SET 
+            name = $1,
+            address = $2,
+            apt = $3,
+            notes = $4,
+            phone = $5,
+            lat = $6,
+            lng = $7,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $8 AND company_id = $9
+    `;
+
+    return db.none(sql, [
+        location.name,
+        location.address,
+        location.apt,
+        location.notes,
+        location.phone,
+        location.lat,
+        location.lng,
+        location.id,
+        location.company_id
+    ]);
+};
+
+// ==========================================
+// ELIMINAR UBICACIÓN
+// ==========================================
+Address.cobidelete = (idLocation) => {
+    // ON DELETE CASCADE en la BD se encargará de borrar sus preferencias de envío si las hay.
+    const sql = `
+        DELETE FROM company_locations
+        WHERE id = $1
+    `;
+
+    return db.none(sql, [idLocation]);
+};
+
 module.exports = Address;

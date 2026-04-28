@@ -43,4 +43,13 @@ module.exports = (app) => {
     // Guardar o actualizar las preferencias de una sucursal específica (UPSERT)
     app.post('/api/locations/upsert', passport.authenticate('cobi-jwt', { session: false }), addressControllers.upsert);
 
+    // 🔥 NUEVA: Ruta para actualizar todos los datos de la sucursal
+    app.put('/api/locations/update', passport.authenticate('cobi-jwt', { session: false }), addressControllers.update);
+
+    /*
+    * DELETE ROUTES (Eliminaciones)
+    */
+    // 🔥 NUEVA: Ruta para eliminar. Usamos :id para pasarlo directamente en la URL
+    app.delete('/api/locations/delete/:id', passport.authenticate('cobi-jwt', { session: false }), addressControllers.cobidelete);
+
 }

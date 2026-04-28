@@ -201,6 +201,61 @@ module.exports = {
                 error: error.message
             });
         }
-    }
+    },
+
+
+    async update(req, res, next) {
+        try {
+            const location = req.body;
+
+            // Validamos que venga el ID
+            if (!location.id || !location.company_id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan datos clave para actualizar (ID)'
+                });
+            }
+
+            await Address.update(location);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Ubicación actualizada correctamente'
+            });
+
+        } catch (error) {
+            console.log(`Error al actualizar ubicación: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al actualizar',
+                error: error.message
+            });
+        }
+    },
+
+    // ==========================================
+    // ELIMINAR UBICACIÓN
+    // ==========================================
+    async cobidelete(req, res, next) {
+        try {
+            // El ID viene en la URL como parámetro (/api/locations/delete/5)
+            const idLocation = req.params.id;
+
+            await Address.cobidelete(idLocation);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Ubicación eliminada correctamente'
+            });
+
+        } catch (error) {
+            console.log(`Error al eliminar ubicación: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al eliminar la ubicación',
+                error: error.message
+            });
+        }
+    },
 
 }
