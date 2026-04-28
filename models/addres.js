@@ -182,28 +182,28 @@ Address.findByCompanyPref = (companyId) => {
     // 🪄 MAGIA SQL: Unimos la Matriz y las Sucursales, y luego cruzamos sus preferencias.
     // Usamos COALESCE para que, si no hay preferencias guardadas, envíe los valores por defecto.
     const sql = `
-        WITH AllLocations AS (
+ WITH AllLocations AS (
             -- Obtenemos la Matriz
-            SELECT 
-                id::text AS location_id, 
-                trade_name AS location_name, 
-                true AS is_matriz, 
-                id AS company_id
+            SELECT
+                id::text AS location_id,
+                trade_name::text AS location_name,
+                true AS is_matriz,
+                id::text AS company_id
             FROM cobi_companies
             WHERE id = $1
-            
+
             UNION ALL
-            
+
             -- Obtenemos las Sucursales extras
-            SELECT 
-                id::text AS location_id, 
-                name AS location_name, 
-                false AS is_matriz, 
-                company_id
+            SELECT
+                id::text AS location_id,
+                name::text AS location_name,
+                false AS is_matriz,
+                company_id::text AS company_id
             FROM company_locations
             WHERE company_id = $1
         )
-        SELECT 
+        SELECT
             al.location_id,
             al.location_name,
             al.is_matriz,
@@ -214,8 +214,8 @@ Address.findByCompanyPref = (companyId) => {
             COALESCE(sp.auto_dispatch, true) as auto_dispatch,
             COALESCE(sp.pickup_notes, '') as pickup_notes
         FROM AllLocations al
-        LEFT JOIN cobi_shipping_preferences sp 
-            ON al.location_id = sp.location_id AND al.company_id = sp.company_id
+        LEFT JOIN cobi_shipping_preferences sp
+            ON al.location_id = sp.location_id AND al.company_id::uuid = sp.company_id
         ORDER BY al.is_matriz DESC, al.location_name ASC;
     `;
 
