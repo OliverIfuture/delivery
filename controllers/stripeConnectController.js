@@ -181,7 +181,7 @@ module.exports = {
         try {
             // 🔥 CORRECCIÓN 1: Le pasamos el ID del USUARIO (porque tu SQL hace WHERE u.id = $1)
             const id_user = req.user.id;
-
+            console.log(`[ALERTA] Petición recibida del Usuario ID: ${id_user} | Email: ${req.user.email}`);
             // 1. Cargar datos del Usuario + su Empresa
             const userData = await User.findById_cobi(id_user);
 
