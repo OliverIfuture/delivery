@@ -104,8 +104,8 @@ SELECT
         address::text,
         ''::text AS apt,
         pickup_notes::text AS notes,
-        latitude::numeric AS lat,
-        longitude::numeric AS lng,
+        lat::numeric AS lat,
+        lng::numeric AS lng,
         telephone::text AS phone,
         is_default,              -- 🔥 AHORA USAMOS EL CAMPO REAL
         created_at::timestamp
