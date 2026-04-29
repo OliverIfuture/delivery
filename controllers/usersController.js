@@ -3093,4 +3093,65 @@ module.exports = {
         }
     },
 
+    async getMembers(req, res) {
+        try {
+            const id_user = req.user.id;
+            const userData = await User.findById_cobi(id_user);
+
+            if (!userData || !userData.company) {
+                return res.status(400).json({ success: false, message: 'No tienes empresa asignada' });
+            }
+
+            const members = await User.findByCompanyTeam(userData.company.id);
+
+            // Le agregamos la bandera "isMe" para que Flutter sepa quién es el que está logueado
+            const formattedMembers = members.map(m => ({
+                id: m.id.toString(),
+                name: m.name,
+                email: m.email,
+                role: m.role,
+                status: m.status,
+                isMe: m.user_id === id_user // Magia pura
+            }));
+
+            return res.status(200).json({ success: true, data: formattedMembers });
+        } catch (error) {
+            return res.status(501).json({ success: false, message: 'Error al obtener equipo', error: error.message });
+        }
+    },
+
+    async inviteMember(req, res) {
+        try {
+            const id_user = req.user.id;
+            const { email, role } = req.body;
+            const userData = await User.findById_cobi(id_user);
+
+            // 1. Validar que la empresa exista
+            const companyId = userData.company.id;
+
+            // 2. Insertar en la BD
+            await User.inviteMember(companyId, email, role);
+
+            // 3. (A futuro) Aquí pondrías la función para enviar el correo con SendGrid o AWS SES
+
+            return res.status(201).json({ success: true, message: 'Invitación enviada correctamente' });
+        } catch (error) {
+            return res.status(501).json({ success: false, message: 'Error al invitar usuario', error: error.message });
+        }
+    },
+
+    async removeMember(req, res) {
+        try {
+            const id_user = req.user.id;
+            const { memberId } = req.params; // Viene en la URL
+            const userData = await User.findById_cobi(id_user);
+
+            await User.removeMember(memberId, userData.company.id);
+
+            return res.status(200).json({ success: true, message: 'Miembro eliminado' });
+        } catch (error) {
+            return res.status(501).json({ success: false, message: 'Error al eliminar', error: error.message });
+        }
+    }
+
 };

@@ -2464,4 +2464,42 @@ User.clearDefaultPaymentMethod = (companyId) => {
     return db.none(sql, [companyId]);
 };
 
+
+User.findByCompanyTeam = (companyId) => {
+    const sql = `
+        SELECT 
+            t.id, 
+            t.email, 
+            t.role, 
+            t.status, 
+            t.user_id,
+            COALESCE(u.name, split_part(t.email, '@', 1)) AS name 
+        FROM cobi_company_team t
+        LEFT JOIN users u ON t.user_id = u.id
+        WHERE t.company_id = $1
+        ORDER BY t.created_at DESC
+    `;
+    // COALESCE hace magia: Si el usuario no existe, usa la primera parte de su correo como nombre.
+    return db.manyOrNone(sql, companyId);
+};
+
+// Invitar a un miembro
+User.inviteMember = (companyId, email, role) => {
+    const sql = `
+        INSERT INTO cobi_company_team (company_id, email, role, status)
+        VALUES ($1, $2, $3, 'pending')
+        RETURNING id
+    `;
+    return db.oneOrNone(sql, [companyId, email, role]);
+};
+
+// Eliminar a un miembro
+User.removeMember = (memberId, companyId) => {
+    const sql = `
+        DELETE FROM cobi_company_team 
+        WHERE id = $1 AND company_id = $2
+    `;
+    return db.none(sql, [memberId, companyId]);
+};
+
 module.exports = User;
