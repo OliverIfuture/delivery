@@ -264,7 +264,11 @@ module.exports = {
 
             // 🔥 CORRECCIÓN 2: Validamos navegando hacia el nodo .company
             if (!userData || !userData.company || !userData.company.stripe_account_id) {
-                return res.status(400).json({ success: false, message: 'Esta empresa no tiene una cuenta de Stripe vinculada.' });
+                return res.status(200).json({
+                    success: true, // Lo mandamos como true pero sin data, para que Flutter entienda que la petición funcionó, pero no hay cuenta configurada.
+                    message: 'Esta empresa no tiene una cuenta de Stripe vinculada.',
+                    data: null
+                });
             }
 
             // Extraemos los datos exactos que necesitamos
@@ -273,16 +277,22 @@ module.exports = {
 
             // 1. Consultar a Stripe directamente usando el ID extraído
             const account = await stripe.accounts.retrieve(stripeAccountId);
+
             const chargesEnabled = account.charges_enabled;
+            const payoutsEnabled = account.payouts_enabled; // 🔥 NUEVO: Extraemos si puede retirar dinero
 
             // 2. Actualizar BD de COBI (campo stripe_charges_enabled)
-            // Asegúrate de llamarlo desde el modelo donde creaste la función (Company)
             await User.updateCobiStripeChargesStatus(companyId, chargesEnabled);
 
+            // 🔥 CORRECCIÓN CRÍTICA: Envolvemos las respuestas dentro del nodo "data"
             return res.status(200).json({
                 success: true,
-                chargesEnabled: chargesEnabled,
-                detailsSubmitted: account.details_submitted
+                message: 'Estado de cuenta obtenido correctamente',
+                data: {
+                    chargesEnabled: chargesEnabled,
+                    payoutsEnabled: payoutsEnabled,
+                    detailsSubmitted: account.details_submitted
+                }
             });
 
         } catch (error) {
