@@ -314,14 +314,34 @@ module.exports = {
                 return res.status(200).json({ success: true, data: [] });
             }
 
-            // Le pedimos a Stripe la lista de tarjetas
+            const companyId = userData.company.id;
+            const customerId = userData.company.stripe_customer_id;
+
+            // 1. Le pedimos a Stripe la lista de tarjetas
             const paymentMethods = await stripe.paymentMethods.list({
-                customer: userData.company.stripe_customer_id,
+                customer: customerId,
                 type: 'card',
             });
 
-            // Opcional: Podrías cruzar esto con tu BD para saber cuál es la 'default_payment_method_id'
-            const defaultMethodId = userData.company.default_payment_method_id;
+            let defaultMethodId = userData.company.default_payment_method_id;
+
+            // 🔥 LA MAGIA AUTOMÁTICA EMPIEZA AQUÍ 🔥
+            // Si el usuario no tiene tarjeta principal en la BD, PERO sí tiene tarjetas en Stripe...
+            if (!defaultMethodId && paymentMethods.data.length > 0) {
+                // Tomamos el ID de la tarjeta más reciente (o la primera de la lista)
+                defaultMethodId = paymentMethods.data[0].id;
+
+                // 1. La guardamos silenciosamente en nuestra base de datos
+                await User.updateDefaultPaymentMethod(companyId, defaultMethodId);
+
+                // 2. Le avisamos a Stripe que esta es la default
+                await stripe.customers.update(customerId, {
+                    invoice_settings: { default_payment_method: defaultMethodId },
+                });
+
+                console.log(`[Stripe] Tarjeta ${defaultMethodId} asignada como principal automáticamente para la empresa ${companyId}`);
+            }
+            // 🔥 TERMINA LA MAGIA 🔥
 
             // Formateamos la respuesta para que Flutter la lea fácil
             const cards = paymentMethods.data.map(pm => ({
@@ -330,6 +350,7 @@ module.exports = {
                 last4: pm.card.last4,
                 expMonth: pm.card.exp_month,
                 expYear: pm.card.exp_year,
+                // Ahora usamos el defaultMethodId que acabamos de autocompletar
                 isDefault: pm.id === defaultMethodId
             }));
 
