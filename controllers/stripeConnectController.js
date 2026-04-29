@@ -365,6 +365,78 @@ module.exports = {
         }
     },
 
+    // ==========================================================
+    // OBTENER HISTORIAL DE FACTURAS Y GASTO ACTUAL
+    // ==========================================================
+    async getInvoices(req, res, next) {
+        try {
+            const id_user = req.user.id;
+            const userData = await User.findById_cobi(id_user);
+
+            // Si no hay empresa o no es cliente de Stripe aún
+            if (!userData || !userData.company || !userData.company.stripe_customer_id) {
+                return res.status(200).json({
+                    success: true,
+                    data: { currentMonthSpent: 0, currentMonthDeliveries: 0, history: [] }
+                });
+            }
+
+            const customerId = userData.company.stripe_customer_id;
+
+            // 1. Pedimos a Stripe las últimas facturas del cliente
+            const invoices = await stripe.invoices.list({
+                customer: customerId,
+                limit: 24, // Traer hasta 2 años de historial
+            });
+
+            let history = [];
+            let currentMonthSpent = 0;
+
+            // 2. Clasificamos las facturas
+            invoices.data.forEach(inv => {
+                // Stripe maneja los montos en centavos, dividimos entre 100
+                const amount = inv.total / 100;
+
+                if (inv.status === 'paid') {
+                    // Si está pagada, va al historial
+                    const dateObj = new Date(inv.created * 1000);
+                    // Formateamos el mes (Ej: "Mayo 2026")
+                    const monthName = dateObj.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+
+                    history.push({
+                        id: inv.id,
+                        month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+                        total: amount,
+                        status: 'paid',
+                        date: dateObj.toLocaleDateString('es-ES'),
+                        // Priorizamos el PDF directo, si no, la vista web de la factura
+                        invoice_url: inv.invoice_pdf || inv.hosted_invoice_url
+                    });
+                } else if (inv.status === 'draft' || inv.status === 'open') {
+                    // Si está abierta o en borrador, es el gasto en curso
+                    currentMonthSpent += amount;
+                }
+            });
+
+            // Opcional: Aquí podrías hacer un query a tu BD para contar cuántos 
+            // envíos (orders) tiene la empresa en el mes actual. Por ahora mandaremos 0.
+            let currentMonthDeliveries = 0;
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    currentMonthSpent,
+                    currentMonthDeliveries,
+                    history
+                }
+            });
+
+        } catch (error) {
+            console.log(`Error getInvoices: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener facturas' });
+        }
+    },
+
 
     async createSetupIntent(req, res, next) {
         try {
