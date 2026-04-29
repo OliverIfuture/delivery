@@ -310,6 +310,9 @@ module.exports = {
             const id_user = req.user.id;
             const userData = await User.findById_cobi(id_user);
 
+            console.log('ID del usuario:', id_user);
+            console.log('Stripe Customer ID en BD:', userData?.company?.stripe_customer_id);
+
             if (!userData || !userData.company || !userData.company.stripe_customer_id) {
                 return res.status(200).json({ success: true, data: [] });
             }
