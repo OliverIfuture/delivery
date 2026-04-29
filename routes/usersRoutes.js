@@ -159,7 +159,7 @@ module.exports = (app, upload) => {
     app.post('/cobi/api/users/set-default-payment-method', passport.authenticate('cobi-jwt', { session: false }), UsersController.setDefaultPaymentMethod);
     app.post('/cobi/api/users/remove-payment-method', passport.authenticate('cobi-jwt', { session: false }), UsersController.removePaymentMethod);
 
-    app.get('/cobi/api/users/team', passport.authenticate('cobi-jwt', { session: false }), UsersController.getMembers);
+    app.get('/cobi/api/users/getteam', passport.authenticate('cobi-jwt', { session: false }), UsersController.getMembers);
     app.post('/cobi/api/users/invite', passport.authenticate('cobi-jwt', { session: false }), UsersController.inviteMember);
     app.delete('/cobi/api/users/team/:memberId', passport.authenticate('cobi-jwt', { session: false }), UsersController.removeMember);
 }
