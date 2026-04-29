@@ -7,6 +7,7 @@ const storage = require('../utils/cloud_storage.js');
 const { use } = require('passport');
 const { findUserById } = require('../models/user');
 const nodemailer = require('nodemailer'); // <--- IMPORTANTE
+const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
 // --- CONFIGURACIÓN DEL TRANSPORTE (SMTP) ---
 // Lo ideal es poner esto en un archivo de config, pero aquí funciona.
