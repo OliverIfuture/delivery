@@ -3013,4 +3013,43 @@ module.exports = {
         }
     },
 
+    async setDefaultPaymentMethod(req, res, next) {
+        try {
+            const id_user = req.user.id;
+            const { paymentMethodId } = req.body; // Recibimos el ID desde Flutter
+
+            const userData = await User.findById_cobi(id_user);
+
+            if (!userData || !userData.company) {
+                return res.status(400).json({ success: false, message: 'No se encontró la empresa.' });
+            }
+
+            const companyId = userData.company.id;
+            const customerId = userData.company.stripe_customer_id;
+
+            // 1. Guardamos el ID de la tarjeta en nuestra tabla cobi_companies
+            await User.updateDefaultPaymentMethod(companyId, paymentMethodId);
+
+            // 2. (Buena práctica) Le decimos a Stripe que también lo marque como default
+            if (customerId) {
+                await stripe.customers.update(customerId, {
+                    invoice_settings: { default_payment_method: paymentMethodId },
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Tarjeta principal actualizada correctamente'
+            });
+
+        } catch (error) {
+            console.log(`Error setDefaultPaymentMethod: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al cambiar la tarjeta principal',
+                error: error.message
+            });
+        }
+    },
+
 };

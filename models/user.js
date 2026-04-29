@@ -2442,4 +2442,14 @@ User.updateStripeCustomerId = (companyId, stripeCustomerId) => {
     return db.none(sql, [companyId, stripeCustomerId]);
 };
 
+
+User.updateDefaultPaymentMethod = (companyId, paymentMethodId) => {
+    const sql = `
+        UPDATE cobi_companies
+        SET default_payment_method_id = $2
+        WHERE id = $1
+    `;
+    return db.none(sql, [companyId, paymentMethodId]);
+};
+
 module.exports = User;

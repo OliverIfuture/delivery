@@ -156,6 +156,6 @@ module.exports = (app, upload) => {
     app.post('/cobi/api/users/login', UsersController.cobilogin);
 
     app.put('/cobi/api/users/updateCompany', upload.array('document', 1), passport.authenticate('cobi-jwt', { session: false }), UsersController.cobiupdateCompany);
-
+    app.post('/cobi/api/stripe/set-default-payment-method', passport.authenticate('cobi-jwt', { session: false }), UsersController.setDefaultPaymentMethod);
 }
 
