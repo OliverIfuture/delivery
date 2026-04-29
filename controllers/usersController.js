@@ -3052,4 +3052,44 @@ module.exports = {
         }
     },
 
+    // ==========================================================
+    // ELIMINAR (DESVINCULAR) UNA TARJETA
+    // ==========================================================
+    async removePaymentMethod(req, res, next) {
+        try {
+            const id_user = req.user.id;
+            const { paymentMethodId } = req.body;
+
+            const userData = await User.findById_cobi(id_user);
+
+            if (!userData || !userData.company) {
+                return res.status(400).json({ success: false, message: 'No se encontró la empresa.' });
+            }
+
+            // 1. Le decimos a Stripe que desvincule la tarjeta
+            await stripe.paymentMethods.detach(paymentMethodId);
+
+            // 2. ¿Era esta la tarjeta principal?
+            if (userData.company.default_payment_method_id === paymentMethodId) {
+                // La limpiamos de nuestra base de datos
+                await User.clearDefaultPaymentMethod(userData.company.id);
+                // No te preocupes por Stripe, al desvincularla, Stripe automáticamente 
+                // la quita como default en su sistema.
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Tarjeta eliminada con éxito'
+            });
+
+        } catch (error) {
+            console.log(`Error removePaymentMethod: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al eliminar la tarjeta',
+                error: error.message
+            });
+        }
+    },
+
 };

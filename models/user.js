@@ -2452,4 +2452,16 @@ User.updateDefaultPaymentMethod = (companyId, paymentMethodId) => {
     return db.none(sql, [companyId, paymentMethodId]);
 };
 
+// ==========================================================
+// LIMPIAR LA TARJETA PREDETERMINADA SI FUE ELIMINADA
+// ==========================================================
+User.clearDefaultPaymentMethod = (companyId) => {
+    const sql = `
+        UPDATE cobi_companies
+        SET default_payment_method_id = NULL
+        WHERE id = $1
+    `;
+    return db.none(sql, [companyId]);
+};
+
 module.exports = User;
