@@ -304,6 +304,73 @@ module.exports = {
             });
         }
     },
+
+
+    async createSetupIntent(req, res, next) {
+        try {
+            const id_user = req.user.id;
+
+            // 1. Obtener datos del usuario y su empresa
+            const userData = await User.findById_cobi(id_user);
+
+            if (!userData || !userData.company) {
+                return res.status(400).json({ success: false, message: 'No se encontró la empresa del usuario.' });
+            }
+
+            const companyId = userData.company.id;
+            // Necesitas tener esta columna en tu tabla cobi_companies
+            let customerId = userData.company.stripe_customer_id;
+
+            // 2. Si la empresa aún no es cliente en Stripe, la creamos
+            if (!customerId) {
+                const customer = await stripe.customers.create({
+                    email: userData.email,
+                    name: userData.company.trade_name || userData.name,
+                    metadata: {
+                        company_id: companyId,
+                        user_id: id_user
+                    }
+                });
+                customerId = customer.id;
+
+                // Guardamos el ID del cliente de Stripe en nuestra base de datos
+                await User.updateStripeCustomerId(companyId, customerId);
+            }
+
+            // 3. Generar la Llave Efímera (Permite a Flutter conectarse temporalmente a este cliente)
+            // IMPORTANTE: Stripe exige que especifiques una versión de API. 
+            // '2023-10-16' es muy estable y funciona perfecto con flutter_stripe.
+            const ephemeralKey = await stripe.ephemeralKeys.create(
+                { customer: customerId },
+                { apiVersion: '2023-10-16' }
+            );
+
+            // 4. Crear el SetupIntent (La intención de guardar una tarjeta)
+            const setupIntent = await stripe.setupIntents.create({
+                customer: customerId,
+                payment_method_types: ['card'], // Indicamos que guardaremos tarjetas
+            });
+
+            // 5. Devolver las llaves de seguridad a Flutter
+            return res.status(200).json({
+                success: true,
+                message: 'Bóveda de Stripe preparada',
+                data: {
+                    clientSecret: setupIntent.client_secret,
+                    ephemeralKey: ephemeralKey.secret,
+                    customer: customerId
+                }
+            });
+
+        } catch (error) {
+            console.log(`Error createSetupIntent: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al conectar con la bóveda de pagos',
+                error: error.message
+            });
+        }
+    },
     /**
      * 3. HISTORIAL DE TRANSFERENCIAS/PAGOS (COBI)
      */
