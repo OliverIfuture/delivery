@@ -2200,6 +2200,8 @@ User.findById_cobi = (id) => {
                 'accepts_credit_cards', c.accepts_credit_cards,
                 'stripe_account_id', c.stripe_account_id,
                 'stripe_charges_enabled', c.stripe_charges_enabled,
+                'stripe_customer_id', c.stripe_customer_id,
+                'default_payment_method_id', c.default_payment_method_id,
                 'created_at', c.created_at,
                 'updated_at', c.updated_at
             ) AS company
