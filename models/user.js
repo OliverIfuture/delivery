@@ -2429,4 +2429,15 @@ User.updateCobiStripeChargesStatus = (id, isEnabled) => {
     ]);
 };
 
+User.updateStripeCustomerId = (companyId, stripeCustomerId) => {
+    // IMPORTANTE: Asegúrate de ir a tu base de datos (pgAdmin/DBeaver)
+    // y ejecutar: ALTER TABLE cobi_companies ADD COLUMN stripe_customer_id VARCHAR(255);
+    const sql = `
+        UPDATE cobi_companies
+        SET stripe_customer_id = $2
+        WHERE id = $1
+    `;
+    return db.none(sql, [companyId, stripeCustomerId]);
+};
+
 module.exports = User;
