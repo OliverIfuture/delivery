@@ -59,5 +59,5 @@ module.exports = (app) => {
     );
 
     app.post('/api/cobi/stripe/create-setup-intent', passport.authenticate('cobi-jwt', { session: false }), stripeConnectController.createSetupIntent);
-
+    app.get('/api/cobi/stripe/get-payment-methods', passport.authenticate('cobi-jwt', { session: false }), stripeConnectController.getPaymentMethods);
 }

@@ -305,6 +305,45 @@ module.exports = {
         }
     },
 
+    async getPaymentMethods(req, res) {
+        try {
+            const id_user = req.user.id;
+            const userData = await User.findById_cobi(id_user);
+
+            if (!userData || !userData.company || !userData.company.stripe_customer_id) {
+                return res.status(200).json({ success: true, data: [] });
+            }
+
+            // Le pedimos a Stripe la lista de tarjetas
+            const paymentMethods = await stripe.paymentMethods.list({
+                customer: userData.company.stripe_customer_id,
+                type: 'card',
+            });
+
+            // Opcional: Podrías cruzar esto con tu BD para saber cuál es la 'default_payment_method_id'
+            const defaultMethodId = userData.company.default_payment_method_id;
+
+            // Formateamos la respuesta para que Flutter la lea fácil
+            const cards = paymentMethods.data.map(pm => ({
+                id: pm.id,
+                brand: pm.card.brand,
+                last4: pm.card.last4,
+                expMonth: pm.card.exp_month,
+                expYear: pm.card.exp_year,
+                isDefault: pm.id === defaultMethodId
+            }));
+
+            return res.status(200).json({
+                success: true,
+                data: cards
+            });
+
+        } catch (error) {
+            console.log(`Error getPaymentMethods: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener tarjetas' });
+        }
+    },
+
 
     async createSetupIntent(req, res, next) {
         try {
