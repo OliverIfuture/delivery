@@ -207,7 +207,7 @@ module.exports = {
                 const account = await stripe.accounts.create({
                     type: 'express',
                     email: userEmail, // Usamos el correo real del usuario
-                    business_type: 'company',
+                    business_type: 'individual',
                     company: {
                         name: tradeName,
                     },
