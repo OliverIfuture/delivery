@@ -290,20 +290,11 @@ module.exports = {
         const customerId = process.env.UBER_CUSTOMER_ID;
         const url = `https://api.uber.com/v1/customers/${customerId}/delivery_quotes`;
 
-        // 🔥 Formato optimizado para Uber Direct
+        // 🔥 SOLUCIÓN: Enviamos las coordenadas como un string simple "lat, lng"
+        // Esto es mucho más fácil de procesar para el geocodificador de Uber
         const body = {
-            pickup_address: JSON.stringify({
-                location: {
-                    lat: parseFloat(pickup.lat),
-                    lng: parseFloat(pickup.lng)
-                }
-            }),
-            dropoff_address: JSON.stringify({
-                location: {
-                    lat: parseFloat(dropoff.lat),
-                    lng: parseFloat(dropoff.lng)
-                }
-            })
+            pickup_address: `${pickup.lat}, ${pickup.lng}`,
+            dropoff_address: `${dropoff.lat}, ${dropoff.lng}`
         };
 
         try {
@@ -315,8 +306,7 @@ module.exports = {
             });
             return response.data;
         } catch (error) {
-            // Si sigue fallando, Uber nos dirá por qué (ej. fuera de área de servicio)
-            console.error('Error en Cotización Uber:', error.response?.data || error.message);
+            console.error('Error detallado de Uber:', error.response?.data || error.message);
             throw error;
         }
     }
