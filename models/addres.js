@@ -182,41 +182,47 @@ Address.findByCompanyPref = (companyId) => {
     // 🪄 MAGIA SQL: Unimos la Matriz y las Sucursales, y luego cruzamos sus preferencias.
     // Usamos COALESCE para que, si no hay preferencias guardadas, envíe los valores por defecto.
     const sql = `
- WITH AllLocations AS (
-            -- Obtenemos la Matriz
-            SELECT
-                id::text AS location_id,
-                trade_name::text AS location_name,
-                true AS is_matriz,
-                id::text AS company_id
-            FROM cobi_companies
-            WHERE id = $1
+WITH AllLocations AS (
+    -- Obtenemos la Matriz
+    SELECT
+        id::text AS location_id,
+        trade_name::text AS location_name,
+        true AS is_matriz,
+        id::text AS company_id,
+        latitude AS lats, -- 🔥 Latitud de la matriz
+        lngongitude AS lng  -- 🔥 Longitud de la matriz
+    FROM cobi_companies
+    WHERE id = $1
 
-            UNION ALL
+    UNION ALL
 
-            -- Obtenemos las Sucursales extras
-            SELECT
-                id::text AS location_id,
-                name::text AS location_name,
-                false AS is_matriz,
-                company_id::text AS company_id
-            FROM company_locations
-            WHERE company_id = $1
-        )
-        SELECT
-            al.location_id,
-            al.location_name,
-            al.is_matriz,
-            al.company_id,
-            sp.id,
-            COALESCE(sp.default_vehicle, 'moto') as default_vehicle,
-            COALESCE(sp.preparation_time_minutes, 15) as preparation_time_minutes,
-            COALESCE(sp.auto_dispatch, true) as auto_dispatch,
-            COALESCE(sp.pickup_notes, '') as pickup_notes
-        FROM AllLocations al
-        LEFT JOIN cobi_shipping_preferences sp
-            ON al.location_id = sp.location_id AND al.company_id::uuid = sp.company_id
-        ORDER BY al.is_matriz DESC, al.location_name ASC;
+    -- Obtenemos las Sucursales extras
+    SELECT
+        id::text AS location_id,
+        name::text AS location_name,
+        false AS is_matriz,
+        company_id::text AS company_id,
+        lat, -- 🔥 Latitud de la sucursal
+        lng  -- 🔥 Longitud de la sucursal
+    FROM company_locations
+    WHERE company_id = $1
+)
+SELECT
+    al.location_id,
+    al.location_name,
+    al.is_matriz,
+    al.company_id,
+    al.lat, -- 🔥 Se exponen para enviarlas a Flutter/Uber
+    al.lng, -- 🔥 Se exponen para enviarlas a Flutter/Uber
+    sp.id,
+    COALESCE(sp.default_vehicle, 'moto') as default_vehicle,
+    COALESCE(sp.preparation_time_minutes, 15) as preparation_time_minutes,
+    COALESCE(sp.auto_dispatch, true) as auto_dispatch,
+    COALESCE(sp.pickup_notes, '') as pickup_notes
+FROM AllLocations al
+LEFT JOIN cobi_shipping_preferences sp
+    ON al.location_id = sp.location_id AND al.company_id::uuid = sp.company_id
+ORDER BY al.is_matriz DESC, al.location_name ASC;
     `;
 
     return db.manyOrNone(sql, [companyId]);
