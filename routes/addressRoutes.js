@@ -64,28 +64,28 @@ module.exports = (app) => {
                 merchantLng,
                 customerLat,
                 customerLng,
-                merchantFeePercentage
+                merchantFeePercentage,
+                customerAddressText // 🔥 Atrapamos el texto de Google Autocomplete
             } = req.body;
 
             // Validación rápida de datos
-            if (!merchantLat || !customerLat) {
+            if (!merchantLat || !customerLat || !customerAddressText) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Faltan coordenadas de origen o destino.'
+                    message: 'Faltan coordenadas o la dirección en texto.'
                 });
             }
 
             // 1. Llamamos a Uber para el precio real
             const uberQuote = await addressController.getQuote(
                 { lat: merchantLat, lng: merchantLng },
-                { lat: customerLat, lng: customerLng }
+                { lat: customerLat, lng: customerLng, addressText: customerAddressText } // Pasamos el texto
             );
 
             // 2. Convertimos centavos a pesos
             const totalFee = uberQuote.fee / 100;
 
             // 3. Aplicamos la lógica de COBI (Split de pago)
-            // Calculamos cuánto absorbe el negocio y cuánto paga el cliente
             const merchantPart = totalFee * (merchantFeePercentage / 100);
             const customerPart = totalFee - merchantPart;
 
@@ -100,6 +100,15 @@ module.exports = (app) => {
             });
 
         } catch (error) {
+            // Manejo específico del error de distancia de Uber (Sandbox)
+            if (error.response && error.response.data && error.response.data.code === 'address_undeliverable') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El destino se encuentra fuera de nuestra área de cobertura actual.',
+                    details: error.response.data.metadata.details
+                });
+            }
+
             console.error('Error en /api/delivery/quote:', error);
             return res.status(500).json({
                 success: false,

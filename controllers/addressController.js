@@ -290,24 +290,30 @@ module.exports = {
         const customerId = process.env.UBER_CUSTOMER_ID;
         const url = `https://api.uber.com/v1/customers/${customerId}/delivery_quotes`;
 
+        // Extraemos solo el nombre de la calle/colonia del texto de Google (opcional, pero ayuda)
+        // Usamos la cadena completa de Google si es corta, o la cortamos para evitar strings gigantes
+        const cleanAddressText = dropoff.addressText.substring(0, 60);
+
         const body = {
-            // 1. La dirección DEBE ser un JSON string escapado con direcciones REALES o válidas
+            // 1. ORIGEN: Mantenemos la dirección base de la tienda
             "pickup_address": JSON.stringify({
-                "street_address": ["Paseo de los Héroes 10999"], // Dirección de Plaza Río
-                "city": "Tijuana",
-                "state": "BC",
-                "zip_code": "22010",
-                "country": "MX"
-            }),
-            "dropoff_address": JSON.stringify({
-                "street_address": ["Paseo de los Héroes 9350"], // Dirección del CECUT (muy cerca)
+                "street_address": ["Paseo de los Héroes 10999"],
                 "city": "Tijuana",
                 "state": "BC",
                 "zip_code": "22010",
                 "country": "MX"
             }),
 
-            // 2. Coordenadas en sus propios campos numéricos para precisión
+            // 2. DESTINO: Inyectamos el string dinámico
+            "dropoff_address": JSON.stringify({
+                "street_address": [cleanAddressText], // 🔥 String real de Google Autocomplete
+                "city": "Tijuana",
+                "state": "BC",
+                "zip_code": "22000", // El código postal genérico está bien, la API prioriza lat/lng si el texto coincide
+                "country": "MX"
+            }),
+
+            // 3. COORDENADAS: Precisión milimétrica
             "pickup_latitude": parseFloat(pickup.lat),
             "pickup_longitude": parseFloat(pickup.lng),
             "dropoff_latitude": parseFloat(dropoff.lat),
@@ -323,7 +329,8 @@ module.exports = {
             });
             return response.data;
         } catch (error) {
-            console.error('Error detallado:', error.response?.data || error.message);
+            // Lanzamos el error hacia la ruta para que lo maneje y devuelva el 400
+            console.error('Error detallado de Uber:', error.response?.data || error.message);
             throw error;
         }
     }
