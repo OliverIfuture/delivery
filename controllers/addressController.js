@@ -259,18 +259,19 @@ module.exports = {
         }
     },
 
+    // 🔥 PASO A: Obtener el Token de Acceso (Corregido)
     async getAccessToken() {
         try {
             const data = qs.stringify({
                 'client_id': process.env.UBER_CLIENT_ID,
                 'client_secret': process.env.UBER_CLIENT_SECRET,
                 'grant_type': 'client_credentials',
-                'scope': 'delivery'
+                'scope': 'eats.deliveries' // <--- CAMBIO CLAVE AQUÍ
             });
 
             const config = {
                 method: 'post',
-                url: 'https://login.uber.com/oauth/v2/token',
+                url: 'https://auth.uber.com/oauth/v2/token', // Sugerencia: auth.uber.com es el estándar actual
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 data: data
             };
