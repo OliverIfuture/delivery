@@ -291,19 +291,19 @@ module.exports = {
         const url = `https://api.uber.com/v1/customers/${customerId}/delivery_quotes`;
 
         const body = {
-            // 1. La dirección DEBE ser un JSON string escapado
+            // 1. La dirección DEBE ser un JSON string escapado con direcciones REALES o válidas
             "pickup_address": JSON.stringify({
-                "street_address": ["Plaza Rio Tijuana"],
+                "street_address": ["Paseo de los Héroes 10999"], // Dirección de Plaza Río
                 "city": "Tijuana",
                 "state": "BC",
                 "zip_code": "22010",
                 "country": "MX"
             }),
             "dropoff_address": JSON.stringify({
-                "street_address": ["Direccion Destino"],
+                "street_address": ["Paseo de los Héroes 9350"], // Dirección del CECUT (muy cerca)
                 "city": "Tijuana",
                 "state": "BC",
-                "zip_code": "22000",
+                "zip_code": "22010",
                 "country": "MX"
             }),
 
