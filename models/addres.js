@@ -189,7 +189,7 @@ WITH AllLocations AS (
         trade_name::text AS location_name,
         true AS is_matriz,
         id::text AS company_id,
-        latitude AS lats, -- 🔥 Latitud de la matriz
+        latitude AS lat, -- 🔥 Latitud de la matriz
         longitude AS lng  -- 🔥 Longitud de la matriz
     FROM cobi_companies
     WHERE id = $1
