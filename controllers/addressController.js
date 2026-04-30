@@ -322,21 +322,10 @@ module.exports = {
                 }
             });
             return response.data;
-        } } catch(error) {
-            if (error.response && error.response.data && error.response.data.code === 'address_undeliverable') {
-                // Capturamos el error específico del radio de entrega
-                console.warn("Alerta de Radio de Entrega:", error.response.data.metadata.details);
-
-                return res.status(400).json({
-                    success: false,
-                    message: "El destino se encuentra fuera de nuestra área de cobertura actual.",
-                    details: error.response.data.metadata.details
-                });
-            }
-
-            // Para cualquier otro error (tokens inválidos, caídas de servidor, etc.)
+        } catch (error) {
             console.error('Error detallado:', error.response?.data || error.message);
-            return res.status(500).json({ success: false, message: "Error interno del servidor al procesar la cotización." });
+            throw error;
         }
+    }
 
 }
