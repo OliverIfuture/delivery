@@ -280,7 +280,7 @@ module.exports = {
             console.error('Error obteniendo token de Uber:', error.response?.data || error.message);
             throw error;
         }
-    }
+    },
 
     // 🔥 PASO B: Cotizar el Envío
     async getQuote(pickup, dropoff) {
