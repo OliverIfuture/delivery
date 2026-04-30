@@ -288,15 +288,21 @@ module.exports = {
     async getQuote(pickup, dropoff) {
         const token = await this.getAccessToken();
         const customerId = process.env.UBER_CUSTOMER_ID;
-
         const url = `https://api.uber.com/v1/customers/${customerId}/delivery_quotes`;
 
+        // 🔥 Formato optimizado para Uber Direct
         const body = {
             pickup_address: JSON.stringify({
-                location: { lat: pickup.lat, lng: pickup.lng }
+                location: {
+                    lat: parseFloat(pickup.lat),
+                    lng: parseFloat(pickup.lng)
+                }
             }),
             dropoff_address: JSON.stringify({
-                location: { lat: dropoff.lat, lng: dropoff.lng }
+                location: {
+                    lat: parseFloat(dropoff.lat),
+                    lng: parseFloat(dropoff.lng)
+                }
             })
         };
 
@@ -307,13 +313,12 @@ module.exports = {
                     'Content-Type': 'application/json'
                 }
             });
-
-            // Uber devuelve el precio en centavos (ej. 5000 = $50.00)
             return response.data;
         } catch (error) {
+            // Si sigue fallando, Uber nos dirá por qué (ej. fuera de área de servicio)
             console.error('Error en Cotización Uber:', error.response?.data || error.message);
             throw error;
         }
-    },
+    }
 
 }
