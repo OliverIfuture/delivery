@@ -52,4 +52,60 @@ module.exports = (app) => {
     // 🔥 NUEVA: Ruta para eliminar. Usamos :id para pasarlo directamente en la URL
     app.delete('/api/locations/delete/:id', passport.authenticate('cobi-jwt', { session: false }), addressControllers.cobidelete);
 
+
+
+    //////////// 🔥 UBER DIRECT / COBI PAY ////////////////
+
+    // Nota: Esta ruta es pública porque la usa el cliente final en Vue.js
+    app.post('/api/delivery/quote', async (req, res) => {
+        try {
+            const {
+                merchantLat,
+                merchantLng,
+                customerLat,
+                customerLng,
+                merchantFeePercentage
+            } = req.body;
+
+            // Validación rápida de datos
+            if (!merchantLat || !customerLat) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan coordenadas de origen o destino.'
+                });
+            }
+
+            // 1. Llamamos a Uber para el precio real
+            const uberQuote = await addressController.getQuote(
+                { lat: merchantLat, lng: merchantLng },
+                { lat: customerLat, lng: customerLng }
+            );
+
+            // 2. Convertimos centavos a pesos
+            const totalFee = uberQuote.fee / 100;
+
+            // 3. Aplicamos la lógica de COBI (Split de pago)
+            // Calculamos cuánto absorbe el negocio y cuánto paga el cliente
+            const merchantPart = totalFee * (merchantFeePercentage / 100);
+            const customerPart = totalFee - merchantPart;
+
+            return res.status(200).json({
+                success: true,
+                quote_id: uberQuote.id,
+                total_fee: totalFee,
+                merchant_pays: merchantPart,
+                customer_pays: customerPart,
+                currency: uberQuote.currency_type,
+                estimated_arrival: uberQuote.dropoff_eta
+            });
+
+        } catch (error) {
+            console.error('Error en /api/delivery/quote:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'No pudimos cotizar el envío. Verifica las coordenadas o el estado de Uber Direct.'
+            });
+        }
+    });
+
 }

@@ -1,6 +1,6 @@
 const { findByUser } = require('../models/addres');
 const Address = require('../models/addres');
-
+const qs = require('qs');
 module.exports = {
 
     async findByUser(req, res, next) {
@@ -255,6 +255,62 @@ module.exports = {
                 message: 'Error al eliminar la ubicación',
                 error: error.message
             });
+        }
+    },
+
+    async getAccessToken() {
+        try {
+            const data = qs.stringify({
+                'client_id': process.env.UBER_CLIENT_ID,
+                'client_secret': process.env.UBER_CLIENT_SECRET,
+                'grant_type': 'client_credentials',
+                'scope': 'delivery'
+            });
+
+            const config = {
+                method: 'post',
+                url: 'https://login.uber.com/oauth/v2/token',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                data: data
+            };
+
+            const response = await axios(config);
+            return response.data.access_token;
+        } catch (error) {
+            console.error('Error obteniendo token de Uber:', error.response?.data || error.message);
+            throw error;
+        }
+    }
+
+    // 🔥 PASO B: Cotizar el Envío
+    async getQuote(pickup, dropoff) {
+        const token = await this.getAccessToken();
+        const customerId = process.env.UBER_CUSTOMER_ID;
+
+        const url = `https://api.uber.com/v1/customers/${customerId}/delivery_quotes`;
+
+        const body = {
+            pickup_address: JSON.stringify({
+                location: { lat: pickup.lat, lng: pickup.lng }
+            }),
+            dropoff_address: JSON.stringify({
+                location: { lat: dropoff.lat, lng: dropoff.lng }
+            })
+        };
+
+        try {
+            const response = await axios.post(url, body, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            // Uber devuelve el precio en centavos (ej. 5000 = $50.00)
+            return response.data;
+        } catch (error) {
+            console.error('Error en Cotización Uber:', error.response?.data || error.message);
+            throw error;
         }
     },
 
