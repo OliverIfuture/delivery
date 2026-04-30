@@ -290,11 +290,28 @@ module.exports = {
         const customerId = process.env.UBER_CUSTOMER_ID;
         const url = `https://api.uber.com/v1/customers/${customerId}/delivery_quotes`;
 
-        // 🔥 SOLUCIÓN: Enviamos las coordenadas como un string simple "lat, lng"
-        // Esto es mucho más fácil de procesar para el geocodificador de Uber
         const body = {
-            pickup_address: `${pickup.lat}, ${pickup.lng}`,
-            dropoff_address: `${dropoff.lat}, ${dropoff.lng}`
+            // 1. La dirección DEBE ser un JSON string escapado
+            "pickup_address": JSON.stringify({
+                "street_address": ["Plaza Rio Tijuana"],
+                "city": "Tijuana",
+                "state": "BC",
+                "zip_code": "22010",
+                "country": "MX"
+            }),
+            "dropoff_address": JSON.stringify({
+                "street_address": ["Direccion Destino"],
+                "city": "Tijuana",
+                "state": "BC",
+                "zip_code": "22000",
+                "country": "MX"
+            }),
+
+            // 2. Coordenadas en sus propios campos numéricos para precisión
+            "pickup_latitude": parseFloat(pickup.lat),
+            "pickup_longitude": parseFloat(pickup.lng),
+            "dropoff_latitude": parseFloat(dropoff.lat),
+            "dropoff_longitude": parseFloat(dropoff.lng)
         };
 
         try {
@@ -306,7 +323,7 @@ module.exports = {
             });
             return response.data;
         } catch (error) {
-            console.error('Error detallado de Uber:', error.response?.data || error.message);
+            console.error('Error detallado:', error.response?.data || error.message);
             throw error;
         }
     }
