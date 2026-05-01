@@ -1398,7 +1398,7 @@ module.exports = {
             const id = req.params.id;
 
             const data = await User.getCompanyById(id);
-            // console.log(`Datos enviados del getCompanyById: ${JSON.stringify(data)}`);
+            console.log(`Datos enviados del getCompanyById: ${JSON.stringify(data)}`);
 
             if (!data) {
                 return res.status(404).json({ success: false, message: 'company no encontrado' });
