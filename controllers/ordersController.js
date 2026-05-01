@@ -16,7 +16,7 @@ module.exports = {
         try {
             const usertoken = req.params.usertoken;
             const amount = req.params.amount;
-            
+
             const stripe = require('stripe')(usertoken);
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
@@ -49,7 +49,7 @@ module.exports = {
             const status = req.params.status;
 
             const data = await Order.findByDeliveryAndStatus(id_delivery, status);
-           // console.log(`Delivery status: ${JSON.stringify(data)}`);
+            // console.log(`Delivery status: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 
         } catch (error) {
@@ -107,13 +107,13 @@ module.exports = {
 
     },
 
-   async getByClientAndStatusWeb(req, res, next) {
+    async getByClientAndStatusWeb(req, res, next) {
 
         try {
             const id_client = req.params.id_client;
 
             const data = await Order.getByClientAndStatusWeb(id_client);
-                       // console.log(`orden creada: ${JSON.stringify(data)}`);
+            // console.log(`orden creada: ${JSON.stringify(data)}`);
 
             return res.status(201).json(data);
         }
@@ -127,7 +127,7 @@ module.exports = {
         }
 
     },
-    
+
     async findByClientAndStatus(req, res, next) {
 
         try {
@@ -148,13 +148,13 @@ module.exports = {
 
     },
 
-    async updateCode (req, res, next) {
+    async updateCode(req, res, next) {
         try {
 
             const id = req.params.id;
             const code = req.params.code;
-            const delivery_name  = req.params.delivery_name;
-            await Order.updateCode(id, code, delivery_name );
+            const delivery_name = req.params.delivery_name;
+            await Order.updateCode(id, code, delivery_name);
 
             return res.status(201).json({
                 success: true,
@@ -171,7 +171,7 @@ module.exports = {
             });
         }
     },
-    
+
     async updateLatLng(req, res, next) {
         try {
 
@@ -243,16 +243,16 @@ module.exports = {
     },
 
 
-async updateNacionalStatus(req, res, next) {
+    async updateNacionalStatus(req, res, next) {
 
         try {
-            let order = req.body; 
-            await Order.updateNacionalStatus(order); 
+            let order = req.body;
+            await Order.updateNacionalStatus(order);
             return res.status(201).json({
                 success: true,
                 message: 'La orden se actualizo correctamente',
             });
-        } 
+        }
         catch (error) {
             console.log(`Error ${error}`)
             return res.status(501).json({ success: false, message: 'Error al actualizar', error: error.message });
@@ -262,49 +262,49 @@ async updateNacionalStatus(req, res, next) {
 
 
 
-   async updateToDelivered(req, res, next) {
+    async updateToDelivered(req, res, next) {
 
         try {
-            let orderUpdateData = req.body; 
+            let orderUpdateData = req.body;
             orderUpdateData.status = 'ENTREGADO';
-    
+
             // 1. Actualizar el estado
-            await Order.update(orderUpdateData); 
+            await Order.update(orderUpdateData);
             console.log(`orden creada para actualizar: ${JSON.stringify(orderUpdateData)}`);
 
             // --- LÓGICA DE COMISIÓN (EFECTIVO) ---
             try {
                 // 2. Obtener la orden completa de la BD (incluyendo el TOTAL guardado)
                 const order = await Order.findById(orderUpdateData.id);
-               // console.log(`orden con id de entrenador actualizada : ${JSON.stringify(order)}`);
+                // console.log(`orden con id de entrenador actualizada : ${JSON.stringify(order)}`);
 
-                if (order && order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company) 
+                if (order && order.paymethod === 'EFECTIVO' && order.affiliate_referral_id && order.id_order_company)
                     console.log(`[Afiliado] Orden (Efectivo) ${order.id} ENTREGADA. Procesando comisión...`);
-                    // 3. Ya no recalculamos nada. Usamos order.total directamente.
-                    // Aseguramos que sea int/float si viene como string de la BD
-                    // (Aunque affiliate.js hace parseFloat, es bueno saber que el dato ya está ahí)
-                    const vendorCompany = await User.findCompanyById(order.id_order_company);
-                   console.log(`aun no entra  a calcular: ${JSON.stringify(vendorCompany)}`);
-                    if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
-                        console.log(`entro a calcular: ${JSON.stringify(vendorCompany)}`);
-                        await Affiliate.createCommission(order, vendorCompany);
-                        console.log(`[Afiliado] Comisión guardada.`);
-                    }
+                // 3. Ya no recalculamos nada. Usamos order.total directamente.
+                // Aseguramos que sea int/float si viene como string de la BD
+                // (Aunque affiliate.js hace parseFloat, es bueno saber que el dato ya está ahí)
+                const vendorCompany = await User.findCompanyById(order.id_order_company);
+                console.log(`aun no entra  a calcular: ${JSON.stringify(vendorCompany)}`);
+                if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
+                    console.log(`entro a calcular: ${JSON.stringify(vendorCompany)}`);
+                    await Affiliate.createCommission(order, vendorCompany);
+                    console.log(`[Afiliado] Comisión guardada.`);
                 }
-             catch (e) {
+            }
+            catch (e) {
                 console.log(`[Afiliado] Error comisión: ${e.message}`);
             }
             return res.status(201).json({
                 success: true,
                 message: 'La orden se entrego correctamente',
             });
-        } 
+        }
         catch (error) {
             console.log(`Error ${error}`)
             return res.status(501).json({ success: false, message: 'Error al actualizar', error: error.message });
         }
-    }, 
-    
+    },
+
     async cancelOrder(req, res, next) {
         try {
 
@@ -332,19 +332,19 @@ async updateNacionalStatus(req, res, next) {
      * Por lo tanto, debe calcular la comisión.
      */
     async create(req, res, next) {
-        
+
         try {
             let order = req.body;
-            order.status = 'PAGADO'; 
+            order.status = 'PAGADO';
             console.log(`orden creada: ${JSON.stringify(order)}`);
-            
+
             // --- LIMPIEZA: ELIMINADO CÁLCULO MANUAL DE TOTAL ---
             // Confiamos en order.total que viene del frontend
             // ---------------------------------------------------
 
             // 1. Guardar la orden
-            const data = await Order.create(order);
-            order.id = data.id; 
+            const data = await Order.createApp(order);
+            order.id = data.id;
 
             // 2. Guardar los productos
             let products = order.products;
@@ -361,7 +361,7 @@ async updateNacionalStatus(req, res, next) {
 
                     if (vendorCompany && vendorCompany.acceptsAffiliates === true) {
                         // Pasamos el objeto 'order' que ya tiene el 'total' correcto
-                        await Affiliate.createCommission(order, vendorCompany); 
+                        await Affiliate.createCommission(order, vendorCompany);
                         console.log(`[Afiliado] Comisión guardada.`);
                     }
                 }
@@ -375,7 +375,7 @@ async updateNacionalStatus(req, res, next) {
                 data: data.id
             });
 
-        } 
+        }
         catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al crear orden', error: error.message });
@@ -390,10 +390,10 @@ async updateNacionalStatus(req, res, next) {
         try {
             let order = req.body;
             order.status = 'PENDIENTE DE PAGO';
-            
+
             // --- LIMPIEZA: ELIMINADO CÁLCULO MANUAL ---
             // Usamos order.total directamente
-            
+
             const data = await Order.create(order);
 
             for (const product of order.products) {
@@ -412,23 +412,23 @@ async updateNacionalStatus(req, res, next) {
             return res.status(501).json({ success: false, message: 'Error al crear orden', error: error.message });
         }
     },
-     async createSale(req, res, next) {
+    async createSale(req, res, next) {
         try {
             let sales = req.body;
             // 1. Crear el registro principal de la venta
-            const data = await Order.createSale(sales); 
+            const data = await Order.createSale(sales);
 
             ////recorrer todos los productos de la orden
             for (const product of sales.products) {
-                
+
                 // 3. **LÓGICA CORREGIDA: CALCULAR Y ACTUALIZAR EL STOCK**
                 //    Parseamos los valores a números para hacer la resta
-                const currentStock = parseInt(product.state || '0'); 
+                const currentStock = parseInt(product.state || '0');
                 const soldQuantity = parseInt(product.quantity || '0');
-                
+
                 // Calculamos el nuevo stock
                 // **CORRECCIÓN: 'newStock' se declara DENTRO del loop con 'const'**
-                const newStock = currentStock - soldQuantity; 
+                const newStock = currentStock - soldQuantity;
 
                 console.log(`Actualizando stock para Producto ID ${product.id}:`);
                 console.log(`  Stock Actual (product.state): ${currentStock}`);
@@ -438,12 +438,12 @@ async updateNacionalStatus(req, res, next) {
                 // 2. Insertar el detalle de la venta (el producto vendido)
                 //    (Ahora se pasa 'newStock' a la función)
                 await OrderHasProducts.createSale(
-                    product.name, 
-                    product.price, 
-                    product.image1, 
-                    product.price_buy, 
-                    sales.reference, 
-                    product.quantity, 
+                    product.name,
+                    product.price,
+                    product.image1,
+                    product.price_buy,
+                    sales.reference,
+                    product.quantity,
                     sales.shift_ref,
                     newStock, // Pasando el stock ya calculado
                     product.id
@@ -891,7 +891,7 @@ async updateNacionalStatus(req, res, next) {
 
     },
 
-        async insertRecharge(req, res, next) {
+    async insertRecharge(req, res, next) {
         try {
 
             const id_client = req.params.id_client;
@@ -914,7 +914,7 @@ async updateNacionalStatus(req, res, next) {
         }
     },
 
-async createrecharge(req, res, next) {
+    async createrecharge(req, res, next) {
         try {
 
             let recharge = req.body;
@@ -939,7 +939,7 @@ async createrecharge(req, res, next) {
         }
     },
 
-async createOrdeDealer(req, res, next) {
+    async createOrdeDealer(req, res, next) {
         try {
 
             let order = req.body;
@@ -962,10 +962,10 @@ async createOrdeDealer(req, res, next) {
                 error: error
             });
         }
-    },    
+    },
 
-    
-async createrechargegym(req, res, next) {
+
+    async createrechargegym(req, res, next) {
         try {
 
             let recharge = req.body;
@@ -988,14 +988,14 @@ async createrechargegym(req, res, next) {
                 error: error
             });
         }
-    },    
+    },
 
 
-async findByClientDealerRechargeGym(req, res, next) {
+    async findByClientDealerRechargeGym(req, res, next) {
 
         try {
             const id_sucursal = req.params.id_sucursal;
-            const shift_ref =   req.params.shift_ref;
+            const shift_ref = req.params.shift_ref;
             const data = await Order.findByClientDealerRechargeGym(id_sucursal, shift_ref);
             return res.status(201).json(data);
         }
@@ -1010,10 +1010,10 @@ async findByClientDealerRechargeGym(req, res, next) {
 
     },
 
-     async getSumShift(req, res, next) {
+    async getSumShift(req, res, next) {
         try {
             const id_sucursal = req.params.id_sucursal;
-            const shift_ref =   req.params.shift_ref;
+            const shift_ref = req.params.shift_ref;
 
             const data = await Order.getSumShift(id_sucursal, shift_ref);
             console.log(`el getSumShift : ${JSON.stringify(data)}`);
@@ -1029,13 +1029,13 @@ async findByClientDealerRechargeGym(req, res, next) {
                 success: false
             });
         }
-    },  
+    },
 
 
-      async  getCortes(req, res, next) {
+    async getCortes(req, res, next) {
         try {
             const id_sucursal = req.params.id_sucursal;
-            const shift_ref =   req.params.shift_ref;
+            const shift_ref = req.params.shift_ref;
 
             const data = await Order.getCortes(id_sucursal, shift_ref);
             console.log(`el getCortes : ${JSON.stringify(data)}`);
@@ -1051,12 +1051,12 @@ async findByClientDealerRechargeGym(req, res, next) {
                 success: false
             });
         }
-    },     
+    },
 
 
 
-    
-async getShiftTurn(req, res, next) {
+
+    async getShiftTurn(req, res, next) {
         try {
             const id_sucursal = req.params.id_sucursal;
             const data = await Order.getShiftTurn(id_sucursal);
@@ -1073,10 +1073,10 @@ async getShiftTurn(req, res, next) {
                 success: false
             });
         }
-    },  
+    },
 
 
- async closeShiftGym(req, res, next) {
+    async closeShiftGym(req, res, next) {
         try {
 
             let shiftGym = req.body;
@@ -1098,9 +1098,9 @@ async getShiftTurn(req, res, next) {
                 error: error
             });
         }
-    }, 
+    },
 
- async insertNewTurnGym(req, res, next) {
+    async insertNewTurnGym(req, res, next) {
         try {
 
             let shiftGym = req.body;
@@ -1122,9 +1122,9 @@ async getShiftTurn(req, res, next) {
                 error: error
             });
         }
-    },     
-    
- async updateToCancelClient(req, res, next) {
+    },
+
+    async updateToCancelClient(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1144,9 +1144,9 @@ async getShiftTurn(req, res, next) {
                 error: error
             });
         }
-    },    
-  
-     async updateToCancelClientToClient(req, res, next) {
+    },
+
+    async updateToCancelClientToClient(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1167,10 +1167,10 @@ async getShiftTurn(req, res, next) {
                 error: error
             });
         }
-    },    
+    },
 
 
-async  getDealers(req, res, next) {
+    async getDealers(req, res, next) {
         try {
             const sucursalId = req.params.sucursalId;
 
@@ -1188,11 +1188,11 @@ async  getDealers(req, res, next) {
                 success: false
             });
         }
-    },     
+    },
 
 
 
-     async getNotifications(req, res, next) {
+    async getNotifications(req, res, next) {
         try {
             const idUser = req.params.userid;
 
@@ -1210,9 +1210,9 @@ async  getDealers(req, res, next) {
                 success: false
             });
         }
-    },  
+    },
 
-async createNotification(req, res, next) {
+    async createNotification(req, res, next) {
         try {
 
             let notification = req.body;
@@ -1237,7 +1237,7 @@ async createNotification(req, res, next) {
         }
     },
 
-    async  getAppoiments(req, res, next) {
+    async getAppoiments(req, res, next) {
         try {
             const userId = req.params.userId;
 
@@ -1254,9 +1254,9 @@ async createNotification(req, res, next) {
                 success: false
             });
         }
-    }, 
+    },
 
-        async  getAppoimentsByCompany(req, res, next) {
+    async getAppoimentsByCompany(req, res, next) {
         try {
             const id = req.params.id;
 
@@ -1275,7 +1275,7 @@ async createNotification(req, res, next) {
         }
     },
 
-       async updateAppointmentStatus (req, res, next) {
+    async updateAppointmentStatus(req, res, next) {
         try {
 
             const id = req.params.appointmentId;
@@ -1296,9 +1296,9 @@ async createNotification(req, res, next) {
                 error: error
             });
         }
-    }, 
+    },
 
-       async updateSaleStatus (req, res, next) {
+    async updateSaleStatus(req, res, next) {
         try {
 
             const id = req.params.id;
@@ -1322,7 +1322,7 @@ async createNotification(req, res, next) {
     },
 
 
-          async  getSalesByDateRange(req, res, next) {
+    async getSalesByDateRange(req, res, next) {
         try {
             const id = req.params.id;
             const startDate = req.params.startDate;
@@ -1344,10 +1344,10 @@ async createNotification(req, res, next) {
     },
 
 
-   async createCotization(req, res, next) {
+    async createCotization(req, res, next) {
         try {
             let order = req.body;
-            const data = await Order.createCotization(order); 
+            const data = await Order.createCotization(order);
 
             return res.status(201).json({
                 success: true,
@@ -1364,7 +1364,7 @@ async createNotification(req, res, next) {
             });
         }
     },
-  
+
 
     async getSavedCotizations(req, res, next) {
         try {
@@ -1389,10 +1389,10 @@ async createNotification(req, res, next) {
 
 
 
-  async confirmCotization(req, res, next) {
+    async confirmCotization(req, res, next) {
         try {
             const id = req.params.id;
-            
+
             // 1. Llamamos a la nueva funcion en el modelo (Order.confirm)
             // Esta funcion hara la transaccion y nos devolvera un resultado detallado
             const data = await Order.confirm(id);
@@ -1413,7 +1413,7 @@ async createNotification(req, res, next) {
             return res.status(200).json({ // 200 OK
                 success: true,
                 message: 'cotizacion confirmada correctamente',
-                data: data.data 
+                data: data.data
             });
 
         } catch (error) {
@@ -1459,7 +1459,7 @@ async createNotification(req, res, next) {
             });
         }
     },
-    
+
 }
 
 

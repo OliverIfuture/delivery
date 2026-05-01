@@ -491,7 +491,7 @@ Order.findByClientAndStatus = (id_client, status) => {
 
 }
 
-Order.create = (order) => {
+Order.createApp = (order) => {
     const sql = `
     INSERT INTO
         orders(
