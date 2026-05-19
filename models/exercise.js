@@ -6,8 +6,6 @@ const Exercise = {};
  * Crea un nuevo ejercicio
  */
 Exercise.create = (exercise) => {
-    // (Tu lógica de 'create' existente...)
-    // Esta función debe existir en tu archivo
     const sql = `
         INSERT INTO exercises(
             id_company,
@@ -16,19 +14,22 @@ Exercise.create = (exercise) => {
             muscle_group,
             equipment,
             media_url,
+            thumbnail_url, -- 🔥 NUEVO CAMPO AÑADIDO
             media_type,
             created_at,
             updated_at
         )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
     `;
+
     return db.one(sql, [
         exercise.idCompany,
         exercise.name,
         exercise.description,
-        exercise.muscle_group,
+        exercise.muscle_group, // Cuidado con el snake_case, debe coincidir con lo que mandas desde Flutter
         exercise.equipment,
-        exercise.media_url,
+        exercise.media_url || null, // null si no hay link
+        exercise.thumbnail_url || null, // null si no hay portada
         exercise.media_type,
         new Date(),
         new Date()

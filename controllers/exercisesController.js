@@ -13,7 +13,7 @@ module.exports = {
             const data = await Exercise.findByCompany(id_company);
             console.log(`Ejercicios para compañía ${id_company}: ${data.length}`);
             return res.status(200).json(data);
-        } 
+        }
         catch (error) {
             console.log(`Error en exercisesController.findByCompany: ${error}`);
             return res.status(501).json({
@@ -27,48 +27,75 @@ module.exports = {
     /**
      * Crea un nuevo ejercicio, subiendo una imagen si existe.
      */
-async create(req, res, next) {
+    async create(req, res, next) {
         try {
-            // 1. Parsear datos
+            // 1. Validar que vengan los datos
+            if (!req.body.exercise) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan los datos del ejercicio en la petición'
+                });
+            }
+
+            // 2. Parsear datos
             const exercise = JSON.parse(req.body.exercise);
+
             if (req.user.mi_store == 4) {
-                exercise.idCompany = null; 
+                exercise.idCompany = null;
             } else {
                 exercise.idCompany = req.user.mi_store;
             }
-            // 2. --- DETECCIÓN DE ARCHIVOS ROBUSTA ---
-            let file = null;
-            
-            if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-                // Caso A: upload.array('image')
-                file = req.files[0];
-            } else if (req.file) {
-                // Caso B: upload.single('image')
-                file = req.file;
-            } else if (req.files && req.files['image']) {
-                 // Caso C: upload.fields(...)
-                 file = req.files['image'][0];
-            }
 
-            console.log('Archivo detectado:', file ? file.originalname : 'NINGUNO'); // Log de depuración
-            // -----------------------------------------
+            // 3. --- EXTRACCIÓN DE ARCHIVOS (IMAGEN Y VIDEO) ---
+            let imageFile = null;
+            let videoFile = null;
 
-            if (file) {
-                const pathImage = `exercises/${Date.now()}`;
-                const url = await storage(file, pathImage);
-
-                if (url) {
-                    exercise.media_url = url;
+            if (req.files) {
+                if (req.files['image'] && req.files['image'].length > 0) {
+                    imageFile = req.files['image'][0];
                 }
-                
-                // Detectar tipo
-                const mimeType = file.mimetype;
-                if (mimeType.startsWith('image/')) exercise.media_type = 'image';
-                else if (mimeType.startsWith('video/')) exercise.media_type = 'video';
-                else if (mimeType === 'application/pdf') exercise.media_type = 'pdf';
+                if (req.files['video'] && req.files['video'].length > 0) {
+                    videoFile = req.files['video'][0];
+                }
             }
 
+            console.log(`Archivos detectados -> Video: ${videoFile ? 'SI' : 'NO'}, Imagen: ${imageFile ? 'SI' : 'NO'}`);
 
+            // 4. --- SUBIDA A FIREBASE (STORAGE) ---
+
+            // A) Subir Video (Si existe)
+            if (videoFile) {
+                const pathVideo = `exercises/videos/${Date.now()}`;
+                const videoUrl = await storage(videoFile, pathVideo); // Asegúrate de tener importada tu función storage
+
+                if (videoUrl) {
+                    exercise.media_url = videoUrl;
+                    exercise.media_type = 'video';
+                }
+            }
+
+            // B) Subir Imagen / Portada (Si existe)
+            if (imageFile) {
+                const pathImage = `exercises/thumbnails/${Date.now()}`;
+                const imageUrl = await storage(imageFile, pathImage);
+
+                if (imageUrl) {
+                    exercise.thumbnail_url = imageUrl;
+
+                    // Si NO mandaron video, la imagen asume el rol principal
+                    if (!videoFile) {
+                        exercise.media_url = imageUrl;
+                        exercise.media_type = 'image';
+                    }
+                }
+            }
+
+            // Fallback por si no envían nada
+            if (!exercise.media_type) {
+                exercise.media_type = 'none';
+            }
+
+            // 5. --- GUARDAR EN BASE DE DATOS ---
             const data = await Exercise.create(exercise);
 
             return res.status(201).json({
@@ -82,15 +109,15 @@ async create(req, res, next) {
             return res.status(501).json({
                 success: false,
                 message: 'Error al crear el ejercicio',
-                error: error
+                error: error.message || error
             });
         }
     },
-        async delete(req, res, next) {
+    async delete(req, res, next) {
         try {
             const id = req.params.id;
             await Exercise.delete(id);
-            
+
             return res.status(200).json({
                 success: true,
                 message: 'Ejercicio eliminado con éxito'
@@ -125,7 +152,7 @@ async create(req, res, next) {
         }
     },
 
-       async update(req, res, next) {
+    async update(req, res, next) {
         try {
             const exercise = req.body;
             await Exercise.update(exercise);

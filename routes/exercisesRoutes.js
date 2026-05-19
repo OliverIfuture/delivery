@@ -7,34 +7,36 @@ module.exports = (app, upload) => {
     // Usada para obtener la biblioteca completa de un entrenador
     // (Coincide con ExerciseProvider.getByCompany)
     app.get(
-        '/api/exercises/findByCompany/:id_company', 
-        passport.authenticate('jwt', { session: false }), 
+        '/api/exercises/findByCompany/:id_company',
+        passport.authenticate('jwt', { session: false }),
         exercisesController.findByCompany
     );
 
-       // NUEVA RUTA
+    // NUEVA RUTA
     app.get('/api/exercises/getGlobal', passport.authenticate('jwt', { session: false }), exercisesController.getGlobal);
 
 
     // --- RUTAS POST ---
-    // Usada para crear un nuevo ejercicio con imagen
-    // (Coincide con ExerciseProvider.create)
-app.post('/api/exercises/create', 
-        passport.authenticate('jwt', { session: false }), 
-        upload.array('image', 1), // <--- 'image' debe coincidir con Flutter
+    // Asegúrate de importar 'upload' (tu middleware de Multer)
+    app.post('/api/exercises/create',
+        passport.authenticate('jwt', { session: false }),
+        // 🔥 CAMBIO CLAVE: Usamos fields en lugar de array para recibir ambos archivos
+        upload.fields([
+            { name: 'image', maxCount: 1 },
+            { name: 'video', maxCount: 1 }
+        ]),
         exercisesController.create
     );
-    
 
     // --- RUTAS PUT ---
     // (Aquí irán las rutas para actualizar, ej: updateWithImage, update)
 
     // --- RUTAS DELETE ---
     // (Aquí irá la ruta para eliminar)
-        // RUTA PARA ELIMINAR UN EJERCICIO
+    // RUTA PARA ELIMINAR UN EJERCICIO
     app.delete(
-        '/api/exercises/delete/:id', 
-        passport.authenticate('jwt', { session: false }), 
+        '/api/exercises/delete/:id',
+        passport.authenticate('jwt', { session: false }),
         exercisesController.delete
     );
 
