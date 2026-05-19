@@ -76,7 +76,8 @@ Exercise.findByCompany = (id_company) => {
         muscle_group,
         equipment,
         media_url,
-        media_type
+        media_type,
+        thumbnail_url
     FROM
         exercises
     WHERE

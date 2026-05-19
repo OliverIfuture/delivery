@@ -1,0 +1,1596 @@
+{
+  "weeks": [
+    {
+      "days": {
+        "Lunes": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "168",
+                  "name": "Prensa Inclinada",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "35",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763596996132.gif?alt=media&token=2b543ec6-8da3-4bd1-9d56-02fd8420232d",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Pies en la plataforma, ancho de hombros.\n\nBaja el peso hasta que las rodillas estén cerca del pecho (90 grados).\n\nEmpuja sin bloquear las rodillas al final.\n\nMantén la espalda baja pegada al respaldo siempre.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "170",
+                  "name": "Peso Muerto Rumano con Barra",
+                  "sets": [
+                    {
+                      "reps": "8",
+                      "weight": "180",
+                      "comment": ""
+                    },
+                    {
+                      "reps": "8",
+                      "weight": "180",
+                      "comment": ""
+                    }
+                  ],
+                  "notes": "",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597107478.gif?alt=media&token=e9b88404-6902-482f-aa32-ae444b727fab",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Sujeta la barra de pie.\n\nPiernas semirrígidas. Envía la cadera hacia atrás.\n\nBaja la barra rozando las piernas hasta sentir tensión en femorales (bajo las rodillas).\n\nSube empujando la cadera adelante.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "175",
+                  "name": "Hip Thrust Inclinado con Barra",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597512311.jpeg?alt=media&token=28da7d65-eaee-48d4-b486-a1b214ecc047",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Apoya la espalda alta en un banco, barra sobre la cadera.\n\nPies en el suelo. Levanta la cadera hasta alinear hombros, cadera y rodillas.\n\nAprieta glúteos arriba.\n\nBaja la cadera sin tocar el suelo y repite.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "169",
+                  "name": "Extensión de Cuádriceps en Máquina",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "190",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597046515.gif?alt=media&token=a0077caa-cd29-4d39-a207-575a232700fd",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta el rodillo sobre los tobillos.\n\nExtiende las piernas hasta que estén rectas.\n\nAprieta los cuádriceps un segundo arriba.\n\nBaja lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "178",
+                  "name": "Extensión de Gemelos sentado en Máquina",
+                  "sets": [
+                    {
+                      "reps": "12",
+                      "weight": "145",
+                      "comment": ""
+                    },
+                    {
+                      "reps": "12",
+                      "weight": "145",
+                      "comment": ""
+                    },
+                    {
+                      "reps": "12",
+                      "weight": "145",
+                      "comment": ""
+                    },
+                    {
+                      "reps": "66",
+                      "weight": "66",
+                      "comment": "thjghjg"
+                    }
+                  ],
+                  "notes": "",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597916689.jpeg?alt=media&token=3ddc3b5a-a75d-4dae-afa5-9cdd864f0a41",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate en la máquina, almohadilla sobre muslos.\n\nBaja los talones.\n\nSube los talones usando solo los gemelos.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "482",
+                  "name": "Abdominales",
+                  "sets": [
+                    {
+                      "reps": "12",
+                      "weight": "66",
+                      "comment": "al fallo"
+                    },
+                    {
+                      "reps": "12",
+                      "weight": "66",
+                      "comment": "tranki"
+                    }
+                  ],
+                  "notes": "",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1775770121089.jpg?alt=media&token=2740904f-065b-413a-9fc2-7009e818a37d",
+                  "description": "Para realizar abdominales completos (también conocidos como sit-ups), que trabajan el recto abdominal y los flexores de la cadera, sigue estos pasos para asegurar una técnica correcta y evitar lesiones en el cuello o la espalda: \n\nPosición inicial: Acuéstate boca arriba sobre una superficie plana (preferiblemente un mat de yoga). Flexiona las rodillas y apoya los pies firmemente en el suelo, separados al ancho de las caderas.\nColocación de las manos: Puedes cruzar los brazos sobre el pecho o colocar las manos suavemente detrás de las orejas. Evita entrelazar los dedos detrás de la nuca, ya que esto puede provocar que tires del cuello hacia adelante innecesariamente.\nEl ascenso: Inhala y, al exhalar, contrae los músculos del abdomen para elevar el torso del suelo. Debes subir hasta que tu pecho esté cerca de tus rodillas o tu espalda quede en posición vertical.\nEl descenso: Baja lentamente y de forma controlada hasta que tus hombros toquen el suelo de nuevo. No dejes caer el cuerpo; mantén la tensión abdominal en todo momento"
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "219",
+                  "name": "Sentadilla Hack",
+                  "sets": [
+                    {
+                      "reps": "12",
+                      "weight": "",
+                      "comment": ""
+                    },
+                    {
+                      "reps": "12",
+                      "weight": "",
+                      "comment": ""
+                    }
+                  ],
+                  "notes": "",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601719255.jpeg?alt=media&token=f59dae88-13a4-40b9-b5bb-a4e780f5cdae",
+                  "description": "flexionar las rodillas y bajar el cuerpo hasta que los muslos queden paralelos al suelo o ligeramente por debajo, para luego volver a la posición inicial.",
+                  "thumbnail_url": ""
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Enfoque en Piernas, Glúteos",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2FpiernaMujer.jpg?alt=media&token=4fd7a565-b77f-4a91-a6c9-86b4be37f3af"
+        },
+        "Jueves": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "173",
+                  "name": "Zancadas ( desplantes) con mancuernas",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "35",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597406947.gif?alt=media&token=a9c4ab8a-bb91-47e9-acfe-ecf018e84dcc",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Da un paso largo al frente.\n\nBaja la rodilla trasera casi al suelo (ambas rodillas a 90 grados).\n\nEmpuja con el pie delantero para volver o avanzar.\n\nMantén el torso vertical.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "172",
+                  "name": "Curl femoral sentado",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "140",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597334345.png?alt=media&token=4922cc8f-7dae-42b7-812f-d712e8a1ef98",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta la almohadilla sobre los muslos para no levantarte.\n\nEmpuja los talones hacia abajo y atrás debajo del asiento.\n\nRegresa lento a la posición estirada.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "180",
+                  "name": "Aductor Interno en Máquina",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "10",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763598056574.gif?alt=media&token=a934486e-9a1a-428c-9852-a52784076fa0",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate y coloca las piernas por fuera de las almohadillas.\n\nCierra las piernas juntando las rodillas.\n\nAbre controlado.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "341",
+                  "name": "Peso Muerto con Bandas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "10",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1774487366338.gif?alt=media&token=d69c9c3b-61fb-4099-a38f-eaa62fd99812",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De pie con las piernas separadas a la anchura de los hombros, pon las bandas en algún soporte detrás del ti y agáchate hacia delante con la espalda recta, sacando glúteos. Coge los extremos de la banda y ponte en posición erguida, estirando bien el cuerpo en vertical y apretando los glúteos arriba.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "178",
+                  "name": "Extensión de Gemelos sentado en Máquina",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "145",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597916689.jpeg?alt=media&token=3ddc3b5a-a75d-4dae-afa5-9cdd864f0a41",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate en la máquina, almohadilla sobre muslos.\n\nBaja los talones.\n\nSube los talones usando solo los gemelos.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Variaciones de ejercicios, enfoque en glúteos/isquios",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2Fpierinaposterior.jpg?alt=media&token=b3e168e8-c3b8-4cfa-923c-2fff005ffb42"
+        },
+        "Martes": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "167",
+                  "name": "Sentadilla libre con Barra",
+                  "reps": "9",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "180",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763596892690.jpeg?alt=media&token=5eed33ed-1ac2-4a60-abb0-781622949bff",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Barra sobre trapecios, pies ancho de hombros.\n\nBaja la cadera atrás y abajo, espalda recta.\n\nRompe el paralelo (cadera bajo rodillas).\n\nSube empujando con toda la planta del pie.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "174",
+                  "name": "Sentadilla búlgara",
+                  "reps": "10",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "40",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597470039.gif?alt=media&token=fa743351-8799-4935-b05b-004b2fafc073",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Coloca un pie en un banco detrás de ti.\n\nBaja la cadera verticalmente hasta que la rodilla trasera casi toque el suelo.\n\nEmpuja con la pierna delantera para subir.\n\nMantén el equilibrio y el pecho alto.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Bi-Serie / Súper-Serie",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "169",
+                  "name": "Extensión de Cuádriceps en Máquina",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "190",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597046515.gif?alt=media&token=a0077caa-cd29-4d39-a207-575a232700fd",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta el rodillo sobre los tobillos.\n\nExtiende las piernas hasta que estén rectas.\n\nAprieta los cuádriceps un segundo arriba.\n\nBaja lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "172",
+                  "name": "Curl femoral sentado",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "140",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597334345.png?alt=media&token=4922cc8f-7dae-42b7-812f-d712e8a1ef98",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta la almohadilla sobre los muslos para no levantarte.\n\nEmpuja los talones hacia abajo y atrás debajo del asiento.\n\nRegresa lento a la posición estirada.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "170",
+                  "name": "Peso Muerto Rumano con Barra",
+                  "reps": "8",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "180",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597107478.gif?alt=media&token=e9b88404-6902-482f-aa32-ae444b727fab",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Sujeta la barra de pie.\n\nPiernas semirrígidas. Envía la cadera hacia atrás.\n\nBaja la barra rozando las piernas hasta sentir tensión en femorales (bajo las rodillas).\n\nSube empujando la cadera adelante.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "442",
+                  "name": "Pantorrilla parado en maquina",
+                  "reps": "12",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "75",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1775696525542.jpg?alt=media&token=61259662-381a-457d-86b6-746dc9d50588",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Posición Inicial\nAjuste de altura: Coloca las almohadillas de la máquina de modo que queden sobre tus hombros (trapecio) cuando estés de pie con las piernas extendidas.\nApoyo de los pies: Coloca la parte delantera de los pies (metatarsos) en el borde de la plataforma o escalón, dejando los talones al aire.\nAlineación: Mantén los pies separados a la anchura de las caderas y las rodillas con una ligera flexión (no las bloquees totalmente). \n\n2. Ejecución (Fase de Subida)\nExtensión completa: Empuja con las puntas de los pies para elevar los talones lo más alto posible.\nContracción: En el punto más alto, aprieta las pantorrillas y mantén la posición durante 1 o 2 segundos para maximizar el estímulo. \n\n3. Descenso (Fase de Estiramiento)\nControl: Baja los talones lentamente por debajo del nivel de la plataforma.\nRango completo: Siente el estiramiento profundo en el músculo antes de comenzar la siguiente repetición. \n\nConsejos de Seguridad y Técnica\nEvita el rebote: No utilices el impulso ni te \"columpies\". El movimiento debe ser pausado y controlado tanto al subir como al bajar.\nEspalda recta: Mantén el torso erguido y la mirada al frente o ligeramente hacia abajo para proteger la columna.\nSeguros de la máquina: Si usas la máquina Smith, asegúrate de colocar las barras de seguridad para prevenir accidentes en caso de resbalón.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "178",
+                  "name": "Extensión de Gemelos sentado en Máquina",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "145",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597916689.jpeg?alt=media&token=3ddc3b5a-a75d-4dae-afa5-9cdd864f0a41",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate en la máquina, almohadilla sobre muslos.\n\nBaja los talones.\n\nSube los talones usando solo los gemelos.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Bi-Serie / Súper-Serie",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Leg Day!",
+          "day_image": "https://i.pinimg.com/736x/23/8f/de/238fde01d678bb249fc7bcbce56ca568.jpg"
+        },
+        "Domingo": {
+          "blocks": [],
+          "day_name": "",
+          "day_image": ""
+        },
+        "Sábado": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "213",
+                  "name": "Crunch Superior de rodillas con Polea",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "85",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601262887.gif?alt=media&token=1213610a-2fee-41c2-9f11-745141200024",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De rodillas frente a polea alta con cuerda tras la nuca.\n\nDobla el torso hacia abajo llevando codos a rodillas.\n\nSube lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "210",
+                  "name": "Plancha",
+                  "reps": "30",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601134301.gif?alt=media&token=33e9fc22-1297-4074-99ff-cf55ef3b127f",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "EMPEZAR CON 20 SEGUNDOS\n\nCodos y puntas de pies en el suelo.\n\nCuerpo recto como una tabla.\n\nAprieta abdomen y glúteo. Aguanta.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "333",
+                  "name": "Puente de glúteos",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1774485502908.jpg?alt=media&token=49990a9b-bf99-4c78-a9de-8e8d334cf137",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Tumbada boca arriba con los bazos extendidos hacia los lados y los hombros perfectamente apoyados en el suelo, flexiona las rodillas y eleva poco a poco la cadera hasta formar una tabla. Contrae bien el glúteo e intenta apretar el abdomen para proteger la lumbar. Mantén la postura unos segundos activando los músculos de las piernas.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "223",
+                  "name": "Step Up con Mancuernas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "10",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601949544.gif?alt=media&token=864046e4-f4b4-4b16-bea6-152fef3d7691",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Coloca un pie entero sobre un cajón o banco (altura de la rodilla).\n\nInclina el peso hacia adelante sobre esa pierna.\n\nImpúlsate solo con la pierna de arriba (evita saltar con la de abajo).\n\nBaja muy lentamente (3-4 segundos) para mayor trabajo.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "175",
+                  "name": "Hip Thrust Inclinado con Barra",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597512311.jpeg?alt=media&token=28da7d65-eaee-48d4-b486-a1b214ecc047",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Apoya la espalda alta en un banco, barra sobre la cadera.\n\nPies en el suelo. Levanta la cadera hasta alinear hombros, cadera y rodillas.\n\nAprieta glúteos arriba.\n\nBaja la cadera sin tocar el suelo y repite.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Core y gluteo",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2Ftorsoypostura.jpg?alt=media&token=83ea3b61-39db-47ca-9ee5-e4db37ef40bd"
+        },
+        "Viernes": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "160",
+                  "name": "Remo Horizontal Cerrado Neutro en Polea",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "140",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763595094143.gif?alt=media&token=a9e22a95-ead0-4d38-b9d5-397fa16e646c",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate con los pies en los apoyos, rodillas semiflexionadas.\n\nAgarra el maneral y mantén la espalda recta.\n\nJala el maneral hacia el abdomen bajo, sacando el pecho.\n\nEstira los brazos adelante sin curvar la espalda.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "147",
+                  "name": "Press inclinado con mancuernas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "10",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763594070072.gif?alt=media&token=d80253db-c546-48a0-88ed-c02011add7a1",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta el banco a 30-45 grados.\n\nSube las mancuernas a la altura de los hombros con las palmas mirando al frente.\n\nEmpuja hacia arriba hasta que los brazos estén extendidos.\n\nBaja lentamente hasta que las mancuernas estén a la altura del pecho.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "184",
+                  "name": "Elevaciones Laterales Neutras con Mancuernas",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "40",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599506863.gif?alt=media&token=4d2b7a22-49fb-45bf-9d49-41325d9e455d",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De pie, mancuernas a los lados.\n\nLevanta los brazos hacia los lados hasta la altura de hombros.\n\nCodos ligeramente flexionados, meñiques un poco más arriba que pulgares.\n\nBaja lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "191",
+                  "name": "Curl alternado con mancuernas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "47.5",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599923157.gif?alt=media&token=5826ac09-3136-4eb0-b98c-83dc3a8a325c",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Mancuernas a los lados.\n\nSube una, girando la muñeca (supinación) para que la palma mire arriba.\n\nBaja y repite con la otra mano.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "198",
+                  "name": "Extensión Vertical Neutra en Polea Alta",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "140",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763600276463.gif?alt=media&token=a52b1623-30cb-4069-b543-3e5f09f2f00a",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Codos pegados a las costillas.\n\nBaja la barra extendiendo los brazos completamente.\n\nSube hasta que el antebrazo toque el bíceps (90 grados).",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Variaciones de ejercicios, enfoque en brazos",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2Fsuperioshombromujer.jpg?alt=media&token=93c31454-8f83-4f05-a942-e99609393da5"
+        },
+        "Miércoles": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "182",
+                  "name": "Press Militar en Pronación con Mancuernas",
+                  "reps": "9",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "75",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763598254620.gif?alt=media&token=7d38ae1b-98e6-4c26-aba1-20837d4e80aa",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Sentado o de pie (RECOMENDADO EN BANCO CON RESPALDO) , mancuernas a la altura de las orejas.\n\nEmpuja hacia arriba hasta juntarlas (sin tocar).\n\nBaja hasta que los brazos formen 90 grados o un poco más.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "186",
+                  "name": "Elevaciones Frontales en Pronación con Mancuernas",
+                  "reps": "12",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "20",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599607058.gif?alt=media&token=72aec30e-9821-48e0-a2db-54ebd7441aaa",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Mancuernas o disco en manos.\n\nLevanta los brazos al frente hasta la altura de los ojos.\n\nBaja controlado. Evita columpiar el cuerpo.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Drop-Set",
+              "block_notes": "4ta serie al fallo"
+            },
+            {
+              "exercises": [
+                {
+                  "id": "184",
+                  "name": "Elevaciones Laterales Neutras con Mancuernas",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "40",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599506863.gif?alt=media&token=4d2b7a22-49fb-45bf-9d49-41325d9e455d",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De pie, mancuernas a los lados.\n\nLevanta los brazos hacia los lados hasta la altura de hombros.\n\nCodos ligeramente flexionados, meñiques un poco más arriba que pulgares.\n\nBaja lento.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "187",
+                  "name": "Pájaros sentado con Mancuernas",
+                  "reps": "15",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "30",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599665097.jpeg?alt=media&token=5b4bd1f4-b8c0-480e-9cae-1ad019c596e0",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Inclina el torso hacia adelante (casi paralelo al suelo).\n\nLevanta los brazos hacia los lados/atrás.\n\nEnfócate en la parte posterior del hombro, no en la espalda.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Drop-Set",
+              "block_notes": "3Er serie al fallo"
+            },
+            {
+              "exercises": [
+                {
+                  "id": "240",
+                  "name": "Aperturas Traseras en Pronación en Máquina",
+                  "reps": "12",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "45",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763603425405.jpeg?alt=media&token=0e09ef8a-4b08-4f22-8cc8-3d0f89789b3f",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Con la espalda recta coge un agarre con cada mano en pronación y sin balanceo ni impulso, lleva los soportes hacia los lados con los brazos rectos. Aprieta los hombros y aguanta durante uno o dos segundos. Retrocede de forma controlada a la posición inicial.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "191",
+                  "name": "Curl alternado con mancuernas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "47.5",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599923157.gif?alt=media&token=5826ac09-3136-4eb0-b98c-83dc3a8a325c",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Mancuernas a los lados.\n\nSube una, girando la muñeca (supinación) para que la palma mire arriba.\n\nBaja y repite con la otra mano.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "192",
+                  "name": "Curl en Martillo Cruzado con Mancuernas",
+                  "reps": "10",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "35",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599968120.jpeg?alt=media&token=ca98ad72-dc55-4167-bef7-319f47fb2427",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Palmas mirándose entre sí (agarre neutro).\n\nSube la mancuerna sin girar la muñeca.\n\nBaja igual. Enfoca el braquial y antebrazo.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Drop-Set",
+              "block_notes": "4ta serie al fallo"
+            },
+            {
+              "exercises": [
+                {
+                  "id": "477",
+                  "name": "Curl de bicep con barra",
+                  "reps": "9",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "90",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1775768486540.jpg?alt=media&token=09dc1d89-775b-4aa2-868e-439a58df3074",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Instrucciones Detalladas\nPosición inicial: Pies separados a la anchura de los hombros, rodillas ligeramente dobladas y espalda recta. Sujeta la barra con agarre en supinación (palmas hacia arriba), con las manos a la anchura de los hombros.\nMovimiento (Fase Concéntrica): Eleva la barra doblando los codos, acercándola al pecho sin mover los codos de su sitio. Exhala al subir.\nContracción: Aprieta los bíceps durante un segundo en la posición superior.\nDescenso (Fase Excéntrica): Baja la barra lentamente, manteniendo el control hasta la posición inicial. Inhala durante esta fase",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "211",
+                  "name": "Wheel Rollout de pie",
+                  "reps": "11",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601176223.jpeg?alt=media&token=080dbc22-79cb-4341-b052-465446529257",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Rodillas en el suelo, sujeta la rueda.\n\nRueda hacia adelante estirando el cuerpo sin arquear la espalda.\n\nRegresa contrayendo el abdomen.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "213",
+                  "name": "Crunch Superior de rodillas con Polea",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "85",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601262887.gif?alt=media&token=1213610a-2fee-41c2-9f11-745141200024",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De rodillas frente a polea alta con cuerda tras la nuca.\n\nDobla el torso hacia abajo llevando codos a rodillas.\n\nSube lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Hombro,Bicep y Abdomen",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2Fcbumtrin.jpg?alt=media&token=d8a5bc94-74f2-4072-ad4f-1645b8383b9f"
+        }
+      },
+      "week_number": 1
+    },
+    {
+      "days": {
+        "Lunes": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "168",
+                  "name": "Prensa Inclinada",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "35",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763596996132.gif?alt=media&token=2b543ec6-8da3-4bd1-9d56-02fd8420232d",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Pies en la plataforma, ancho de hombros.\n\nBaja el peso hasta que las rodillas estén cerca del pecho (90 grados).\n\nEmpuja sin bloquear las rodillas al final.\n\nMantén la espalda baja pegada al respaldo siempre.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "170",
+                  "name": "Peso Muerto Rumano con Barra",
+                  "reps": "8",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "180",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597107478.gif?alt=media&token=e9b88404-6902-482f-aa32-ae444b727fab",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Sujeta la barra de pie.\n\nPiernas semirrígidas. Envía la cadera hacia atrás.\n\nBaja la barra rozando las piernas hasta sentir tensión en femorales (bajo las rodillas).\n\nSube empujando la cadera adelante.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "175",
+                  "name": "Hip Thrust Inclinado con Barra",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597512311.jpeg?alt=media&token=28da7d65-eaee-48d4-b486-a1b214ecc047",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Apoya la espalda alta en un banco, barra sobre la cadera.\n\nPies en el suelo. Levanta la cadera hasta alinear hombros, cadera y rodillas.\n\nAprieta glúteos arriba.\n\nBaja la cadera sin tocar el suelo y repite.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "169",
+                  "name": "Extensión de Cuádriceps en Máquina",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "190",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597046515.gif?alt=media&token=a0077caa-cd29-4d39-a207-575a232700fd",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta el rodillo sobre los tobillos.\n\nExtiende las piernas hasta que estén rectas.\n\nAprieta los cuádriceps un segundo arriba.\n\nBaja lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "178",
+                  "name": "Extensión de Gemelos sentado en Máquina",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "145",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597916689.jpeg?alt=media&token=3ddc3b5a-a75d-4dae-afa5-9cdd864f0a41",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate en la máquina, almohadilla sobre muslos.\n\nBaja los talones.\n\nSube los talones usando solo los gemelos.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Enfoque en Piernas, Glúteos",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2FpiernaMujer.jpg?alt=media&token=4fd7a565-b77f-4a91-a6c9-86b4be37f3af"
+        },
+        "Jueves": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "173",
+                  "name": "Zancadas ( desplantes) con mancuernas",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "35",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597406947.gif?alt=media&token=a9c4ab8a-bb91-47e9-acfe-ecf018e84dcc",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Da un paso largo al frente.\n\nBaja la rodilla trasera casi al suelo (ambas rodillas a 90 grados).\n\nEmpuja con el pie delantero para volver o avanzar.\n\nMantén el torso vertical.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "172",
+                  "name": "Curl femoral sentado",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "140",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597334345.png?alt=media&token=4922cc8f-7dae-42b7-812f-d712e8a1ef98",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta la almohadilla sobre los muslos para no levantarte.\n\nEmpuja los talones hacia abajo y atrás debajo del asiento.\n\nRegresa lento a la posición estirada.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "180",
+                  "name": "Aductor Interno en Máquina",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "10",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763598056574.gif?alt=media&token=a934486e-9a1a-428c-9852-a52784076fa0",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate y coloca las piernas por fuera de las almohadillas.\n\nCierra las piernas juntando las rodillas.\n\nAbre controlado.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "341",
+                  "name": "Peso Muerto con Bandas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "10",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1774487366338.gif?alt=media&token=d69c9c3b-61fb-4099-a38f-eaa62fd99812",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De pie con las piernas separadas a la anchura de los hombros, pon las bandas en algún soporte detrás del ti y agáchate hacia delante con la espalda recta, sacando glúteos. Coge los extremos de la banda y ponte en posición erguida, estirando bien el cuerpo en vertical y apretando los glúteos arriba.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "178",
+                  "name": "Extensión de Gemelos sentado en Máquina",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "145",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597916689.jpeg?alt=media&token=3ddc3b5a-a75d-4dae-afa5-9cdd864f0a41",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate en la máquina, almohadilla sobre muslos.\n\nBaja los talones.\n\nSube los talones usando solo los gemelos.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Variaciones de ejercicios, enfoque en glúteos/isquios",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2Fpierinaposterior.jpg?alt=media&token=b3e168e8-c3b8-4cfa-923c-2fff005ffb42"
+        },
+        "Martes": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "167",
+                  "name": "Sentadilla libre con Barra",
+                  "reps": "9",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "180",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763596892690.jpeg?alt=media&token=5eed33ed-1ac2-4a60-abb0-781622949bff",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Barra sobre trapecios, pies ancho de hombros.\n\nBaja la cadera atrás y abajo, espalda recta.\n\nRompe el paralelo (cadera bajo rodillas).\n\nSube empujando con toda la planta del pie.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "174",
+                  "name": "Sentadilla búlgara",
+                  "reps": "10",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "40",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597470039.gif?alt=media&token=fa743351-8799-4935-b05b-004b2fafc073",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Coloca un pie en un banco detrás de ti.\n\nBaja la cadera verticalmente hasta que la rodilla trasera casi toque el suelo.\n\nEmpuja con la pierna delantera para subir.\n\nMantén el equilibrio y el pecho alto.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Bi-Serie / Súper-Serie",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "169",
+                  "name": "Extensión de Cuádriceps en Máquina",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "190",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597046515.gif?alt=media&token=a0077caa-cd29-4d39-a207-575a232700fd",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta el rodillo sobre los tobillos.\n\nExtiende las piernas hasta que estén rectas.\n\nAprieta los cuádriceps un segundo arriba.\n\nBaja lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "172",
+                  "name": "Curl femoral sentado",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "140",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597334345.png?alt=media&token=4922cc8f-7dae-42b7-812f-d712e8a1ef98",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta la almohadilla sobre los muslos para no levantarte.\n\nEmpuja los talones hacia abajo y atrás debajo del asiento.\n\nRegresa lento a la posición estirada.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "170",
+                  "name": "Peso Muerto Rumano con Barra",
+                  "reps": "8",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "180",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597107478.gif?alt=media&token=e9b88404-6902-482f-aa32-ae444b727fab",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Sujeta la barra de pie.\n\nPiernas semirrígidas. Envía la cadera hacia atrás.\n\nBaja la barra rozando las piernas hasta sentir tensión en femorales (bajo las rodillas).\n\nSube empujando la cadera adelante.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "442",
+                  "name": "Pantorrilla parado en maquina",
+                  "reps": "12",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "75",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1775696525542.jpg?alt=media&token=61259662-381a-457d-86b6-746dc9d50588",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Posición Inicial\nAjuste de altura: Coloca las almohadillas de la máquina de modo que queden sobre tus hombros (trapecio) cuando estés de pie con las piernas extendidas.\nApoyo de los pies: Coloca la parte delantera de los pies (metatarsos) en el borde de la plataforma o escalón, dejando los talones al aire.\nAlineación: Mantén los pies separados a la anchura de las caderas y las rodillas con una ligera flexión (no las bloquees totalmente). \n\n2. Ejecución (Fase de Subida)\nExtensión completa: Empuja con las puntas de los pies para elevar los talones lo más alto posible.\nContracción: En el punto más alto, aprieta las pantorrillas y mantén la posición durante 1 o 2 segundos para maximizar el estímulo. \n\n3. Descenso (Fase de Estiramiento)\nControl: Baja los talones lentamente por debajo del nivel de la plataforma.\nRango completo: Siente el estiramiento profundo en el músculo antes de comenzar la siguiente repetición. \n\nConsejos de Seguridad y Técnica\nEvita el rebote: No utilices el impulso ni te \"columpies\". El movimiento debe ser pausado y controlado tanto al subir como al bajar.\nEspalda recta: Mantén el torso erguido y la mirada al frente o ligeramente hacia abajo para proteger la columna.\nSeguros de la máquina: Si usas la máquina Smith, asegúrate de colocar las barras de seguridad para prevenir accidentes en caso de resbalón.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "178",
+                  "name": "Extensión de Gemelos sentado en Máquina",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "145",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597916689.jpeg?alt=media&token=3ddc3b5a-a75d-4dae-afa5-9cdd864f0a41",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate en la máquina, almohadilla sobre muslos.\n\nBaja los talones.\n\nSube los talones usando solo los gemelos.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Bi-Serie / Súper-Serie",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Leg Day!",
+          "day_image": "https://i.pinimg.com/736x/23/8f/de/238fde01d678bb249fc7bcbce56ca568.jpg"
+        },
+        "Domingo": {
+          "blocks": [],
+          "day_name": "",
+          "day_image": ""
+        },
+        "Sábado": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "213",
+                  "name": "Crunch Superior de rodillas con Polea",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "85",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601262887.gif?alt=media&token=1213610a-2fee-41c2-9f11-745141200024",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De rodillas frente a polea alta con cuerda tras la nuca.\n\nDobla el torso hacia abajo llevando codos a rodillas.\n\nSube lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "210",
+                  "name": "Plancha",
+                  "reps": "30",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601134301.gif?alt=media&token=33e9fc22-1297-4074-99ff-cf55ef3b127f",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "EMPEZAR CON 20 SEGUNDOS\n\nCodos y puntas de pies en el suelo.\n\nCuerpo recto como una tabla.\n\nAprieta abdomen y glúteo. Aguanta.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "333",
+                  "name": "Puente de glúteos",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1774485502908.jpg?alt=media&token=49990a9b-bf99-4c78-a9de-8e8d334cf137",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Tumbada boca arriba con los bazos extendidos hacia los lados y los hombros perfectamente apoyados en el suelo, flexiona las rodillas y eleva poco a poco la cadera hasta formar una tabla. Contrae bien el glúteo e intenta apretar el abdomen para proteger la lumbar. Mantén la postura unos segundos activando los músculos de las piernas.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "223",
+                  "name": "Step Up con Mancuernas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "10",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601949544.gif?alt=media&token=864046e4-f4b4-4b16-bea6-152fef3d7691",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Coloca un pie entero sobre un cajón o banco (altura de la rodilla).\n\nInclina el peso hacia adelante sobre esa pierna.\n\nImpúlsate solo con la pierna de arriba (evita saltar con la de abajo).\n\nBaja muy lentamente (3-4 segundos) para mayor trabajo.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "175",
+                  "name": "Hip Thrust Inclinado con Barra",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763597512311.jpeg?alt=media&token=28da7d65-eaee-48d4-b486-a1b214ecc047",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Apoya la espalda alta en un banco, barra sobre la cadera.\n\nPies en el suelo. Levanta la cadera hasta alinear hombros, cadera y rodillas.\n\nAprieta glúteos arriba.\n\nBaja la cadera sin tocar el suelo y repite.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Core y gluteo",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2Ftorsoypostura.jpg?alt=media&token=83ea3b61-39db-47ca-9ee5-e4db37ef40bd"
+        },
+        "Viernes": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "160",
+                  "name": "Remo Horizontal Cerrado Neutro en Polea",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "140",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763595094143.gif?alt=media&token=a9e22a95-ead0-4d38-b9d5-397fa16e646c",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Siéntate con los pies en los apoyos, rodillas semiflexionadas.\n\nAgarra el maneral y mantén la espalda recta.\n\nJala el maneral hacia el abdomen bajo, sacando el pecho.\n\nEstira los brazos adelante sin curvar la espalda.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "147",
+                  "name": "Press inclinado con mancuernas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "10",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763594070072.gif?alt=media&token=d80253db-c546-48a0-88ed-c02011add7a1",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Ajusta el banco a 30-45 grados.\n\nSube las mancuernas a la altura de los hombros con las palmas mirando al frente.\n\nEmpuja hacia arriba hasta que los brazos estén extendidos.\n\nBaja lentamente hasta que las mancuernas estén a la altura del pecho.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "184",
+                  "name": "Elevaciones Laterales Neutras con Mancuernas",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "40",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599506863.gif?alt=media&token=4d2b7a22-49fb-45bf-9d49-41325d9e455d",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De pie, mancuernas a los lados.\n\nLevanta los brazos hacia los lados hasta la altura de hombros.\n\nCodos ligeramente flexionados, meñiques un poco más arriba que pulgares.\n\nBaja lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "191",
+                  "name": "Curl alternado con mancuernas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "47.5",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599923157.gif?alt=media&token=5826ac09-3136-4eb0-b98c-83dc3a8a325c",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Mancuernas a los lados.\n\nSube una, girando la muñeca (supinación) para que la palma mire arriba.\n\nBaja y repite con la otra mano.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "198",
+                  "name": "Extensión Vertical Neutra en Polea Alta",
+                  "reps": "15",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "140",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763600276463.gif?alt=media&token=a52b1623-30cb-4069-b543-3e5f09f2f00a",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Codos pegados a las costillas.\n\nBaja la barra extendiendo los brazos completamente.\n\nSube hasta que el antebrazo toque el bíceps (90 grados).",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Variaciones de ejercicios, enfoque en brazos",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2Fsuperioshombromujer.jpg?alt=media&token=93c31454-8f83-4f05-a942-e99609393da5"
+        },
+        "Miércoles": {
+          "blocks": [
+            {
+              "exercises": [
+                {
+                  "id": "182",
+                  "name": "Press Militar en Pronación con Mancuernas",
+                  "reps": "9",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "75",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763598254620.gif?alt=media&token=7d38ae1b-98e6-4c26-aba1-20837d4e80aa",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Sentado o de pie (RECOMENDADO EN BANCO CON RESPALDO) , mancuernas a la altura de las orejas.\n\nEmpuja hacia arriba hasta juntarlas (sin tocar).\n\nBaja hasta que los brazos formen 90 grados o un poco más.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "186",
+                  "name": "Elevaciones Frontales en Pronación con Mancuernas",
+                  "reps": "12",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "20",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599607058.gif?alt=media&token=72aec30e-9821-48e0-a2db-54ebd7441aaa",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Mancuernas o disco en manos.\n\nLevanta los brazos al frente hasta la altura de los ojos.\n\nBaja controlado. Evita columpiar el cuerpo.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Drop-Set",
+              "block_notes": "4ta serie al fallo"
+            },
+            {
+              "exercises": [
+                {
+                  "id": "184",
+                  "name": "Elevaciones Laterales Neutras con Mancuernas",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "40",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599506863.gif?alt=media&token=4d2b7a22-49fb-45bf-9d49-41325d9e455d",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De pie, mancuernas a los lados.\n\nLevanta los brazos hacia los lados hasta la altura de hombros.\n\nCodos ligeramente flexionados, meñiques un poco más arriba que pulgares.\n\nBaja lento.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "187",
+                  "name": "Pájaros sentado con Mancuernas",
+                  "reps": "15",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "30",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599665097.jpeg?alt=media&token=5b4bd1f4-b8c0-480e-9cae-1ad019c596e0",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Inclina el torso hacia adelante (casi paralelo al suelo).\n\nLevanta los brazos hacia los lados/atrás.\n\nEnfócate en la parte posterior del hombro, no en la espalda.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Drop-Set",
+              "block_notes": "3Er serie al fallo"
+            },
+            {
+              "exercises": [
+                {
+                  "id": "240",
+                  "name": "Aperturas Traseras en Pronación en Máquina",
+                  "reps": "12",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "45",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763603425405.jpeg?alt=media&token=0e09ef8a-4b08-4f22-8cc8-3d0f89789b3f",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Con la espalda recta coge un agarre con cada mano en pronación y sin balanceo ni impulso, lleva los soportes hacia los lados con los brazos rectos. Aprieta los hombros y aguanta durante uno o dos segundos. Retrocede de forma controlada a la posición inicial.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "191",
+                  "name": "Curl alternado con mancuernas",
+                  "reps": "10",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "47.5",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599923157.gif?alt=media&token=5826ac09-3136-4eb0-b98c-83dc3a8a325c",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Mancuernas a los lados.\n\nSube una, girando la muñeca (supinación) para que la palma mire arriba.\n\nBaja y repite con la otra mano.",
+                  "muscle_group": null
+                },
+                {
+                  "id": "192",
+                  "name": "Curl en Martillo Cruzado con Mancuernas",
+                  "reps": "10",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "35",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763599968120.jpeg?alt=media&token=ca98ad72-dc55-4167-bef7-319f47fb2427",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Palmas mirándose entre sí (agarre neutro).\n\nSube la mancuerna sin girar la muñeca.\n\nBaja igual. Enfoca el braquial y antebrazo.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Drop-Set",
+              "block_notes": "4ta serie al fallo"
+            },
+            {
+              "exercises": [
+                {
+                  "id": "477",
+                  "name": "Curl de bicep con barra",
+                  "reps": "9",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "90",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1775768486540.jpg?alt=media&token=09dc1d89-775b-4aa2-868e-439a58df3074",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Instrucciones Detalladas\nPosición inicial: Pies separados a la anchura de los hombros, rodillas ligeramente dobladas y espalda recta. Sujeta la barra con agarre en supinación (palmas hacia arriba), con las manos a la anchura de los hombros.\nMovimiento (Fase Concéntrica): Eleva la barra doblando los codos, acercándola al pecho sin mover los codos de su sitio. Exhala al subir.\nContracción: Aprieta los bíceps durante un segundo en la posición superior.\nDescenso (Fase Excéntrica): Baja la barra lentamente, manteniendo el control hasta la posición inicial. Inhala durante esta fase",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "211",
+                  "name": "Wheel Rollout de pie",
+                  "reps": "11",
+                  "sets": "4",
+                  "notes": "",
+                  "weight": "1",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601176223.jpeg?alt=media&token=080dbc22-79cb-4341-b052-465446529257",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "Rodillas en el suelo, sujeta la rueda.\n\nRueda hacia adelante estirando el cuerpo sin arquear la espalda.\n\nRegresa contrayendo el abdomen.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            },
+            {
+              "exercises": [
+                {
+                  "id": "213",
+                  "name": "Crunch Superior de rodillas con Polea",
+                  "reps": "12",
+                  "sets": "3",
+                  "notes": "",
+                  "weight": "85",
+                  "mediaUrl": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/exercises%2F1763601262887.gif?alt=media&token=1213610a-2fee-41c2-9f11-745141200024",
+                  "equipment": null,
+                  "id_company": null,
+                  "media_type": null,
+                  "description": "De rodillas frente a polea alta con cuerda tras la nuca.\n\nDobla el torso hacia abajo llevando codos a rodillas.\n\nSube lento.",
+                  "muscle_group": null
+                }
+              ],
+              "block_type": "Sencillo",
+              "block_notes": ""
+            }
+          ],
+          "day_name": "Hombro,Bicep y Abdomen",
+          "day_image": "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ejercicios%2Fcbumtrin.jpg?alt=media&token=d8a5bc94-74f2-4072-ad4f-1645b8383b9f"
+        }
+      },
+      "week_number": 2
+    }
+  ],
+  "total_weeks": 2
+}
