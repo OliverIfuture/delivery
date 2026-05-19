@@ -154,13 +154,77 @@ module.exports = {
 
     async update(req, res, next) {
         try {
-            const exercise = req.body;
+            // 1. Validar que vengan los datos
+            if (!req.body.exercise) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan los datos del ejercicio en la petición'
+                });
+            }
+
+            // 2. Parsear el JSON enviado desde Flutter
+            const exercise = JSON.parse(req.body.exercise);
+
+            // 3. --- EXTRACCIÓN DE ARCHIVOS NUEVOS (IMAGEN Y VIDEO) ---
+            let imageFile = null;
+            let videoFile = null;
+
+            if (req.files) {
+                if (req.files['image'] && req.files['image'].length > 0) {
+                    imageFile = req.files['image'][0];
+                }
+                if (req.files['video'] && req.files['video'].length > 0) {
+                    videoFile = req.files['video'][0];
+                }
+            }
+
+            console.log(`[UPDATE] Archivos nuevos -> Video: ${videoFile ? 'SI' : 'NO'}, Imagen: ${imageFile ? 'SI' : 'NO'}`);
+
+            // 4. --- SUBIDA A FIREBASE (STORAGE) SI HAY ARCHIVOS NUEVOS ---
+
+            // A) Subir Video Nuevo
+            if (videoFile) {
+                const pathVideo = `exercises/videos/${Date.now()}`;
+                const videoUrl = await storage(videoFile, pathVideo); // Asegúrate de tener importado storage
+
+                if (videoUrl) {
+                    exercise.mediaUrl = videoUrl; // Actualizamos la URL en el objeto
+                    exercise.media_type = 'video';
+                }
+            }
+
+            // B) Subir Imagen / Portada Nueva
+            if (imageFile) {
+                const pathImage = `exercises/thumbnails/${Date.now()}`;
+                const imageUrl = await storage(imageFile, pathImage);
+
+                if (imageUrl) {
+                    exercise.thumbnail_url = imageUrl;
+
+                    // Si el ejercicio es de "Solo Imagen" (No tiene video previo ni nuevo)
+                    if (!videoFile && exercise.media_type !== 'video') {
+                        exercise.mediaUrl = imageUrl;
+                        exercise.media_type = 'image';
+                    }
+                }
+            }
+
+            // 5. --- GUARDAR ACTUALIZACIÓN EN BASE DE DATOS ---
             await Exercise.update(exercise);
-            return res.status(201).json({ success: true, message: 'El ejercicio se actualizo correctamente' });
+
+            return res.status(200).json({
+                success: true,
+                message: 'Ejercicio actualizado correctamente',
+                data: exercise.id
+            });
+
+        } catch (error) {
+            console.log(`Error en exercisesController.update: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al actualizar el ejercicio',
+                error: error.message || error
+            });
         }
-        catch (error) {
-            console.log(`Error: ${error}`);
-            return res.status(501).json({ success: false, message: 'Hubo un error al actualizar el ejercicio', error: error });
-        }
-    },
+    }
 };

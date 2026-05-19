@@ -40,30 +40,29 @@ Exercise.create = (exercise) => {
  * Actualiza un ejercicio
  */
 Exercise.update = (exercise) => {
-    // (Tu lógica de 'update' existente...)
     const sql = `
-        UPDATE exercises
-        SET
+        UPDATE exercises SET
             name = $2,
             description = $3,
             muscle_group = $4,
             equipment = $5,
             media_url = $6,
-            media_type = $7,
-            updated_at = $8
-        WHERE
-            id = $1 AND id_company = $9
+            thumbnail_url = $7,
+            media_type = $8,
+            updated_at = $9
+        WHERE id = $1
     `;
+
     return db.none(sql, [
         exercise.id,
         exercise.name,
         exercise.description,
-        exercise.muscle_group,
+        exercise.muscle_group, // Ojo aquí: en el toJson() de Flutter lo mandamos como 'muscle_group'
         exercise.equipment,
-        exercise.media_url,
-        exercise.media_type,
-        new Date(),
-        exercise.idCompany
+        exercise.mediaUrl || exercise.media_url || null,
+        exercise.thumbnail_url || null,
+        exercise.media_type || exercise.mediaType, // Cacha ambos formatos
+        new Date()
     ]);
 };
 

@@ -29,8 +29,15 @@ module.exports = (app, upload) => {
     );
 
     // --- RUTAS PUT ---
-    // (Aquí irán las rutas para actualizar, ej: updateWithImage, update)
-
+    // RUTA PARA ACTUALIZAR (Asegúrate de tener importado 'upload')
+    app.put('/api/exercises/update',
+        passport.authenticate('jwt', { session: false }),
+        upload.fields([
+            { name: 'image', maxCount: 1 },
+            { name: 'video', maxCount: 1 }
+        ]),
+        exercisesController.update
+    );
     // --- RUTAS DELETE ---
     // (Aquí irá la ruta para eliminar)
     // RUTA PARA ELIMINAR UN EJERCICIO
