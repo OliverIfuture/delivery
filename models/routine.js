@@ -4,11 +4,10 @@ const Routine = {};
 
 Routine.create = (routine) => {
     return db.tx(async t => {
-        // PASO 1: Si la nueva rutina viene marcada como activa...
+        // PASO 1: Si es una rutina para cliente y viene activa, desactivamos la anterior
         const isActive = routine.is_active ?? false;
 
-        if (isActive) {
-            // ...buscamos cualquier rutina activa anterior de este cliente y la apagamos
+        if (isActive && routine.id_client) {
             const sqlDeactivate = `
                 UPDATE routines 
                 SET is_active = false, updated_at = $2
@@ -17,7 +16,7 @@ Routine.create = (routine) => {
             await t.none(sqlDeactivate, [routine.id_client, new Date()]);
         }
 
-        // PASO 2: Ahora sí, insertamos la nueva rutina con TODOS LOS NUEVOS CAMPOS
+        // PASO 2: Insertar rutina (agregado is_template)
         const sqlInsert = `
             INSERT INTO routines(
                 id_company,
@@ -29,26 +28,27 @@ Routine.create = (routine) => {
                 updated_at,
                 description,
                 rest_time,
-                image
+                image,
+                is_template
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id
         `;
 
         return t.one(sqlInsert, [
             routine.id_company,
-            routine.id_client,
+            routine.id_client || null, // Si es plantilla, esto llegará como null
             routine.name,
             routine.plan_data,
             isActive,
             new Date(),
             new Date(),
-            routine.description || null, // Guardamos el texto o NULL
-            routine.rest_time || 90,     // Guardamos el tiempo o 90s por defecto
-            routine.image || null        // Guardamos la imagen o NULL
+            routine.description || null,
+            routine.rest_time || 90,
+            routine.image || null,
+            routine.is_template || false // 🔥 Nuevo campo
         ]);
     });
 };
-
 Routine.update = (routine) => {
     const sql = `
         UPDATE routines
@@ -58,10 +58,11 @@ Routine.update = (routine) => {
             updated_at = $3,
             description = $5,
             rest_time = $6,
-            image = $7
+            image = $7,
+            is_template = $8,
+            id_client = $9
         WHERE
-            id = $4 
-            -- Eliminamos la restricción de id_company aquí para permitir auto-edición
+            id = $4
     `;
     return db.none(sql, [
         routine.name,
@@ -70,7 +71,9 @@ Routine.update = (routine) => {
         routine.id,
         routine.description || null,
         routine.rest_time || 90,
-        routine.image || null
+        routine.image || null,
+        routine.is_template || false, // 🔥 Actualizar estado de plantilla
+        routine.id_client || null     // 🔥 Actualizar cliente
     ]);
 };
 Routine.delete = (id_routine) => {
