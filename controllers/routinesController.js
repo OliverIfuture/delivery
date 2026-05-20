@@ -224,10 +224,6 @@ module.exports = {
                 routine.id_client = req.user.id;
             }
 
-            // VALIDACIÓN INMEDIATA ANTES DE PROCEDER
-            if (!routine.id_client) {
-                return res.status(400).json({ success: false, message: 'Error: No se pudo identificar al cliente para esta rutina.' });
-            }
 
             console.log('--- INTENTANDO CREAR RUTINA ---');
             console.log('ID Company final:', routine.id_company);
