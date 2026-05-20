@@ -9,6 +9,12 @@ module.exports = (app) => {
     // Obtener todas las rutinas creadas por un entrenador
     app.get('/api/routines/findByTrainer/:id_company', passport.authenticate('jwt', { session: false }), routinesController.findByTrainer);
 
+    // Agrega esto junto a tus otras rutas de rutinas
+    app.get('/api/routines/getTemplates/:id_company',
+        passport.authenticate('jwt', { session: false }),
+        routinesController.getTemplates
+    );
+
     // Obtener la rutina ACTIVA de un cliente específico (para la app del cliente)
     app.get('/api/routines/findActiveByClient/:id_client', passport.authenticate('jwt', { session: false }), routinesController.findActiveByClient);
 

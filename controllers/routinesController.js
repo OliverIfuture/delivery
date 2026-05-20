@@ -341,6 +341,22 @@ module.exports = {
         }
     },
 
+    async getTemplates(req, res, next) {
+        try {
+            const id_company = req.params.id_company;
+            const data = await Routine.getTemplates(id_company);
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            console.log(`Error en routinesController.getTemplates: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al buscar plantillas',
+                error: error
+            });
+        }
+    },
+
     /**
      * Buscar la rutina activa de un cliente
      */

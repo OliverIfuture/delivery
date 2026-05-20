@@ -122,6 +122,27 @@ Routine.findByTrainer = (id_company) => {
     return db.manyOrNone(sql, id_company);
 };
 
+Routine.getTemplates = (id_company) => {
+    const sql = `
+        SELECT
+            id,
+            id_company,
+            name,
+            description,
+            rest_time,
+            is_active,
+            plan_data,
+            is_template
+        FROM
+            routines
+        WHERE
+            id_company = $1 AND is_template = true
+        ORDER BY
+            updated_at DESC
+    `;
+    return db.manyOrNone(sql, id_company);
+};
+
 Routine.findActiveByClient = (id_client) => {
     const sql = `
         SELECT
