@@ -16,7 +16,7 @@ Routine.create = (routine) => {
             await t.none(sqlDeactivate, [routine.id_client, new Date()]);
         }
 
-        // PASO 2: Insertar rutina (agregado is_template)
+        // PASO 2: Insertar rutina (agregado is_template y current_week)
         const sqlInsert = `
             INSERT INTO routines(
                 id_company,
@@ -29,9 +29,10 @@ Routine.create = (routine) => {
                 description,
                 rest_time,
                 image,
-                is_template
+                is_template,
+                current_week
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id
         `;
 
         return t.one(sqlInsert, [
@@ -45,7 +46,8 @@ Routine.create = (routine) => {
             routine.description || null,
             routine.rest_time || 90,
             routine.image || null,
-            routine.is_template || false // 🔥 Nuevo campo
+            routine.is_template || false, // Plantilla
+            routine.current_week || 1     // 🔥 NUEVO: Semana actual (por defecto 1)
         ]);
     });
 };
