@@ -25,7 +25,9 @@ module.exports = {
             }
 
             console.log(`🚀 FINAL A GUARDAR EN BD: ${log.exercise_name} | REPS: ${log.completed_reps} | PESO: ${log.completed_weight}`);
-
+            // 🔥 Asegurarnos de que las coordenadas vengan, o poner defaults
+            log.day_name_key = req.body.day_name_key || "";
+            log.week_number = parseInt(req.body.week_number) || 1;
             // Enviamos el objeto 'log' (que ya viene en formato snake_case) directo a la BD
             const data = await WorkoutLog.create(log);
 
