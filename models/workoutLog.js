@@ -34,7 +34,7 @@ WorkoutLog.create = (log) => {
     const notes = log.notes ?? "";
     const createdAt = log.createdAt ?? log.created_at ?? new Date();
 
-    // 🔥 NUESTRAS COORDENADAS
+    // 🔥 TUS COORDENADAS EXACTAS
     const dayNameKey = log.day_name_key ?? "";
     const weekNumber = log.week_number ?? 1;
 
