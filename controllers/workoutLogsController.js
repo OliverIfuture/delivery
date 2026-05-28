@@ -189,7 +189,8 @@ module.exports = {
             const id_client = req.params.id_client;
             // CRÍTICO: Obtenemos el ID de la rutina de los query parameters
             const id_routine = req.params.idRoutine;
-
+            const week_number = req.params.week_number;
+            const day_name_key = req.params.day_name_key;
             if (!id_routine) {
                 return res.status(400).json({
                     success: false,
@@ -198,8 +199,7 @@ module.exports = {
             }
 
             // Llama a la función del modelo filtrada por la fecha de hoy
-            const data = await WorkoutLog.findByClientAndRoutineToday(id_client, id_routine);
-            // console.log(`logs del dia: ${JSON.stringify(data)}`);
+            const data = await WorkoutLog.findByClientAndRoutineToday(id_client, id_routine, week_number, day_name_key);            // console.log(`logs del dia: ${JSON.stringify(data)}`);
 
             return res.status(200).json(data);
         }

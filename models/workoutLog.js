@@ -39,13 +39,14 @@ WorkoutLog.create = (log) => {
     const weekNumber = log.week_number ?? 1;
 
     const sql = `
-        WITH inserted_log AS (
+WITH inserted_log AS (
             INSERT INTO workout_logs(
-                id_client, id_company, id_routine, exercise_name, 
-                set_number, planned_reps, planned_weight, 
-                completed_reps, completed_weight, notes, created_at, updated_at
+                id_client, id_company, id_routine, exercise_name,
+                set_number, planned_reps, planned_weight,
+                completed_reps, completed_weight, notes, created_at, updated_at,
+                day_name_key, week_number -- 🔥 AQUI ESTAN LOS NUEVOS CAMPOS
             )
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING id
         )
         UPDATE routines
@@ -265,25 +266,24 @@ SELECT
     return db.manyOrNone(sql, id_company);
 };
 
-WorkoutLog.findByClientAndRoutineToday = (id_client, id_routine) => {
+WorkoutLog.findByClientAndRoutineToday = (id_client, id_routine, week_number, day_name_key) => {
     const sql = `
         SELECT 
             id, id_client, id_company, id_routine, exercise_name, set_number, 
-            planned_reps, planned_weight, completed_reps, completed_weight, created_at
+            planned_reps, planned_weight, completed_reps, completed_weight, created_at,
+            week_number, day_name_key
         FROM 
             workout_logs
         WHERE 
             id_client = $1 AND 
             id_routine = $2 AND 
-            -- CORRECCIÓN DE ZONA HORARIA:
-            -- 1. Tomamos NOW() y lo convertimos a hora de México.
-            -- 2. Truncamos al inicio del día (00:00 AM de México).
-            -- 3. Comparamos si el registro se creó después de esa hora.
+            week_number = $3 AND   -- 🔥 MAGIA PURA: Filtra por la semana exacta
+            day_name_key = $4 AND  -- 🔥 MAGIA PURA: Filtra por el día exacto
             created_at >= DATE_TRUNC('day', NOW() AT TIME ZONE 'America/Mexico_City')
         ORDER BY 
             created_at ASC
     `;
-    return db.manyOrNone(sql, [id_client, id_routine]);
+    return db.manyOrNone(sql, [id_client, id_routine, week_number, day_name_key]);
 };
 
 WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {

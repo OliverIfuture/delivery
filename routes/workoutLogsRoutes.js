@@ -26,7 +26,7 @@ module.exports = (app) => {
     app.get('/api/workoutlogs/feed/:id_company', passport.authenticate('jwt', { session: false }), workoutLogsController.getTrainerFeed);
 
     app.get(
-        '/api/workoutlogs/findLogsForCurrentRoutine/:id_client/:idRoutine',
+        '/api/workoutlogs/findLogsForCurrentRoutine/:id_client/:idRoutine/:week_number/:day_name_key',
         passport.authenticate('jwt', { session: false }),
         workoutLogsController.findLogsForCurrentRoutine
     );
