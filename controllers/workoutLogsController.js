@@ -11,12 +11,11 @@ module.exports = {
 
             const log = req.body;
 
-            // 1. Sincronizamos las llaves de seguridad leyendo en snake_case
+            // 1. Sincronizamos llaves de seguridad
             log.id_client = req.user?.id || log.id_client;
             log.id_company = req.user?.id_entrenador || log.id_company || null;
 
-            // 🔥 2. FILTRO DE ÚLTIMA MILLA EN EL CONTROLADOR 🔥
-            // Ahora leemos 'completed_weight' y 'completed_reps' con guión bajo
+            // 2. Filtro de última milla
             if (log.completed_weight === null || log.completed_weight === undefined || log.completed_weight === "") {
                 log.completed_weight = 0.0;
             }
@@ -24,37 +23,35 @@ module.exports = {
                 log.completed_reps = 0;
             }
 
-            console.log(`🚀 FINAL A GUARDAR EN BD: ${log.exercise_name} | REPS: ${log.completed_reps} | PESO: ${log.completed_weight}`);
-            // 🔥 Asegurarnos de que las coordenadas vengan, o poner defaults
+            // 3. CAPTURAMOS LAS COORDENADAS
             log.day_name_key = req.body.day_name_key || "";
             log.week_number = parseInt(req.body.week_number) || 1;
-            // Enviamos el objeto 'log' (que ya viene en formato snake_case) directo a la BD
+
+            console.log(`🚀 INTENTANDO EDITAR EL JSON EN BD CON ESTAS COORDENADAS:`);
+            console.log(`   - Ejercicio: "${log.exercise_name}"`);
+            console.log(`   - Set a editar: ${log.set_number}`);
+            console.log(`   - Nuevo Peso: ${log.completed_weight}`);
+            console.log(`   - Llave del Día (CRÍTICO): "${log.day_name_key}" (Debe decir Lunes, Martes...)`);
+            console.log(`   - Semana: ${log.week_number}`);
+
             const data = await WorkoutLog.create(log);
 
             console.log(`✅ Registro guardado exitosamente con ID: ${data?.id}`);
-
-            // Actualizar racha usando el ID correcto
             await User.updateStreak(log.id_client);
-
             console.log('======================================================\n');
 
             return res.status(201).json({
                 success: true,
-                message: 'Rutina actualizada y racha incrementada.',
+                message: 'Rutina actualizada.',
                 data: { 'id': data.id }
             });
         }
         catch (error) {
             console.log('\n❌ ERROR FINAL AL CREAR LOG:', error);
             console.log('======================================================\n');
-            return res.status(501).json({
-                success: false,
-                message: 'Error al procesar el entrenamiento',
-                error: error.message || error
-            });
+            return res.status(501).json({ success: false, error: error.message });
         }
     },
-
     async create3(req, res, next) {
         try {
             const log = req.body;
