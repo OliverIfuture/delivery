@@ -34,7 +34,7 @@ WorkoutLog.create = (log) => {
     const notes = log.notes ?? "";
     const createdAt = log.createdAt ?? log.created_at ?? new Date();
 
-    // 🔥 NUESTRAS COORDENADAS PERFECTAS
+    // 🔥 NUESTRAS COORDENADAS
     const dayNameKey = log.day_name_key ?? "";
     const weekNumber = log.week_number ?? 1;
 
@@ -59,14 +59,14 @@ WorkoutLog.create = (log) => {
                     '{weeks}',
                     (
                         SELECT COALESCE(jsonb_agg(
-                            -- 🎯 FILTRO 1: ¿Es la semana correcta? ($14 = weekNumber)
-                            CASE WHEN (week_obj->>'week_number')::int = $14::int THEN
+                            -- 🎯 FILTRO 1: ¿Es la semana corriente O la siguiente semana? ($14 o $14 + 1)
+                            CASE WHEN (week_obj->>'week_number')::int IN ($14::int, $14::int + 1) THEN
                                 jsonb_set(
                                     week_obj,
                                     '{days}',
                                     (
                                         SELECT COALESCE(jsonb_object_agg(day_key, 
-                                            -- 🎯 FILTRO 2: ¿Es el día correcto? ($13 = dayNameKey)
+                                            -- 🎯 FILTRO 2: ¿Es el día correcto?
                                             CASE WHEN LOWER(TRIM(day_key)) = LOWER(TRIM($13::text)) THEN
                                                 jsonb_set(
                                                     day_val,
@@ -79,7 +79,7 @@ WorkoutLog.create = (log) => {
                                                                 (
                                                                     SELECT COALESCE(jsonb_agg(
                                                                         CASE 
-                                                                            -- 🎯 FILTRO 3: ¿Es el ejercicio correcto? ($4 = exerciseName)
+                                                                            -- 🎯 FILTRO 3: ¿Es el ejercicio correcto?
                                                                             WHEN LOWER(TRIM(ex_obj->>'name')) = LOWER(TRIM($4::text))
                                                                             THEN 
                                                                                 CASE 
@@ -91,32 +91,43 @@ WorkoutLog.create = (log) => {
                                                                                             '{sets}',
                                                                                             (
                                                                                                 SELECT COALESCE(jsonb_agg(
-                                                                                                    -- 🎯 FILTRO 4: ¿Es el Set correcto? ($5 = setNumber)
+                                                                                                    -- 🎯 FILTRO 4: ¿Es el Set correcto?
                                                                                                     CASE WHEN (idx - 1) = ($5::int - 1)
                                                                                                          THEN 
-                                                                                                            set_item || jsonb_build_object(
-                                                                                                                'weight', $9::text, -- $9 = completedWeight
-                                                                                                                'reps', $8::text    -- $8 = completedReps
-                                                                                                            )
+                                                                                                            CASE 
+                                                                                                                -- A) SEMANA CORRIENTE: Actualizamos PESO y REPS
+                                                                                                                WHEN (week_obj->>'week_number')::int = $14::int THEN
+                                                                                                                    set_item || jsonb_build_object('weight', $9::text, 'reps', $8::text)
+                                                                                                                -- B) SEMANA SIGUIENTE: Actualizamos SOLO EL PESO (Reps intactas)
+                                                                                                                WHEN (week_obj->>'week_number')::int = ($14::int + 1) THEN
+                                                                                                                    set_item || jsonb_build_object('weight', $9::text)
+                                                                                                                ELSE set_item
+                                                                                                            END
                                                                                                          ELSE 
                                                                                                             set_item
                                                                                                     END
-                                                                                                    ORDER BY idx -- 🔥 EVITAMOS QUE SE REVUELVAN LOS SETS
+                                                                                                    ORDER BY idx
                                                                                                 ), '[]'::jsonb)
                                                                                                 FROM jsonb_array_elements(ex_obj->'sets') WITH ORDINALITY AS arr(set_item, idx)
                                                                                             )
                                                                                         )
                                                                                     ELSE
-                                                                                        ex_obj || jsonb_build_object('weight', $9::text, 'reps', $8::text)
+                                                                                        CASE 
+                                                                                            WHEN (week_obj->>'week_number')::int = $14::int THEN
+                                                                                                ex_obj || jsonb_build_object('weight', $9::text, 'reps', $8::text)
+                                                                                            WHEN (week_obj->>'week_number')::int = ($14::int + 1) THEN
+                                                                                                ex_obj || jsonb_build_object('weight', $9::text)
+                                                                                            ELSE ex_obj
+                                                                                        END
                                                                                 END
                                                                             ELSE ex_obj
                                                                         END
-                                                                        ORDER BY ex_idx -- 🔥 EVITAMOS QUE SE REVUELVAN LOS EJERCICIOS
+                                                                        ORDER BY ex_idx
                                                                     ), '[]'::jsonb)
                                                                     FROM jsonb_array_elements(CASE WHEN jsonb_typeof(block_obj->'exercises') = 'array' THEN block_obj->'exercises' ELSE '[]'::jsonb END) WITH ORDINALITY AS ex_arr(ex_obj, ex_idx)
                                                                 )
                                                             )
-                                                            ORDER BY blk_idx -- 🔥 EVITAMOS QUE SE REVUELVAN LOS BLOQUES
+                                                            ORDER BY blk_idx
                                                         ), '[]'::jsonb)
                                                         FROM jsonb_array_elements(CASE WHEN jsonb_typeof(day_val->'blocks') = 'array' THEN day_val->'blocks' ELSE '[]'::jsonb END) WITH ORDINALITY AS blk_arr(block_obj, blk_idx)
                                                     )
@@ -127,7 +138,7 @@ WorkoutLog.create = (log) => {
                                     )
                                 )
                             ELSE week_obj END
-                            ORDER BY wk_idx -- 🔥 EVITAMOS QUE SE REVUELVAN LAS SEMANAS
+                            ORDER BY wk_idx
                         ), '[]'::jsonb)
                         FROM jsonb_array_elements(CASE WHEN jsonb_typeof(plan_data->'weeks') = 'array' THEN plan_data->'weeks' ELSE '[]'::jsonb END) WITH ORDINALITY AS wk_arr(week_obj, wk_idx)
                     )
