@@ -1351,7 +1351,7 @@ module.exports = {
 
             const id = req.params.id;
 
-            // const data = await User.findByUserIdPhone(id);
+            const data = await User.findByUserIdPhone(id);
             console.log(`Datos enviados del usuario: ${JSON.stringify(data)}`);
             return res.status(201).json(data);
 

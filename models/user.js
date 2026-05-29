@@ -971,18 +971,12 @@ User.findByUserIdPhone = (id) => {
         U.id,
         U.name,
         U.phone,
-        U.password,
-        U.session_token,
-        U.notification_token,
-        U.balance,
-	U.company,
- 	U.activate,
-  	U.isadmin
-	
-    FROM 
-        users_dealer AS U
+        U.balance
+
+    FROM
+        users AS U
     WHERE
-        U.id = $1
+        U.phone = $1 and id_entrenador = 4
     GROUP BY
         U.id
     `
