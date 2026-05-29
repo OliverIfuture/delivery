@@ -14,7 +14,8 @@ SELECT
 FROM
     users u
 LEFT JOIN
-    client_subscriptions m ON u.id = m.id_client;
+    client_subscriptions m ON u.id = m.id_client
+	where id_entrenador != 4;
     `;
 
     return db.manyOrNone(sql);
