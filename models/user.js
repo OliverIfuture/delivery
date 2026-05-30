@@ -1549,6 +1549,7 @@ User.getByClientRealSubs = (id_client) => {
 User.getAllUsers = () => {
     const sql = `
         SELECT * FROM public.users
+   where id_entrenador != 4
         ORDER BY id DESC
     `;
 
