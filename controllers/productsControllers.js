@@ -249,6 +249,25 @@ module.exports = {
         }
     },
 
+
+    async getPostAllV2(req, res, next) {
+        try {
+            // 🔥 1. Atrapamos el id del usuario que hace la petición
+            const id_user = req.params.id_user;
+
+            // 🔥 2. Se lo pasamos al NUEVO modelo V2
+            const data = await Product.getPostAllV2(id_user);
+
+            return res.status(200).json(data); // 200 es el código correcto para GET
+        }
+        catch (error) {
+            console.log(`error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'error al obtener posts v2'
+            });
+        }
+    },
     async castVote(req, res, next) {
         try {
             const { id_post, option_id } = req.body;
@@ -343,6 +362,55 @@ module.exports = {
 
         }
         catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al publicar',
+                error: error
+            });
+        }
+    },
+    async createPostV2(req, res, next) {
+        try {
+            // 1. Extraemos todos los datos que manda Flutter (incluido el nuevo is_trainer)
+            const id_user = req.body.id_user;
+            const description = req.body.description;
+            const is_trainer = req.body.is_trainer ? req.body.is_trainer : 'false';
+            const poll_options = req.body.poll_options ? req.body.poll_options : null;
+
+            const files = req.files;
+            let finalImageString = null;
+
+            // 2. Procesamos si hay imágenes
+            if (files && files.length > 0) {
+                let uploadedUrls = [];
+
+                // Recorremos cada imagen seleccionada y la subimos
+                for (let i = 0; i < files.length; i++) {
+                    const pathImage = `image_${Date.now()}_${i}`;
+                    const url = await storage(files[i], pathImage); // Aquí usas tu función actual de subir
+
+                    if (url != undefined && url != null) {
+                        uploadedUrls.push(url);
+                    }
+                }
+
+                // Si se subieron fotos con éxito, convertimos el array a un JSON String 
+                // Esto es perfecto porque tu código en Flutter intenta leer arrays JSON primero.
+                if (uploadedUrls.length > 0) {
+                    finalImageString = JSON.stringify(uploadedUrls);
+                }
+            }
+
+            // 3. Llamamos al nuevo modelo V2
+            await Product.createPostV2(id_user, description, finalImageString, is_trainer, poll_options);
+
+            return res.status(201).json({
+                success: true,
+                message: 'El registro se realizó correctamente',
+            });
+
+        } catch (error) {
             console.log(`Error: ${error}`);
             return res.status(501).json({
                 success: false,

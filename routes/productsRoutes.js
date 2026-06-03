@@ -24,6 +24,7 @@ module.exports = (app, upload) => {
   app.post('/api/products/reportPost', passport.authenticate('jwt', { session: false }), productsControllers.reportPost);
   app.post('/api/products/blockUser', passport.authenticate('jwt', { session: false }), productsControllers.blockUser);
   app.post('/api/products/createPost', upload.array('image', 1), productsControllers.createPost);
+  app.post('/api/products/createPost/v2', upload.array('image', 10), productsControllers.createPostV2);
   app.post('/api/products/create', passport.authenticate('jwt', { session: false }), upload.array('image', 3), productsControllers.create);
   app.post('/api/products/createPLate', passport.authenticate('jwt', { session: false }), upload.array('image', 3), productsControllers.createPLate);
   app.post('/api/products/createTab', passport.authenticate('jwt', { session: false }), upload.array('image', 3), productsControllers.createTab);
@@ -67,6 +68,7 @@ module.exports = (app, upload) => {
   app.get('/api/products/getPost/:id_user', productsControllers.getPost);
   // Pasamos el :id_user en la URL
   app.get('/api/products/getPostAll/:id_user', passport.authenticate('jwt', { session: false }), productsControllers.getPostAll);
+  app.get('/api/products/getPostAll/v2/:id_user', passport.authenticate('jwt', { session: false }), productsControllers.getPostAllV2);
   app.get('/api/products/findReview/:id', productsControllers.findReview);
   app.get('/api/products/findReviewProduct/:id', productsControllers.findReviewProduct);
 

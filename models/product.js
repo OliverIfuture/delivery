@@ -152,6 +152,40 @@ Product.createPost = (id_user, description, url, poll_options) => {
     ]);
 }
 
+Product.createPostV2 = (id_user, description, image_urls_json, is_trainer, poll_options) => {
+    const sql = `
+    WITH rows AS (
+      INSERT INTO
+            post(
+                id_user,
+                description,
+                image_post, -- Aquí entra el String JSON con el carrete entero
+                id_company,
+                poll_options,
+                is_trainer -- 🔥 NUEVO CAMPO PARA EL FILTRO COMUNIDAD
+            )
+        VALUES($1, $2, $3, $4, $5, $6) RETURNING id
+    )
+    INSERT INTO likes_publish(
+        id_publish, 
+        username,
+        useremail,
+        id_user
+    )
+    SELECT id, '0', '0', '0'
+    FROM rows
+    `;
+
+    return db.oneOrNone(sql, [
+        id_user,
+        description,
+        image_urls_json, // Enviamos el JSON String o null
+        1,               // Suponiendo que id_company siempre sea 1 por ahora
+        poll_options,
+        is_trainer === 'true' || is_trainer === true // Aseguramos que guarde un Boolean puro en PGAdmin
+    ]);
+}
+
 
 Product.createClassroomLesson = (lesson) => {
     const sql = `
@@ -381,6 +415,69 @@ GROUP BY P.id, U.name, U.image, P.poll_options
 ORDER BY P.is_pinned DESC, P.id DESC;
     `;
     return db.manyOrNone(sql, [id_user]); // 🔥 Pasamos el parámetro $1
+}
+
+Product.getPostAllV2 = (id_user) => {
+    const sql = `
+SELECT
+    P.id,
+    P.id_user,
+    P.description,
+    P.image_post,
+    P.social,
+    P.id_company,
+    P.is_pinned,
+    P.poll_options,
+    P.is_trainer, -- 🔥 NUEVO PARÁMETRO AGREGADO AQUÍ 🔥
+    U.name,
+    U.image AS photo,
+    
+    -- 1. Total de votos
+    (SELECT COUNT(*) FROM poll_votes WHERE id_post = P.id) AS total_votes,
+
+    -- 2. TOTAL DE COMENTARIOS
+    (SELECT COUNT(*) FROM coments_post WHERE id_post = P.id) AS "C.countpost",
+
+    -- Detalle de Votos
+    (
+        SELECT COALESCE(json_agg(json_build_object(
+            'id_user', pv.id_user,
+            'option_id', pv.option_id,
+            'user_photo', u2.image,
+            'user_name', u2.name 
+        )), '[]')
+        FROM poll_votes pv
+        INNER JOIN users u2 ON u2.id = pv.id_user
+        WHERE pv.id_post = P.id
+    ) AS votes_detail,
+
+    -- Detalle de Likes
+    (
+        SELECT COALESCE(json_agg(json_build_object(
+            'id', lp.id,
+            'id_user', lp.id_user,
+            'username', u3.name,
+            'userImage', u3.image,
+            'useremail', lp.useremail
+        )), '[]')
+        FROM likes_publish lp
+        INNER JOIN users u3 ON u3.id = lp.id_user
+        WHERE lp.id_publish = P.id
+    ) AS likespost
+
+FROM post AS P
+INNER JOIN users AS U ON U.id = P.id_user
+WHERE P.id_company = 1
+
+  -- FILTROS DE MODERACIÓN APPLE
+  AND P.id NOT IN (SELECT post_id FROM reported_posts WHERE user_id = $1)
+  AND P.id_user NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = $1)
+  AND P.id_user NOT IN (SELECT blocker_id FROM blocked_users WHERE blocked_id = $1)
+
+GROUP BY P.id, U.name, U.image, P.poll_options
+ORDER BY P.is_pinned DESC, P.id DESC;
+    `;
+    return db.manyOrNone(sql, [id_user]);
 }
 
 Product.togglePinPost = (id_post) => {
