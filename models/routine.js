@@ -57,25 +57,26 @@ Routine.update = (routine) => {
         SET
             name = $1,
             plan_data = $2,
-            updated_at = $3,
-            description = $5,
-            rest_time = $6,
-            image = $7,
-            is_template = $8,
-            id_client = $9
+            -- 🔥 MAGIA SQL: Tomamos la hora actual exacta y la forzamos a CDMX
+            updated_at = NOW() AT TIME ZONE 'America/Mexico_City',
+            description = $4,
+            rest_time = $5,
+            image = $6,
+            is_template = $7,
+            id_client = $8
         WHERE
-            id = $4
+            id = $3
     `;
+
     return db.none(sql, [
-        routine.name,
-        routine.plan_data,
-        new Date(),
-        routine.id,
-        routine.description || null,
-        routine.rest_time || 90,
-        routine.image || null,
-        routine.is_template || false, // 🔥 Actualizar estado de plantilla
-        routine.id_client || null     // 🔥 Actualizar cliente
+        routine.name,                 // $1
+        routine.plan_data,            // $2
+        routine.id,                   // $3 (Movimos el ID aquí para mantener orden)
+        routine.description || null,  // $4
+        routine.rest_time || 90,      // $5
+        routine.image || null,        // $6
+        routine.is_template || false, // $7 🔥 Actualizar estado de plantilla
+        routine.id_client || null     // $8 🔥 Actualizar cliente
     ]);
 };
 Routine.delete = (id_routine) => {
@@ -151,9 +152,20 @@ Routine.getTemplates = (id_company) => {
 Routine.findActiveByClient = (id_client) => {
     const sql = `
         SELECT
-            r.*,
-            c.name as trainer_name,
-            c.logo as trainer_logo
+            r.id,
+            r.id_company,
+            r.id_client,
+            r.name,
+            r.plan_data,
+            r.is_active,
+            r.image,
+            r.description,
+            r.rest_time,
+            r.is_template,
+            r.current_week,
+            r.created_at AS updated_at, -- 🔥 Aquí hacemos el truco del renombre
+            c.name AS trainer_name,
+            c.logo AS trainer_logo
         FROM
             routines AS r
         LEFT JOIN -- LEFT JOIN porque ahora puede no tener compañía
