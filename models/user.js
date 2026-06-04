@@ -2532,6 +2532,9 @@ User.addPoints = async (id_user, action_type, points) => {
 // =========================================================================
 // GAMIFICACIÓN: OBTENER LEADERBOARDS
 // =========================================================================
+// =========================================================================
+// GAMIFICACIÓN: OBTENER LEADERBOARDS
+// =========================================================================
 User.getLeaderboard = (period) => {
     let timeCondition = '';
 
@@ -2550,6 +2553,7 @@ User.getLeaderboard = (period) => {
             SELECT 
                 id, 
                 name, 
+                lastname AS city, -- 🔥 AQUÍ LEEMOS LASTNAME COMO CIUDAD
                 image AS photo, 
                 COALESCE(total_points, 0) AS score, 
                 COALESCE(current_level, 1) AS level 
@@ -2563,13 +2567,14 @@ User.getLeaderboard = (period) => {
             SELECT 
                 u.id, 
                 u.name, 
+                u.lastname AS city, -- 🔥 AQUÍ LEEMOS LASTNAME COMO CIUDAD
                 u.image AS photo, 
                 SUM(p.points) AS score,
                 COALESCE(u.current_level, 1) AS level
             FROM points_log p
             INNER JOIN users u ON u.id = p.id_user
             ${timeCondition}
-            GROUP BY u.id, u.name, u.image, u.current_level
+            GROUP BY u.id, u.name, u.lastname, u.image, u.current_level -- 🔥 AGREGADO AL GROUP BY
             ORDER BY score DESC
             LIMIT 10;
         `;
@@ -2577,5 +2582,4 @@ User.getLeaderboard = (period) => {
 
     return db.manyOrNone(sql);
 };
-
 module.exports = User;
