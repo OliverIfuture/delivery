@@ -598,16 +598,18 @@ module.exports = {
                 m: r.multiplier || 1
             }));
 
-            // --- PASO 2: PROMPT ULTRA-LIGERO Y ESTRICTO CON LAS UNIDADES ---
-            const promptText = `Genera una lista de compras consolidada en JSON.
+            // --- PASO 2: PROMPT CON LÓGICA DE SUPERMERCADO ---
+            const promptText = `Eres un experto en compras de supermercado y nutrición. Genera una lista de compras consolidada en JSON.
         Datos: ${JSON.stringify(simplifiedRecipes)}
 
-        Tarea:
+        Reglas estrictas de cálculo y unidades:
         1. Multiplica la cantidad de cada ingrediente por el multiplicador "m".
-        2. Consolida ingredientes duplicados sumando sus cantidades. 
-        3. REGLA ESTRICTA DE UNIDADES: Siempre incluye la unidad de medida junto a la cantidad final (ej. "500 g", "2 tazas", "1.5 kg", "300 ml").
-        4. Si un ingrediente original no especifica unidad (ej. solo dice "3"), usa "piezas" o "unidades" (ej. "3 piezas"). NUNCA devuelvas solo un número.
-        5. Clasifica en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
+        2. Consolida ingredientes idénticos sumando sus cantidades. 
+        3. UNIDADES REALES: Expresa las cantidades SIEMPRE en medidas de supermercado: gramos (g), kilogramos (kg), mililitros (ml), litros (L), tazas, o piezas.
+        4. PROHIBIDO USAR "PORCIONES" O "PIEZAS" EN CARNES: Si el texto original dice "Carne", "Pollo", "Pescado", "Jamón" o "Pavo" y no tiene un peso exacto (ej. dice "1 porción" o "1"), ASUME que 1 porción = 150 g y haz el cálculo matemático. (Ej: 2 porciones de pollo = "300 g").
+        5. LÓGICA DE PIEZAS: Usa "piezas" ÚNICAMENTE para cosas que se compran enteras lógicamente (Ej: "huevos", "manzanas", "aguacates", "plátanos", "pan").
+        6. Si dice "Verduras" o "Fruta" en general sin peso, asume "150 g" o "1 taza" por porción.
+        7. Clasifica en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
         
         Esquema de salida:
         {
@@ -616,8 +618,8 @@ module.exports = {
               "name": "Nombre Categoría",
               "items": [
                 { 
-                  "name": "Nombre del ingrediente", 
-                  "quantity": "Número + Unidad (Ej: '2 piezas', '500 g', '1 taza')", 
+                  "name": "Nombre del producto limpio", 
+                  "quantity": "Número + Unidad lógica (Ej: '300 g', '2 piezas', '1 taza')", 
                   "isChecked": false 
                 }
               ]
@@ -626,12 +628,13 @@ module.exports = {
         }
         Responde exclusivamente con el JSON, sin texto adicional ni bloques de código.`;
 
-            // --- PASO 3: LLAMADA A GEMINI CON CONFIGURACIÓN DE VELOCIDAD ---
+            // --- PASO 3: LLAMADA A GEMINI FLASH LITE ---
             const model = aiClient.getGenerativeModel({
-                model: "gemini-2.5-flash-lite",
+                model: "gemini-2.5-flash-lite", // Modelo ultra rápido
                 generationConfig: {
                     responseMimeType: "application/json",
-                    temperature: 0.1
+                    temperature: 0.1, // Respuesta matemática y predecible
+                    maxOutputTokens: 1500 // Evita que se quede pensando de más
                 }
             });
 
@@ -641,8 +644,8 @@ module.exports = {
 
             if (!text) throw new Error("La IA devolvió un cuerpo vacío.");
 
-            // Parseo seguro
-            const shoppingListJSON = JSON.parse(text.replace(/```json|```/g, ""));
+            // Parseo seguro (limpia los acentos graves si la IA decide ponerlos a pesar de la instrucción)
+            const shoppingListJSON = JSON.parse(text.replace(/```json|```/gi, ""));
 
             return res.status(200).json({
                 success: true,
