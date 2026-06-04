@@ -634,7 +634,7 @@ module.exports = {
 
             // --- PASO 3: LLAMADA A GEMINI FLASH LITE ---
             const model = aiClient.getGenerativeModel({
-                model: "gemini-2.5-flash-lite",
+                model: "gemini-3.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
                     temperature: 0.1, // Baja temperatura para seguir instrucciones estrictas
