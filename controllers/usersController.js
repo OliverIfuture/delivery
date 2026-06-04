@@ -2831,11 +2831,27 @@ module.exports = {
     // =========================================================================
     // GAMIFICACIÓN: DEVOLVER LA LISTA DE TOPS
     // =========================================================================
+    // =========================================================================
+    // GAMIFICACIÓN: DEVOLVER LA LISTA DE TOPS POR COMUNIDAD
+    // =========================================================================
     async getLeaderboard(req, res, next) {
         try {
             const period = req.params.period; // '7days', '30days', 'alltime'
 
-            const data = await User.getLeaderboard(period);
+            // 🔥 EXTRAEMOS LA COMUNIDAD DEL USUARIO QUE HACE LA PETICIÓN
+            // Si es cliente, su comunidad es 'id_entrenador'. 
+            // Si es el entrenador, su comunidad es 'mi_store'.
+            const id_comunidad = req.user.id_entrenador || req.user.mi_store;
+
+            if (!id_comunidad) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El usuario no tiene una comunidad asignada.'
+                });
+            }
+
+            // Pasamos el id_comunidad a la consulta SQL
+            const data = await User.getLeaderboard(period, id_comunidad);
 
             return res.status(200).json(data);
         } catch (error) {

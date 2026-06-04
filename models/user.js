@@ -2538,13 +2538,17 @@ User.addPoints = async (id_user, action_type, points) => {
 // =========================================================================
 // GAMIFICACIÓN: OBTENER LEADERBOARDS
 // =========================================================================
-User.getLeaderboard = (period) => {
+// =========================================================================
+// GAMIFICACIÓN: OBTENER LEADERBOARDS (FILTRADO POR COMUNIDAD)
+// =========================================================================
+User.getLeaderboard = (period, id_entrenador) => {
     let timeCondition = '';
 
+    // 🔥 OJO AQUÍ: Cambiamos "WHERE" por "AND" porque el WHERE principal será el id_entrenador
     if (period === '7days') {
-        timeCondition = "WHERE p.created_at >= CURRENT_DATE - INTERVAL '7 days'";
+        timeCondition = "AND p.created_at >= CURRENT_DATE - INTERVAL '7 days'";
     } else if (period === '30days') {
-        timeCondition = "WHERE p.created_at >= CURRENT_DATE - INTERVAL '30 days'";
+        timeCondition = "AND p.created_at >= CURRENT_DATE - INTERVAL '30 days'";
     }
 
     let sql;
@@ -2556,10 +2560,11 @@ User.getLeaderboard = (period) => {
                 name, 
                 lastname AS city, 
                 image AS photo, 
-                created_at, -- 🔥 AQUÍ AGREGAMOS LA FECHA
+                created_at, 
                 COALESCE(total_points, 0) AS score, 
                 COALESCE(current_level, 1) AS level 
             FROM users 
+            WHERE id_entrenador = $1 -- 🔥 FILTRO DE COMUNIDAD
             ORDER BY score DESC 
             LIMIT 10;
         `;
@@ -2570,18 +2575,19 @@ User.getLeaderboard = (period) => {
                 u.name, 
                 u.lastname AS city, 
                 u.image AS photo, 
-                u.created_at, -- 🔥 AQUÍ AGREGAMOS LA FECHA
+                u.created_at, 
                 SUM(p.points) AS score,
                 COALESCE(u.current_level, 1) AS level
             FROM points_log p
             INNER JOIN users u ON u.id = p.id_user
+            WHERE u.id_entrenador = $1 -- 🔥 FILTRO DE COMUNIDAD
             ${timeCondition}
-            GROUP BY u.id, u.name, u.lastname, u.image, u.created_at, u.current_level -- 🔥 AGREGADO AL GROUP BY
+            GROUP BY u.id, u.name, u.lastname, u.image, u.created_at, u.current_level
             ORDER BY score DESC
             LIMIT 10;
         `;
     }
 
-    return db.manyOrNone(sql);
+    return db.manyOrNone(sql, id_entrenador);
 };
 module.exports = User;
