@@ -2535,10 +2535,12 @@ User.addPoints = async (id_user, action_type, points) => {
 // =========================================================================
 // GAMIFICACIÓN: OBTENER LEADERBOARDS
 // =========================================================================
+// =========================================================================
+// GAMIFICACIÓN: OBTENER LEADERBOARDS
+// =========================================================================
 User.getLeaderboard = (period) => {
     let timeCondition = '';
 
-    // Filtramos según el periodo solicitado por la app
     if (period === '7days') {
         timeCondition = "WHERE p.created_at >= CURRENT_DATE - INTERVAL '7 days'";
     } else if (period === '30days') {
@@ -2548,13 +2550,13 @@ User.getLeaderboard = (period) => {
     let sql;
 
     if (period === 'alltime') {
-        // All-Time lo leemos directo del usuario (mucho más rápido)
         sql = `
             SELECT 
                 id, 
                 name, 
-                lastname AS city, -- 🔥 AQUÍ LEEMOS LASTNAME COMO CIUDAD
+                lastname AS city, 
                 image AS photo, 
+                created_at, -- 🔥 AQUÍ AGREGAMOS LA FECHA
                 COALESCE(total_points, 0) AS score, 
                 COALESCE(current_level, 1) AS level 
             FROM users 
@@ -2562,19 +2564,19 @@ User.getLeaderboard = (period) => {
             LIMIT 10;
         `;
     } else {
-        // Los temporales requieren sumar el historial de puntos reciente
         sql = `
             SELECT 
                 u.id, 
                 u.name, 
-                u.lastname AS city, -- 🔥 AQUÍ LEEMOS LASTNAME COMO CIUDAD
+                u.lastname AS city, 
                 u.image AS photo, 
+                u.created_at, -- 🔥 AQUÍ AGREGAMOS LA FECHA
                 SUM(p.points) AS score,
                 COALESCE(u.current_level, 1) AS level
             FROM points_log p
             INNER JOIN users u ON u.id = p.id_user
             ${timeCondition}
-            GROUP BY u.id, u.name, u.lastname, u.image, u.current_level -- 🔥 AGREGADO AL GROUP BY
+            GROUP BY u.id, u.name, u.lastname, u.image, u.created_at, u.current_level -- 🔥 AGREGADO AL GROUP BY
             ORDER BY score DESC
             LIMIT 10;
         `;
