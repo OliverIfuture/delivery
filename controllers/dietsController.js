@@ -592,29 +592,35 @@ module.exports = {
             console.log(`[SHOPPING-LIST] Procesando ${recipes.length} recetas para ${days} días.`);
 
             // --- PASO 1: LIMPIEZA CRÍTICA DE DATOS ---
-            // Solo enviamos el título, los ingredientes y el multiplicador.
-            // Esto reduce el tamaño del prompt en un 80-90%.
             const simplifiedRecipes = recipes.map(r => ({
                 t: r.title || r.name,
                 i: r.ingredients,
                 m: r.multiplier || 1
             }));
 
-            // --- PASO 2: PROMPT ULTRA-LIGERO ---
+            // --- PASO 2: PROMPT ULTRA-LIGERO Y ESTRICTO CON LAS UNIDADES ---
             const promptText = `Genera una lista de compras consolidada en JSON.
         Datos: ${JSON.stringify(simplifiedRecipes)}
 
         Tarea:
-        1. Multiplica ingredientes por "m".
-        2. Consolida duplicados sumando cantidades.
-        3. Clasifica en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
+        1. Multiplica la cantidad de cada ingrediente por el multiplicador "m".
+        2. Consolida ingredientes duplicados sumando sus cantidades. 
+        3. REGLA ESTRICTA DE UNIDADES: Siempre incluye la unidad de medida junto a la cantidad final (ej. "500 g", "2 tazas", "1.5 kg", "300 ml").
+        4. Si un ingrediente original no especifica unidad (ej. solo dice "3"), usa "piezas" o "unidades" (ej. "3 piezas"). NUNCA devuelvas solo un número.
+        5. Clasifica en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
         
         Esquema de salida:
         {
           "categories": [
             {
               "name": "Nombre Categoría",
-              "items": [{ "name": "Ingrediente", "quantity": "cantidad + unidad", "isChecked": false }]
+              "items": [
+                { 
+                  "name": "Nombre del ingrediente", 
+                  "quantity": "Número + Unidad (Ej: '2 piezas', '500 g', '1 taza')", 
+                  "isChecked": false 
+                }
+              ]
             }
           ]
         }
@@ -622,14 +628,13 @@ module.exports = {
 
             // --- PASO 3: LLAMADA A GEMINI CON CONFIGURACIÓN DE VELOCIDAD ---
             const model = aiClient.getGenerativeModel({
-                model: "gemini-2.5-flash-lite", // La versión Flash es la más rápida disponible
+                model: "gemini-2.5-flash-lite",
                 generationConfig: {
                     responseMimeType: "application/json",
-                    temperature: 0.1 // Menos creatividad = más velocidad
+                    temperature: 0.1
                 }
             });
 
-            // Agregamos un tiempo límite (timeout) interno para no quedar colgados
             const result = await model.generateContent(promptText);
             const response = await result.response;
             const text = response.text().trim();
@@ -648,7 +653,6 @@ module.exports = {
         } catch (error) {
             console.error(`[SHOPPING-LIST] Error: ${error.message}`);
 
-            // Manejo específico para evitar que el cliente espere en vano
             return res.status(500).json({
                 success: false,
                 message: 'Error al generar la lista. Intenta con menos recetas.',
