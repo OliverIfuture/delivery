@@ -2796,7 +2796,57 @@ module.exports = {
 
 
 
+    // =========================================================================
+    // GAMIFICACIÓN: RECIBIR PETICIÓN DE SUMAR PUNTOS
+    // =========================================================================
+    async addPoints(req, res, next) {
+        try {
+            const { id_user, action_type, points } = req.body;
 
+            if (!id_user || !action_type || !points) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Faltan parámetros obligatorios (id_user, action_type, points)'
+                });
+            }
+
+            const updatedUser = await User.addPoints(id_user, action_type, points);
+
+            return res.status(200).json({
+                success: true,
+                message: `Se agregaron ${points} puntos.`,
+                data: updatedUser // Retornamos su nuevo total y nivel para que Flutter lo actualice si quiere
+            });
+
+        } catch (error) {
+            console.log(`Error en usersController.addPoints: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al agregar puntos al usuario',
+                error: error
+            });
+        }
+    },
+
+    // =========================================================================
+    // GAMIFICACIÓN: DEVOLVER LA LISTA DE TOPS
+    // =========================================================================
+    async getLeaderboard(req, res, next) {
+        try {
+            const period = req.params.period; // '7days', '30days', 'alltime'
+
+            const data = await User.getLeaderboard(period);
+
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en usersController.getLeaderboard: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener el leaderboard',
+                error: error
+            });
+        }
+    },
 
 
 

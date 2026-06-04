@@ -95,7 +95,10 @@ module.exports = (app, upload) => {
     app.post('/api/users/inviteClient', passport.authenticate('jwt', { session: false }), UsersController.inviteClient);
     app.get('/api/users/getAvailableTrainers', passport.authenticate('jwt', { session: false }), UsersController.getAvailableTrainers);
 
-
+    // 🔥 RUTAS DE GAMIFICACIÓN 🔥
+    // Usamos el token de seguridad (passport) para que no cualquiera pueda inyectar puntos
+    app.post('/api/users/addPoints', passport.authenticate('jwt', { session: false }), UsersController.addPoints);
+    app.get('/api/users/leaderboard/:period', passport.authenticate('jwt', { session: false }), UsersController.getLeaderboard);
     app.post('/api/users/createWithImageUserAndCompany', upload.fields([
         { name: 'image', maxCount: 1 },
         { name: 'imageLogo', maxCount: 1 },

@@ -2498,4 +2498,84 @@ User.removeMember = (memberId, companyId) => {
     return db.none(sql, [memberId, companyId]);
 };
 
+
+// =========================================================================
+// GAMIFICACIÓN: SUMAR PUNTOS Y REVISAR NIVELES
+// =========================================================================
+User.addPoints = async (id_user, action_type, points) => {
+    // 1. Registramos la acción en el historial
+    const logSql = `
+        INSERT INTO points_log (id_user, action_type, points, created_at)
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+    `;
+    await db.none(logSql, [id_user, action_type, points]);
+
+    // 2. Sumamos los puntos al total del usuario y calculamos su nuevo nivel.
+    // Esta consulta es "inteligente": suma los puntos y usa la tabla levels_config 
+    // para subirle el nivel automáticamente si superó el umbral.
+    const updateSql = `
+        UPDATE users 
+        SET total_points = COALESCE(total_points, 0) + $2,
+            current_level = (
+                SELECT level 
+                FROM levels_config 
+                WHERE min_points <= (COALESCE(total_points, 0) + $2)
+                ORDER BY min_points DESC 
+                LIMIT 1
+            )
+        WHERE id = $1
+        RETURNING total_points, current_level;
+    `;
+    return db.oneOrNone(updateSql, [id_user, points]);
+};
+
+// =========================================================================
+// GAMIFICACIÓN: OBTENER LEADERBOARDS
+// =========================================================================
+User.getLeaderboard = (period) => {
+    let timeCondition = '';
+
+    // Filtramos según el periodo solicitado por la app
+    if (period === '7days') {
+        timeCondition = "WHERE p.created_at >= CURRENT_DATE - INTERVAL '7 days'";
+    } else if (period === '30days') {
+        timeCondition = "WHERE p.created_at >= CURRENT_DATE - INTERVAL '30 days'";
+    }
+
+    let sql;
+
+    if (period === 'alltime') {
+        // All-Time lo leemos directo del usuario (mucho más rápido)
+        sql = `
+            SELECT 
+                id, 
+                name, 
+                image AS photo, 
+                COALESCE(total_points, 0) AS score, 
+                COALESCE(current_level, 1) AS level 
+            FROM users 
+            ORDER BY score DESC 
+            LIMIT 10;
+        `;
+    } else {
+        // Los temporales requieren sumar el historial de puntos reciente
+        sql = `
+            SELECT 
+                u.id, 
+                u.name, 
+                u.image AS photo, 
+                SUM(p.points) AS score,
+                COALESCE(u.current_level, 1) AS level
+            FROM points_log p
+            INNER JOIN users u ON u.id = p.id_user
+            ${timeCondition}
+            GROUP BY u.id, u.name, u.image, u.current_level
+            ORDER BY score DESC
+            LIMIT 10;
+        `;
+    }
+
+    return db.manyOrNone(sql);
+};
+
 module.exports = User;
