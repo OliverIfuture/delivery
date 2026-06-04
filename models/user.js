@@ -2541,10 +2541,12 @@ User.addPoints = async (id_user, action_type, points) => {
 // =========================================================================
 // GAMIFICACIÓN: OBTENER LEADERBOARDS (FILTRADO POR COMUNIDAD)
 // =========================================================================
+// =========================================================================
+// GAMIFICACIÓN: OBTENER LEADERBOARDS (FILTRADO POR COMUNIDAD Y EXCLUYENDO ENTRENADORES)
+// =========================================================================
 User.getLeaderboard = (period, id_entrenador) => {
     let timeCondition = '';
 
-    // 🔥 OJO AQUÍ: Cambiamos "WHERE" por "AND" porque el WHERE principal será el id_entrenador
     if (period === '7days') {
         timeCondition = "AND p.created_at >= CURRENT_DATE - INTERVAL '7 days'";
     } else if (period === '30days') {
@@ -2564,7 +2566,8 @@ User.getLeaderboard = (period, id_entrenador) => {
                 COALESCE(total_points, 0) AS score, 
                 COALESCE(current_level, 1) AS level 
             FROM users 
-            WHERE id_entrenador = $1 -- 🔥 FILTRO DE COMUNIDAD
+            WHERE id_entrenador = $1 
+              AND (mi_store = 0 OR mi_store IS NULL) -- 🔥 AQUÍ ELIMINAMOS A LOS ENTRENADORES
             ORDER BY score DESC 
             LIMIT 10;
         `;
@@ -2580,7 +2583,8 @@ User.getLeaderboard = (period, id_entrenador) => {
                 COALESCE(u.current_level, 1) AS level
             FROM points_log p
             INNER JOIN users u ON u.id = p.id_user
-            WHERE u.id_entrenador = $1 -- 🔥 FILTRO DE COMUNIDAD
+            WHERE u.id_entrenador = $1 
+              AND (u.mi_store = 0 OR u.mi_store IS NULL) -- 🔥 AQUÍ ELIMINAMOS A LOS ENTRENADORES
             ${timeCondition}
             GROUP BY u.id, u.name, u.lastname, u.image, u.created_at, u.current_level
             ORDER BY score DESC
@@ -2588,6 +2592,7 @@ User.getLeaderboard = (period, id_entrenador) => {
         `;
     }
 
+    // Pasamos el id_entrenador (o mi_store si es el coach pidiendo ver a sus alumnos)
     return db.manyOrNone(sql, id_entrenador);
 };
 module.exports = User;
