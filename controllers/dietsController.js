@@ -622,7 +622,7 @@ module.exports = {
 
             // --- PASO 3: LLAMADA A GEMINI CON CONFIGURACIÓN DE VELOCIDAD ---
             const model = aiClient.getGenerativeModel({
-                model: "gemini-2.0-flash", // La versión Flash es la más rápida disponible
+                model: "gemini-2.5-flash", // La versión Flash es la más rápida disponible
                 generationConfig: {
                     responseMimeType: "application/json",
                     temperature: 0.1 // Menos creatividad = más velocidad
