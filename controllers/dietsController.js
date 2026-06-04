@@ -598,20 +598,23 @@ module.exports = {
                 m: r.multiplier || 1
             }));
 
-            // --- PASO 2: PROMPT CON LÓGICA DE SUPERMERCADO ---
-            const promptText = `Eres un experto en compras de supermercado y nutrición. Genera una lista de compras consolidada en JSON.
-        Datos: ${JSON.stringify(simplifiedRecipes)}
+            // --- PASO 2: PROMPT CON TABLA DE CONVERSIÓN ESTRICTA ---
+            const promptText = `Eres un experto en compras de supermercado y nutrición. Tu objetivo es convertir un listado de ingredientes de recetas en una lista de compras realista y consolidada en formato JSON.
 
-        Reglas estrictas de cálculo y unidades:
-        1. Multiplica la cantidad de cada ingrediente por el multiplicador "m".
-        2. Consolida ingredientes idénticos sumando sus cantidades. 
-        3. UNIDADES REALES: Expresa las cantidades SIEMPRE en medidas de supermercado: gramos (g), kilogramos (kg), mililitros (ml), litros (L), tazas, o piezas.
-        4. PROHIBIDO USAR "PORCIONES" O "PIEZAS" EN CARNES: Si el texto original dice "Carne", "Pollo", "Pescado", "Jamón" o "Pavo" y no tiene un peso exacto (ej. dice "1 porción" o "1"), ASUME que 1 porción = 150 g y haz el cálculo matemático. (Ej: 2 porciones de pollo = "300 g").
-        5. LÓGICA DE PIEZAS: Usa "piezas" ÚNICAMENTE para cosas que se compran enteras lógicamente (Ej: "huevos", "manzanas", "aguacates", "plátanos", "pan").
-        6. Si dice "Verduras" o "Fruta" en general sin peso, asume "150 g" o "1 taza" por porción.
-        7. Clasifica en: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
-        
-        Esquema de salida:
+        Datos de entrada: ${JSON.stringify(simplifiedRecipes)}
+
+        REGLAS DE CÁLCULO Y CONVERSIÓN (¡APLICA ESTO ESTRICTAMENTE!):
+        1.  Multiplica la cantidad inicial de cada ingrediente por su valor "m" correspondiente.
+        2.  Suma las cantidades de los ingredientes idénticos o muy similares (ej. "Pechuga de pollo" y "Pollo" -> consolidar como "Pollo").
+        3.  **PROHIBIDO usar "piezas" o "porciones" para carnes y verduras genéricas.** Si un ingrediente NO especifica una unidad clara de peso o volumen (g, kg, ml, tazas), DEBES aplicar esta tabla de conversión basada en la cantidad numérica o multiplicador:
+            * "Carne", "Pollo", "Pescado", "Salmón", "Atún", "Pavo", "Jamón", "Lomo": Multiplica el número por **150 g**. (Ej: Si el cálculo da 2 -> "300 g").
+            * "Verduras", "Vegetales", "Fruta": Multiplica el número por **1 taza** o **150 g**.
+            * "Avena", "Arroz", "Quinoa", "Pasta": Multiplica el número por **1/2 taza** o **50 g**.
+            * "Patata", "Boniato", "Papa": Multiplica el número por **200 g**.
+        4.  Usa "piezas" o "unidades" **SOLO** para alimentos que se compran inherentemente así: Huevos, Manzanas, Plátanos, Aguacates, Pan (rebanadas), Tortillas.
+        5.  Clasifica los ingredientes consolidados en las siguientes categorías: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
+
+        Esquema de salida JSON requerido:
         {
           "categories": [
             {
@@ -619,22 +622,23 @@ module.exports = {
               "items": [
                 { 
                   "name": "Nombre del producto limpio", 
-                  "quantity": "Número + Unidad lógica (Ej: '300 g', '2 piezas', '1 taza')", 
+                  "quantity": "Cantidad total + Unidad lógica de supermercado (Ej: '300 g', '2 piezas', '1 taza', '500 ml')", 
                   "isChecked": false 
                 }
               ]
             }
           ]
         }
-        Responde exclusivamente con el JSON, sin texto adicional ni bloques de código.`;
+        
+        IMPORTANTE: Devuelve ÚNICAMENTE el JSON válido. Sin explicaciones, sin formato de código markdown (\`\`\`json).`;
 
             // --- PASO 3: LLAMADA A GEMINI FLASH LITE ---
             const model = aiClient.getGenerativeModel({
-                model: "gemini-2.5-flash-lite", // Modelo ultra rápido
+                model: "gemini-2.5-flash-lite",
                 generationConfig: {
                     responseMimeType: "application/json",
-                    temperature: 0.1, // Respuesta matemática y predecible
-                    maxOutputTokens: 1500 // Evita que se quede pensando de más
+                    temperature: 0.1, // Baja temperatura para seguir instrucciones estrictas
+                    maxOutputTokens: 1500
                 }
             });
 
@@ -644,7 +648,7 @@ module.exports = {
 
             if (!text) throw new Error("La IA devolvió un cuerpo vacío.");
 
-            // Parseo seguro (limpia los acentos graves si la IA decide ponerlos a pesar de la instrucción)
+            // Parseo seguro (elimina cualquier markdown residual)
             const shoppingListJSON = JSON.parse(text.replace(/```json|```/gi, ""));
 
             return res.status(200).json({
@@ -658,7 +662,7 @@ module.exports = {
 
             return res.status(500).json({
                 success: false,
-                message: 'Error al generar la lista. Intenta con menos recetas.',
+                message: 'Error al generar la lista. Intenta de nuevo.',
                 error: error.message
             });
         }
