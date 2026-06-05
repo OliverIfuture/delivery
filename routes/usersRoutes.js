@@ -94,7 +94,8 @@ module.exports = (app, upload) => {
     app.get('/api/users/getClientsByCompany/:id_company', UsersController.getClientsByCompany);
     app.post('/api/users/inviteClient', passport.authenticate('jwt', { session: false }), UsersController.inviteClient);
     app.get('/api/users/getAvailableTrainers', passport.authenticate('jwt', { session: false }), UsersController.getAvailableTrainers);
-
+    app.get('/api/users/getActiveGiveaway', passport.authenticate('jwt', { session: false }), UsersController.getActiveGiveaway);
+    app.get('/api/users/getPastGiveaways', passport.authenticate('jwt', { session: false }), UsersController.getPastGiveaways);
     // 🔥 RUTAS DE GAMIFICACIÓN 🔥
     // Usamos el token de seguridad (passport) para que no cualquiera pueda inyectar puntos
     app.post('/api/users/addPoints', passport.authenticate('jwt', { session: false }), UsersController.addPoints);

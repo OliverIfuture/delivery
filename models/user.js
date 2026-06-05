@@ -2595,4 +2595,30 @@ User.getLeaderboard = (period, id_entrenador) => {
     // Pasamos el id_entrenador (o mi_store si es el coach pidiendo ver a sus alumnos)
     return db.manyOrNone(sql, id_entrenador);
 };
+
+
+// =========================================================================
+// SORTEOS (GIVEAWAYS)
+// =========================================================================
+User.getActiveGiveaway = (id_entrenador) => {
+    const sql = `
+        SELECT id, title, description, prize, media_url, min_level, end_date 
+        FROM giveaways 
+        WHERE id_entrenador = $1 AND status = 'activo' AND end_date > CURRENT_TIMESTAMP
+        ORDER BY end_date ASC 
+        LIMIT 1;
+    `;
+    return db.oneOrNone(sql, id_entrenador);
+};
+
+User.getPastGiveaways = (id_entrenador) => {
+    const sql = `
+        SELECT id, title, prize, end_date, winner_name 
+        FROM giveaways 
+        WHERE id_entrenador = $1 AND status = 'finalizado'
+        ORDER BY end_date DESC 
+        LIMIT 10;
+    `;
+    return db.manyOrNone(sql, id_entrenador);
+};
 module.exports = User;

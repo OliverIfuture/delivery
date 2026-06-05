@@ -2866,7 +2866,32 @@ module.exports = {
 
 
 
+    // =========================================================================
+    // SORTEOS
+    // =========================================================================
+    async getActiveGiveaway(req, res, next) {
+        try {
+            const id_comunidad = req.user.id_entrenador || req.user.mi_store;
+            const data = await User.getActiveGiveaway(id_comunidad);
 
+            // Si no hay sorteo, devolvemos un 200 pero vacío
+            return res.status(200).json(data || {});
+        } catch (error) {
+            console.log(`Error en getActiveGiveaway: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener sorteo activo' });
+        }
+    },
+
+    async getPastGiveaways(req, res, next) {
+        try {
+            const id_comunidad = req.user.id_entrenador || req.user.mi_store;
+            const data = await User.getPastGiveaways(id_comunidad);
+            return res.status(200).json(data || []);
+        } catch (error) {
+            console.log(`Error en getPastGiveaways: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener sorteos pasados' });
+        }
+    },
 
 
     //////////////   COBI FUNCTIONS /////////////
