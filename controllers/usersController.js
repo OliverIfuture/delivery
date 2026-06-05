@@ -2869,10 +2869,26 @@ module.exports = {
     // =========================================================================
     // SORTEOS
     // =========================================================================
+    // =========================================================================
+    // SORTEOS
+    // =========================================================================
     async getActiveGiveaway(req, res, next) {
         try {
+            console.log('--- INICIANDO getActiveGiveaway ---');
+
+            // 1. Vemos qué trae exactamente el token del usuario
+            console.log(`req.user.id_entrenador: ${req.user.id_entrenador}`);
+            console.log(`req.user.mi_store: ${req.user.mi_store}`);
+
             const id_comunidad = req.user.id_entrenador || req.user.mi_store;
+
+            // 2. Vemos con qué ID final se va a hacer la búsqueda en SQL
+            console.log(`ID COMUNIDAD RESUELTO PARA LA BÚSQUEDA: ${id_comunidad}`);
+
             const data = await User.getActiveGiveaway(id_comunidad);
+
+            // 3. Vemos qué respondió Postgres
+            console.log('DATA DEVUELTA POR LA BASE DE DATOS (Active):', data);
 
             // Si no hay sorteo, devolvemos un 200 pero vacío
             return res.status(200).json(data || {});
@@ -2884,8 +2900,20 @@ module.exports = {
 
     async getPastGiveaways(req, res, next) {
         try {
+            console.log('--- INICIANDO getPastGiveaways ---');
+
+            console.log(`req.user.id_entrenador: ${req.user.id_entrenador}`);
+            console.log(`req.user.mi_store: ${req.user.mi_store}`);
+
             const id_comunidad = req.user.id_entrenador || req.user.mi_store;
+            console.log(`ID COMUNIDAD RESUELTO PARA LA BÚSQUEDA: ${id_comunidad}`);
+
             const data = await User.getPastGiveaways(id_comunidad);
+
+            // Verificamos si es null/undefined o un arreglo y mostramos cuántos trajo
+            console.log(`DATA DEVUELTA POR LA BD (Past). Cantidad de eventos: ${data ? data.length : 0}`);
+            console.log('Detalle de la data (Past):', data);
+
             return res.status(200).json(data || []);
         } catch (error) {
             console.log(`Error en getPastGiveaways: ${error}`);
