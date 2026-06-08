@@ -1984,50 +1984,63 @@ module.exports = {
         }
     },
 
-    async createClientSubscription(req, res, next) {
+    // Función auxiliar reutilizable para registrar el historial de pagos de manera segura
+    async logPaymentHistory(db, subscription) {
+        try {
+            const planId = parseInt(subscription.id_plan, 10);
+            if (!planId || isNaN(planId)) {
+                console.log(`⚠️ No se pudo registrar historial de pago: id_plan inválido (${subscription.id_plan})`);
+                return;
+            }
+
+            // Buscamos el precio del plan para registrarlo en las ventas
+            const plan = await db.oneOrNone('SELECT price FROM public.subscription_plans WHERE id = $1', [planId]);
+            const amountPaid = plan && plan.price ? parseFloat(plan.price) : 0;
+
+            // Insertar en payment_history si el monto es mayor a 0
+            if (amountPaid > 0) {
+                // Generamos un ID de factura ficticio o mapeamos el existente para los cobros manuales
+                const manualInvoiceId = subscription.stripe_invoice_id || `manual_inv_${Date.now()}`;
+
+                // Obtenemos la fecha y hora exacta en Tijuana (Baja California)
+                const tijuanaDateString = new Date().toLocaleString('en-US', { timeZone: 'America/Tijuana' });
+
+                await db.none(`
+                INSERT INTO public.payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `, [
+                    parseInt(subscription.id_company, 10),
+                    parseInt(subscription.id_client, 10),
+                    planId,
+                    subscription.stripe_subscription_id || `manual_sub_${Date.now()}`,
+                    manualInvoiceId,
+                    amountPaid,
+                    tijuanaDateString
+                ]);
+                console.log(`💰 Historial de pago registrado con éxito: $${amountPaid} para la sub ${subscription.stripe_subscription_id} a las ${tijuanaDateString} (Hora Tijuana)`);
+            }
+        } catch (err) {
+            console.log(`⚠️ Error crítico procesando payment_history de forma asíncrona: ${err.message}`);
+        }
+    }
+
+// CONTROLADORES ACTUALIZADOS
+async createClientSubscription(req, res, next) {
         try {
             const subscription = req.body;
-            const db = require('../config/config'); // Asegúrate de que esta ruta a tu config de BD sea correcta
+            const db = require('../config/config');
 
             // 1. Llamamos al modelo para insertar la membresía (y la tabla users)
             const data = await User.createClientSubscription(subscription);
 
-            // 2. Buscamos el precio del plan para registrarlo en las ventas
-            const plan = await db.oneOrNone('SELECT price FROM public.subscription_plans WHERE id = $1', [subscription.id_plan]);
+            // 2. Registro seguro del historial de transacciones
+            await logPaymentHistory(db, subscription);
 
-            // Verificamos si encontramos el plan y su precio
-            const amountPaid = plan && plan.price ? parseFloat(plan.price) : 0;
-
-            // 3. Insertar en payment_history si el monto es mayor a 0
-            if (amountPaid > 0) {
-                // Generamos un ID de factura ficticio para los cobros manuales
-                const manualInvoiceId = `manual_inv_${Date.now()}`;
-
-                // 🔥 Obtenemos la fecha y hora exacta en Tijuana (Baja California)
-                const tijuanaDateString = new Date().toLocaleString('en-US', { timeZone: 'America/Tijuana' });
-
-                await db.none(`
-                    INSERT INTO public.payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                `, [
-                    subscription.id_company,
-                    subscription.id_client,
-                    subscription.id_plan,
-                    subscription.stripe_subscription_id,
-                    manualInvoiceId,
-                    amountPaid,
-                    tijuanaDateString // 🔥 Mandamos la fecha formateada en lugar de new Date()
-                ]);
-                console.log(`💰 Historial de pago (Manual) registrado: $${amountPaid} para la sub ${subscription.stripe_subscription_id} a las ${tijuanaDateString} (Hora Tijuana)`);
-            }
-
-            // 4. Respondemos al frontend que todo salió perfecto
             return res.status(201).json({
                 success: true,
                 message: 'Membresía creada y venta registrada correctamente',
-                data: data // Contiene el ID generado
+                data: data
             });
-
         } catch (error) {
             console.log(`Error en createClientSubscription: ${error}`);
             return res.status(501).json({
@@ -2036,20 +2049,23 @@ module.exports = {
                 error: error.message
             });
         }
-    },
+    }
 
-    async updateClientSubscription(req, res, next) {
+async updateClientSubscription(req, res, next) {
         try {
             const subscription = req.body;
+            const db = require('../config/config');
 
             // Llamamos al modelo para actualizar
             await User.updateClientSubscription(subscription);
 
+            // 🔥 CORRECCIÓN: Ahora las actualizaciones también registran cobros si se guardan cambios financieros
+            await logPaymentHistory(db, subscription);
+
             return res.status(201).json({
                 success: true,
-                message: 'Membresía actualizada correctamente'
+                message: 'Membresía actualizada y procesada correctamente'
             });
-
         } catch (error) {
             console.log(`Error en updateClientSubscription: ${error}`);
             return res.status(501).json({
@@ -2058,7 +2074,6 @@ module.exports = {
                 error: error.message
             });
         }
-
     },
 
 
