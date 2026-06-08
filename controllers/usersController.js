@@ -41,8 +41,7 @@ async function logPaymentHistory(db, subscription) {
     } catch (err) {
         console.log(`⚠️ Error crítico en logPaymentHistory: ${err.message}`);
     }
-},
-
+}
 // --- CONFIGURACIÓN DEL TRANSPORTE (SMTP) ---
 // Lo ideal es poner esto en un archivo de config, pero aquí funciona.
 // Asegúrate de usar variables de entorno en Heroku para user y pass.
