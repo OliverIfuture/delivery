@@ -35,5 +35,6 @@ module.exports = (app) => {
 
     app.get('/api/subscriptions/pending', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getPendingRequests);
     app.put('/api/subscriptions/approve', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.approveRequest);
-
+    // Cancelar suscripción activa
+    app.post('/api/subscriptions/cancel', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.cancelSubscription);
 };

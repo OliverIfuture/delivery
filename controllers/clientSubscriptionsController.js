@@ -135,6 +135,57 @@ module.exports = {
         }
     },
 
+    // =================================================================
+    // CANCELAR SUSCRIPCIÓN EN STRIPE DESDE LA APP
+    // =================================================================
+    async cancelSubscription(req, res, next) {
+        try {
+            const { stripe_subscription_id, id_company } = req.body;
+
+            if (!stripe_subscription_id || stripe_subscription_id.startsWith('manual_')) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'ID inválido. Solo las suscripciones domiciliadas pueden cancelarse por este medio.'
+                });
+            }
+
+            // 1. Obtener la llave secreta del entrenador/gimnasio
+            const User = require('../models/user.js');
+            const company = await User.findCompanyById(id_company);
+
+            if (!company || !company.stripeSecretKey) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El gimnasio no tiene configurado Stripe para realizar la cancelación.'
+                });
+            }
+
+            const stripe = require('stripe')(company.stripeSecretKey);
+
+            // 2. Dar la orden a Stripe
+            // En Stripe API, .cancel() detiene los cobros inmediatamente
+            await stripe.subscriptions.cancel(stripe_subscription_id);
+
+            // 3. Actualizar la base de datos local para que la UI se entere rápido
+            // (El webhook 'customer.subscription.deleted' también se disparará y hará la limpieza de VIPs)
+            const ClientSubscription = require('../models/clientSubscription.js');
+            await ClientSubscription.updateStatus(stripe_subscription_id, 'canceled');
+
+            return res.status(200).json({
+                success: true,
+                message: 'Suscripción domiciliada cancelada correctamente en Stripe.'
+            });
+
+        } catch (error) {
+            console.log(`Error al cancelar en Stripe: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al cancelar la suscripción en la pasarela de pagos.',
+                error: error.message
+            });
+        }
+    },
+
     async getPaymentHistory(req, res) {
         try {
             const stripe_subscription_id = req.params.stripe_subscription_id;
