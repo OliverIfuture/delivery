@@ -1547,16 +1547,15 @@ User.getByClientRealSubs = (id_client) => {
 
 
 User.getAllUsers = (miStore, idEntrenador) => {
-    // Si mi_store es 1, es admin general, devolvemos todo (excepto el entrenador 4 que querías excluir)
+    // Si mi_store es 1, es admin general
     if (miStore == 1) {
         return db.manyOrNone(`
-SELECT * FROM public.users 
-    WHERE id_entrenador IS NULL OR id_entrenador = $1 
-    ORDER BY id DESC
-        `);
+            SELECT * FROM public.users 
+            WHERE id_entrenador IS NULL OR id_entrenador = $1 
+            ORDER BY id DESC
+        `, [idEntrenador]); // 🔥 FALTABA ESTE ARREGLO AQUÍ 🔥
     } else {
         // Si no es 1, solo vemos los usuarios de su propia tienda/comunidad
-        // Usamos $1 para pasar el id_entrenador
         return db.manyOrNone(`
             SELECT * FROM public.users 
             WHERE id_entrenador = $1 
