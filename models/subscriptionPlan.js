@@ -105,25 +105,52 @@ SubscriptionPlan.deleteExpense = (id_expense, id_company) => {
  * Busca todos los planes de un entrenador
  */
 SubscriptionPlan.findByCompany = (id_company) => {
-    const sql = `
-SELECT
-    id,
-    id_company,
-    name,
-    description,
-    price,
-    currency,
-    stripe_product_id,
-    stripe_price_id,
-    "durationInDays"
-FROM
-    subscription_plans
-WHERE
-    id_company = $1 AND id IN (331, 464)
-ORDER BY
-    price desc;
+    let sql = '';
+
+    // Si el id de la compañía (entrenador) es 1, aplicamos el filtro específico
+    if (id_company == 1) {
+        sql = `
+            SELECT
+                id,
+                id_company,
+                name,
+                description,
+                price,
+                currency,
+                stripe_product_id,
+                stripe_price_id,
+                "durationInDays"
+            FROM
+                subscription_plans
+            WHERE
+                id_company = $1 AND id IN (331, 464)
+            ORDER BY
+                price desc;
         `;
-    return db.manyOrNone(sql, id_company);
+    } else {
+        // Si es cualquier otro entrenador, le traemos TODOS sus planes
+        sql = `
+            SELECT
+                id,
+                id_company,
+                name,
+                description,
+                price,
+                currency,
+                stripe_product_id,
+                stripe_price_id,
+                "durationInDays"
+            FROM
+                subscription_plans
+            WHERE
+                id_company = $1
+            ORDER BY
+                price desc;
+        `;
+    }
+
+    // Ejecutamos la consulta pasándole el parámetro
+    return db.manyOrNone(sql, [id_company]);
 };
 
 SubscriptionPlan.findByCompanyDash = (id_company) => {
