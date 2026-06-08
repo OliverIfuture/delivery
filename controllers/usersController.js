@@ -2022,10 +2022,10 @@ module.exports = {
         } catch (err) {
             console.log(`⚠️ Error crítico procesando payment_history de forma asíncrona: ${err.message}`);
         }
-    }
+    },
 
-// CONTROLADORES ACTUALIZADOS
-async createClientSubscription(req, res, next) {
+    // CONTROLADORES ACTUALIZADOS
+    async createClientSubscription(req, res, next) {
         try {
             const subscription = req.body;
             const db = require('../config/config');
@@ -2049,9 +2049,9 @@ async createClientSubscription(req, res, next) {
                 error: error.message
             });
         }
-    }
+    },
 
-async updateClientSubscription(req, res, next) {
+    async updateClientSubscription(req, res, next) {
         try {
             const subscription = req.body;
             const db = require('../config/config');
