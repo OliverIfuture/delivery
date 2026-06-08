@@ -9,6 +9,40 @@ const { findUserById } = require('../models/user');
 const nodemailer = require('nodemailer'); // <--- IMPORTANTE
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
+async function logPaymentHistory(db, subscription) {
+    try {
+        const planId = parseInt(subscription.id_plan, 10);
+        if (!planId || isNaN(planId)) {
+            console.log(`⚠️ No se pudo registrar historial de pago: id_plan inválido (${subscription.id_plan})`);
+            return;
+        }
+
+        const plan = await db.oneOrNone('SELECT price FROM public.subscription_plans WHERE id = $1', [planId]);
+        const amountPaid = plan && plan.price ? parseFloat(plan.price) : 0;
+
+        if (amountPaid > 0) {
+            const manualInvoiceId = subscription.stripe_invoice_id || `manual_inv_${Date.now()}`;
+            const tijuanaDateString = new Date().toLocaleString('en-US', { timeZone: 'America/Tijuana' });
+
+            await db.none(`
+                INSERT INTO public.payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `, [
+                parseInt(subscription.id_company, 10),
+                parseInt(subscription.id_client, 10),
+                planId,
+                subscription.stripe_subscription_id || `manual_sub_${Date.now()}`,
+                manualInvoiceId,
+                amountPaid,
+                tijuanaDateString
+            ]);
+            console.log(`💰 Historial registrado: $${amountPaid} a las ${tijuanaDateString}`);
+        }
+    } catch (err) {
+        console.log(`⚠️ Error crítico en logPaymentHistory: ${err.message}`);
+    }
+},
+
 // --- CONFIGURACIÓN DEL TRANSPORTE (SMTP) ---
 // Lo ideal es poner esto en un archivo de config, pero aquí funciona.
 // Asegúrate de usar variables de entorno en Heroku para user y pass.
@@ -1981,46 +2015,6 @@ module.exports = {
                 error: error
 
             });
-        }
-    },
-
-    // Función auxiliar reutilizable para registrar el historial de pagos de manera segura
-    async logPaymentHistory(db, subscription) {
-        try {
-            const planId = parseInt(subscription.id_plan, 10);
-            if (!planId || isNaN(planId)) {
-                console.log(`⚠️ No se pudo registrar historial de pago: id_plan inválido (${subscription.id_plan})`);
-                return;
-            }
-
-            // Buscamos el precio del plan para registrarlo en las ventas
-            const plan = await db.oneOrNone('SELECT price FROM public.subscription_plans WHERE id = $1', [planId]);
-            const amountPaid = plan && plan.price ? parseFloat(plan.price) : 0;
-
-            // Insertar en payment_history si el monto es mayor a 0
-            if (amountPaid > 0) {
-                // Generamos un ID de factura ficticio o mapeamos el existente para los cobros manuales
-                const manualInvoiceId = subscription.stripe_invoice_id || `manual_inv_${Date.now()}`;
-
-                // Obtenemos la fecha y hora exacta en Tijuana (Baja California)
-                const tijuanaDateString = new Date().toLocaleString('en-US', { timeZone: 'America/Tijuana' });
-
-                await db.none(`
-                INSERT INTO public.payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-            `, [
-                    parseInt(subscription.id_company, 10),
-                    parseInt(subscription.id_client, 10),
-                    planId,
-                    subscription.stripe_subscription_id || `manual_sub_${Date.now()}`,
-                    manualInvoiceId,
-                    amountPaid,
-                    tijuanaDateString
-                ]);
-                console.log(`💰 Historial de pago registrado con éxito: $${amountPaid} para la sub ${subscription.stripe_subscription_id} a las ${tijuanaDateString} (Hora Tijuana)`);
-            }
-        } catch (err) {
-            console.log(`⚠️ Error crítico procesando payment_history de forma asíncrona: ${err.message}`);
         }
     },
 
