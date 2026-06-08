@@ -1550,9 +1550,9 @@ User.getAllUsers = (miStore, idEntrenador) => {
     // Si mi_store es 1, es admin general, devolvemos todo (excepto el entrenador 4 que querías excluir)
     if (miStore == 1) {
         return db.manyOrNone(`
-            SELECT * FROM public.users 
-            WHERE id_entrenador != 4 
-            ORDER BY id DESC
+SELECT * FROM public.users 
+    WHERE id_entrenador IS NULL OR id_entrenador = $1 
+    ORDER BY id DESC
         `);
     } else {
         // Si no es 1, solo vemos los usuarios de su propia tienda/comunidad
