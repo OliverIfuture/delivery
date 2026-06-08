@@ -2074,18 +2074,23 @@ module.exports = {
 
     async getAllUsers(req, res, next) {
         try {
+            // 1. Extraemos los datos del usuario que hace la petición
+            const miStore = req.user.mi_store;
+            const idEntrenador = req.user.mi_store; // Asumimos que su ID de comunidad es su mi_store
 
-            // Llamamos al modelo
-            const data = await User.getAllUsers();
+            console.log(`Buscando usuarios para mi_store: ${miStore}, id_entrenador: ${idEntrenador}`);
 
-            // Retornamos directamente los datos
-            return res.status(201).json(data);
+            // 2. Llamamos al modelo pasando los criterios
+            const data = await User.getAllUsers(miStore, idEntrenador);
+
+            // 3. Retornamos los datos
+            return res.status(200).json(data);
 
         } catch (error) {
             console.log(`Error en getAllUsers: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'Error al obtener la getAllUsers del cliente',
+                message: 'Error al obtener la lista de usuarios',
                 error: error.message
             });
         }
