@@ -57,7 +57,7 @@ module.exports = (app, upload) => {
     app.put('/api/users/updateNotificationToken_dealer', UsersController.updateNotificationToken_dealer);
     app.get('/api/users/selectToken_dealer/:id', passport.authenticate('dealer-jwt', { session: false }), UsersController.selectToken_dealer);
     // RUTA PÚBLICA (Para Landing Pages e Invitaciones)
-    app.get('/api/users/getTrainerPublicProfile/:id', usersController.getTrainerPublicProfile);
+    app.get('/api/users/getTrainerPublicProfile/:id', UsersController.getTrainerPublicProfile);
     app.get('/api/users/findClientdealer/:name', passport.authenticate('dealer-jwt', { session: false }), UsersController.findClientDealer);
     app.get('/api/users/getAdminsNotificationTokensDealer', passport.authenticate('dealer-jwt', { session: false }), UsersController.getAdminsNotificationTokensDealer);
     app.get('/api/users/getCompanyById/:id', passport.authenticate('jwt', { session: false }), UsersController.getCompanyById);
