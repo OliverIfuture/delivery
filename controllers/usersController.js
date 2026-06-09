@@ -11,11 +11,14 @@ const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
 async function logPaymentHistory(db, subscription) {
     try {
-        const planId = parseInt(subscription.id_plan, 10);
-        if (!planId || isNaN(planId)) {
-            console.log(`⚠️ No se pudo registrar historial de pago: id_plan inválido (${subscription.id_plan})`);
+        // 🔥 BLOQUEO: Si el estado es cancelado, no registramos ninguna venta 🔥
+        if (subscription.status === 'canceled') {
+            console.log("🚫 Membresía cancelada: Omitiendo registro en historial de pagos.");
             return;
         }
+
+        const planId = parseInt(subscription.id_plan, 10);
+        if (!planId || isNaN(planId)) return;
 
         const plan = await db.oneOrNone('SELECT price FROM public.subscription_plans WHERE id = $1', [planId]);
         const amountPaid = plan && plan.price ? parseFloat(plan.price) : 0;
@@ -36,10 +39,10 @@ async function logPaymentHistory(db, subscription) {
                 amountPaid,
                 tijuanaDateString
             ]);
-            console.log(`💰 Historial registrado: $${amountPaid} a las ${tijuanaDateString}`);
+            console.log(`💰 Historial registrado: $${amountPaid}`);
         }
     } catch (err) {
-        console.log(`⚠️ Error crítico en logPaymentHistory: ${err.message}`);
+        console.log(`⚠️ Error en logPaymentHistory: ${err.message}`);
     }
 }
 // --- CONFIGURACIÓN DEL TRANSPORTE (SMTP) ---
@@ -2073,20 +2076,42 @@ module.exports = {
         }
     },
 
+    // 2. EL CONTROLADOR ACTUALIZADO PARA ACTUALIZACIONES Y CANCELACIONES MANUALES
     async updateClientSubscription(req, res, next) {
         try {
             const subscription = req.body;
             const db = require('../config/config');
 
-            // Llamamos al modelo para actualizar
+            // 1. Llamamos al modelo para actualizar en BD (Aplica el estado canceled o los cambios de fecha)
             await User.updateClientSubscription(subscription);
 
-            // 🔥 CORRECCIÓN: Ahora las actualizaciones también registran cobros si se guardan cambios financieros
-            await logPaymentHistory(db, subscription);
+            // =====================================================================
+            // 🔥 2. MAGIA: ¿ES CANCELACIÓN O RENOVACIÓN MANUAL?
+            // =====================================================================
+            if (subscription.status === 'canceled') {
+                // Si el administrador canceló a este usuario, limpiamos su pago del mes
+                try {
+                    const deleteQuery = `
+                        DELETE FROM payment_history
+                        WHERE stripe_subscription_id = $1
+                        AND DATE_TRUNC('month', payment_date) = DATE_TRUNC('month', CURRENT_DATE)
+                    `;
+                    const result = await db.result(deleteQuery, [subscription.stripe_subscription_id]);
+                    console.log(`🧹 Historial manual depurado: Se eliminaron ${result.rowCount} registro(s) de este mes para la subscripción ${subscription.stripe_subscription_id}.`);
+                } catch (dbError) {
+                    console.log(`⚠️ Error al intentar borrar el historial manual: ${dbError.message}`);
+                }
 
-            return res.status(201).json({
+            } else if (subscription.status === 'active') {
+                // Si está activa (por ejemplo, le extendieron los días), registramos el cobro.
+                // (OJO: logPaymentHistory ya tiene el escudo que pusimos arriba por si acaso)
+                await logPaymentHistory(db, subscription);
+            }
+            // =====================================================================
+
+            return res.status(200).json({
                 success: true,
-                message: 'Membresía actualizada y procesada correctamente'
+                message: 'Membresía procesada y finanzas actualizadas correctamente'
             });
         } catch (error) {
             console.log(`Error en updateClientSubscription: ${error}`);
