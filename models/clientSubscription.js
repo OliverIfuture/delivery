@@ -144,6 +144,7 @@ ClientSubscription.createManual = (sub) => {
     const timestamp = Date.now();
     const fakeSubId = `sub_MANUAL_${timestamp}`;
     const fakeCusId = `cus_MANUAL_${timestamp}`;
+    const fakeInvoiceId = `inv_MANUAL_${timestamp}`; // 🔥 ID Falso para la factura
 
     // --- LÓGICA DE ESTADO DINÁMICO (REPS vs EFECTIVO) ---
     // Si Flutter nos manda un status (ej. 'active'), lo usamos. Si no, por defecto es 'PENDING'.
@@ -161,32 +162,66 @@ ClientSubscription.createManual = (sub) => {
     expirationDate.setDate(expirationDate.getDate() + durationDays);
     // ---------------------------------------
 
-    const sql = `
-        INSERT INTO client_subscriptions(
-            id_client,
-            id_company,
-            id_plan,
-            stripe_subscription_id, 
-            stripe_customer_id,     
-            status,                 -- Ahora recibe el parámetro dinámico ($8)
-            current_period_end,     
-            created_at,
-            updated_at
-        )
-        VALUES($1, $2, $3, $6, $7, $8, $4, $5, $5)
-        RETURNING id
-    `;
+    // 🔥 USAMOS UNA TRANSACCIÓN (t) PARA ASEGURAR QUE AMBAS CONSULTAS SE EJECUTEN CON ÉXITO 🔥
+    return db.tx(async t => {
 
-    return db.one(sql, [
-        sub.id_client,  // $1
-        sub.id_company, // $2
-        sub.id_plan,    // $3
-        expirationDate, // $4: La fecha de vencimiento calculada
-        new Date(),     // $5: created_at y updated_at
-        fakeSubId,      // $6: ID falso de subscripción
-        fakeCusId,      // $7: ID falso de cliente
-        finalStatus     // $8: 'active' (REPS) o 'PENDING' (Efectivo)
-    ]);
+        // 1. INSERTAR LA SUSCRIPCIÓN
+        const sqlSub = `
+            INSERT INTO client_subscriptions(
+                id_client,
+                id_company,
+                id_plan,
+                stripe_subscription_id, 
+                stripe_customer_id,     
+                status,                 
+                current_period_end,     
+                created_at,
+                updated_at
+            )
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $8)
+            RETURNING id
+        `;
+
+        const insertedSub = await t.one(sqlSub, [
+            sub.id_client,      // $1
+            sub.id_company,     // $2
+            sub.id_plan,        // $3
+            fakeSubId,          // $4: ID falso de subscripción
+            fakeCusId,          // $5: ID falso de cliente
+            finalStatus,        // $6: 'active' o 'PENDING'
+            expirationDate,     // $7: Fecha de vencimiento
+            new Date()          // $8: Fechas
+        ]);
+
+        // 2. OBTENER EL PRECIO DEL PLAN
+        // Necesitamos saber cuánto costaba este plan para ponerlo en el payment_history
+        const plan = await t.oneOrNone('SELECT price FROM subscription_plans WHERE id = $1', [sub.id_plan]);
+        const amountPaid = plan && plan.price ? parseFloat(plan.price) : 0;
+
+        // 3. INSERTAR EL HISTORIAL DE PAGO
+        // Usamos tu hora de Tijuana como estándar
+        const tijuanaDateString = new Date().toLocaleString('en-US', { timeZone: 'America/Tijuana' });
+
+        const sqlHistory = `
+            INSERT INTO payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `;
+
+        await t.none(sqlHistory, [
+            sub.id_company,
+            sub.id_client,
+            sub.id_plan,
+            fakeSubId,
+            fakeInvoiceId,
+            amountPaid,
+            tijuanaDateString
+        ]);
+
+        console.log(`💰 Historial de pago (Manual) registrado: $${amountPaid} para la sub ${fakeSubId} a las ${tijuanaDateString}`);
+
+        // Retornamos la respuesta original para que el Controller no falle
+        return insertedSub;
+    });
 };
 // Necesitarás esta para validar si ya existe una pendiente
 ClientSubscription.findPendingByClient = (id_client, id_plan) => {
