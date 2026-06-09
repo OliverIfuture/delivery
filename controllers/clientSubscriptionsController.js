@@ -166,14 +166,38 @@ module.exports = {
             // En Stripe API, .cancel() detiene los cobros inmediatamente
             await stripe.subscriptions.cancel(stripe_subscription_id);
 
-            // 3. Actualizar la base de datos local para que la UI se entere rápido
-            // (El webhook 'customer.subscription.deleted' también se disparará y hará la limpieza de VIPs)
+            // 3. Actualizar la base de datos local (Estado de la suscripción)
             const ClientSubscription = require('../models/clientSubscription.js');
             await ClientSubscription.updateStatus(stripe_subscription_id, 'canceled');
 
+            // =====================================================================
+            // 🔥 4. NUEVO: ELIMINAR EL PAGO DEL MES CORRIENTE EN EL HISTORIAL 🔥
+            // =====================================================================
+            try {
+                // Importamos la instancia de la base de datos
+                const db = require('../config/config.js');
+
+                // Consulta: Borra de payment_history si el ID coincide Y el mes/año del pago es igual al mes/año actual.
+                const deleteQuery = `
+                    DELETE FROM payment_history
+                    WHERE stripe_subscription_id = $1
+                    AND DATE_TRUNC('month', payment_date) = DATE_TRUNC('month', CURRENT_DATE)
+                `;
+
+                // Usamos db.result para saber exactamente cuántas filas se borraron
+                const result = await db.result(deleteQuery, [stripe_subscription_id]);
+                console.log(`🧹 Historial de pagos limpiado: Se eliminaron ${result.rowCount} registro(s) de este mes para la subscripción ${stripe_subscription_id}.`);
+
+            } catch (dbError) {
+                // Lo envolvemos en su propio try-catch para que si falla la eliminación, 
+                // NO arruine la respuesta de éxito (ya que Stripe sí se canceló correctamente).
+                console.log(`⚠️ Advertencia: Error al intentar borrar el historial de pago de este mes: ${dbError.message}`);
+            }
+            // =====================================================================
+
             return res.status(200).json({
                 success: true,
-                message: 'Suscripción domiciliada cancelada correctamente en Stripe.'
+                message: 'Suscripción domiciliada cancelada correctamente y registros de este mes depurados.'
             });
 
         } catch (error) {
