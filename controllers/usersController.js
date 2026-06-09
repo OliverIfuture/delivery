@@ -114,6 +114,35 @@ module.exports = {
             });
         }
     },
+
+    // PERFIL PÚBLICO DEL ENTRENADOR (Sin JWT)
+    async getTrainerPublicProfile(req, res, next) {
+        try {
+            const id = req.params.id;
+            const data = await User.getPublicProfile(id);
+
+            if (!data) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Entrenador no encontrado'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Perfil público obtenido',
+                data: data // Solo viaja id, name, lastname e image
+            });
+
+        } catch (error) {
+            console.log(`Error en getTrainerPublicProfile: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener el perfil público',
+                error: error.message
+            });
+        }
+    },
     async getShops(req, res, next) {
         try {
 

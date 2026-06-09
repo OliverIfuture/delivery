@@ -1244,7 +1244,15 @@ User.getCompanyById = (id) => {
     return db.oneOrNone(sql, id)
 
 }
-
+// OBTENER PERFIL PÚBLICO DEL ENTRENADOR
+User.getPublicProfile = (id) => {
+    const sql = `
+        SELECT id, name, lastname, image, mi_store 
+        FROM public.users 
+        WHERE id = $1
+    `;
+    return db.oneOrNone(sql, id);
+};
 User.getAllCompanies = () => {
     const sql = `
     SELECT 
