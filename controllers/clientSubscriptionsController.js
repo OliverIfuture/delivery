@@ -849,41 +849,51 @@ async stripeWebhook12(req, res, next) {
 
     async createManualRequest(req, res, next) {
         try {
-            const { id_plan, id_company } = req.body;
+            const { id_plan, status } = req.body;
             const id_client = req.user.id;
-            const finalStatus = req.body.status;
 
-            console.log(`[Manual Request] Cliente: ${id_client} -> Plan: ${id_plan}`);
+            // =========================================================
+            // 🔥 INTERCEPCIÓN SEGURA DEL ID_COMPANY 🔥
+            // Usamos el ID del entrenador asignado al usuario en lugar
+            // de confiar en lo que Flutter envíe en el body.
+            // =========================================================
+            let id_company = req.user.id_entrenador;
+
+            // Si el usuario no tiene entrenador (es null o '0'), 
+            // usamos el valor que venía en el body como respaldo o un ID global.
+            if (!id_company || id_company === '0' || id_company === 'null') {
+                id_company = req.body.id_company;
+                console.log(`[Manual Request] Usuario sin entrenador, usando ID del body: ${id_company}`);
+            } else {
+                console.log(`[Manual Request] Usuario ${id_client} forzado a su entrenador: ${id_company}`);
+            }
 
             // 0. VALIDACIÓN ANTI-SPAM
-            // Verificamos si este cliente YA tiene este plan en estado 'PENDING'
             const existingRequest = await ClientSubscription.findPendingByClient(id_client, id_plan);
 
             if (existingRequest) {
-                return res.status(409).json({ // 409 Conflict
+                return res.status(409).json({
                     success: false,
-                    message: 'Ya tienes una solicitud pendiente para este plan. Espera a que tu entrenador la apruebe.'
+                    message: 'Ya tienes una solicitud pendiente para este plan.'
                 });
             }
 
-            // 1. VALIDACIÓN DE EXISTENCIA DEL PLAN Y OBTENCIÓN DE DÍAS
+            // 1. VALIDACIÓN DE EXISTENCIA DEL PLAN
             const plan = await ClientSubscription.findById(id_plan);
-
             if (!plan) {
-                return res.status(404).json({ success: false, message: 'El plan seleccionado ya no existe.' });
+                return res.status(404).json({ success: false, message: 'El plan no existe.' });
             }
 
             // 2. PREPARAR OBJETO
-            // Ya no calculamos fechas aquí. Solo pasamos los datos y la duración.
             const subscriptionData = {
                 id_client: id_client,
-                id_company: id_company,
+                id_company: id_company, // <--- Usamos el ID interceptado/validado
                 id_plan: id_plan,
-                duration_days: plan.durationInDays, // <--- PASAMOS EL DATO AL MODELO
-                status: finalStatus
+                duration_days: plan.durationInDays,
+                status: status
             };
 
-            // 3. INSERTAR EN BD (El modelo calculará la fecha de vencimiento)
+            // 3. INSERTAR EN BD
             const data = await ClientSubscription.createManual(subscriptionData);
 
             // 4. VINCULACIÓN AUTOMÁTICA
@@ -891,7 +901,7 @@ async stripeWebhook12(req, res, next) {
 
             return res.status(201).json({
                 success: true,
-                message: 'Solicitud enviada. Tu entrenador ha sido notificado.',
+                message: 'Solicitud enviada correctamente.',
                 data: { 'id': data.id }
             });
 
