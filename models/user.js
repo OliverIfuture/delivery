@@ -1706,12 +1706,13 @@ SELECT
     LastSub.status as status_plan,
     LastSub.current_period_end as finaliza,
     U.target_calories,
-    U.target_protein, -- 🔥 AGREGADO
-    U.target_carbs,   -- 🔥 AGREGADO
-    U.target_fats     -- 🔥 AGREGADO
+    U.target_protein, 
+    U.target_carbs,   
+    U.target_fats     
 FROM
     users AS U
-INNER JOIN (
+-- 🔥 CAMBIO CRÍTICO: Usamos LEFT JOIN para que traiga usuarios sin membresías activos
+LEFT JOIN (
     -- Subconsulta: Trae solo la última suscripción por cada cliente
     SELECT DISTINCT ON (id_client)
         id_client,
@@ -1724,11 +1725,12 @@ INNER JOIN (
 WHERE
     U.id_entrenador = $1
 ORDER BY
-    LastSub.current_period_end ASC;
+    -- 🔥 OPTIMIZACIÓN: Los ordenamos por fecha de vencimiento ascendente, 
+    -- colocando a los nuevos (que son NULL) al principio de la lista para su atención inmediata
+    LastSub.current_period_end ASC NULLS FIRST;
         `;
     return db.manyOrNone(sql, id_company);
 }
-
 User.createInvitation = (email, id_company) => {
     const sql = `
         INSERT INTO trainer_invitations(
