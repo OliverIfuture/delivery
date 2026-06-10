@@ -1460,21 +1460,28 @@ module.exports = {
 
     async getCompanyById(req, res, next) {
         try {
-            const id = req.params.id;
+            // El ID que envía Flutter por defecto (ej. "1")
+            let id_company = req.params.id;
 
-            const data = await User.getCompanyById(id);
-            console.log(`Datos enviados del getCompanyById: ${JSON.stringify(data)}`);
-
-            if (!data) {
-                return res.status(404).json({ success: false, message: 'company no encontrado' });
+            // =========================================================
+            // 🔥 TRUCO MAGICO: INTERCEPCIÓN EN EL BACKEND 🔥
+            // Si el usuario logueado tiene un id_entrenador, ignoramos
+            // el número que mandó Flutter y usamos el de su entrenador.
+            // =========================================================
+            if (req.user && req.user.id_entrenador && req.user.id_entrenador !== '0' && req.user.id_entrenador !== 'null') {
+                id_company = req.user.id_entrenador;
+                console.log(`[Redirección] Flutter pidió la tienda ${req.params.id}, pero serviremos el entrenador: ${id_company}`);
             }
 
-            return res.status(200).json(data); // Cambiar a 200 para respuesta exitosa
+            // Llamamos a tu modelo (Ajusta 'User.getCompanyById' según cómo se llame en tu código)
+            const data = await User.getCompanyById(id_company);
+
+            return res.status(200).json(data);
         } catch (error) {
-            console.error(`error: ${error}`); // Usar console.error para errores
-            return res.status(500).json({
+            console.log(`error: ${error}`);
+            return res.status(501).json({
                 success: false,
-                message: 'Error al obtener el company por ID'
+                message: 'error al obtener la información de la tienda'
             });
         }
     },
@@ -2319,30 +2326,21 @@ module.exports = {
 
 
 
-    async getCompanyById(req, res, next) {
+    async getClientsByCompany(req, res, next) {
         try {
-            // El ID que envía Flutter por defecto (ej. "1")
-            let id_company = req.params.id;
+            const id_company = req.params.id_company;
+            const data = await User.getClientsByCompany(id_company);
+            // console.log(`getClientsByCompany: ${data}`);
+            return res.status(201).json(data);
 
-            // =========================================================
-            // 🔥 TRUCO MAGICO: INTERCEPCIÓN EN EL BACKEND 🔥
-            // Si el usuario logueado tiene un id_entrenador, ignoramos
-            // el número que mandó Flutter y usamos el de su entrenador.
-            // =========================================================
-            if (req.user && req.user.id_entrenador && req.user.id_entrenador !== '0' && req.user.id_entrenador !== 'null') {
-                id_company = req.user.id_entrenador;
-                console.log(`[Redirección] Flutter pidió la tienda ${req.params.id}, pero serviremos el entrenador: ${id_company}`);
-            }
 
-            // Llamamos a tu modelo (Ajusta 'User.getCompanyById' según cómo se llame en tu código)
-            const data = await User.getCompanyById(id_company);
+        }
+        catch (error) {
 
-            return res.status(200).json(data);
-        } catch (error) {
             console.log(`error: ${error}`);
             return res.status(501).json({
                 success: false,
-                message: 'error al obtener la información de la tienda'
+                message: 'error al obtener los repartidores'
             });
         }
     },
