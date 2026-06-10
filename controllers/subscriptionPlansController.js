@@ -297,8 +297,24 @@ module.exports = {
 
     async findByCompany(req, res, next) {
         try {
-            const id_company = req.params.id_company;
+            // 1. Tomamos el ID que manda Flutter desde la URL (por ejemplo, el "1")
+            let id_company = req.params.id_company;
+
+            console.log(`[Planes] Flutter solicitó planes para la tienda por defecto: ${id_company}`);
+
+            // =========================================================
+            // 🔥 INTERCEPCIÓN DINÁMICA 🔥
+            // Si el JWT revela que el usuario tiene su propio entrenador,
+            // sobrescribimos la variable id_company.
+            // =========================================================
+            if (req.user && req.user.id_entrenador && req.user.id_entrenador !== '0' && req.user.id_entrenador !== 'null') {
+                id_company = req.user.id_entrenador;
+                console.log(`[Planes] ¡Interceptado! Entregando los planes del entrenador real -> ${id_company}`);
+            }
+
+            // 2. Buscamos en la BD usando el ID final (ya sea el '1' o el del entrenador)
             const data = await SubscriptionPlan.findByCompany(id_company);
+
             return res.status(200).json(data);
         }
         catch (error) {
@@ -306,7 +322,7 @@ module.exports = {
             return res.status(501).json({
                 success: false,
                 message: 'Error al buscar los planes',
-                error: error
+                error: error.message
             });
         }
     },
