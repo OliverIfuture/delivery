@@ -591,78 +591,223 @@ module.exports = {
 
             console.log(`[SHOPPING-LIST] Procesando ${recipes.length} recetas para ${days} días.`);
 
-            // --- PASO 1: LIMPIEZA CRÍTICA DE DATOS ---
-            const simplifiedRecipes = recipes.map(r => ({
-                t: r.title || r.name,
-                i: r.ingredients,
-                m: r.multiplier || 1
+            // =======================================================
+            // 1. TU BASE DE DATOS DE INGREDIENTES (Diccionario Oficial)
+            // =======================================================
+            const dbIngredients = [
+                { name: "Aderezo César", unit: "g", category: "Otros" },
+                { name: "Mayonesa regular", unit: "g", category: "Otros" },
+                { name: "Combo Carls Jr: Charbroiled Chicken Club", unit: "combo", category: "Otros" },
+                { name: "Combo Carls Jr: Super Star con Queso", unit: "combo", category: "Otros" },
+                { name: "3 Tacos de Pescado Clásicos (Capeados)", unit: "orden", category: "Otros" },
+                { name: "Caldo de Mariscos (Plato Grande)", unit: "porción", category: "Pescados y mariscos" },
+                { name: "Burro de carne asada mediano", unit: "porción", category: "Carnes y aves" },
+                { name: "Ajo en polvo, sal, pimienta negra y pimentón de la Vera", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Patata o boniato", unit: "g", category: "Frutas y verduras" },
+                { name: "Aceite de Oliva Virgen Extra (AOVE)", unit: "ml", category: "Cereales y abarrotes" },
+                { name: "Verduras a elegir (calabacín, cebolla, brócoli, champiñones)", unit: "g", category: "Frutas y verduras" },
+                { name: "Pimentón dulce y azafrán (o colorante)", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Verduras picadas (pimiento rojo, verde, cebolla y ajo)", unit: "g", category: "Frutas y verduras" },
+                { name: "Caldo de pollo", unit: "ml", category: "Carnes y aves" },
+                { name: "Cacao en polvo (sin azúcar)", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Aceite de coco", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Mantequilla / Ghee", unit: "g", category: "Lácteos y huevos" },
+                { name: "Leche de almendras (sin azúcar)", unit: "ml", category: "Lácteos y huevos" },
+                { name: "Pistaches (sin cáscara)", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Semillas de girasol", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Semillas de calabaza (Pepitas)", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Cilantro fresco", unit: "g", category: "Frutas y verduras" },
+                { name: "Sal de mesa / Sal del Himalaya", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Paprika / Pimentón", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Cúrcuma en polvo", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Orégano seco", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Canela en polvo", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Pimienta negra molida", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Edamames (vainas)", unit: "g", category: "Frutas y verduras" },
+                { name: "Elote desgranado", unit: "g", category: "Frutas y verduras" },
+                { name: "Pan tostado integral", unit: "pieza", category: "Cereales y abarrotes" },
+                { name: "Amaranto tostado", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Camote / Batata (hervido)", unit: "g", category: "Frutas y verduras" },
+                { name: "Papa blanca (hervida)", unit: "g", category: "Frutas y verduras" },
+                { name: "Garbanzos (cocidos)", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Toronja", unit: "pieza", category: "Frutas y verduras" },
+                { name: "Mandarina", unit: "pieza", category: "Frutas y verduras" },
+                { name: "Pera", unit: "pieza", category: "Frutas y verduras" },
+                { name: "Kiwi", unit: "g", category: "Frutas y verduras" },
+                { name: "Mango", unit: "g", category: "Frutas y verduras" },
+                { name: "Uvas", unit: "g", category: "Frutas y verduras" },
+                { name: "Sandía", unit: "g", category: "Frutas y verduras" },
+                { name: "Melón", unit: "g", category: "Frutas y verduras" },
+                { name: "Ajo fresco", unit: "diente", category: "Frutas y verduras" },
+                { name: "Chícharos (Guisantes)", unit: "g", category: "Frutas y verduras" },
+                { name: "Germen de alfalfa", unit: "g", category: "Frutas y verduras" },
+                { name: "Cebolla morada", unit: "g", category: "Frutas y verduras" },
+                { name: "Betabel (Remolacha)", unit: "g", category: "Frutas y verduras" },
+                { name: "Apio", unit: "g", category: "Frutas y verduras" },
+                { name: "Ejotes (Judías verdes)", unit: "g", category: "Frutas y verduras" },
+                { name: "Berenjena", unit: "g", category: "Frutas y verduras" },
+                { name: "Coliflor", unit: "g", category: "Frutas y verduras" },
+                { name: "Pulpo (cocido)", unit: "g", category: "Pescados y mariscos" },
+                { name: "Tofu firme", unit: "g", category: "Otros" },
+                { name: "Muslo de pollo (sin piel/hueso)", unit: "g", category: "Carnes y aves" },
+                { name: "Sardina en salsa de tomate", unit: "g", category: "Pescados y mariscos" },
+                { name: "Pechuga de pavo (fresca)", unit: "g", category: "Carnes y aves" },
+                { name: "Lomo de cerdo magro (crudo)", unit: "g", category: "Carnes y aves" },
+                { name: "Claras de huevo líquidas", unit: "ml", category: "Lácteos y huevos" },
+                { name: "Soya texturizada (seca)", unit: "g", category: "Otros" },
+                { name: "Miel", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Semillas de chía", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Coco fresco", unit: "g", category: "Frutas y verduras" },
+                { name: "Durazno", unit: "pieza", category: "Frutas y verduras" },
+                { name: "Papaya", unit: "g", category: "Frutas y verduras" },
+                { name: "Piña", unit: "g", category: "Frutas y verduras" },
+                { name: "Hummus", unit: "g", category: "Otros" },
+                { name: "Gelatina light", unit: "taza", category: "Otros" },
+                { name: "Salsa natural (verde/roja/tomate)", unit: "g", category: "Otros" },
+                { name: "Aceite (Oliva/Vegetal)", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Crema de cacahuate / almendras", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Almendras / Nueces", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Plátano tabasco", unit: "pieza", category: "Frutas y verduras" },
+                { name: "Fresas / Frutos rojos", unit: "g", category: "Frutas y verduras" },
+                { name: "Manzana", unit: "pieza", category: "Frutas y verduras" },
+                { name: "Maíz palomero", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Galleta salada / habanera", unit: "pieza", category: "Cereales y abarrotes" },
+                { name: "Pan de caja integral", unit: "pieza", category: "Cereales y abarrotes" },
+                { name: "Lentejas cocidas", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Tortilla harina integral", unit: "pieza", category: "Cereales y abarrotes" },
+                { name: "Pasta integral (cocida)", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Quinoa cocida", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Arroz blanco/integral (cocido)", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Galletas de arroz", unit: "pieza", category: "Cereales y abarrotes" },
+                { name: "Avena en hojuelas", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Bolillo integral", unit: "pieza", category: "Cereales y abarrotes" },
+                { name: "Frijoles de olla / molidos", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Totopos horneados", unit: "g", category: "Cereales y abarrotes" },
+                { name: "Tostada horneada de maíz", unit: "pieza", category: "Cereales y abarrotes" },
+                { name: "Tortilla de maíz", unit: "pieza", category: "Cereales y abarrotes" },
+                { name: "Champiñones", unit: "g", category: "Frutas y verduras" },
+                { name: "Chayote", unit: "g", category: "Frutas y verduras" },
+                { name: "Jícama", unit: "g", category: "Frutas y verduras" },
+                { name: "Pepino", unit: "g", category: "Frutas y verduras" },
+                { name: "Calabacita", unit: "g", category: "Frutas y verduras" },
+                { name: "Espinacas", unit: "g", category: "Frutas y verduras" },
+                { name: "Lechuga / Mix hojas verdes", unit: "g", category: "Frutas y verduras" },
+                { name: "Espárragos", unit: "g", category: "Frutas y verduras" },
+                { name: "Brócoli", unit: "g", category: "Frutas y verduras" },
+                { name: "Zanahoria", unit: "g", category: "Frutas y verduras" }
+            ];
+
+            // =======================================================
+            // 2. FUNCIÓN DE LIMPIEZA PARA EL MATCHING
+            // =======================================================
+            const normalizeStr = (str) => {
+                return str.toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita acentos
+                    .replace(/de|con|sin|en|fresco|cocido|hervido/gi, '') // Quita palabras basura
+                    .trim();
+            };
+
+            // Creamos un diccionario optimizado para buscar rápido
+            const dbSearchMap = dbIngredients.map(item => ({
+                original: item,
+                normalized: normalizeStr(item.name)
             }));
 
-            // --- PASO 2: PROMPT CON TABLA DE CONVERSIÓN ESTRICTA ---
-            const promptText = `Eres un experto en compras de supermercado y nutrición. Tu objetivo es convertir un listado de ingredientes de recetas en una lista de compras realista y consolidada en formato JSON.
+            // =======================================================
+            // 3. EXTRACCIÓN Y MATCHING ESTRICTO
+            // =======================================================
+            const shoppingCart = {};
 
-        Datos de entrada: ${JSON.stringify(simplifiedRecipes)}
+            recipes.forEach(recipe => {
+                const multiplier = recipe.multiplier || 1;
+                const ingredients = recipe.ingredients || [];
 
-        REGLAS DE CÁLCULO Y CONVERSIÓN (¡APLICA ESTO ESTRICTAMENTE!):
-        1.  Multiplica la cantidad inicial de cada ingrediente por su valor "m" correspondiente.
-        2.  Suma las cantidades de los ingredientes idénticos o muy similares (ej. "Pechuga de pollo" y "Pollo" -> consolidar como "Pollo").
-        3.  **PROHIBIDO usar "piezas" o "porciones" para carnes y verduras genéricas.** Si un ingrediente NO especifica una unidad clara de peso o volumen (g, kg, ml, tazas), DEBES aplicar esta tabla de conversión basada en la cantidad numérica o multiplicador:
-            * "Carne", "Pollo", "Pescado", "Salmón", "Atún", "Pavo", "Jamón", "Lomo": Multiplica el número por **150 g**. (Ej: Si el cálculo da 2 -> "300 g").
-            * "Verduras", "Vegetales", "Fruta": Multiplica el número por **1 taza** o **150 g**.
-            * "Avena", "Arroz", "Quinoa", "Pasta": Multiplica el número por **1/2 taza** o **50 g**.
-            * "Patata", "Boniato", "Papa": Multiplica el número por **200 g**.
-        4.  Usa "piezas" o "unidades" **SOLO** para alimentos que se compran inherentemente así: Huevos, Manzanas, Plátanos, Aguacates, Pan (rebanadas), Tortillas.
-        5.  Clasifica los ingredientes consolidados en las siguientes categorías: "Carnes y aves", "Frutas y verduras", "Lácteos y huevos", "Cereales y abarrotes", "Otros".
+                ingredients.forEach(ing => {
+                    let rawName = "";
+                    let qty = 1;
 
-        Esquema de salida JSON requerido:
-        {
-          "categories": [
-            {
-              "name": "Nombre Categoría",
-              "items": [
-                { 
-                  "name": "Nombre del producto limpio", 
-                  "quantity": "Cantidad total + Unidad lógica de supermercado (Ej: '300 g', '2 piezas', '1 taza', '500 ml')", 
-                  "isChecked": false 
-                }
-              ]
-            }
-          ]
-        }
-        
-        IMPORTANTE: Devuelve ÚNICAMENTE el JSON válido. Sin explicaciones, sin formato de código markdown (\`\`\`json).`;
+                    // Extraer cantidad y nombre del string o del JSON
+                    if (typeof ing === 'string') {
+                        const match = ing.match(/^([\d.,]+)\s*([a-zA-Z]+)?\s*(de\s*)?(.*)$/i);
+                        if (match) {
+                            qty = parseFloat(match[1]) || 1;
+                            rawName = match[4] ? match[4] : ing;
+                        } else {
+                            rawName = ing;
+                        }
+                    } else if (typeof ing === 'object') {
+                        rawName = ing.name || ing.ingredient || "";
+                        qty = parseFloat(ing.quantity || ing.qty || 1);
+                    }
 
-            // --- PASO 3: LLAMADA A GEMINI FLASH LITE ---
-            const model = aiClient.getGenerativeModel({
-                model: "gemini-2.0-flash",
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    temperature: 0.1, // Baja temperatura para seguir instrucciones estrictas
-                    maxOutputTokens: 1500
-                }
+                    const totalQty = qty * multiplier;
+                    const cleanName = normalizeStr(rawName);
+
+                    // BUSCADOR INTELIGENTE: Encuentra el ingrediente que mejor coincida en la BD
+                    let matchedDBItem = null;
+                    for (const dbItem of dbSearchMap) {
+                        // Si el nombre de la receta incluye la palabra clave de la BD (o viceversa)
+                        if (cleanName.includes(dbItem.normalized) || dbItem.normalized.includes(cleanName)) {
+                            matchedDBItem = dbItem.original;
+                            break;
+                        }
+                    }
+
+                    // SOLO GUARDAMOS SI EXISTE EN TU BASE DE DATOS
+                    if (matchedDBItem) {
+                        const uniqueKey = matchedDBItem.name;
+
+                        if (shoppingCart[uniqueKey]) {
+                            shoppingCart[uniqueKey].quantity += totalQty;
+                        } else {
+                            shoppingCart[uniqueKey] = {
+                                name: matchedDBItem.name,
+                                quantity: totalQty,
+                                unit: matchedDBItem.unit,
+                                category: matchedDBItem.category
+                            };
+                        }
+                    }
+                });
             });
 
-            const result = await model.generateContent(promptText);
-            const response = await result.response;
-            const text = response.text().trim();
+            // =======================================================
+            // 4. AGRUPAR EN EL FORMATO ESPERADO (CATEGORÍAS)
+            // =======================================================
+            const categoriesGrouped = {};
 
-            if (!text) throw new Error("La IA devolvió un cuerpo vacío.");
+            Object.values(shoppingCart).forEach(item => {
+                if (!categoriesGrouped[item.category]) {
+                    categoriesGrouped[item.category] = [];
+                }
 
-            // Parseo seguro (elimina cualquier markdown residual)
-            const shoppingListJSON = JSON.parse(text.replace(/```json|```/gi, ""));
+                // Ajuste visual (g -> g, pieza -> pz)
+                let displayUnit = item.unit === 'pieza' ? 'pz' : item.unit;
+                const quantityStr = `${item.quantity.toFixed(1).replace(/\.0$/, '')} ${displayUnit}`;
+
+                categoriesGrouped[item.category].push({
+                    name: item.name, // Nombre oficial de tu BD
+                    quantity: quantityStr,
+                    isChecked: false
+                });
+            });
+
+            const finalOutputArray = Object.keys(categoriesGrouped).map(key => ({
+                name: key,
+                items: categoriesGrouped[key]
+            }));
 
             return res.status(200).json({
                 success: true,
-                message: 'Lista generada con éxito',
-                data: shoppingListJSON
+                message: 'Lista generada con éxito a partir de la BD oficial',
+                data: { categories: finalOutputArray }
             });
 
         } catch (error) {
-            console.error(`[SHOPPING-LIST] Error: ${error.message}`);
-
+            console.error(`[SHOPPING-LIST] Error crítico: ${error.stack || error.message}`);
             return res.status(500).json({
                 success: false,
-                message: 'Error al generar la lista. Intenta de nuevo.',
+                message: 'Error interno al generar la lista.',
                 error: error.message
             });
         }
