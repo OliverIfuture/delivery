@@ -212,7 +212,8 @@ Product.createClassroomLesson = (lesson) => {
 };
 
 // --- OBTENER MÓDULOS (Filtrado por Nivel) ---
-Product.getClassroom = (user_level) => {
+// 🔥 Ahora recibe user_level y id_company
+Product.getClassroom = (user_level, id_company) => {
     const sql = `
 SELECT
             m.id,
@@ -250,12 +251,15 @@ SELECT
             classroom_modules m
         WHERE
             m.is_active = true
+            -- 🔥 NUEVO FILTRO: Solo trae los módulos de ese entrenador específico
+            AND m.id_company = $2 
         ORDER BY
             m.required_level ASC, m.id DESC;
     `;
-    return db.manyOrNone(sql, user_level);
-};
 
+    // Pasamos el array con ambos valores
+    return db.manyOrNone(sql, [user_level, id_company]);
+};
 // --- MODERACIÓN: REPORTAR POST ---
 Product.reportPost = (post_id, user_id) => {
     const sql = `

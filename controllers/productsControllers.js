@@ -197,7 +197,21 @@ module.exports = {
     async getClassroom(req, res, next) {
         try {
             const access_level = req.params.access_level;
-            const data = await Product.getClassroom(access_level);
+
+            // =========================================================
+            // 🔥 INTERCEPCIÓN DINÁMICA DEL CLASSROOM 🔥
+            // =========================================================
+            let id_company = '1'; // Classroom por defecto (Global)
+            if (req.user && req.user.id_entrenador && req.user.id_entrenador !== '0' && req.user.id_entrenador !== 'null') {
+                id_company = req.user.id_entrenador;
+                console.log(`[Classroom] Entregando módulos del entrenador real -> ${id_company}`);
+            } else {
+                console.log(`[Classroom] Sin entrenador asignado. Sirviendo módulos globales (ID 1)`);
+            }
+
+            // Pasamos AMBOS parámetros al modelo
+            const data = await Product.getClassroom(access_level, id_company);
+
             return res.status(200).json(data);
         } catch (error) {
             console.log(`Error: ${error}`);
