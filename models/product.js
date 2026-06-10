@@ -417,7 +417,8 @@ ORDER BY P.is_pinned DESC, P.id DESC;
     return db.manyOrNone(sql, [id_user]); // 🔥 Pasamos el parámetro $1
 }
 
-Product.getPostAllV2 = (id_user) => {
+// 🔥 Ahora recibe dos parámetros
+Product.getPostAllV2 = (id_user, id_company) => {
     const sql = `
 SELECT
     P.id,
@@ -428,7 +429,7 @@ SELECT
     P.id_company,
     P.is_pinned,
     P.poll_options,
-    P.is_trainer, -- 🔥 NUEVO PARÁMETRO AGREGADO AQUÍ 🔥
+    P.is_trainer, 
     U.name,
     U.image AS photo,
     
@@ -467,9 +468,11 @@ SELECT
 
 FROM post AS P
 INNER JOIN users AS U ON U.id = P.id_user
-WHERE P.id_company = 1
 
-  -- FILTROS DE MODERACIÓN APPLE
+-- 🔥 CAMBIO CRÍTICO: Aquí inyectamos el ID de la comunidad correcta
+WHERE P.id_company = $2 
+
+  -- FILTROS DE MODERACIÓN APPLE (usando $1 que es el id_user)
   AND P.id NOT IN (SELECT post_id FROM reported_posts WHERE user_id = $1)
   AND P.id_user NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = $1)
   AND P.id_user NOT IN (SELECT blocker_id FROM blocked_users WHERE blocked_id = $1)
@@ -477,7 +480,9 @@ WHERE P.id_company = 1
 GROUP BY P.id, U.name, U.image, P.poll_options
 ORDER BY P.is_pinned DESC, P.id DESC;
     `;
-    return db.manyOrNone(sql, [id_user]);
+
+    // 🔥 Le pasamos el array con las dos variables a la base de datos
+    return db.manyOrNone(sql, [id_user, id_company]);
 }
 
 Product.togglePinPost = (id_post) => {

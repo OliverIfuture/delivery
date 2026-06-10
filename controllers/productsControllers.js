@@ -255,13 +255,24 @@ module.exports = {
             // 🔥 1. Atrapamos el id del usuario que hace la petición
             const id_user = req.params.id_user;
 
-            // 🔥 2. Se lo pasamos al NUEVO modelo V2
-            const data = await Product.getPostAllV2(id_user);
+            // =========================================================
+            // 🔥 2. INTERCEPCIÓN DINÁMICA DE LA COMUNIDAD 🔥
+            // =========================================================
+            let id_company = '1'; // Comunidad por defecto
+            if (req.user && req.user.id_entrenador && req.user.id_entrenador !== '0' && req.user.id_entrenador !== 'null') {
+                id_company = req.user.id_entrenador;
+                console.log(`[Comunidad] Usuario ${id_user} solicitó posts. Entregando comunidad del entrenador: ${id_company}`);
+            } else {
+                console.log(`[Comunidad] Usuario ${id_user} sin entrenador. Entregando comunidad global: 1`);
+            }
 
-            return res.status(200).json(data); // 200 es el código correcto para GET
+            // 🔥 3. Le pasamos AMBAS variables al modelo
+            const data = await Product.getPostAllV2(id_user, id_company);
+
+            return res.status(200).json(data);
         }
         catch (error) {
-            console.log(`error: ${error}`);
+            console.log(`error en getPostAllV2: ${error}`);
             return res.status(501).json({
                 success: false,
                 message: 'error al obtener posts v2'
