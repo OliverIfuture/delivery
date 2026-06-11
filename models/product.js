@@ -152,17 +152,17 @@ Product.createPost = (id_user, description, url, poll_options) => {
     ]);
 }
 
-Product.createPostV2 = (id_user, description, image_urls_json, is_trainer, poll_options) => {
+Product.createPostV2 = (id_user, description, image_urls_json, is_trainer, poll_options, id_company) => {
     const sql = `
     WITH rows AS (
       INSERT INTO
             post(
                 id_user,
                 description,
-                image_post, -- Aquí entra el String JSON con el carrete entero
-                id_company,
+                image_post, 
+                id_company,    -- 🔥 AQUÍ ENTRARÁ EL ID DEL ENTRENADOR
                 poll_options,
-                is_trainer -- 🔥 NUEVO CAMPO PARA EL FILTRO COMUNIDAD
+                is_trainer
             )
         VALUES($1, $2, $3, $4, $5, $6) RETURNING id
     )
@@ -179,13 +179,12 @@ Product.createPostV2 = (id_user, description, image_urls_json, is_trainer, poll_
     return db.oneOrNone(sql, [
         id_user,
         description,
-        image_urls_json, // Enviamos el JSON String o null
-        1,               // Suponiendo que id_company siempre sea 1 por ahora
+        image_urls_json,
+        id_company,  // 🔥 Pasamos la variable en lugar del '1' fijo
         poll_options,
-        is_trainer === 'true' || is_trainer === true // Aseguramos que guarde un Boolean puro en PGAdmin
+        is_trainer === 'true' || is_trainer === true
     ]);
 }
-
 
 Product.createClassroomLesson = (lesson) => {
     const sql = `
@@ -473,10 +472,13 @@ SELECT
 FROM post AS P
 INNER JOIN users AS U ON U.id = P.id_user
 
--- 🔥 CAMBIO CRÍTICO: Aquí inyectamos el ID de la comunidad correcta
-WHERE P.id_company = $2 
+-- =========================================================
+-- 🔥 FILTRO DIRECTO Y LIMPIO 🔥
+-- Al usar ::varchar prevenimos crasheos de tipos en Postgres
+-- =========================================================
+WHERE P.id_company::varchar = $2 
 
-  -- FILTROS DE MODERACIÓN APPLE (usando $1 que es el id_user)
+  -- FILTROS DE MODERACIÓN APPLE
   AND P.id NOT IN (SELECT post_id FROM reported_posts WHERE user_id = $1)
   AND P.id_user NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = $1)
   AND P.id_user NOT IN (SELECT blocker_id FROM blocked_users WHERE blocked_id = $1)
@@ -485,10 +487,8 @@ GROUP BY P.id, U.name, U.image, P.poll_options
 ORDER BY P.is_pinned DESC, P.id DESC;
     `;
 
-    // 🔥 Le pasamos el array con las dos variables a la base de datos
     return db.manyOrNone(sql, [id_user, id_company]);
 }
-
 Product.togglePinPost = (id_post) => {
     const sql = `
         UPDATE post

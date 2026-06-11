@@ -273,12 +273,15 @@ module.exports = {
             // 🔥 2. INTERCEPCIÓN DINÁMICA DE LA COMUNIDAD 🔥
             // =========================================================
             let id_company = '1'; // Comunidad por defecto
-            if (req.user && req.user.id_entrenador && req.user.id_entrenador !== '0' && req.user.id_entrenador !== 'null') {
-                id_company = req.user.id_entrenador;
-                console.log(`[Comunidad] Usuario ${id_user} solicitó posts. Entregando comunidad del entrenador: ${id_company}`);
-            } else {
-                console.log(`[Comunidad] Usuario ${id_user} sin entrenador. Entregando comunidad global: 1`);
+
+            if (req.user && req.user.id_entrenador) {
+                const idStr = String(req.user.id_entrenador); // Blindaje contra enteros
+                if (idStr !== '0' && idStr !== 'null' && idStr !== '') {
+                    id_company = idStr;
+                }
             }
+
+            console.log(`[Comunidad] Usuario ${id_user} solicitó posts. Entregando comunidad: ${id_company}`);
 
             // 🔥 3. Le pasamos AMBAS variables al modelo
             const data = await Product.getPostAllV2(id_user, id_company);
@@ -397,11 +400,28 @@ module.exports = {
     },
     async createPostV2(req, res, next) {
         try {
-            // 1. Extraemos todos los datos que manda Flutter (incluido el nuevo is_trainer)
+            // 1. Extraemos todos los datos que manda Flutter
             const id_user = req.body.id_user;
             const description = req.body.description;
             const is_trainer = req.body.is_trainer ? req.body.is_trainer : 'false';
             const poll_options = req.body.poll_options ? req.body.poll_options : null;
+
+            // =========================================================
+            // 🔥 DETERMINAR LA COMUNIDAD DEL POST 🔥
+            // Extraemos el entrenador del token para que el post quede
+            // sellado permanentemente a la comunidad correcta.
+            // =========================================================
+            let id_company = '1';
+            if (req.user && req.user.id_entrenador) {
+                const idStr = String(req.user.id_entrenador);
+                if (idStr !== '0' && idStr !== 'null' && idStr !== '') {
+                    id_company = idStr;
+                }
+            }
+            // Si el autor es el propio entrenador, guardamos el post con su propio ID.
+            if (is_trainer === 'true' || is_trainer === true) {
+                id_company = String(id_user);
+            }
 
             const files = req.files;
             let finalImageString = null;
@@ -410,25 +430,22 @@ module.exports = {
             if (files && files.length > 0) {
                 let uploadedUrls = [];
 
-                // Recorremos cada imagen seleccionada y la subimos
                 for (let i = 0; i < files.length; i++) {
                     const pathImage = `image_${Date.now()}_${i}`;
-                    const url = await storage(files[i], pathImage); // Aquí usas tu función actual de subir
+                    const url = await storage(files[i], pathImage);
 
                     if (url != undefined && url != null) {
                         uploadedUrls.push(url);
                     }
                 }
 
-                // Si se subieron fotos con éxito, convertimos el array a un JSON String 
-                // Esto es perfecto porque tu código en Flutter intenta leer arrays JSON primero.
                 if (uploadedUrls.length > 0) {
                     finalImageString = JSON.stringify(uploadedUrls);
                 }
             }
 
-            // 3. Llamamos al nuevo modelo V2
-            await Product.createPostV2(id_user, description, finalImageString, is_trainer, poll_options);
+            // 3. Llamamos al modelo pasándole el id_company calculado
+            await Product.createPostV2(id_user, description, finalImageString, is_trainer, poll_options, id_company);
 
             return res.status(201).json({
                 success: true,
