@@ -495,7 +495,7 @@ Diet.getRecipesByCompany = (id_company) => {
                 WHERE m.id_recipe = r.id
             ) AS intelligent_ingredients
         FROM diet_recipes_v2 r
-        WHERE r.id_company = $1
+        WHERE r.id_company = $1  or r.id_company = 1
         ORDER BY r.id DESC;
     `;
 
