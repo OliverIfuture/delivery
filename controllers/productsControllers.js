@@ -420,7 +420,7 @@ module.exports = {
             }
             // Si el autor es el propio entrenador, guardamos el post con su propio ID.
             if (is_trainer === 'true' || is_trainer === true) {
-                id_company = String(id_user);
+                id_company = String(req.user.mi_store);
             }
 
             const files = req.files;
