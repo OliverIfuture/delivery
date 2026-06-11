@@ -1244,6 +1244,54 @@ User.getCompanyById = (id) => {
     return db.oneOrNone(sql, id)
 
 }
+
+User.getCompanyByIdStore = (id) => {
+
+    const sql = `
+    select 
+	c.id,
+	c.name,
+	c.addres,
+	c.telephone,
+	c.user_id,
+	c.state,
+	c.available,
+	c.type,
+	c.lat,
+	c.lng,
+	c.wantsappointments,
+	c.cashaccept,
+	c.creditcardaccepted,
+	c."stripeSecretKey",
+	c."stripePublishableKey",
+	c.membership_plan,
+	c.membership_expires_at,
+	c.membership_status,
+	c.pos,
+	c.code,
+	c.points,
+	c."stripeAccountId",
+	c."chargesEnabled",
+	c.updated_at,
+	c."acceptsAffiliates",
+	c."affiliateCommissionRate",
+	c.image_card,
+	U.notification_token,
+	c.description,
+	c.ispromo,
+	c."deliveryCost",
+	c.logo,
+	c.country
+		
+	from company as c
+	
+		inner join users as U on U.id = c.user_id
+	where c.id = $1
+		`;
+
+    return db.oneOrNone(sql, id)
+
+}
 // OBTENER PERFIL PÚBLICO DEL ENTRENADOR
 User.getPublicProfile = (id) => {
     const sql = `
