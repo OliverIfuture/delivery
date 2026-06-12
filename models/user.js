@@ -1020,9 +1020,9 @@ User.createWithImageUserAndCompany = (user, company) => {
     const sqlUser = `
         INSERT INTO
             users(
-                email, name, lastname, phone, image, password, created_at, updated_at
+                email, name, lastname, phone, image, password, created_at, updated_at, is_trainer
             )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8) 
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) 
         RETURNING id
     `;
 
@@ -1034,7 +1034,8 @@ User.createWithImageUserAndCompany = (user, company) => {
         user.image,
         user.password,
         new Date(),
-        new Date()
+        new Date(),
+        'true'
     ])
         .then(userData => {
             const newUserId = userData.id;
