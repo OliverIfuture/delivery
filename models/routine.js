@@ -163,7 +163,7 @@ Routine.findActiveByClient = (id_client) => {
             r.rest_time,
             r.is_template,
             r.current_week,
-            r.created_at, -- 🔥 Aquí hacemos el truco del renombre
+            r.updated_at as created_at, -- 🔥 Aquí hacemos el truco del renombre
             c.name AS trainer_name,
             c.logo AS trainer_logo
         FROM
