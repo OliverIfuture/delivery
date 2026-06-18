@@ -226,5 +226,24 @@ module.exports = {
                 error: error.message || error
             });
         }
+    },
+
+    /**
+     * Devuelve las variantes/sustitutos recomendados para un ejercicio
+     */
+    async getVariants(req, res, next) {
+        try {
+            const id_exercise = req.params.id_exercise;
+            const data = await Exercise.getVariants(id_exercise);
+
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en exercisesController.getVariants: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener las variantes del ejercicio',
+                error: error
+            });
+        }
     }
 };

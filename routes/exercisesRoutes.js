@@ -47,4 +47,11 @@ module.exports = (app, upload) => {
         exercisesController.delete
     );
 
+    // Obtener variantes de un ejercicio
+    app.get(
+        '/api/exercises/variants/:id_exercise',
+        passport.authenticate('jwt', { session: false }),
+        exercisesController.getVariants
+    );
+
 }

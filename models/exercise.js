@@ -134,5 +134,20 @@ Exercise.countByCompany = (id_company) => {
     return db.one(sql, id_company);
 };
 
+/**
+ * Obtiene las variantes de un ejercicio específico (Bidireccional)
+ */
+Exercise.getVariants = (exerciseId) => {
+    const sql = `
+        SELECT e.* FROM exercises e
+        JOIN exercise_variants v 
+          ON e.id = v.id_exercise_variant OR e.id = v.id_exercise_base
+        WHERE (v.id_exercise_base = $1 OR v.id_exercise_variant = $1)
+          AND e.id != $1
+        ORDER BY e.name ASC
+    `;
+    return db.manyOrNone(sql, exerciseId);
+};
+
 
 module.exports = Exercise;
