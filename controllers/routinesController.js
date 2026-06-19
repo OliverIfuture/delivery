@@ -490,7 +490,7 @@ module.exports = {
             console.log(`\n=================================================`);
             console.log(`🔄 [NODE] Solicitud de SUSTITUCIÓN DE EJERCICIO recibida`);
 
-            const { id_routine, id_exercise_old, id_exercise_new, current_week, current_day, exclude_future } = req.body;
+            const { id_routine, id_exercise_old, id_exercise_new, current_week, current_day, exclude_future, exercise_name_old } = req.body;
             console.log(`📦 [NODE] Payload recibido:`, req.body);
 
             // 1. Buscamos los datos reales del nuevo ejercicio sustituto
@@ -511,7 +511,7 @@ module.exports = {
 
             // Parseamos el plan_data si viene como String desde Postgres
             let planData = typeof routine.plan_data === 'string' ? JSON.parse(routine.plan_data) : routine.plan_data;
-            let replacedCount = 0; // Para auditar cuántos reemplazos hicimos
+            let replacedCount = 0;
 
             // 3. 🔥 ALGORITMO DE BARRIDO PROFUNDO EN EL JSON 🔥
             planData.weeks.forEach(w => {
@@ -526,8 +526,12 @@ module.exports = {
                             dayData.blocks.forEach(block => {
                                 if (block.exercises) {
                                     block.exercises.forEach(ex => {
-                                        if (ex.id?.toString() === id_exercise_old.toString()) {
 
+                                        // 🔥 REFUERZO: Compara por ID o por Nombre idéntico si es un cambio global (exclude_future)
+                                        const matchById = ex.id?.toString() === id_exercise_old.toString();
+                                        const matchByName = exclude_future && exercise_name_old && ex.name?.trim().toLowerCase() === exercise_name_old.trim().toLowerCase();
+
+                                        if (matchById || matchByName) {
                                             ex.id = id_exercise_new.toString();
                                             ex.name = newExerciseData.name;
                                             ex.description = newExerciseData.description;
@@ -535,7 +539,7 @@ module.exports = {
                                             ex.thumbnail_url = newExerciseData.thumbnail_url;
 
                                             replacedCount++;
-                                            console.log(`   ➤ ♻️ Muteado en: Semana ${w.week_number} | Día: ${dayKey}`);
+                                            console.log(`   ➤ ♻️ Muteado en: Semana ${w.week_number} | Día: ${dayKey} | Ejercicio: ${ex.name}`);
                                         }
                                     });
                                 }
