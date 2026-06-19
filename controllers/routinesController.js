@@ -571,6 +571,7 @@ module.exports = {
                 message: 'Error interno al sustituir ejercicio',
                 error: error.message || error
             });
+
         }
     }
 };
