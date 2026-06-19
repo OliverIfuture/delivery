@@ -177,6 +177,55 @@ Routine.findActiveByClient = (id_client) => {
 };
 
 /**
+ * Encuentra una rutina específica por su ID
+ */
+Routine.findById = (id) => {
+    const sql = `
+        SELECT
+            id,
+            id_company,
+            id_client,
+            name,
+            plan_data,
+            is_active,
+            image,
+            description,
+            rest_time,
+            is_template,
+            current_week,
+            created_at,
+            updated_at
+        FROM
+            routines
+        WHERE
+            id = $1
+    `;
+    return db.oneOrNone(sql, id);
+};
+
+/**
+ * Actualiza ÚNICAMENTE el plan_data (JSON) de la rutina.
+ * Lo usamos para cuando el usuario sustituye un ejercicio.
+ */
+Routine.updatePlanData = (id_routine, plan_data) => {
+    const sql = `
+        UPDATE routines SET
+            plan_data = $2,
+            updated_at = $3
+        WHERE id = $1
+    `;
+
+    // Convertimos el objeto a String de JSON (si no lo está ya) para que Postgres lo guarde correctamente
+    const planDataString = typeof plan_data === 'string' ? plan_data : JSON.stringify(plan_data);
+
+    return db.none(sql, [
+        id_routine,
+        planDataString,
+        new Date() // Actualiza la fecha de modificación automáticamente
+    ]);
+};
+
+/**
  * NUEVO: Busca TODAS las rutinas de un cliente (para su biblioteca personal)
  */
 Routine.findAllByClient = (id_client) => {

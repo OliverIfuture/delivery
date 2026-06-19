@@ -66,6 +66,28 @@ Exercise.update = (exercise) => {
     ]);
 };
 
+/**
+ * Encuentra un ejercicio específico por su ID
+ */
+Exercise.findById = (id) => {
+    const sql = `
+        SELECT
+            id,
+            id_company,
+            name,
+            description,
+            muscle_group,
+            equipment,
+            media_url,
+            media_type,
+            thumbnail_url
+        FROM
+            exercises
+        WHERE
+            id = $1
+    `;
+    return db.oneOrNone(sql, id);
+};
 Exercise.findByCompany = (id_company) => {
     const sql = `
     SELECT

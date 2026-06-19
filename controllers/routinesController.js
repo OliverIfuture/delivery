@@ -2,6 +2,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const EvaluationControl = require('../models/evaluationControl.js'); // El modelo nuevo
 const Routine = require('../models/routine.js');
 const db = require('../config/config'); // <--- TU CONEXIÓN A POSTGRES
+const Exercise = require('../models/exercise.js');
 
 const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -483,4 +484,89 @@ module.exports = {
             return res.status(500).json({ success: false, error: error.message });
         }
     },
+
+    async substituteExercise(req, res, next) {
+        try {
+            console.log(`\n=================================================`);
+            console.log(`🔄 [NODE] Solicitud de SUSTITUCIÓN DE EJERCICIO recibida`);
+
+            const { id_routine, id_exercise_old, id_exercise_new, current_week, current_day, exclude_future } = req.body;
+            console.log(`📦 [NODE] Payload recibido:`, req.body);
+
+            // 1. Buscamos los datos reales del nuevo ejercicio sustituto
+            const newExerciseData = await Exercise.findById(id_exercise_new);
+            if (!newExerciseData) {
+                console.log(`❌ [NODE] Error: Ejercicio sustituto (ID: ${id_exercise_new}) no encontrado en la BD.`);
+                return res.status(404).json({ success: false, message: 'Ejercicio sustituto no encontrado' });
+            }
+            console.log(`🔎 [NODE] Ejercicio sustituto validado: ${newExerciseData.name}`);
+
+            // 2. Traemos la rutina con el planData actual
+            const routine = await Routine.findById(id_routine);
+            if (!routine) {
+                console.log(`❌ [NODE] Error: Rutina (ID: ${id_routine}) no encontrada.`);
+                return res.status(404).json({ success: false, message: 'Rutina no encontrada' });
+            }
+            console.log(`🔎 [NODE] Rutina encontrada. Iniciando barrido JSON...`);
+
+            // Parseamos el plan_data si viene como String desde Postgres
+            let planData = typeof routine.plan_data === 'string' ? JSON.parse(routine.plan_data) : routine.plan_data;
+            let replacedCount = 0; // Para auditar cuántos reemplazos hicimos
+
+            // 3. 🔥 ALGORITMO DE BARRIDO PROFUNDO EN EL JSON 🔥
+            planData.weeks.forEach(w => {
+                if (!exclude_future && w.week_number !== parseInt(current_week)) return;
+
+                if (w.days) {
+                    Object.keys(w.days).forEach(dayKey => {
+                        if (!exclude_future && dayKey.toLowerCase() !== current_day.toLowerCase()) return;
+
+                        const dayData = w.days[dayKey];
+                        if (dayData && dayData.blocks) {
+                            dayData.blocks.forEach(block => {
+                                if (block.exercises) {
+                                    block.exercises.forEach(ex => {
+                                        if (ex.id?.toString() === id_exercise_old.toString()) {
+
+                                            ex.id = id_exercise_new.toString();
+                                            ex.name = newExerciseData.name;
+                                            ex.description = newExerciseData.description;
+                                            ex.mediaUrl = newExerciseData.media_url;
+                                            ex.thumbnail_url = newExerciseData.thumbnail_url;
+
+                                            replacedCount++;
+                                            console.log(`   ➤ ♻️ Muteado en: Semana ${w.week_number} | Día: ${dayKey}`);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            console.log(`🛠️ [NODE] Barrido finalizado. Total de reemplazos: ${replacedCount}`);
+
+            // 4. Actualizamos el JSON mutado en PostgreSQL
+            await Routine.updatePlanData(id_routine, planData);
+            console.log(`💾 [NODE] JSON de rutina guardado exitosamente en Postgres.`);
+
+            console.log(`✅ [NODE] Respondiendo a Flutter con éxito.`);
+            console.log(`=================================================\n`);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Plan de entrenamiento actualizado',
+                plan_data: planData
+            });
+
+        } catch (error) {
+            console.log(`❌ [NODE] Error Crítico en substituteExercise: ${error}`);
+            return res.status(500).json({
+                success: false,
+                message: 'Error interno al sustituir ejercicio',
+                error: error.message || error
+            });
+        }
+    }
 };

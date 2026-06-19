@@ -61,4 +61,10 @@ module.exports = (app) => {
         passport.authenticate('jwt', { session: false }),
         routinesController.updateRoutine
     );
+
+    app.post(
+        '/api/routines/substitute-exercise',
+        passport.authenticate('jwt', { session: false }),
+        routinesController.substituteExercise
+    );
 }

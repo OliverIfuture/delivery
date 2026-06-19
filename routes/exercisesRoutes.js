@@ -54,4 +54,5 @@ module.exports = (app, upload) => {
         exercisesController.getVariants
     );
 
+
 }
