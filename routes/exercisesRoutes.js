@@ -55,4 +55,11 @@ module.exports = (app, upload) => {
     );
 
 
+    // Guardar lista de variantes (checkboxes)
+    app.post(
+        '/api/exercises/variants/save',
+        passport.authenticate('jwt', { session: false }),
+        exercisesController.saveVariants
+    );
+
 }

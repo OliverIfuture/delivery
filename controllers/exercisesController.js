@@ -228,6 +228,27 @@ module.exports = {
         }
     },
 
+    async saveVariants(req, res, next) {
+        try {
+            const id_exercise_base = req.body.id_exercise_base;
+            const variantIds = req.body.variantIds; // Esperamos un array: ["1", "5", "8"]
+
+            await Exercise.saveVariants(id_exercise_base, variantIds);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Variantes actualizadas correctamente'
+            });
+        } catch (error) {
+            console.log(`Error: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al guardar las variantes',
+                error: error
+            });
+        }
+    },
+
     /**
      * Devuelve las variantes/sustitutos recomendados para un ejercicio
      */

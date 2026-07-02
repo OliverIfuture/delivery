@@ -172,4 +172,22 @@ Exercise.getVariants = (exerciseId) => {
 };
 
 
+// Borra las variantes anteriores y guarda la nueva lista de checkboxes
+Exercise.saveVariants = async (id_exercise_base, variantIds) => {
+    // 1. Limpiamos las variantes actuales donde este ejercicio sea la base
+    await db.none('DELETE FROM exercise_variants WHERE id_exercise_base = $1', [id_exercise_base]);
+
+    // 2. Insertamos las nuevas variantes seleccionadas
+    if (variantIds && variantIds.length > 0) {
+        const queries = variantIds.map(id_variant => {
+            return db.none(
+                'INSERT INTO exercise_variants(id_exercise_base, id_exercise_variant) VALUES($1, $2)',
+                [id_exercise_base, id_variant]
+            );
+        });
+        return db.tx(t => t.batch(queries)); // Ejecuta todas las inserciones juntas
+    }
+    return true;
+};
+
 module.exports = Exercise;
