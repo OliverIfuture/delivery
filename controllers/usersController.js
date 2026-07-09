@@ -2525,7 +2525,7 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Falta el correo electrónico.' });
             }
 
-            // Enlaces a las tiendas (Los que me proporcionaste)
+            // Enlaces a las tiendas
             const linkPlayStore = "https://play.google.com/store/apps/details?id=com.premiumsupplementsversion2023.app";
             const linkAppStore = "https://testflight.apple.com/join/1TYBARXK";
 
@@ -2536,58 +2536,73 @@ module.exports = {
             const mailOptions = {
                 from: '"Trainer+ Equipo" <oliverjdm2@gmail.com>',
                 to: email,
-                subject: '¡Bienvenido a Trainer+! Tu comprobante de inscripción',
+                subject: '¡Bienvenido a Trainer+! Tu comprobante y pasos a seguir',
                 html: `
                     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f4f7fa; padding: 20px;">
                         
                         <div style="background-color: #002D5E; padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">TRAINER+</h1>
-                            <p style="color: #3399FF; margin: 10px 0 0 0; font-size: 16px;">Activaste tu Modo Pro</p>
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px;">TRAINER+</h1>
                         </div>
 
                         <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                            <h2 style="color: #002D5E; font-size: 20px; margin-top: 0;">¡Hola ${name || 'Futuro Campeón'}!</h2>
-                            <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
-                                Nos emociona darte la bienvenida al equipo. Tu inscripción ha sido procesada con éxito. Ya estamos listos para empezar a transformar tu físico.
+                            <h2 style="color: #002D5E; font-size: 22px; margin-top: 0; text-align: center;">¡Hola ${name || 'Futuro Campeón'}!</h2>
+                            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; text-align: center;">
+                                Nos emociona darte la bienvenida al equipo. Tu pago ha sido procesado con éxito.
                             </p>
 
                             <div style="background-color: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 25px 0;">
                                 <h3 style="color: #002D5E; margin: 0 0 15px 0; font-size: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">
                                     Resumen de tu Orden
                                 </h3>
-                                <table style="width: 100%; color: #4b5563; font-size: 14px;">
+                                <table style="width: 100%; color: #4b5563; font-size: 15px;">
                                     <tr>
-                                        <td style="padding: 5px 0;"><strong>Plan:</strong></td>
+                                        <td style="padding: 8px 0;"><strong>Plan:</strong></td>
                                         <td style="text-align: right;">${planName || 'Suscripción PRO'}</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 5px 0;"><strong>Método de pago:</strong></td>
-                                        <td style="text-align: right;">Tarjeta (Stripe)</td>
+                                        <td style="padding: 8px 0;"><strong>Método:</strong></td>
+                                        <td style="text-align: right;">Tarjeta</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 15px 0 5px 0; font-size: 16px; font-weight: bold; color: #002D5E;">Total Pagado:</td>
-                                        <td style="padding: 15px 0 5px 0; font-size: 16px; font-weight: bold; color: #3399FF; text-align: right;">$${amountPaid} MXN</td>
+                                        <td style="padding: 15px 0 5px 0; font-size: 18px; font-weight: bold; color: #002D5E;">Total Pagado:</td>
+                                        <td style="padding: 15px 0 5px 0; font-size: 18px; font-weight: bold; color: #3399FF; text-align: right;">$${amountPaid} MXN</td>
                                     </tr>
                                 </table>
                             </div>
 
-                            <h3 style="color: #002D5E; font-size: 18px; text-align: center; margin-top: 35px;">Siguiente Paso: Descarga la App</h3>
-                            <p style="color: #4b5563; font-size: 14px; text-align: center; line-height: 1.6;">
-                                Para comenzar con tus rutinas y tu plan de nutrición, descarga nuestra aplicación oficial e inicia sesión con este mismo correo (${email}).
-                            </p>
+                            <h3 style="color: #002D5E; font-size: 20px; text-align: center; margin-top: 40px; margin-bottom: 10px;">Para terminar tu registro:</h3>
+                            
+                            <div style="background-color: #f4f7fa; padding: 25px 20px; border-radius: 12px; margin-bottom: 30px;">
+                                <ol style="color: #4b5563; font-size: 16px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                                    <li style="margin-bottom: 10px;"><strong>Descarga la App</strong> tocando las imágenes enormes de abajo.</li>
+                                    <li style="margin-bottom: 10px;">Abre la app y ve a la sección de <strong>"Registrarme"</strong>.</li>
+                                    <li style="margin-bottom: 10px;">Coloca tu correo electrónico exactamente así: <br>
+                                        <div style="background-color: #ffffff; padding: 10px 15px; border-radius: 8px; border: 1px solid #e5e7eb; display: inline-block; margin: 10px 0; font-weight: bold; color: #002D5E; font-size: 18px;">
+                                            ${email}
+                                        </div>
+                                    </li>
+                                    <li>Llena el resto de tus datos y ¡listo para entrenar!</li>
+                                </ol>
+                            </div>
 
-                            <div style="text-align: center; margin-top: 25px;">
-                                <a href="${linkAppStore}" target="_blank" style="text-decoration: none; display: inline-block; margin-right: 10px;">
-                                    <img src="${imgAppStore}" alt="Descargar en App Store" style="height: 50px; border-radius: 8px;" />
+                            <div style="text-align: center; margin-top: 30px;">
+                                <a href="${linkAppStore}" target="_blank" style="text-decoration: none; display: block; margin-bottom: 25px;">
+                                    <img src="${imgAppStore}" alt="Descargar en App Store" style="width: 100%; max-width: 380px; height: auto; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.15);" />
                                 </a>
-                                <a href="${linkPlayStore}" target="_blank" style="text-decoration: none; display: inline-block;">
-                                    <img src="${imgPlayStore}" alt="Disponible en Google Play" style="height: 50px; border-radius: 8px;" />
+                                <a href="${linkPlayStore}" target="_blank" style="text-decoration: none; display: block;">
+                                    <img src="${imgPlayStore}" alt="Disponible en Google Play" style="width: 100%; max-width: 380px; height: auto; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.15);" />
                                 </a>
                             </div>
 
-                            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+                            <div style="text-align: center; margin-top: 50px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+                                <h4 style="color: #002D5E; font-size: 18px; margin-bottom: 15px;">¿Tienes alguna duda o problema?</h4>
+                                <a href="https://wa.me/526656567298" target="_blank" style="background-color: #25D366; color: #ffffff; text-decoration: none; padding: 16px 30px; border-radius: 30px; font-size: 16px; font-weight: bold; display: inline-block; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);">
+                                    Contactar por WhatsApp
+                                </a>
+                            </div>
+
+                            <div style="margin-top: 30px; text-align: center;">
                                 <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                                    Si tienes alguna duda con tu cobro o tu plan, contáctanos a soporte o escríbenos por WhatsApp.<br>
                                     © 2026 Trainer+. Todos los derechos reservados.
                                 </p>
                             </div>
