@@ -119,6 +119,7 @@ module.exports = (app, upload) => {
         passport.authenticate('jwt', { session: false }),
         UsersController.generateAccessQr
     );
+    app.post('/api/users/send-welcome-receipt', UsersController.sendWelcomeAndReceiptEmail);
     app.post('/api/users/sendDeleteOtp', UsersController.sendDeleteOtp);
     app.post('/api/users/invite', passport.authenticate('jwt', { session: false }), UsersController.sendInvitation);
     app.post('/api/users/send-otp', UsersController.sendOtp);

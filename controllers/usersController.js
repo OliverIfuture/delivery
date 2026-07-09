@@ -2516,6 +2516,104 @@ module.exports = {
         }
     },
 
+    async sendWelcomeAndReceiptEmail(req, res, next) {
+        try {
+            // Extraemos los datos que nos mandará Vue desde el frontend
+            const { email, name, planName, amountPaid } = req.body;
+
+            if (!email) {
+                return res.status(400).json({ success: false, message: 'Falta el correo electrónico.' });
+            }
+
+            // Enlaces a las tiendas (Los que me proporcionaste)
+            const linkPlayStore = "https://play.google.com/store/apps/details?id=com.premiumsupplementsversion2023.app";
+            const linkAppStore = "https://testflight.apple.com/join/1TYBARXK";
+
+            const imgAppStore = "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ad_banners%2Ftestpasos.png?alt=media&token=ce3cefab-9f11-497e-9a1a-8af5b54ef48c";
+            const imgPlayStore = "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ad_banners%2FWhatsApp%20Image%202026-07-08%20at%2018.29.25.jpeg?alt=media&token=1e91af6f-db19-4c33-bb02-806bc8cd88e5";
+
+            // --- HTML DEL CORREO TIPO FACTURA Y BIENVENIDA ---
+            const mailOptions = {
+                from: '"Trainer+ Equipo" <oliverjdm2@gmail.com>',
+                to: email,
+                subject: '¡Bienvenido a Trainer+! Tu comprobante de inscripción',
+                html: `
+                    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f4f7fa; padding: 20px;">
+                        
+                        <div style="background-color: #002D5E; padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">TRAINER+</h1>
+                            <p style="color: #3399FF; margin: 10px 0 0 0; font-size: 16px;">Activaste tu Modo Pro</p>
+                        </div>
+
+                        <div style="background-color: #ffffff; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                            <h2 style="color: #002D5E; font-size: 20px; margin-top: 0;">¡Hola ${name || 'Futuro Campeón'}!</h2>
+                            <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
+                                Nos emociona darte la bienvenida al equipo. Tu inscripción ha sido procesada con éxito. Ya estamos listos para empezar a transformar tu físico.
+                            </p>
+
+                            <div style="background-color: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                                <h3 style="color: #002D5E; margin: 0 0 15px 0; font-size: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">
+                                    Resumen de tu Orden
+                                </h3>
+                                <table style="width: 100%; color: #4b5563; font-size: 14px;">
+                                    <tr>
+                                        <td style="padding: 5px 0;"><strong>Plan:</strong></td>
+                                        <td style="text-align: right;">${planName || 'Suscripción PRO'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px 0;"><strong>Método de pago:</strong></td>
+                                        <td style="text-align: right;">Tarjeta (Stripe)</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 15px 0 5px 0; font-size: 16px; font-weight: bold; color: #002D5E;">Total Pagado:</td>
+                                        <td style="padding: 15px 0 5px 0; font-size: 16px; font-weight: bold; color: #3399FF; text-align: right;">$${amountPaid} MXN</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <h3 style="color: #002D5E; font-size: 18px; text-align: center; margin-top: 35px;">Siguiente Paso: Descarga la App</h3>
+                            <p style="color: #4b5563; font-size: 14px; text-align: center; line-height: 1.6;">
+                                Para comenzar con tus rutinas y tu plan de nutrición, descarga nuestra aplicación oficial e inicia sesión con este mismo correo (${email}).
+                            </p>
+
+                            <div style="text-align: center; margin-top: 25px;">
+                                <a href="${linkAppStore}" target="_blank" style="text-decoration: none; display: inline-block; margin-right: 10px;">
+                                    <img src="${imgAppStore}" alt="Descargar en App Store" style="height: 50px; border-radius: 8px;" />
+                                </a>
+                                <a href="${linkPlayStore}" target="_blank" style="text-decoration: none; display: inline-block;">
+                                    <img src="${imgPlayStore}" alt="Disponible en Google Play" style="height: 50px; border-radius: 8px;" />
+                                </a>
+                            </div>
+
+                            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+                                <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                                    Si tienes alguna duda con tu cobro o tu plan, contáctanos a soporte o escríbenos por WhatsApp.<br>
+                                    © 2026 Trainer+. Todos los derechos reservados.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            };
+
+            await transporter.sendMail(mailOptions);
+            console.log(`✅ Correo de bienvenida y factura enviado a ${email}`);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Correo de bienvenida enviado exitosamente.'
+            });
+
+        } catch (error) {
+            console.error(`Error enviando correo de bienvenida: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Hubo un error al enviar el correo.',
+                error: error.message
+            });
+        }
+    },
+
     async sendOtp(req, res, next) {
         try {
             const email = req.body.email;

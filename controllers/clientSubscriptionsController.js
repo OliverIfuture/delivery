@@ -542,9 +542,104 @@ module.exports = {
 
         res.status(200).json({ received: true });
     },
+
+
     /**
      * WEBHOOK DE STRIPE
      * (Esta función maneja TODAS las confirmaciones de pago)
+     * 
+     * 
+     * 
+     * 
+     * 
+     * async createRecurringRegistrationIntent(req, res, next) {
+        try {
+            // 1. Extraemos discount_percent del body que envía Vue
+            const { id_plan, id_company, stripe_price_id, duration_days, customer_email, discount_percent } = req.body;
+
+            const company = await User.findCompanyById(id_company);
+            const stripe = require('stripe')(company.stripeSecretKey);
+
+            const customer = await stripe.customers.create({
+                email: customer_email.toLowerCase(),
+                metadata: { registration_email: customer_email.toLowerCase() }
+            });
+
+            // 🚀 AQUÍ ESTÁ LA CORRECCIÓN ORIGINAL: Agregamos payment_settings
+            const subscriptionConfig = {
+                customer: customer.id,
+                items: [{ price: stripe_price_id }],
+                transfer_data: { destination: company.stripeAccountId },
+
+                // 🔥 LA MAGIA: Retenemos el 4.5% para que Stripe se lo cobre de ahí 🔥
+                application_fee_percent: 4.5,
+
+                payment_behavior: 'default_incomplete',
+                expand: ['latest_invoice.payment_intent'],
+                metadata: {
+                    type: 'client_subscription_payment',
+                    id_company: id_company,
+                    id_plan: id_plan,
+                    duration_days: duration_days || 30,
+                    temp_email: customer_email.toLowerCase()
+                },
+                // Forzamos la metadata al PaymentIntent inicial
+                payment_settings: {
+                    save_default_payment_method: 'on_subscription',
+                    payment_method_options: {
+                        card: { mandate_options: { amount_type: 'fixed' } }
+                    }
+                }
+            };
+
+            // ==============================================================
+            // 🔥 NUEVA LÓGICA DE DESCUENTO PARA WEB 🔥
+            // ==============================================================
+            if (discount_percent && !isNaN(parseFloat(discount_percent)) && parseFloat(discount_percent) > 0) {
+                const discountValue = parseFloat(discount_percent);
+                
+                // Creamos un cupón de un solo uso en la cuenta conectada del entrenador
+                const coupon = await stripe.coupons.create({
+                    percent_off: discountValue,
+                    duration: 'once',
+                    name: `Descuento ${discountValue}% Web`,
+                });
+
+                // Lo aplicamos a la configuración de la suscripción
+                subscriptionConfig.coupon = coupon.id;
+                
+                // Opcional: Dejamos rastro en la metadata para tus reportes
+                subscriptionConfig.metadata.discount_applied = 'YES';
+                subscriptionConfig.metadata.discount_percent = discountValue.toString();
+                
+                console.log(`Cupón de Stripe creado y aplicado en web: ${coupon.id} (${discountValue}%)`);
+            } else {
+                subscriptionConfig.metadata.discount_applied = 'NO';
+            }
+            // ==============================================================
+
+            const subscription = await stripe.subscriptions.create(subscriptionConfig);
+
+            // Inyectamos manualmente para que el Webhook lo reciba a la primera
+            if (subscription.latest_invoice && subscription.latest_invoice.payment_intent) {
+                await stripe.paymentIntents.update(
+                    subscription.latest_invoice.payment_intent.id,
+                    { metadata: subscriptionConfig.metadata }
+                );
+            }
+
+            return res.status(200).json({
+                success: true,
+                subscriptionId: subscription.id,
+                clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+                publishableKey: company.stripePublishableKey
+            });
+        } catch (error) {
+            console.log("Error en createRecurringRegistrationIntent:", error.message);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    },
+     * 
      */
     /**
 async stripeWebhook12(req, res, next) {
@@ -1088,6 +1183,13 @@ async stripeWebhook12(req, res, next) {
             res.status(500).json({ success: false, error: error.message });
         }
     },
+
+
+
+
+
+
+
 
     async createExtensionIntent(req, res, next) {
         try {
