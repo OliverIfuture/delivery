@@ -430,8 +430,8 @@ module.exports = {
                 email: user.email,
                 phone: user.phone,
                 image: user.image,
-                // Devolvemos el ID asignado (sea por link o por email)
-                id_entrenador: data.mi_store || trainerIdFromLink,
+                // 🔥 AQUÍ AGREGAMOS EL || 1 PARA EL FRONTEND 🔥
+                id_entrenador: data.mi_store || trainerIdFromLink || 1,
                 session_token: `JWT ${token}`
             };
 

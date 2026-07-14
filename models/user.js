@@ -545,10 +545,8 @@ User.create = (user, id_entrenador) => {
     const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
     user.password = myPasswordHashed;
 
-    // 2. LÓGICA DE ASIGNACIÓN (EL CAMBIO IMPORTANTE)
-    // Explicación: Si user.id_entrenador tiene valor (no es null ni undefined), úsalo.
-    // Si no, usa la variable 'id_entrenador' que recibimos como argumento.
-    const idEntrenadorFinal = user.id_entrenador ? user.id_entrenador : id_entrenador;
+    // 2. LÓGICA DE ASIGNACIÓN CON DEFAULT A 1 🔥
+    const idEntrenadorFinal = user.id_entrenador || id_entrenador || 1;
 
     const sql = `
         INSERT INTO users(
@@ -574,7 +572,7 @@ User.create = (user, id_entrenador) => {
         user.password,
         new Date(),
         new Date(),
-        idEntrenadorFinal // <--- AQUÍ PASAMOS EL ID YA CALCULADO
+        idEntrenadorFinal // <--- AQUÍ PASAMOS EL ID YA CALCULADO (O EL 1 POR DEFECTO)
     ]);
 };
 
