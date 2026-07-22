@@ -170,7 +170,16 @@ Exercise.getVariants = (exerciseId) => {
     `;
     return db.manyOrNone(sql, exerciseId);
 };
-
+Exercise.findByName = (name) => {
+    const sql = `
+        SELECT * 
+        FROM exercises 
+        WHERE name ILIKE $1 
+        ORDER BY name ASC 
+        LIMIT 30
+    `;
+    return db.manyOrNone(sql, [`%${name}%`]);
+};
 
 // Borra las variantes anteriores y guarda la nueva lista de checkboxes
 Exercise.saveVariants = async (id_exercise_base, variantIds) => {

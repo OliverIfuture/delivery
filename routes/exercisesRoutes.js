@@ -54,6 +54,11 @@ module.exports = (app, upload) => {
         exercisesController.getVariants
     );
 
+    app.get(
+        '/api/exercises/search/:name',
+        passport.authenticate('jwt', { session: false }),
+        exercisesController.findByName
+    );
 
     // Guardar lista de variantes (checkboxes)
     app.post(

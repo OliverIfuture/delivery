@@ -267,4 +267,20 @@ module.exports = {
             });
         }
     }
+
+    async findByName(req, res, next) {
+        try {
+            const name = req.params.name;
+            const data = await Exercise.findByName(name);
+
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en exercisesController.findByName: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al buscar los ejercicios por nombre',
+                error: error
+            });
+        }
+    }
 };
