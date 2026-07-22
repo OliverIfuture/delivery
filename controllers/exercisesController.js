@@ -266,7 +266,7 @@ module.exports = {
                 error: error
             });
         }
-    }
+    },
 
     async findByName(req, res, next) {
         try {
