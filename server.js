@@ -8,8 +8,8 @@ const cors = require('cors');
 const multer = require('multer');
 const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
-const password = require('passport');
-//const io = require('socket.io')(server);
+const passport = require('passport'); // Corregido: antes decía const password = require('passport')
+
 // Configuración CORS específica para WebSockets
 const io = require('socket.io')(server, {
     cors: {
@@ -18,15 +18,13 @@ const io = require('socket.io')(server, {
     }
 });
 const mercadopago = require('mercadopago');
+
 /*
 * mercadopago config
 */
 mercadopago.configure({
     access_token: 'TEST-3489130875095219-030320-0f0a92e8a429cb7ebc0c9d4e1f89cf6f-372923193'
-
 });
-
-
 
 /*
 * SOCKETS
@@ -34,34 +32,33 @@ mercadopago.configure({
 const orderDeliverySocket = require('./sockets/orders_delivery_socket.js');
 
 /*
-/**
- * * iniciar firebase admin
- * * */
+* iniciar firebase admin
+* */
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
-
-})
+});
 
 const upload = multer({
     storage: multer.memoryStorage()
-})
+});
 
 /**
- * * RUTAS 
- * */
+ * =========================================================
+ * RUTAS EXISTENTES
+ * =========================================================
+ */
 const users = require('./routes/usersRoutes.js');
 const categories = require('./routes/categoriesRoutes.js');
-const passport = require('passport');
 const products = require('./routes/productsRoutes.js');
 const address = require('./routes/addressRoutes.js');
 const orders = require('./routes/ordersRoutes.js');
 const mercadoPagoRoutes = require('./routes/mercadoPagoRoutes.js');
 const exercises = require('./routes/exercisesRoutes.js');
-const routines = require('./routes/routinesRoutes.js'); // **NUEVA RUTA AÑADIDA**
+const routines = require('./routes/routinesRoutes.js');
 const diets = require('./routes/dietsRoutes.js');
 const workoutLogs = require('./routes/workoutLogsRoutes.js');
 const subscriptionPlans = require('./routes/subscriptionPlansRoutes.js');
-const clientSubscriptions = require('./routes/clientSubscriptionsRoutes.js'); // <-- AÑADE ESTA
+const clientSubscriptions = require('./routes/clientSubscriptionsRoutes.js');
 const stripeConnect = require('./routes/stripeConnectRoutes.js');
 const clientProgress = require('./routes/clientProgressRoutes.js');
 const chat = require('./routes/chatRoutes.js');
@@ -74,18 +71,21 @@ const gymAdminRoutes = require('./routes/gymAdminRoutes.js');
 const nutritionRoutes = require('./routes/nutritionRoutes.js');
 const walletRoutes = require('./routes/walletRoutes.js');
 
-const PORT = process.env.PORT || 4000
+/**
+ * =========================================================
+ * RUTAS NUEVAS - PROYECTO EMOON
+ * =========================================================
+ */
+const emoonUsersRoutes = require('./routes/emoonUsersRoutes.js');
 
-
-
+const PORT = process.env.PORT || 4000;
 
 app.use(logger('dev'));
 // Usamos express.json() CON la opción "verify"
 app.use(express.json({
-    limit: '2mb', // <--- AGREGA ESTA LÍNEA
+    limit: '2mb',
     verify: (req, res, buf) => {
-        // Guardamos el body "crudo" (raw) en una nueva variable
-        // para que el webhook de Stripe pueda usarlo
+        // Guardamos el body "crudo" (raw) para el webhook de Stripe
         req.rawBody = buf;
     }
 }));
@@ -99,20 +99,21 @@ app.use(cors({
 app.use(express.urlencoded({
     extended: true
 }));
-//app.use(cors());
+
 app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport.js')(passport);
 app.disable('x-power-by');
 app.set('PORT', PORT);
 
-
-
 // LLAMAR A LOS SOCKETS
 orderDeliverySocket(io);
+
 /**
- * *LLAMANDO RUTAS 
- * */
+ * =========================================================
+ * LLAMANDO RUTAS EXISTENTES
+ * =========================================================
+ */
 users(app, upload);
 categories(app);
 products(app, upload);
@@ -120,12 +121,12 @@ address(app, upload);
 orders(app);
 mercadoPagoRoutes(app);
 exercises(app, upload);
-routines(app); // **NUEVA RUTA AÑADIDA**
+routines(app);
 diets(app);
 workoutLogs(app);
 subscriptionPlans(app);
 clientSubscriptions(app);
-stripeConnect(app); // <-- AÑADE ESTA LÍNEA
+stripeConnect(app);
 clientProgress(app);
 chat(app, upload);
 trainerDashboard(app);
@@ -137,15 +138,21 @@ gymAdminRoutes(app);
 nutritionRoutes(app);
 walletRoutes(app, upload);
 
+/**
+ * =========================================================
+ * LLAMANDO RUTAS NUEVAS - PROYECTO EMOON
+ * =========================================================
+ */
+// Inyectamos la dependencia 'app' (express) y 'upload' (multer)
+emoonUsersRoutes(app, upload);
+
+
 // IMPORTANTE: '0.0.0.0' hace que el servidor escuche conexiones externas
 server.listen(PORT, '0.0.0.0', function () {
     console.log('🚀 Servidor escuchando en puerto: ' + PORT);
 });
 
-
-
 //ERROR HANDLER
-
 app.use((err, req, res, next) => {
     console.log(err);
     res.status(err.status || 500).send(err.stack);
@@ -155,4 +162,3 @@ module.exports = {
     app: app,
     server: server
 }
-
