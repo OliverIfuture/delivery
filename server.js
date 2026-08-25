@@ -72,7 +72,7 @@ const nutritionRoutes = require('./routes/nutritionRoutes.js');
 const walletRoutes = require('./routes/walletRoutes.js');
 const emoonPackagesRoutes = require('./routes/emoonPackagesRoutes.js');
 const emoonSalesRoutes = require('./routes/emoonSalesRoutes.js');
-
+const scheduledRoutes = require('./routes/emoonScheduledClassesRoutes');
 /**
  * =========================================================
  * RUTAS NUEVAS - PROYECTO EMOON
@@ -141,6 +141,7 @@ nutritionRoutes(app);
 walletRoutes(app, upload);
 emoonPackagesRoutes(app);
 emoonSalesRoutes(app);
+scheduledRoutes(app);
 /**
  * =========================================================
  * LLAMANDO RUTAS NUEVAS - PROYECTO EMOON
