@@ -12,4 +12,10 @@ module.exports = (app) => {
         passport.authenticate('emoon-jwt', { session: false }),
         emoonPackagesController.create
     );
+
+    app.put(
+        '/api/emoon/packages/update/:id',
+        passport.authenticate('emoon-jwt', { session: false }),
+        emoonPackagesController.update
+    );
 };

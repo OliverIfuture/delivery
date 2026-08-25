@@ -33,4 +33,30 @@ EmoonPackage.create = (pkg) => {
     ]);
 };
 
+EmoonPackage.update = (id, pkg) => {
+    const sql = `
+        UPDATE emoon.emoon_packages
+        SET
+            name = COALESCE($2, name),
+            type_id = COALESCE($3, type_id),
+            price = COALESCE($4, price),
+            credits = COALESCE($5, credits),
+            validity_days = COALESCE($6, validity_days),
+            description = COALESCE($7, description),
+            is_active = COALESCE($8, is_active)
+        WHERE id = $1
+        RETURNING *
+    `;
+    return db.oneOrNone(sql, [
+        id,
+        pkg.name,
+        pkg.type_id,
+        pkg.price,
+        pkg.credits,
+        pkg.validity_days,
+        pkg.description,
+        pkg.is_active
+    ]);
+};
+
 module.exports = EmoonPackage;

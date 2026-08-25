@@ -49,5 +49,30 @@ module.exports = {
                 error: error.message
             });
         }
+    },
+
+    async update(req, res) {
+        try {
+            const id = req.params.id; // Obtenemos el ID de la URL
+            const packageData = req.body;
+
+            const data = await EmoonPackage.update(id, packageData);
+
+            if (data) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'Paquete actualizado correctamente',
+                    data: data
+                });
+            } else {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No se encontró el paquete para actualizar.'
+                });
+            }
+        } catch (error) {
+            console.log('Error en emoonPackagesController.update:', error);
+            return res.status(500).json({ success: false, message: 'Error al actualizar el paquete', error: error.message });
+        }
     }
 };
