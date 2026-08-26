@@ -15,7 +15,7 @@ module.exports = (app) => {
     );
 
     app.get(
-        '/api/emoon/payments/all',
+        '/api/emoon/purchases/all',
         passport.authenticate('emoon-jwt', { session: false }),
         emoonPurchasesController.getAll
     );
