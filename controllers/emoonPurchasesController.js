@@ -30,6 +30,26 @@ module.exports = {
                 error: error.message
             });
         }
-    }
+    },
+
+    async getAll(req, res) {
+        try {
+            // Verificamos permisos de admin si lo deseas (opcional, basado en req.user)
+            const payments = await EmoonPurchase.getAllAdmin();
+
+            return res.status(200).json({
+                success: true,
+                message: 'Historial de transacciones obtenido correctamente.',
+                data: payments
+            });
+        } catch (error) {
+            console.log('Error en emoonPaymentsController.getAll:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error interno al obtener los pagos.',
+                error: error.message
+            });
+        }
+    },
 
 };

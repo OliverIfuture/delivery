@@ -21,4 +21,25 @@ EmoonPurchase.getByUserId = (userId) => {
     return db.manyOrNone(sql, [userId]);
 };
 
+EmoonPurchase.getAllAdmin = () => {
+    const sql = `
+        SELECT 
+            p.id,
+            p.paid_at AS date,
+            p.stripe_payment_intent_id AS "stripeId",
+            p.stripe_receipt_url AS "receiptUrl",
+            p.amount,
+            COALESCE(p.payment_method, 'No especificado') AS method,
+            p.status,
+            COALESCE(u.first_name || ' ' || u.last_name, 'Usuario Desconocido') AS "clientName",
+            COALESCE(u.email, 'Sin correo') AS "clientEmail",
+            COALESCE(pkg.name, 'Paquete / Servicio eliminado') AS "packageName"
+        FROM emoon.emoon_payments p
+        LEFT JOIN emoon.emoon_users u ON p.user_id = u.id
+        LEFT JOIN emoon.emoon_packages pkg ON p.package_id = pkg.id
+        ORDER BY p.paid_at DESC;
+    `;
+    return db.manyOrNone(sql);
+};
+
 module.exports = EmoonPurchase;
