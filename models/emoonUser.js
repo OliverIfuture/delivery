@@ -31,6 +31,19 @@ EmoonUser.getAll = () => {
     return db.manyOrNone(sql);
 };
 
+// NUEVA FUNCIÓN: Actualizar el rol del usuario
+EmoonUser.updateRole = (id, role) => {
+    const sql = `
+        UPDATE emoon.emoon_users
+        SET 
+            role = $2,
+            updated_at = $3
+        WHERE id = $1
+        RETURNING id, first_name, last_name, email, role
+    `;
+    return db.oneOrNone(sql, [id, role, new Date()]);
+};
+
 // Crear usuario (Registro)
 EmoonUser.create = async (user) => {
     const hash = await bcrypt.hash(user.password, 10);

@@ -83,5 +83,38 @@ module.exports = {
                 error: error.message
             });
         }
+    },
+
+    // 4. NUEVO: Actualizar el rol de un usuario
+    async updateRole(req, res) {
+        try {
+            const userId = req.body.id;
+            const newRole = req.body.role;
+
+            // Validación básica
+            if (!userId || !newRole) {
+                return res.status(400).json({ success: false, message: 'Faltan datos obligatorios (id o role).' });
+            }
+
+            const updatedUser = await EmoonUser.updateRole(userId, newRole);
+
+            if (!updatedUser) {
+                return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Rol de usuario actualizado correctamente.',
+                data: updatedUser
+            });
+
+        } catch (error) {
+            console.log('Error en emoonUsersController.updateRole:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al actualizar el rol del usuario.',
+                error: error.message
+            });
+        }
     }
 };

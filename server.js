@@ -70,16 +70,17 @@ const posRoutes = require('./routes/posRoutes.js');
 const gymAdminRoutes = require('./routes/gymAdminRoutes.js');
 const nutritionRoutes = require('./routes/nutritionRoutes.js');
 const walletRoutes = require('./routes/walletRoutes.js');
-const emoonPackagesRoutes = require('./routes/emoonPackagesRoutes.js');
-const emoonSalesRoutes = require('./routes/emoonSalesRoutes.js');
-const scheduledRoutes = require('./routes/emoonScheduledClassesRoutes');
+
+
 /**
  * =========================================================
  * RUTAS NUEVAS - PROYECTO EMOON
  * =========================================================
  */
 const emoonUsersRoutes = require('./routes/emoonUsersRoutes.js');
-
+const emoonPackagesRoutes = require('./routes/emoonPackagesRoutes.js');
+const emoonSalesRoutes = require('./routes/emoonSalesRoutes.js');
+const scheduledRoutes = require('./routes/emoonScheduledClassesRoutes');
 const PORT = process.env.PORT || 4000;
 
 app.use(logger('dev'));
