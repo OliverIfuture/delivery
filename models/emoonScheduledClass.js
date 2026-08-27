@@ -3,7 +3,6 @@ const db = require('../config/config');
 
 const EmoonScheduledClass = {};
 
-// Crear una nueva clase programada en el calendario
 EmoonScheduledClass.create = async (classTypeId, instructorId, scheduledDate) => {
     const sql = `
         INSERT INTO emoon.emoon_scheduled_classes(
@@ -15,7 +14,6 @@ EmoonScheduledClass.create = async (classTypeId, instructorId, scheduledDate) =>
     return db.oneOrNone(sql, [classTypeId, instructorId, scheduledDate]);
 };
 
-// Obtener todas las clases programadas para el calendario
 EmoonScheduledClass.getAll = async () => {
     const sql = `
         SELECT 
@@ -26,7 +24,8 @@ EmoonScheduledClass.getAll = async () => {
                 (
                     SELECT COUNT(*)::int 
                     FROM emoon.emoon_reservations r 
-                    WHERE r.scheduled_class_id = sc.id AND r.status = 'confirmed'
+                    WHERE r.scheduled_class_id = sc.id 
+                    AND COALESCE(r.status, '') NOT IN ('cancelled', 'cancelada')
                 ), 0
             ) AS booked_spots,
             sc.status,
@@ -41,6 +40,16 @@ EmoonScheduledClass.getAll = async () => {
         ORDER BY sc.scheduled_datetime ASC;
     `;
     return db.manyOrNone(sql);
+};
+
+EmoonScheduledClass.cancel = async (id) => {
+    const sql = `
+        UPDATE emoon.emoon_scheduled_classes
+        SET status = 'cancelled'
+        WHERE id = $1
+        RETURNING *;
+    `;
+    return db.oneOrNone(sql, [id]);
 };
 
 module.exports = EmoonScheduledClass;
