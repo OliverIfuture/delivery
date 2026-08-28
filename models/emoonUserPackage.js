@@ -3,28 +3,25 @@ const db = require('../config/config');
 
 const EmoonUserPackage = {};
 
-// Obtener el total acumulado de créditos activos del usuario
+// Obtener TODOS los paquetes activos y con créditos disponibles del usuario
 EmoonUserPackage.getActivePackage = async (userId) => {
     const sql = `
         SELECT 
-            COALESCE(SUM(remaining_classes), 0)::int AS remaining_classes,
-            MAX(expiration_date) AS expiration_date,
-            COUNT(id)::int AS active_packages_count,
-            'Créditos Acumulados' AS package_name
-        FROM emoon.emoon_user_packages
-        WHERE user_id = $1
-          AND status = 'active'
-          AND (expiration_date IS NULL OR expiration_date >= CURRENT_DATE)
-          AND remaining_classes > 0;
+            up.id,
+            up.user_id,
+            up.remaining_classes,
+            up.expiration_date,
+            up.status,
+            COALESCE(p.name, 'Paquete de Clases') AS package_name
+        FROM emoon.emoon_user_packages up
+        LEFT JOIN emoon.emoon_packages p ON up.package_id = p.id
+        WHERE up.user_id = $1
+          AND up.status = 'active'
+          AND (up.expiration_date IS NULL OR up.expiration_date >= CURRENT_DATE)
+          AND (up.remaining_classes > 0 OR up.remaining_classes IS NULL)
+        ORDER BY up.expiration_date ASC NULLS LAST;
     `;
-    const result = await db.oneOrNone(sql, [userId]);
-
-    // Si no tiene clases disponibles
-    if (!result || result.remaining_classes === 0) {
-        return null;
-    }
-
-    return result;
+    return db.manyOrNone(sql, [userId]);
 };
 
 EmoonUserPackage.getByUserId = async (userId) => {
