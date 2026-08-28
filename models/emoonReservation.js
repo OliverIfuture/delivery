@@ -16,12 +16,14 @@ EmoonReservation.create = async (userId, scheduledClassId) => {
             throw new Error('El cliente ya tiene una reserva activa para esta clase.');
         }
 
-        // 2. Verificar cupo disponible
+        // 2. Calcular disponibilidad y conteo de lugares en tiempo real
         const scheduledClass = await t.oneOrNone(
-            `SELECT sc.id, sc.booked_spots, COALESCE(sc.override_capacity, ct.max_capacity, 10) AS capacity
+            `SELECT sc.id, 
+                    COALESCE(sc.override_capacity, ct.max_capacity, 10) AS capacity,
+                    (SELECT COUNT(*)::int FROM emoon.emoon_reservations r WHERE r.scheduled_class_id = sc.id AND r.status != 'cancelled') AS booked_spots
              FROM emoon.emoon_scheduled_classes sc
-             INNER JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
-             WHERE sc.id = $1 AND sc.status = 'scheduled'`,
+             LEFT JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
+             WHERE sc.id = $1 AND (sc.status = 'scheduled' OR sc.status IS NULL)`,
             [scheduledClassId]
         );
 
@@ -50,21 +52,15 @@ EmoonReservation.create = async (userId, scheduledClassId) => {
             throw new Error('No tienes créditos activos disponibles. Adquiere un paquete para continuar.');
         }
 
-        // 4. Crear reserva
+        // 4. Crear reserva respetando exacto la tabla emoon_reservations
         const reservation = await t.one(
-            `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, user_package_id, status)
-             VALUES($1, $2, $3, 'active')
+            `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status)
+             VALUES($1, $2, 'active')
              RETURNING *`,
-            [userId, scheduledClassId, activePackage.id]
+            [userId, scheduledClassId]
         );
 
-        // 5. Aumentar ocupación en la clase
-        await t.none(
-            `UPDATE emoon.emoon_scheduled_classes SET booked_spots = booked_spots + 1 WHERE id = $1`,
-            [scheduledClassId]
-        );
-
-        // 6. Descontar crédito al paquete
+        // 5. Descontar 1 crédito al paquete del cliente
         if (activePackage.remaining_classes !== null) {
             const newRemaining = activePackage.remaining_classes - 1;
             const newStatus = newRemaining <= 0 ? 'exhausted' : 'active';
@@ -113,7 +109,7 @@ EmoonReservation.updateStatus = (reservationId, status) => {
 EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
     return db.tx(async (t) => {
         const reservation = await t.oneOrNone(
-            `SELECT r.*, sc.scheduled_date
+            `SELECT r.*, COALESCE(sc.scheduled_date, sc.scheduled_datetime) AS class_date
              FROM emoon.emoon_reservations r
              INNER JOIN emoon.emoon_scheduled_classes sc ON r.scheduled_class_id = sc.id
              WHERE r.id = $1 AND r.user_id = $2 AND r.status != 'cancelled'`,
@@ -135,10 +131,11 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
             }
         }
 
-        const classTime = new Date(reservation.scheduled_date).getTime();
+        const classTime = new Date(reservation.class_date).getTime();
         const diffHours = (classTime - Date.now()) / (1000 * 60 * 60);
         const eligibleForRefund = diffHours >= cancellationHours;
 
+        // Cambiar estado a cancelado
         await t.none(
             `UPDATE emoon.emoon_reservations 
              SET status = 'cancelled', cancelled_at = NOW() 
@@ -146,22 +143,27 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
             [reservationId]
         );
 
-        await t.none(
-            `UPDATE emoon.emoon_scheduled_classes 
-             SET booked_spots = GREATEST(0, booked_spots - 1) 
-             WHERE id = $1`,
-            [reservation.scheduled_class_id]
-        );
-
-        if (eligibleForRefund && reservation.user_package_id) {
-            await t.none(
-                `UPDATE emoon.emoon_user_packages
-                 SET remaining_classes = CASE WHEN remaining_classes IS NOT NULL THEN remaining_classes + 1 ELSE remaining_classes END,
-                     status = 'active',
-                     updated_at = NOW()
-                 WHERE id = $1`,
-                [reservation.user_package_id]
+        // Reembolsar crédito si canceló con anticipación
+        if (eligibleForRefund) {
+            const userPkg = await t.oneOrNone(
+                `SELECT id, remaining_classes 
+                 FROM emoon.emoon_user_packages 
+                 WHERE user_id = $1 
+                 ORDER BY updated_at DESC, created_at DESC 
+                 LIMIT 1`,
+                [userId]
             );
+
+            if (userPkg && userPkg.remaining_classes !== null) {
+                await t.none(
+                    `UPDATE emoon.emoon_user_packages
+                     SET remaining_classes = remaining_classes + 1,
+                         status = 'active',
+                         updated_at = NOW()
+                     WHERE id = $1`,
+                    [userPkg.id]
+                );
+            }
         }
 
         return { refunded: eligibleForRefund, cancellationHours };
