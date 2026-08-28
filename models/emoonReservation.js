@@ -170,4 +170,28 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
     });
 };
 
+EmoonReservation.getByUserId = async (userId) => {
+    const sql = `
+        SELECT 
+            r.id AS reservation_id,
+            r.user_id,
+            r.scheduled_class_id,
+            r.status AS reservation_status,
+            r.reserved_at,
+            r.cancelled_at,
+            sc.scheduled_date,
+            sc.start_time,
+            sc.end_time,
+            COALESCE(sc.instructor_name, 'Instructor Studio') AS instructor_name,
+            COALESCE(ct.name, 'Clase Reformer') AS class_name,
+            COALESCE(ct.description, '') AS class_description
+        FROM emoon.emoon_reservations r
+        INNER JOIN emoon.emoon_scheduled_classes sc ON r.scheduled_class_id = sc.id
+        LEFT JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
+        WHERE r.user_id = $1
+        ORDER BY sc.scheduled_date DESC, sc.start_time DESC;
+    `;
+    return db.manyOrNone(sql, [userId]);
+};
+
 module.exports = EmoonReservation;

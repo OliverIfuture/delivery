@@ -37,6 +37,21 @@ module.exports = {
         }
     },
 
+    async getByUserId(req, res) {
+        try {
+            const { userId } = req.params;
+            if (!userId) {
+                return res.status(400).json({ success: false, message: 'El ID de usuario es requerido.' });
+            }
+
+            const data = await EmoonReservation.getByUserId(userId);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('Error getByUserId:', error);
+            return res.status(500).json({ success: false, message: 'Error al consultar reservas del usuario', error: error.message });
+        }
+    },
+
     async cancel(req, res) {
         try {
             const { reservationId, userId } = req.body;
