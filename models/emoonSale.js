@@ -47,7 +47,7 @@ EmoonSale.createManualSale = async (userId, packageId, paymentMethod) => {
             activation_date,
             expiration_date,
             status,
-            activation_date
+            created_at
         )
         VALUES ($1, $2, $3, $4, $4, $4, $4, NOW(), $5, 'active', NOW()) 
         RETURNING *;
