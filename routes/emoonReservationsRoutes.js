@@ -1,23 +1,33 @@
 // routes/emoonReservationsRoutes.js
-const emoonReservationsController = require('../controllers/emoonReservationsController');
+const reservationsController = require('../controllers/emoonReservationsController');
 const passport = require('passport');
 
 module.exports = (app) => {
+    // Crear reserva con validación y descuento de créditos
     app.post(
-        '/api/emoon/reservations/create',
+        '/api/emoon/reservations',
         passport.authenticate('emoon-jwt', { session: false }),
-        emoonReservationsController.create
+        reservationsController.create
     );
 
+    // Obtener lista de inscritos por clase (para el pase de lista)
     app.get(
-        '/api/emoon/reservations/class/:classId',
+        '/api/emoon/reservations/class/:scheduledClassId',
         passport.authenticate('emoon-jwt', { session: false }),
-        emoonReservationsController.getByClass
+        reservationsController.getByClassId
     );
 
+    // Actualizar estado de asistencia (Check-in / Ausencia / Cancelación manual)
     app.put(
-        '/api/emoon/reservations/:id/status',
+        '/api/emoon/reservations/status',
         passport.authenticate('emoon-jwt', { session: false }),
-        emoonReservationsController.updateStatus
+        reservationsController.updateStatus
+    );
+
+    // Cancelar reserva por parte del cliente (evalúa reembolso)
+    app.post(
+        '/api/emoon/reservations/cancel',
+        passport.authenticate('emoon-jwt', { session: false }),
+        reservationsController.cancel
     );
 };

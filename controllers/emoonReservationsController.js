@@ -6,49 +6,47 @@ module.exports = {
         try {
             const { userId, scheduledClassId } = req.body;
             if (!userId || !scheduledClassId) {
-                return res.status(400).json({ success: false, message: 'Se requiere cliente y clase.' });
+                return res.status(400).json({ success: false, message: 'Faltan parámetros de usuario o clase.' });
             }
 
-            const reservation = await EmoonReservation.create(userId, scheduledClassId);
-            return res.status(201).json({
-                success: true,
-                message: '¡Reserva creada exitosamente!',
-                data: reservation
-            });
+            const data = await EmoonReservation.create(userId, scheduledClassId);
+            return res.status(201).json({ success: true, message: 'Reserva creada exitosamente', data });
         } catch (error) {
-            console.error('Error en createReservation:', error);
-            return res.status(500).json({ success: false, message: error.message || 'Error al crear la reserva.' });
+            console.error('Error createReservation:', error.message);
+            return res.status(400).json({ success: false, message: error.message });
         }
     },
 
-    async getByClass(req, res) {
+    async getByClassId(req, res) {
         try {
-            const { classId } = req.params;
-            const attendees = await EmoonReservation.getByClassId(classId);
-            return res.status(200).json({
-                success: true,
-                data: attendees
-            });
+            const { scheduledClassId } = req.params;
+            const data = await EmoonReservation.getByClassId(scheduledClassId);
+            return res.status(200).json({ success: true, data });
         } catch (error) {
-            console.error('Error en getByClass:', error);
-            return res.status(500).json({ success: false, message: 'Error al obtener alumnos.', error: error.message });
+            return res.status(500).json({ success: false, message: error.message });
         }
     },
 
     async updateStatus(req, res) {
         try {
-            const { id } = req.params;
-            const { status } = req.body; // 'attended', 'no_show', 'cancelled'
-
-            const updated = await EmoonReservation.updateStatus(id, status);
-            return res.status(200).json({
-                success: true,
-                message: 'Estado de asistencia actualizado.',
-                data: updated
-            });
+            const { reservationId, status } = req.body;
+            const data = await EmoonReservation.updateStatus(reservationId, status);
+            return res.status(200).json({ success: true, data });
         } catch (error) {
-            console.error('Error en updateStatus:', error);
-            return res.status(500).json({ success: false, message: 'Error al cambiar asistencia.', error: error.message });
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    },
+
+    async cancel(req, res) {
+        try {
+            const { reservationId, userId } = req.body;
+            const result = await EmoonReservation.cancelWithCredit(reservationId, userId);
+            const msg = result.refunded
+                ? 'Reserva cancelada y crédito reembolsado.'
+                : `Reserva cancelada fuera del límite (${result.cancellationHours}h). El crédito no fue devuelto.`;
+            return res.status(200).json({ success: true, message: msg, refunded: result.refunded });
+        } catch (error) {
+            return res.status(400).json({ success: false, message: error.message });
         }
     }
 };
