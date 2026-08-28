@@ -12,7 +12,7 @@ module.exports = {
             const data = await EmoonReservation.create(userId, scheduledClassId);
             return res.status(201).json({ success: true, message: 'Reserva creada exitosamente', data });
         } catch (error) {
-            console.error('Error createReservation:', error.message);
+            console.error('Error createReservation: Ya tienes una reservacion para esta hora', error.message);
             return res.status(400).json({ success: false, message: error.message });
         }
     },
