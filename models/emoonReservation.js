@@ -170,7 +170,9 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
     });
 };
 
-EmoonReservation.getByUserId = async (userId) => {
+// models/emoonReservation.js
+
+EmoonReservation.getByUserId = (userId) => {
     const sql = `
         SELECT 
             r.id AS reservation_id,
@@ -179,17 +181,16 @@ EmoonReservation.getByUserId = async (userId) => {
             r.status AS reservation_status,
             r.reserved_at,
             r.cancelled_at,
-            sc.scheduled_date,
-            sc.start_time,
-            sc.end_time,
-            COALESCE(sc.instructor_name, 'Instructor Studio') AS instructor_name,
-            COALESCE(ct.name, 'Clase Reformer') AS class_name,
-            COALESCE(ct.description, '') AS class_description
+            sc.scheduled_datetime::date AS scheduled_date,
+            to_char(sc.scheduled_datetime, 'HH24:MI') AS start_time,
+            COALESCE(NULLIF(TRIM(CONCAT(u_inst.first_name, ' ', u_inst.last_name)), ''), 'Instructor Studio') AS instructor_name,
+            COALESCE(ct.name, 'Clase Reformer') AS class_name
         FROM emoon.emoon_reservations r
         INNER JOIN emoon.emoon_scheduled_classes sc ON r.scheduled_class_id = sc.id
         LEFT JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
+        LEFT JOIN emoon.emoon_users u_inst ON sc.instructor_id = u_inst.id
         WHERE r.user_id = $1
-        ORDER BY sc.scheduled_date DESC, sc.start_time DESC;
+        ORDER BY sc.scheduled_datetime DESC;
     `;
     return db.manyOrNone(sql, [userId]);
 };
