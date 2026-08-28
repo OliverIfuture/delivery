@@ -84,6 +84,7 @@ const emoonPurchasesRoutes = require('./routes/emoonPurchasesRoutes');
 const emoonClassesRoutes = require('./routes/emoonClassesRoutes');
 const emoonSettingsRoutes = require('./routes/emoonSettingsRoutes');
 const emoonReservationsRoutes = require('./routes/emoonReservationsRoutes');
+const emoonReviewsRoutes = require('./routes/emoonReviewsRoutes');
 const PORT = process.env.PORT || 4000;
 
 app.use(logger('dev'));
@@ -150,6 +151,7 @@ emoonPurchasesRoutes(app);
 emoonClassesRoutes(app);
 emoonSettingsRoutes(app);
 emoonReservationsRoutes(app);
+emoonReviewsRoutes(app);
 /**
  * =========================================================
  * LLAMANDO RUTAS NUEVAS - PROYECTO EMOON
