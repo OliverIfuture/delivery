@@ -52,7 +52,7 @@ EmoonReservation.create = async (userId, scheduledClassId) => {
             throw new Error('No tienes créditos activos disponibles. Adquiere un paquete para continuar.');
         }
 
-        // 4. Crear reserva respetando exacto la tabla emoon_reservations
+        // 4. CREACIÓN DE LA RESERVA (AQUÍ SE FORZA EXPLÍCITAMENTE 'active')
         const reservation = await t.one(
             `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status)
              VALUES($1, $2, 'active')
@@ -60,13 +60,13 @@ EmoonReservation.create = async (userId, scheduledClassId) => {
             [userId, scheduledClassId]
         );
 
-        // 5. Descontar 1 crédito al paquete del cliente
+        // 5. Descontar 1 crédito al paquete (sin updated_at)
         if (activePackage.remaining_classes !== null) {
             const newRemaining = activePackage.remaining_classes - 1;
             const newStatus = newRemaining <= 0 ? 'exhausted' : 'active';
             await t.none(
                 `UPDATE emoon.emoon_user_packages
-                 SET remaining_classes = $1, status = $2, updated_at = NOW()
+                 SET remaining_classes = $1, status = $2
                  WHERE id = $3`,
                 [newRemaining, newStatus, activePackage.id]
             );
@@ -95,6 +95,29 @@ EmoonReservation.getByClassId = (scheduledClassId) => {
     return db.manyOrNone(sql, [scheduledClassId]);
 };
 
+EmoonReservation.getByUserId = (userId) => {
+    const sql = `
+        SELECT 
+            r.id AS reservation_id,
+            r.user_id,
+            r.scheduled_class_id,
+            r.status AS reservation_status,
+            r.reserved_at,
+            r.cancelled_at,
+            sc.scheduled_datetime::date AS scheduled_date,
+            to_char(sc.scheduled_datetime, 'HH24:MI') AS start_time,
+            COALESCE(NULLIF(TRIM(CONCAT(u_inst.first_name, ' ', u_inst.last_name)), ''), 'Instructor Studio') AS instructor_name,
+            COALESCE(ct.name, 'Clase Reformer') AS class_name
+        FROM emoon.emoon_reservations r
+        INNER JOIN emoon.emoon_scheduled_classes sc ON r.scheduled_class_id = sc.id
+        LEFT JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
+        LEFT JOIN emoon.emoon_users u_inst ON sc.instructor_id = u_inst.id
+        WHERE r.user_id = $1
+        ORDER BY sc.scheduled_datetime DESC;
+    `;
+    return db.manyOrNone(sql, [userId]);
+};
+
 EmoonReservation.updateStatus = (reservationId, status) => {
     const sql = `
         UPDATE emoon.emoon_reservations
@@ -109,7 +132,7 @@ EmoonReservation.updateStatus = (reservationId, status) => {
 EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
     return db.tx(async (t) => {
         const reservation = await t.oneOrNone(
-            `SELECT r.*, COALESCE(sc.scheduled_date, sc.scheduled_datetime) AS class_date
+            `SELECT r.*, sc.scheduled_datetime AS class_date
              FROM emoon.emoon_reservations r
              INNER JOIN emoon.emoon_scheduled_classes sc ON r.scheduled_class_id = sc.id
              WHERE r.id = $1 AND r.user_id = $2 AND r.status != 'cancelled'`,
@@ -149,7 +172,7 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
                 `SELECT id, remaining_classes 
                  FROM emoon.emoon_user_packages 
                  WHERE user_id = $1 
-                 ORDER BY updated_at DESC, created_at DESC 
+                 ORDER BY created_at DESC 
                  LIMIT 1`,
                 [userId]
             );
@@ -158,8 +181,7 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
                 await t.none(
                     `UPDATE emoon.emoon_user_packages
                      SET remaining_classes = remaining_classes + 1,
-                         status = 'active',
-                         updated_at = NOW()
+                         status = 'active'
                      WHERE id = $1`,
                     [userPkg.id]
                 );
@@ -168,31 +190,6 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
 
         return { refunded: eligibleForRefund, cancellationHours };
     });
-};
-
-// models/emoonReservation.js
-
-EmoonReservation.getByUserId = (userId) => {
-    const sql = `
-        SELECT 
-            r.id AS reservation_id,
-            r.user_id,
-            r.scheduled_class_id,
-            r.status AS reservation_status,
-            r.reserved_at,
-            r.cancelled_at,
-            sc.scheduled_datetime::date AS scheduled_date,
-            to_char(sc.scheduled_datetime, 'HH24:MI') AS start_time,
-            COALESCE(NULLIF(TRIM(CONCAT(u_inst.first_name, ' ', u_inst.last_name)), ''), 'Instructor Studio') AS instructor_name,
-            COALESCE(ct.name, 'Clase Reformer') AS class_name
-        FROM emoon.emoon_reservations r
-        INNER JOIN emoon.emoon_scheduled_classes sc ON r.scheduled_class_id = sc.id
-        LEFT JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
-        LEFT JOIN emoon.emoon_users u_inst ON sc.instructor_id = u_inst.id
-        WHERE r.user_id = $1
-        ORDER BY sc.scheduled_datetime DESC;
-    `;
-    return db.manyOrNone(sql, [userId]);
 };
 
 module.exports = EmoonReservation;
