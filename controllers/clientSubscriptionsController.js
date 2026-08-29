@@ -9,6 +9,15 @@ const keys = require('../config/keys.js');
 const Gym = require('../models/gym.js'); // <-- Modelo clave para Gimnasios
 const Pos = require('../models/pos.js'); // <-- Modelo clave para el Webhook
 
+// Manejo seguro de llaves por si config/keys.js no está en este proyecto
+let stripeKey = process.env.STRIPE_SECRET_KEY;
+try {
+    const keys = require('../config/keys');
+    if (keys.stripeAdminSecretKey) stripeKey = stripeKey || keys.stripeAdminSecretKey;
+} catch (e) { }
+
+const stripe = require('stripe')(stripeKey);
+
 const endpointSecret = keys.stripeWebhookSecret;
 const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 
