@@ -1608,8 +1608,10 @@ async stripeWebhook12(req, res, next) {
             return res.status(200).json({
                 success: true,
                 message: 'Intención de pago creada exitosamente.',
-                clientSecret: paymentIntent.client_secret,
-                publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || keys.stripePublishableKey
+                data: {
+                    clientSecret: paymentIntent.client_secret,
+                    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || keys.stripePublishableKey
+                }
             });
 
         } catch (error) {
