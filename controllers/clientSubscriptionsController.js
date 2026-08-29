@@ -1559,12 +1559,7 @@ async stripeWebhook12(req, res, next) {
     async createPackagePaymentIntent(req, res) {
         try {
             const { packageId } = req.body;
-            const userId = req.user.id;
-
-            const db = require('../config/config');
-            const keys = require('../config/keys');
-            const stripeKey = process.env.STRIPE_SECRET_KEY || keys.stripeAdminSecretKey;
-            const stripe = require('stripe')(stripeKey);
+            const userId = req.user.id; // Suponiendo que usas passport JWT
 
             // 1. Obtener detalles del paquete desde PostgreSQL
             const pkg = await db.oneOrNone('SELECT id, name, price FROM emoon.emoon_packages WHERE id = $1', [packageId]);
@@ -1588,13 +1583,13 @@ async stripeWebhook12(req, res, next) {
             // Retención del 9.5% (Cubre la comisión de Stripe + tu 5% de plataforma)
             const applicationFeeInCents = Math.round(amountInCents * 0.095);
 
-            // 4. Crear cobro único sin usar IDs de producto de Stripe
+            // 4. Crear cobro único
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amountInCents,
                 currency: 'mxn',
                 payment_method_types: ['card'],
                 transfer_data: {
-                    destination: settings.stripe_account_id // Cuenta destino en Stripe Connect (acct_...)
+                    destination: settings.stripe_account_id // Cuenta destino Connect
                 },
                 application_fee_amount: applicationFeeInCents,
                 metadata: {
@@ -1605,12 +1600,19 @@ async stripeWebhook12(req, res, next) {
                 }
             });
 
+            let pubKey = process.env.STRIPE_PUBLISHABLE_KEY;
+            try {
+                const keys = require('../config/keys');
+                if (keys.stripePublishableKey) pubKey = pubKey || keys.stripePublishableKey;
+            } catch (e) { }
+
+            // 🔥 LA CORRECCIÓN CLAVE: Envolver los datos en "data: {}"
             return res.status(200).json({
                 success: true,
                 message: 'Intención de pago creada exitosamente.',
                 data: {
                     clientSecret: paymentIntent.client_secret,
-                    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || keys.stripePublishableKey
+                    publishableKey: pubKey
                 }
             });
 
