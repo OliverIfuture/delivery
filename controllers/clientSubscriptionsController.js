@@ -1559,60 +1559,57 @@ async stripeWebhook12(req, res, next) {
     async createPackagePaymentIntent(req, res) {
         try {
             const { packageId } = req.body;
-            const userId = req.user.id; // Suponiendo que usas passport JWT
+            const userId = req.user.id;
 
             const db = require('../config/config');
-            // Asegúrate de usar tus propias variables de entorno
-            const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+            const keys = require('../config/keys');
+            const stripeKey = process.env.STRIPE_SECRET_KEY || keys.stripeAdminSecretKey;
+            const stripe = require('stripe')(stripeKey);
 
-            // 1. Obtener detalles del paquete
+            // 1. Obtener detalles del paquete desde PostgreSQL
             const pkg = await db.oneOrNone('SELECT id, name, price FROM emoon.emoon_packages WHERE id = $1', [packageId]);
             if (!pkg) {
                 return res.status(404).json({ success: false, message: 'El paquete no existe.' });
             }
 
-            // 2. Obtener el ID de la cuenta conectada (Stripe Account ID) del gimnasio/estudio
-            // Ajusta esta consulta a la tabla donde guardes el 'stripe_account_id' del estudio
+            // 2. Obtener el ID de la cuenta conectada de Stripe (acct_XXXXXXXXXX)
             const settings = await db.oneOrNone('SELECT stripe_account_id FROM emoon.emoon_settings LIMIT 1');
 
             if (!settings || !settings.stripe_account_id) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El estudio aún no tiene configurada su cuenta para recibir pagos.'
+                    message: 'El estudio aún no tiene configurado su ID de cuenta conectada de Stripe.'
                 });
             }
 
-            // 3. Cálculos matemáticos en CENTAVOS
+            // 3. Conversión del precio único a centavos (Ejemplo: $500.00 MXN -> 50000)
             const amountInCents = Math.round(parseFloat(pkg.price) * 100);
 
-            // Retenemos el 9.5% (Stripe cobra su ~4% de aquí, a ti te queda el ~5.5% libre)
+            // Retención del 9.5% (Cubre la comisión de Stripe + tu 5% de plataforma)
             const applicationFeeInCents = Math.round(amountInCents * 0.095);
 
-            // 4. Crear la Intención de Pago (Destination Charge)
+            // 4. Crear cobro único sin usar IDs de producto de Stripe
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amountInCents,
                 currency: 'mxn',
                 payment_method_types: ['card'],
-                // Magia Connect: Se envía el dinero al estudio
                 transfer_data: {
-                    destination: settings.stripe_account_id,
+                    destination: settings.stripe_account_id // Cuenta destino en Stripe Connect (acct_...)
                 },
-                // Magia Connect: Tu retención exacta del 9.5%
                 application_fee_amount: applicationFeeInCents,
                 metadata: {
                     type: 'emoon_package_purchase',
-                    userId: userId,
-                    packageId: pkg.id,
+                    userId: String(userId),
+                    packageId: String(pkg.id),
                     packageName: pkg.name
                 }
             });
 
             return res.status(200).json({
                 success: true,
-                message: 'Intención de pago creada',
+                message: 'Intención de pago creada exitosamente.',
                 clientSecret: paymentIntent.client_secret,
-                // Opcional: Mandar tu llave pública al front si no la tienes en el .env de Vue
-                publishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+                publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || keys.stripePublishableKey
             });
 
         } catch (error) {
@@ -1624,7 +1621,6 @@ async stripeWebhook12(req, res, next) {
             });
         }
     }
-
 
 
 
