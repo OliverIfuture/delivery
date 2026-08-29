@@ -1,7 +1,8 @@
 // (Asegúrate de que estos 'imports' estén al inicio)
 const ClientSubscription = require('../models/clientSubscription.js');
 const User = require('../models/user.js');
-
+// controllers/emoonPaymentsController.js
+const db = require('../config/config');
 const Wallet = require('../models/wallet.js');
 const Affiliate = require('../models/affiliate.js');
 const keys = require('../config/keys.js');
