@@ -11,7 +11,7 @@ const Pos = require('../models/pos.js'); // <-- Modelo clave para el Webhook
 
 const endpointSecret = keys.stripeWebhookSecret;
 const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
-const stripe = require('stripe')(stripeKey);
+
 module.exports = {
 
     /**
