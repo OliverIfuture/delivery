@@ -37,4 +37,12 @@ module.exports = (app) => {
     app.put('/api/subscriptions/approve', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.approveRequest);
     // Cancelar suscripción activa
     app.post('/api/subscriptions/cancel', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.cancelSubscription);
+
+
+
+    app.post(
+        '/api/emoon/payments/create-payment-intent',
+        passport.authenticate('emoon-jwt', { session: false }),
+        clientSubscriptionsController.createPackagePaymentIntent
+    );
 };
