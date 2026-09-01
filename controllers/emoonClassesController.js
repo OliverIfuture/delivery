@@ -1,4 +1,3 @@
-// controllers/emoonClassesController.js
 const EmoonClassType = require('../models/emoonClassType');
 
 module.exports = {
@@ -37,6 +36,20 @@ module.exports = {
         } catch (error) {
             console.log('Error update Class:', error);
             return res.status(500).json({ success: false, message: 'Error al actualizar', error: error.message });
+        }
+    },
+
+    async delete(req, res) {
+        try {
+            const id = req.params.id;
+            const data = await EmoonClassType.delete(id);
+            if (data) {
+                return res.status(200).json({ success: true, message: 'Clase eliminada exitosamente', data: data });
+            }
+            return res.status(404).json({ success: false, message: 'Clase no encontrada.' });
+        } catch (error) {
+            console.log('Error delete Class:', error);
+            return res.status(500).json({ success: false, message: 'Error al eliminar la clase', error: error.message });
         }
     }
 };
