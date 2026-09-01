@@ -1,12 +1,13 @@
 const EmoonAttendance = require('../models/emoonAttendance');
 
 module.exports = {
-    async getTodayClasses(req, res) {
+    async getClassesByDate(req, res) {
         try {
-            const data = await EmoonAttendance.getTodayClassesWithUsers();
-            return res.status(200).json({ success: true, message: 'Clases de hoy obtenidas', data });
+            const { date } = req.query; // Captura ?date=YYYY-MM-DD
+            const data = await EmoonAttendance.getClassesByDate(date);
+            return res.status(200).json({ success: true, message: 'Clases obtenidas por fecha', data });
         } catch (error) {
-            console.log('Error getTodayClasses:', error);
+            console.log('Error getClassesByDate:', error);
             return res.status(500).json({ success: false, message: 'Error al consultar asistencias', error: error.message });
         }
     },

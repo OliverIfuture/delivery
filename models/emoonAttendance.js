@@ -1,12 +1,14 @@
-// models/emoonAttendance.js
 const db = require('../config/config');
 
 const EmoonAttendance = {};
-
-// Zona horaria local del estudio (Ajustar a 'America/Tijuana' o 'America/Mexico_City')
 const TIMEZONE = "'America/Tijuana'";
 
-EmoonAttendance.getTodayClassesWithUsers = () => {
+EmoonAttendance.getClassesByDate = (date) => {
+    // Si envían fecha la usamos, de lo contrario calcula la fecha local de hoy
+    const dateCondition = date 
+        ? `$1::date` 
+        : `(CURRENT_TIMESTAMP AT TIME ZONE ${TIMEZONE})::date`;
+
     const sql = `
         SELECT 
             sc.id AS scheduled_class_id,
@@ -31,12 +33,12 @@ EmoonAttendance.getTodayClassesWithUsers = () => {
         JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
         LEFT JOIN emoon.emoon_reservations r ON sc.id = r.scheduled_class_id
         LEFT JOIN emoon.emoon_users u ON r.user_id = u.id
-        WHERE (sc.scheduled_datetime AT TIME ZONE ${TIMEZONE})::date = (CURRENT_TIMESTAMP AT TIME ZONE ${TIMEZONE})::date
+        WHERE (sc.scheduled_datetime AT TIME ZONE ${TIMEZONE})::date = ${dateCondition}
           AND (sc.status = 'scheduled' OR sc.status IS NULL)
         GROUP BY sc.id, sc.scheduled_datetime, ct.name, ct.category_id, ct.duration_minutes
         ORDER BY sc.scheduled_datetime ASC
     `;
-    return db.manyOrNone(sql);
+    return db.manyOrNone(sql, date ? [date] : []);
 };
 
 EmoonAttendance.toggleAttendance = (reservationId, attended) => {
