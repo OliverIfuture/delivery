@@ -70,6 +70,7 @@ const posRoutes = require('./routes/posRoutes.js');
 const gymAdminRoutes = require('./routes/gymAdminRoutes.js');
 const nutritionRoutes = require('./routes/nutritionRoutes.js');
 const walletRoutes = require('./routes/walletRoutes.js');
+const emoonAttendanceRoutes = require('./routes/emoonAttendanceRoutes.js');
 
 /**
  * =========================================================
@@ -165,6 +166,7 @@ emoonCategoriesRoutes(app);
  */
 // Inyectamos la dependencia 'app' (express) y 'upload' (multer)
 emoonUsersRoutes(app, upload);
+emoonAttendanceRoutes(app);
 
 
 // IMPORTANTE: '0.0.0.0' hace que el servidor escuche conexiones externas
