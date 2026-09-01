@@ -7,7 +7,7 @@ EmoonAnalytics.getSummary = async () => {
     const sqlRevenue = `
         SELECT COALESCE(SUM(amount), 0) AS total_revenue
         FROM emoon.emoon_payments
-        WHERE date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)
+        WHERE date_trunc('month', paid_at) = date_trunc('month', CURRENT_DATE)
     `;
 
     // 2. Clases programadas/realizadas en el mes actual (desde emoon_scheduled_classes)
@@ -21,7 +21,7 @@ EmoonAnalytics.getSummary = async () => {
     const sqlActiveClients = `
         SELECT COUNT(DISTINCT user_id) AS active_clients
         FROM emoon.emoon_reservations
-        WHERE date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)
+        WHERE date_trunc('month', reserved_at) = date_trunc('month', CURRENT_DATE)
     `;
 
     const [revenueRes, classesRes, clientsRes] = await Promise.all([
