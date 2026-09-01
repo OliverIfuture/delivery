@@ -11,6 +11,27 @@ module.exports = {
         }
     },
 
+    async delete(req, res) {
+    try {
+        const { id } = req.params;
+        const data = await EmoonCategory.delete(id);
+        if (data) {
+            return res.status(200).json({ success: true, message: 'Categoría eliminada exitosamente', data });
+        }
+        return res.status(404).json({ success: false, message: 'Categoría no encontrada.' });
+    } catch (error) {
+        console.log('Error delete Category:', error);
+        // Error 23503 en Postgres es restricción de Clave Foránea (si la categoría está siendo usada por alguna clase)
+        if (error.code === '23503') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No se puede eliminar esta categoría porque hay clases asociadas a ella.' 
+            });
+        }
+        return res.status(500).json({ success: false, message: 'Error al eliminar categoría', error: error.message });
+    }
+},
+
     async create(req, res) {
         try {
             const category = req.body;

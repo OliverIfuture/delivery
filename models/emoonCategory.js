@@ -25,4 +25,13 @@ EmoonCategory.create = (category) => {
     ]);
 };
 
+EmoonCategory.delete = (id) => {
+    const sql = `
+        DELETE FROM emoon.emoon_class_categories
+        WHERE id = $1
+        RETURNING *
+    `;
+    return db.oneOrNone(sql, [id]);
+};
+
 module.exports = EmoonCategory;
