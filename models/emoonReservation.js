@@ -1,9 +1,8 @@
-// models/emoonReservation.js
 const db = require('../config/config');
 
 const EmoonReservation = {};
 
-EmoonReservation.create = async (userId, scheduledClassId) => {
+EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) => {
     return db.tx(async (t) => {
         // 1. Validar reserva previa activa
         const existing = await t.oneOrNone(
@@ -35,7 +34,26 @@ EmoonReservation.create = async (userId, scheduledClassId) => {
             throw new Error('La clase está llena. No hay cupos disponibles.');
         }
 
-        // 3. Buscar paquete activo del usuario
+        // 3. OPCIÓN A: COBRO DIRECTO EN SUCURSAL (Drop-in / Pago por clase suelta)
+        if (paymentInfo && paymentInfo.type === 'direct') {
+            const reservation = await t.one(
+                `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status)
+                 VALUES($1, $2, 'active')
+                 RETURNING *`,
+                [userId, scheduledClassId]
+            );
+
+            // Registrar el ingreso monetario en la tabla de pagos
+            await t.none(
+                `INSERT INTO emoon.emoon_payments(user_id, amount, payment_method, created_at)
+                 VALUES($1, $2, $3, CURRENT_TIMESTAMP)`,
+                [userId, paymentInfo.amount || 250, paymentInfo.method || 'Efectivo']
+            );
+
+            return reservation;
+        }
+
+        // 4. OPCIÓN B: DESCUENTO DE CRÉDITO DE PAQUETE ACTIVO
         const activePackage = await t.oneOrNone(
             `SELECT id, remaining_classes, class_count
              FROM emoon.emoon_user_packages
@@ -49,10 +67,9 @@ EmoonReservation.create = async (userId, scheduledClassId) => {
         );
 
         if (!activePackage) {
-            throw new Error('No tienes créditos activos disponibles. Adquiere un paquete para continuar.');
+            throw new Error('El cliente no tiene créditos activos disponibles. Selecciona "Cobro en Sucursal" para cobrar la clase individual.');
         }
 
-        // 4. CREACIÓN DE LA RESERVA (AQUÍ SE FORZA EXPLÍCITAMENTE 'active')
         const reservation = await t.one(
             `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status)
              VALUES($1, $2, 'active')
@@ -60,7 +77,7 @@ EmoonReservation.create = async (userId, scheduledClassId) => {
             [userId, scheduledClassId]
         );
 
-        // 5. Descontar 1 crédito al paquete (sin updated_at)
+        // Descontar 1 crédito al paquete
         if (activePackage.remaining_classes !== null) {
             const newRemaining = activePackage.remaining_classes - 1;
             const newStatus = newRemaining <= 0 ? 'exhausted' : 'active';
@@ -158,7 +175,6 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
         const diffHours = (classTime - Date.now()) / (1000 * 60 * 60);
         const eligibleForRefund = diffHours >= cancellationHours;
 
-        // Cambiar estado a cancelado
         await t.none(
             `UPDATE emoon.emoon_reservations 
              SET status = 'cancelled', cancelled_at = NOW() 
@@ -166,7 +182,6 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
             [reservationId]
         );
 
-        // Reembolsar crédito si canceló con anticipación
         if (eligibleForRefund) {
             const userPkg = await t.oneOrNone(
                 `SELECT id, remaining_classes 

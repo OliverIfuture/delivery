@@ -1,18 +1,17 @@
-// controllers/emoonReservationsController.js
 const EmoonReservation = require('../models/emoonReservation');
 
 module.exports = {
     async create(req, res) {
         try {
-            const { userId, scheduledClassId } = req.body;
+            const { userId, scheduledClassId, paymentInfo } = req.body;
             if (!userId || !scheduledClassId) {
                 return res.status(400).json({ success: false, message: 'Faltan parámetros de usuario o clase.' });
             }
 
-            const data = await EmoonReservation.create(userId, scheduledClassId);
+            const data = await EmoonReservation.create(userId, scheduledClassId, paymentInfo);
             return res.status(201).json({ success: true, message: 'Reserva creada exitosamente', data });
         } catch (error) {
-            console.error('Error createReservation: Ya tienes una reservacion para esta hora', error.message);
+            console.error('Error createReservation:', error.message);
             return res.status(400).json({ success: false, message: error.message });
         }
     },
