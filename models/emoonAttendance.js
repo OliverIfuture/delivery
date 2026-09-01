@@ -3,13 +3,16 @@ const db = require('../config/config');
 
 const EmoonAttendance = {};
 
+// Zona horaria local del estudio (Ajustar a 'America/Tijuana' o 'America/Mexico_City')
+const TIMEZONE = "'America/Tijuana'";
+
 EmoonAttendance.getTodayClassesWithUsers = () => {
     const sql = `
         SELECT 
             sc.id AS scheduled_class_id,
-            sc.scheduled_datetime::date AS class_date,
-            TO_CHAR(sc.scheduled_datetime, 'HH24:MI') AS start_time,
-            TO_CHAR(sc.scheduled_datetime + (COALESCE(ct.duration_minutes, 50) || ' minutes')::interval, 'HH24:MI') AS end_time,
+            (sc.scheduled_datetime AT TIME ZONE ${TIMEZONE})::date AS class_date,
+            TO_CHAR(sc.scheduled_datetime AT TIME ZONE ${TIMEZONE}, 'HH24:MI') AS start_time,
+            TO_CHAR((sc.scheduled_datetime AT TIME ZONE ${TIMEZONE}) + (COALESCE(ct.duration_minutes, 50) || ' minutes')::interval, 'HH24:MI') AS end_time,
             ct.name AS class_name,
             ct.category_id,
             COALESCE(
@@ -22,13 +25,14 @@ EmoonAttendance.getTodayClassesWithUsers = () => {
                         'email', u.email,
                         'attended', COALESCE(r.attended, false)
                     )
-                ) FILTER (WHERE r.id IS NOT NULL), '[]'
+                ) FILTER (WHERE r.id IS NOT NULL AND r.status != 'cancelled'), '[]'
             ) AS clients
         FROM emoon.emoon_scheduled_classes sc
         JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
         LEFT JOIN emoon.emoon_reservations r ON sc.id = r.scheduled_class_id
         LEFT JOIN emoon.emoon_users u ON r.user_id = u.id
-        WHERE sc.scheduled_datetime::date = CURRENT_DATE
+        WHERE (sc.scheduled_datetime AT TIME ZONE ${TIMEZONE})::date = (CURRENT_TIMESTAMP AT TIME ZONE ${TIMEZONE})::date
+          AND (sc.status = 'scheduled' OR sc.status IS NULL)
         GROUP BY sc.id, sc.scheduled_datetime, ct.name, ct.category_id, ct.duration_minutes
         ORDER BY sc.scheduled_datetime ASC
     `;
