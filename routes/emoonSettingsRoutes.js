@@ -4,7 +4,7 @@ const passport = require('passport');
 
 module.exports = (app) => {
 
-    app.get('/api/emoon/settings',{ session: false }), emoonSettingsController.getSettings);
+    app.get('/api/emoon/settings', emoonSettingsController.getSettings);
 
     app.put('/api/emoon/settings/general', passport.authenticate('emoon-jwt', { session: false }), emoonSettingsController.updateGeneral);
 
