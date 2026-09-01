@@ -6,6 +6,5 @@ module.exports = (app) => {
     app.get(
         '/api/emoon/analytics/summary',
         passport.authenticate('emoon-jwt', { session: false }),
-        analyticsController.getSummary
-    );
+        analyticsController.getSummary);
 };
