@@ -45,7 +45,7 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
 
             // Registrar el ingreso monetario en la tabla de pagos
             await t.none(
-                `INSERT INTO emoon.emoon_payments(user_id, amount, payment_method, created_at)
+                `INSERT INTO emoon.emoon_payments(user_id, amount, payment_method, paid_at)
                  VALUES($1, $2, $3, CURRENT_TIMESTAMP)`,
                 [userId, paymentInfo.amount || 250, paymentInfo.method || 'Efectivo']
             );
