@@ -1,15 +1,15 @@
+// models/emoonAttendance.js
 const db = require('../config/config');
 
 const EmoonAttendance = {};
 
-// Obtener las clases programadas para HOY junto con sus alumnos reservados
 EmoonAttendance.getTodayClassesWithUsers = () => {
     const sql = `
         SELECT 
             sc.id AS scheduled_class_id,
-            sc.class_date,
-            sc.start_time,
-            sc.end_time,
+            sc.scheduled_datetime::date AS class_date,
+            TO_CHAR(sc.scheduled_datetime, 'HH24:MI') AS start_time,
+            TO_CHAR(sc.scheduled_datetime + (COALESCE(ct.duration_minutes, 50) || ' minutes')::interval, 'HH24:MI') AS end_time,
             ct.name AS class_name,
             ct.category_id,
             COALESCE(
@@ -28,14 +28,13 @@ EmoonAttendance.getTodayClassesWithUsers = () => {
         JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
         LEFT JOIN emoon.emoon_reservations r ON sc.id = r.scheduled_class_id
         LEFT JOIN emoon.emoon_users u ON r.user_id = u.id
-        WHERE sc.class_date = CURRENT_DATE
-        GROUP BY sc.id, ct.name, ct.category_id
-        ORDER BY sc.start_time ASC
+        WHERE sc.scheduled_datetime::date = CURRENT_DATE
+        GROUP BY sc.id, sc.scheduled_datetime, ct.name, ct.category_id, ct.duration_minutes
+        ORDER BY sc.scheduled_datetime ASC
     `;
     return db.manyOrNone(sql);
 };
 
-// Toggle de asistencia para una reservación específica
 EmoonAttendance.toggleAttendance = (reservationId, attended) => {
     const sql = `
         UPDATE emoon.emoon_reservations
