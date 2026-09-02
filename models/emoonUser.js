@@ -49,11 +49,19 @@ EmoonUser.create = async (user) => {
     const hash = await bcrypt.hash(user.password, 10);
     const sql = `
         INSERT INTO emoon.emoon_users(
-            first_name, last_name, email, phone, password, role, created_at, updated_at
-        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
+            first_name, last_name, email, phone, birth_date, password, role, created_at, updated_at
+        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
     `;
     return db.oneOrNone(sql, [
-        user.first_name, user.last_name, user.email, user.phone, hash, user.role || 'client', new Date(), new Date()
+        user.first_name, 
+        user.last_name, 
+        user.email, 
+        user.phone, 
+        user.birth_date || null, 
+        hash, 
+        user.role || 'client', 
+        new Date(), 
+        new Date()
     ]);
 };
 
