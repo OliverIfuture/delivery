@@ -1,4 +1,3 @@
-// models/emoonPackage.js
 const db = require('../config/config');
 
 const EmoonPackage = {};
@@ -7,7 +6,7 @@ const EmoonPackage = {};
 EmoonPackage.getAll = () => {
     const sql = `
         SELECT 
-            id, name, type_id, price, credits, validity_days, description, is_active, created_at
+            id, name, type_id, price, credits, validity_days, description, is_active, min_age, created_at
         FROM emoon.emoon_packages
         ORDER BY created_at DESC
     `;
@@ -18,8 +17,8 @@ EmoonPackage.getAll = () => {
 EmoonPackage.create = (pkg) => {
     const sql = `
         INSERT INTO emoon.emoon_packages(
-            name, type_id, price, credits, validity_days, description, is_active, created_at
-        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
+            name, type_id, price, credits, validity_days, description, is_active, min_age, created_at
+        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
     `;
     return db.oneOrNone(sql, [
         pkg.name,
@@ -29,10 +28,12 @@ EmoonPackage.create = (pkg) => {
         pkg.validity_days,
         pkg.description,
         pkg.is_active !== false, // Por defecto true si no se especifica
+        pkg.min_age || null,     // Edad mínima requerida (o null)
         new Date()
     ]);
 };
 
+// Actualizar paquete existente
 EmoonPackage.update = (id, pkg) => {
     const sql = `
         UPDATE emoon.emoon_packages
@@ -43,7 +44,8 @@ EmoonPackage.update = (id, pkg) => {
             credits = COALESCE($5, credits),
             validity_days = COALESCE($6, validity_days),
             description = COALESCE($7, description),
-            is_active = COALESCE($8, is_active)
+            is_active = COALESCE($8, is_active),
+            min_age = COALESCE($9, min_age)
         WHERE id = $1
         RETURNING *
     `;
@@ -55,7 +57,8 @@ EmoonPackage.update = (id, pkg) => {
         pkg.credits,
         pkg.validity_days,
         pkg.description,
-        pkg.is_active
+        pkg.is_active,
+        pkg.min_age
     ]);
 };
 
