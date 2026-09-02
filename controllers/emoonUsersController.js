@@ -56,7 +56,7 @@ return res.status(201).json({
                     last_name: user.last_name,
                     email: user.email,
                     phone: user.phone,
-                    birth_date: myUser.birth_date,
+                    birth_date: user.birth_date,
                     role: user.role,
                     session_token: token
                 };
