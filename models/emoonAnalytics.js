@@ -1,39 +1,77 @@
+// models/emoonAnalytics.js
 const db = require('../config/config');
 
 const EmoonAnalytics = {};
 
 EmoonAnalytics.getSummary = async () => {
-    // 1. Ingresos totales del mes actual (desde emoon_payments)
+    // 1. Ingresos totales del mes actual (usando paid_at)
     const sqlRevenue = `
-        SELECT COALESCE(SUM(amount), 0) AS total_revenue
+        SELECT COALESCE(SUM(amount), 0) AS revenue_this_month
         FROM emoon.emoon_payments
         WHERE date_trunc('month', paid_at) = date_trunc('month', CURRENT_DATE)
     `;
 
-    // 2. Clases programadas/realizadas en el mes actual (desde emoon_scheduled_classes)
-    const sqlClasses = `
-        SELECT COUNT(*) AS total_classes
-        FROM emoon.emoon_scheduled_classes
-        WHERE date_trunc('month', scheduled_datetime) = date_trunc('month', CURRENT_DATE)
+    // 2. Total de alumnos clientes registrados
+    const sqlTotalClients = `
+        SELECT COUNT(*) AS total_clients
+        FROM emoon.emoon_users
+        WHERE role = 'client'
     `;
 
-    // 3. Clientes únicos con reservación en el mes actual (desde emoon_reservations)
-    const sqlActiveClients = `
-        SELECT COUNT(DISTINCT user_id) AS active_clients
-        FROM emoon.emoon_reservations
-        WHERE date_trunc('month', reserved_at) = date_trunc('month', CURRENT_DATE)
+    // 3. Reservaciones programadas para el día de HOY
+    const sqlReservationsToday = `
+        SELECT COUNT(*) AS reservations_today
+        FROM emoon.emoon_reservations r
+        INNER JOIN emoon.emoon_scheduled_classes sc ON r.scheduled_class_id = sc.id
+        WHERE sc.scheduled_datetime::date = CURRENT_DATE 
+          AND r.status != 'cancelled'
     `;
 
-    const [revenueRes, classesRes, clientsRes] = await Promise.all([
+    // 4. Porcentaje promedio de ocupación del mes
+    const sqlOccupancy = `
+        SELECT 
+            COALESCE(
+                ROUND(
+                    (COUNT(r.id)::numeric / NULLIF(SUM(COALESCE(sc.override_capacity, ct.max_capacity, 10)), 0)) * 100, 
+                    1
+                ), 
+                0
+            ) AS avg_occupancy
+        FROM emoon.emoon_scheduled_classes sc
+        LEFT JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
+        LEFT JOIN emoon.emoon_reservations r ON r.scheduled_class_id = sc.id AND r.status != 'cancelled'
+        WHERE date_trunc('month', sc.scheduled_datetime) = date_trunc('month', CURRENT_DATE)
+    `;
+
+    // 5. Gráfico de ocupación por tipo de clase
+    const sqlOccupancyChart = `
+        SELECT 
+            COALESCE(ct.name, 'Clase Reformer') AS name,
+            ct.id AS category_id,
+            COUNT(r.id)::int AS total_reservations
+        FROM emoon.emoon_reservations r
+        INNER JOIN emoon.emoon_scheduled_classes sc ON r.scheduled_class_id = sc.id
+        LEFT JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
+        WHERE date_trunc('month', sc.scheduled_datetime) = date_trunc('month', CURRENT_DATE) 
+          AND r.status != 'cancelled'
+        GROUP BY ct.name, ct.id
+    `;
+
+    const [revenueRes, clientsRes, todayRes, occupancyRes, chartRes] = await Promise.all([
         db.one(sqlRevenue),
-        db.one(sqlClasses),
-        db.one(sqlActiveClients)
+        db.one(sqlTotalClients),
+        db.one(sqlReservationsToday),
+        db.one(sqlOccupancy),
+        db.manyOrNone(sqlOccupancyChart)
     ]);
 
+    // Retorna las llaves en camelCase esperadas por Vue
     return {
-        total_revenue: parseFloat(revenueRes.total_revenue || 0),
-        total_classes: parseInt(classesRes.total_classes || 0),
-        active_clients: parseInt(clientsRes.active_clients || 0)
+        revenueThisMonth: parseFloat(revenueRes.revenue_this_month || 0),
+        totalClients: parseInt(clientsRes.total_clients || 0),
+        reservationsToday: parseInt(todayRes.reservations_today || 0),
+        avgOccupancy: parseFloat(occupancyRes.avg_occupancy || 0),
+        occupancyChart: chartRes || []
     };
 };
 
