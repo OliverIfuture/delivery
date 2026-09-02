@@ -15,17 +15,21 @@ module.exports = {
             const data = await EmoonUser.create(user);
             const token = `JWT ${EmoonUser.generateToken(data)}`;
 
-            return res.status(201).json({
-                success: true,
-                message: '¡Tu cuenta ha sido creada con éxito!',
-                data: {
-                    id: data.id,
-                    email: data.email,
-                    first_name: data.first_name,
-                    role: data.role,
-                    session_token: token
-                }
-            });
+// En el método register:
+return res.status(201).json({
+    success: true,
+    message: '¡Tu cuenta ha sido creada con éxito!',
+    data: {
+        id: data.id,
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        phone: data.phone,
+        birth_date: data.birth_date, // <--- OBLIGATORIO AQUÍ
+        role: data.role,
+        session_token: token
+    }
+});
         } catch (error) {
             console.log('Error register:', error);
             return res.status(500).json({ success: false, message: 'Hubo un error interno al registrar la cuenta.', error: error.message });
