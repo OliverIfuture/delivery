@@ -74,5 +74,31 @@ module.exports = {
             console.log('Error en emoonPackagesController.update:', error);
             return res.status(500).json({ success: false, message: 'Error al actualizar el paquete', error: error.message });
         }
+    },
+    async deletePackage(req, res) {
+    try {
+        const { id } = req.params;
+        const data = await EmoonPackage.delete(id);
+
+        if (!data) {
+            return res.status(404).json({
+                success: false,
+                message: 'El paquete no existe o ya fue eliminado.'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Paquete eliminado exitosamente.',
+            data: data
+        });
+    } catch (error) {
+        console.error('Error deletePackage:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error al eliminar el paquete.',
+            error: error.message
+        });
     }
+}
 };

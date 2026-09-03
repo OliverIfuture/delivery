@@ -18,4 +18,7 @@ module.exports = (app) => {
         passport.authenticate('emoon-jwt', { session: false }),
         emoonPackagesController.update
     );
+    app.delete('/api/emoon/packages/delete/:id', emoonPackagesController.deletePackage);
+
+    
 };
