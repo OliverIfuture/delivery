@@ -65,7 +65,7 @@ EmoonPackage.update = (id, pkg) => {
 EmoonPackage.delete = (id) => {
     const sql = `
         UPDATE emoon.emoon_packages
-        SET is_deleted = TRUE, updated_at = NOW()
+        SET is_deleted = TRUE
         WHERE id = $1
         RETURNING id
     `;
