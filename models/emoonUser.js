@@ -74,5 +74,14 @@ EmoonUser.generateToken = (user) => {
     };
     return jwt.sign(payload, Keys.secretOrKey, { expiresIn: '30d' });
 };
+EmoonUser.delete = (id) => {
+    const sql = `
+        UPDATE emoon.emoon_users
+        SET is_deleted = TRUE
+        WHERE id = $1
+        RETURNING id
+    `;
+    return db.oneOrNone(sql, [id]);
+};
 
 module.exports = EmoonUser;
