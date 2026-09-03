@@ -26,5 +26,6 @@ module.exports = (app, upload) => {
         passport.authenticate('emoon-jwt', { session: false }),
         emoonUsersController.updateRole
     );
+    app.delete('/api/emoon/users/delete/:id', emoonUsersController.deleteUser);
 
 };

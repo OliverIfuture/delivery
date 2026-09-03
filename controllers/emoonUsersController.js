@@ -121,5 +121,31 @@ return res.status(201).json({
                 error: error.message
             });
         }
+    },
+    async deleteUser(req, res) {
+    try {
+        const { id } = req.params;
+        const data = await EmoonUser.delete(id);
+
+        if (!data) {
+            return res.status(404).json({
+                success: false,
+                message: 'El usuario no existe o ya fue eliminado.'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Usuario eliminado correctamente.',
+            data: data
+        });
+    } catch (error) {
+        console.error('Error deleteUser:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error al eliminar el usuario.',
+            error: error.message
+        });
     }
+}
 };
