@@ -7,7 +7,7 @@ EmoonPackage.getAll = () => {
     const sql = `
         SELECT 
             id, name, type_id, price, credits, validity_days, description, is_active, min_age, created_at
-        FROM emoon.emoon_packages
+        FROM emoon.emoon_packages where is_deleted = false
         ORDER BY created_at DESC
     `;
     return db.manyOrNone(sql);
