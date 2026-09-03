@@ -24,7 +24,7 @@ EmoonUser.getAll = () => {
         SELECT 
             id, first_name, last_name, email, phone, avatar_url, role, 
             stats_classes_attended, stats_total_spent, created_at 
-        FROM emoon.emoon_users 
+        FROM emoon.emoon_users  where is_deleted = false
         ORDER BY created_at DESC
     `;
     // Nota: Excluimos intencionalmente la columna 'password' por seguridad
