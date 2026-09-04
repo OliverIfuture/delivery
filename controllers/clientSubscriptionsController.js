@@ -1301,6 +1301,7 @@ async stripeWebhook12(req, res, next) {
                     requirements: capabilityCheck.currentlyDue || [],
                 });
             }
+            
 
             const amountInCents = Math.round(planToPurchase.price * 100);
 
