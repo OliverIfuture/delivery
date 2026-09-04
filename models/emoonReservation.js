@@ -146,6 +146,7 @@ EmoonReservation.updateStatus = (reservationId, status) => {
     return db.oneOrNone(sql, [status, reservationId]);
 };
 
+
 EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
     return db.tx(async (t) => {
         const reservation = await t.oneOrNone(
