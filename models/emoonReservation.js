@@ -123,6 +123,8 @@ EmoonReservation.getByClassId = (scheduledClassId) => {
     return db.manyOrNone(sql, [scheduledClassId]);
 };
 
+
+
 EmoonReservation.getByUserId = (userId) => {
     const sql = `
         SELECT 
