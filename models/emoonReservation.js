@@ -14,7 +14,8 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         if (existing) {
             throw new Error('El cliente ya tiene una reserva activa para esta clase.');
         }
-
+        
+        
         // 2. Calcular disponibilidad y conteo de lugares en tiempo real
         const scheduledClass = await t.oneOrNone(
             `SELECT sc.id, 
