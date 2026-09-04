@@ -14,7 +14,6 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         if (existing) {
             throw new Error('El cliente ya tiene una reserva activa para esta clase.');
         }
-        
 
         // 2. Calcular disponibilidad y conteo de lugares en tiempo real
         const scheduledClass = await t.oneOrNone(
@@ -54,10 +53,9 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             return reservation;
         }
 
-        // 4. OPCIÓN B: BUSCAR PAQUETE O MEMBRESÍA ACTIVA
+        // 4. OPCIÓN B: BUSCAR PAQUETE O MEMBRESÍA ACTIVA (Trayendo type_id de emoon_packages)
         const activePackage = await t.oneOrNone(
-            `SELECT up.id, up.remaining_classes, up.class_count,
-                    COALESCE(up.type_id, p.type_id) AS type_id
+            `SELECT up.id, up.remaining_classes, up.class_count, p.type_id
              FROM emoon.emoon_user_packages up
              LEFT JOIN emoon.emoon_packages p ON up.package_id = p.id
              WHERE up.user_id = $1
@@ -66,7 +64,7 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
                AND (
                    up.remaining_classes > 0 
                    OR up.class_count IS NULL 
-                   OR COALESCE(up.type_id, p.type_id) = 'membership'
+                   OR p.type_id = 'membership'
                )
              ORDER BY up.expiration_date ASC NULLS LAST
              LIMIT 1`,
@@ -84,9 +82,7 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             [userId, scheduledClassId]
         );
 
-        
-
-        // 5. Solo descontar créditos SI NO ES MEMBRESÍA
+        // 5. Solo descontar crédito si el paquete NO es de tipo 'membership'
         const isMembership = activePackage.type_id === 'membership';
 
         if (!isMembership && activePackage.remaining_classes !== null) {
