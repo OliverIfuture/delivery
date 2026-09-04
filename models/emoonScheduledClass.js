@@ -18,9 +18,9 @@ EmoonScheduledClass.create = async (classTypeId, instructorId, scheduledDate) =>
 
 EmoonScheduledClass.getAll = async () => {
     const sql = `
-SELECT 
+        SELECT 
             sc.id, 
-            sc.scheduled_datetime AS scheduled_date, 
+            (sc.scheduled_datetime AT TIME ZONE 'America/Tijuana') AS scheduled_date, 
             COALESCE(sc.override_capacity, ct.max_capacity, 10) AS capacity,
             COALESCE(
                 (
@@ -43,8 +43,7 @@ SELECT
         WHERE sc.status = 'scheduled'
         ORDER BY sc.scheduled_datetime ASC;
     `;
-    return db.manyOrNone(sql); 
-    
+    return db.manyOrNone(sql);
 };
 
 
