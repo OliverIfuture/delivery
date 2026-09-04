@@ -43,7 +43,8 @@ SELECT
         WHERE sc.status = 'scheduled'
         ORDER BY sc.scheduled_datetime ASC;
     `;
-    return db.manyOrNone(sql);
+    return db.manyOrNone(sql); 
+    
 };
 
 EmoonScheduledClass.cancel = async (id) => {
