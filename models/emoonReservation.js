@@ -53,21 +53,27 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             return reservation;
         }
 
-        // 4. OPCIÓN B: DESCUENTO DE CRÉDITO DE PAQUETE ACTIVO (Comparando fecha de Tijuana)
+        // 4. OPCIÓN B: BUSCAR PAQUETE O MEMBRESÍA ACTIVA
         const activePackage = await t.oneOrNone(
-            `SELECT id, remaining_classes, class_count
-             FROM emoon.emoon_user_packages
-             WHERE user_id = $1
-               AND status = 'active'
-               AND (expiration_date IS NULL OR expiration_date >= (NOW() AT TIME ZONE 'America/Tijuana')::date)
-               AND (remaining_classes > 0 OR class_count IS NULL)
-             ORDER BY expiration_date ASC NULLS LAST
+            `SELECT up.id, up.remaining_classes, up.class_count,
+                    COALESCE(up.type_id, p.type_id) AS type_id
+             FROM emoon.emoon_user_packages up
+             LEFT JOIN emoon.emoon_packages p ON up.package_id = p.id
+             WHERE up.user_id = $1
+               AND up.status = 'active'
+               AND (up.expiration_date IS NULL OR up.expiration_date >= (NOW() AT TIME ZONE 'America/Tijuana')::date)
+               AND (
+                   up.remaining_classes > 0 
+                   OR up.class_count IS NULL 
+                   OR COALESCE(up.type_id, p.type_id) = 'membership'
+               )
+             ORDER BY up.expiration_date ASC NULLS LAST
              LIMIT 1`,
             [userId]
         );
 
         if (!activePackage) {
-            throw new Error('El cliente no tiene créditos activos disponibles. Selecciona "Cobro en Sucursal" para cobrar la clase individual.');
+            throw new Error('El cliente no tiene créditos ni membresía activa disponible. Selecciona "Cobro en Sucursal" para cobrar la clase individual.');
         }
 
         const reservation = await t.one(
@@ -77,8 +83,10 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             [userId, scheduledClassId]
         );
 
-        // Descontar 1 crédito al paquete
-        if (activePackage.remaining_classes !== null) {
+        // 5. Solo descontar créditos SI NO ES MEMBRESÍA
+        const isMembership = activePackage.type_id === 'membership';
+
+        if (!isMembership && activePackage.remaining_classes !== null) {
             const newRemaining = activePackage.remaining_classes - 1;
             const newStatus = newRemaining <= 0 ? 'depleted' : 'active';
             
