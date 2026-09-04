@@ -37,13 +37,13 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         // 3. OPCIÓN A: COBRO DIRECTO EN SUCURSAL (Drop-in / Pago por clase suelta)
         if (paymentInfo && paymentInfo.type === 'direct') {
             const reservation = await t.one(
-                `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status)
-                 VALUES($1, $2, 'active')
+                `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at)
+                 VALUES($1, $2, 'active', (NOW() AT TIME ZONE 'America/Tijuana'))
                  RETURNING *`,
                 [userId, scheduledClassId]
             );
 
-            // Registrar pago usando hora exacta de Tijuana
+            // Registrar el ingreso monetario con la hora exacta de Tijuana
             await t.none(
                 `INSERT INTO emoon.emoon_payments(user_id, amount, payment_method, paid_at)
                  VALUES($1, $2, $3, (NOW() AT TIME ZONE 'America/Tijuana'))`,
@@ -53,7 +53,7 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             return reservation;
         }
 
-        // 4. OPCIÓN B: BUSCAR PAQUETE O MEMBRESÍA ACTIVA (Trayendo type_id de emoon_packages)
+        // 4. OPCIÓN B: BUSCAR PAQUETE O MEMBRESÍA ACTIVA
         const activePackage = await t.oneOrNone(
             `SELECT up.id, up.remaining_classes, up.class_count, p.type_id
              FROM emoon.emoon_user_packages up
@@ -75,9 +75,10 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             throw new Error('El cliente no tiene créditos ni membresía activa disponible. Selecciona "Cobro en Sucursal" para cobrar la clase individual.');
         }
 
+        // Insertar la reserva forzando la hora exacta de Tijuana
         const reservation = await t.one(
-            `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status)
-             VALUES($1, $2, 'active')
+            `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at)
+             VALUES($1, $2, 'active', (NOW() AT TIME ZONE 'America/Tijuana'))
              RETURNING *`,
             [userId, scheduledClassId]
         );
@@ -122,6 +123,8 @@ EmoonReservation.getByClassId = (scheduledClassId) => {
     `;
     return db.manyOrNone(sql, [scheduledClassId]);
 };
+
+
 
 
 
