@@ -3,21 +3,38 @@ const db = require('../config/config');
 const EmoonReservation = {};
 
 EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) => {
+    console.log('================ [DEBUG RESERVATION START] ================');
+    console.log('[DEBUG 1] Parametros de entrada:', { userId, scheduledClassId, paymentInfo });
+    console.log('[DEBUG 2] Hora Node Server (ISO):', new Date().toISOString());
+    console.log('[DEBUG 3] Zona Horaria Node (process.env.TZ):', process.env.TZ || 'UTC (por defecto)');
+
     return db.tx(async (t) => {
+        // Diagnóstico de horas directo en PostgreSQL
+        const timeCheck = await t.one(
+            `SELECT 
+                NOW() AS db_utc_now, 
+                NOW() AT TIME ZONE 'America/Tijuana' AS db_tijuana_now,
+                CURRENT_DATE AS db_utc_date,
+                (NOW() AT TIME ZONE 'America/Tijuana')::date AS db_tijuana_date`
+        );
+        console.log('[DEBUG 4] Diagnostico de horas en PostgreSQL:', timeCheck);
+
         // 1. Validar reserva previa activa
         const existing = await t.oneOrNone(
             `SELECT id FROM emoon.emoon_reservations 
              WHERE user_id = $1 AND scheduled_class_id = $2 AND status != 'cancelled'`,
             [userId, scheduledClassId]
         );
+        console.log('[DEBUG 5] Verificacion de reserva existente:', existing);
 
         if (existing) {
             throw new Error('El cliente ya tiene una reserva activa para esta clase.');
         }
 
-        // 2. Calcular disponibilidad y conteo de lugares en tiempo real
+        // 2. Consultar la clase programada y extraer su scheduled_datetime EXACTO
         const scheduledClass = await t.oneOrNone(
             `SELECT sc.id, 
+                    sc.scheduled_datetime,
                     COALESCE(sc.override_capacity, ct.max_capacity, 10) AS capacity,
                     (SELECT COUNT(*)::int FROM emoon.emoon_reservations r WHERE r.scheduled_class_id = sc.id AND r.status != 'cancelled') AS booked_spots
              FROM emoon.emoon_scheduled_classes sc
@@ -27,8 +44,18 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         );
 
         if (!scheduledClass) {
+            console.error('[DEBUG ERROR] Clase no encontrada o cancelada para ID:', scheduledClassId);
             throw new Error('La clase seleccionada no está disponible o fue cancelada.');
         }
+
+        console.log('[DEBUG 6] Datos RAW de la clase programada:', {
+            id: scheduledClass.id,
+            scheduled_datetime_raw: scheduledClass.scheduled_datetime,
+            scheduled_datetime_type: typeof scheduledClass.scheduled_datetime,
+            scheduled_datetime_iso: scheduledClass.scheduled_datetime ? new Date(scheduledClass.scheduled_datetime).toISOString() : null,
+            booked_spots: scheduledClass.booked_spots,
+            capacity: scheduledClass.capacity
+        });
 
         if (parseInt(scheduledClass.booked_spots) >= parseInt(scheduledClass.capacity)) {
             throw new Error('La clase está llena. No hay cupos disponibles.');
@@ -36,12 +63,14 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
 
         // 3. OPCIÓN A: COBRO DIRECTO EN SUCURSAL
         if (paymentInfo && paymentInfo.type === 'direct') {
+            console.log('[DEBUG 7] Procesando Cobro Directo...');
             const reservation = await t.one(
                 `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at)
                  VALUES($1, $2, 'active', CURRENT_TIMESTAMP)
                  RETURNING *`,
                 [userId, scheduledClassId]
             );
+            console.log('[DEBUG 7a] Reserva insertada (Directa):', reservation);
 
             await t.none(
                 `INSERT INTO emoon.emoon_payments(user_id, amount, payment_method, paid_at)
@@ -49,12 +78,14 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
                 [userId, paymentInfo.amount || 250, paymentInfo.method || 'Efectivo']
             );
 
+            console.log('================ [DEBUG RESERVATION END] ================');
             return reservation;
         }
 
         // 4. OPCIÓN B: BUSCAR PAQUETE O MEMBRESÍA ACTIVA
+        console.log('[DEBUG 8] Buscando paquete o membresia activa...');
         const activePackage = await t.oneOrNone(
-            `SELECT up.id, up.remaining_classes, up.class_count, p.type_id
+            `SELECT up.id, up.remaining_classes, up.class_count, up.expiration_date, up.status, p.type_id
              FROM emoon.emoon_user_packages up
              LEFT JOIN emoon.emoon_packages p ON up.package_id = p.id
              WHERE up.user_id = $1
@@ -69,33 +100,44 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
              LIMIT 1`,
             [userId]
         );
+        console.log('[DEBUG 8a] Paquete o Membresia encontrado:', activePackage);
 
         if (!activePackage) {
+            console.error('[DEBUG ERROR] No se encontro paquete/membresia activa para el usuario:', userId);
             throw new Error('El cliente no tiene créditos ni membresía activa disponible. Selecciona "Cobro en Sucursal" para cobrar la clase individual.');
         }
 
+        // Insertar la reserva
         const reservation = await t.one(
             `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at)
              VALUES($1, $2, 'active', CURRENT_TIMESTAMP)
              RETURNING *`,
             [userId, scheduledClassId]
         );
+        console.log('[DEBUG 9] Reserva realizada exitosamente:', reservation);
 
-        // 5. Solo descontar crédito si NO es membresía
+        // 5. Descontar crédito si aplica
         const isMembership = activePackage.type_id === 'membership';
+        console.log('[DEBUG 10] ¿Es membresia ilimitada?:', isMembership);
 
         if (!isMembership && activePackage.remaining_classes !== null) {
             const newRemaining = activePackage.remaining_classes - 1;
             const newStatus = newRemaining <= 0 ? 'depleted' : 'active';
-            
+            console.log('[DEBUG 10a] Actualizando creditos del paquete:', { 
+                anterior: activePackage.remaining_classes, 
+                nuevo: newRemaining, 
+                nuevo_estado: newStatus 
+            });
+
             await t.none(
                 `UPDATE emoon.emoon_user_packages
                  SET remaining_classes = $1, status = $2
                  WHERE id = $3`,
                 [newRemaining, newStatus, activePackage.id]
             );
-        } 
+        }
 
+        console.log('================ [DEBUG RESERVATION END] ================');
         return reservation;
     });
 };
