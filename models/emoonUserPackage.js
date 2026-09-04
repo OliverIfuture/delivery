@@ -12,6 +12,7 @@ EmoonUserPackage.getActivePackage = async (userId) => {
             up.remaining_classes,
             up.expiration_date,
             up.status,
+            p.type_id,
             COALESCE(p.name, 'Paquete de Clases') AS package_name
         FROM emoon.emoon_user_packages up
         LEFT JOIN emoon.emoon_packages p ON up.package_id = p.id
