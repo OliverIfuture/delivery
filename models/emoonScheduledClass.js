@@ -12,7 +12,9 @@ EmoonScheduledClass.create = async (classTypeId, instructorId, scheduledDate) =>
         RETURNING *;
     `;
     return db.oneOrNone(sql, [classTypeId, instructorId, scheduledDate]);
-};
+};  
+
+
 
 EmoonScheduledClass.getAll = async () => {
     const sql = `
