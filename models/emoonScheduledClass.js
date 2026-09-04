@@ -18,29 +18,30 @@ EmoonScheduledClass.create = async (classTypeId, instructorId, scheduledDate) =>
 
 EmoonScheduledClass.getAll = async () => {
     const sql = `
-  SELECT 
-    sc.id, 
-    sc.scheduled_datetime AS scheduled_date, 
-    COALESCE(sc.override_capacity, ct.max_capacity, 10) AS capacity,
-    COALESCE(
-        (
-            SELECT COUNT(*)::int 
-            FROM emoon.emoon_reservations r 
-            WHERE r.scheduled_class_id = sc.id 
-            AND COALESCE(r.status, '') NOT IN ('cancelled', 'cancelada')
-        ), 0
-    ) AS booked_spots,
-    sc.status,
-    ct.name AS class_name, 
-    ct.category_id,
-    ct.category_name, -- <-- AQUÍ FALTABA LA COMA
-    u.first_name AS instructor_name, 
-    u.last_name AS instructor_last_name
-FROM emoon.emoon_scheduled_classes sc
-INNER JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
-INNER JOIN emoon.emoon_users u ON sc.instructor_id = u.id
-WHERE sc.status = 'scheduled'
-ORDER BY sc.scheduled_datetime ASC;
+SELECT 
+            sc.id, 
+            sc.scheduled_datetime AS scheduled_date, 
+            COALESCE(sc.override_capacity, ct.max_capacity, 10) AS capacity,
+            COALESCE(
+                (
+                    SELECT COUNT(*)::int 
+                    FROM emoon.emoon_reservations r 
+                    WHERE r.scheduled_class_id = sc.id 
+                    AND COALESCE(r.status, '') NOT IN ('cancelled', 'cancelada')
+                ), 0
+            ) AS booked_spots,
+            sc.status,
+            ct.name AS class_name, 
+            ct.category_id,
+            cat.name AS category_name,
+            u.first_name AS instructor_name, 
+            u.last_name AS instructor_last_name
+        FROM emoon.emoon_scheduled_classes sc
+        INNER JOIN emoon.emoon_class_types ct ON sc.class_type_id = ct.id
+        LEFT JOIN emoon.emoon_class_categories cat ON ct.category_id = cat.id
+        INNER JOIN emoon.emoon_users u ON sc.instructor_id = u.id
+        WHERE sc.status = 'scheduled'
+        ORDER BY sc.scheduled_datetime ASC;
     `;
     return db.manyOrNone(sql);
 };
