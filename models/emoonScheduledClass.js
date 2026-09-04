@@ -31,6 +31,7 @@ EmoonScheduledClass.getAll = async () => {
             sc.status,
             ct.name AS class_name, 
             ct.category_id,
+            ct.category_name
             u.first_name AS instructor_name, 
             u.last_name AS instructor_last_name
         FROM emoon.emoon_scheduled_classes sc
