@@ -80,7 +80,9 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         // Descontar 1 crédito al paquete
         if (activePackage.remaining_classes !== null) {
             const newRemaining = activePackage.remaining_classes - 1;
-            const newStatus = newRemaining <= 0 ? 'exhausted' : 'active';
+            // CAMBIO AQUÍ: Usar 'depleted' en lugar de 'exhausted'
+            const newStatus = newRemaining <= 0 ? 'depleted' : 'active';
+            
             await t.none(
                 `UPDATE emoon.emoon_user_packages
                  SET remaining_classes = $1, status = $2
