@@ -22,31 +22,6 @@ const endpointSecret = keys.stripeWebhookSecret;
 const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 
 
-async function ensureTransfersCapability(stripeAccountId) {
-    const account = await stripe.accounts.retrieve(stripeAccountId);
-
-    const currentStatus = account.capabilities?.transfers;
-
-    if (currentStatus === 'active') {
-        return { status: 'active' };
-    }
-
-    // No la tiene o está inactiva -> la solicitamos
-    const updated = await stripe.accounts.update(stripeAccountId, {
-        capabilities: {
-            transfers: { requested: true },
-        },
-    });
-
-    const newStatus = updated.capabilities?.transfers;
-
-    return {
-        status: newStatus, // 'active' | 'pending' | 'inactive' | undefined
-        currentlyDue: updated.requirements?.currently_due || [],
-        disabledReason: updated.requirements?.disabled_reason || null,
-    };
-}
-
 module.exports = {
 
     /**
@@ -1289,19 +1264,6 @@ async stripeWebhook12(req, res, next) {
             if (!companyId) {
                 return res.status(400).json({ success: false, message: 'No se pudo identificar al gimnasio/entrenador.' });
             }
-
-                        // 🔥 Llamada normal a una función del módulo, sin problema aquí
-            const capabilityCheck = await ensureTransfersCapability(settings.stripe_account_id);
-
-            if (capabilityCheck.status !== 'active') {
-                console.warn('Transfers capability no activa:', capabilityCheck);
-                return res.status(400).json({
-                    success: false,
-                    message: 'La cuenta del estudio aún no puede recibir transferencias. Falta completar su verificación en Stripe.',
-                    requirements: capabilityCheck.currentlyDue || [],
-                });
-            }
-            
 
             const amountInCents = Math.round(planToPurchase.price * 100);
 
