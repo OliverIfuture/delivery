@@ -35,6 +35,9 @@ EmoonPackage.create = (pkg) => {
 
 // Actualizar paquete existente
 EmoonPackage.update = (id, pkg) => {
+    // Validar si el campo min_age fue enviado explícitamente en la petición (incluso si viene null)
+    const hasMinAge = Object.prototype.hasOwnProperty.call(pkg, 'min_age') || pkg.min_age !== undefined;
+
     const sql = `
         UPDATE emoon.emoon_packages
         SET
@@ -45,10 +48,11 @@ EmoonPackage.update = (id, pkg) => {
             validity_days = COALESCE($6, validity_days),
             description = COALESCE($7, description),
             is_active = COALESCE($8, is_active),
-            min_age = COALESCE($9, min_age)
+            min_age = CASE WHEN $10::boolean THEN $9 ELSE min_age END
         WHERE id = $1
         RETURNING *
     `;
+
     return db.oneOrNone(sql, [
         id,
         pkg.name,
@@ -58,10 +62,10 @@ EmoonPackage.update = (id, pkg) => {
         pkg.validity_days,
         pkg.description,
         pkg.is_active,
-        pkg.min_age
+        pkg.min_age !== undefined ? pkg.min_age : null,
+        hasMinAge
     ]);
 };
-
 EmoonPackage.delete = (id) => {
     const sql = `
         UPDATE emoon.emoon_packages
