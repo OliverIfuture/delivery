@@ -47,6 +47,7 @@ SELECT
     
 };
 
+
 EmoonScheduledClass.cancel = async (id) => {
     const sql = `
         UPDATE emoon.emoon_scheduled_classes
