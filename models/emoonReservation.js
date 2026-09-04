@@ -43,23 +43,23 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
                 [userId, scheduledClassId]
             );
 
-            // Registrar el ingreso monetario en la tabla de pagos
+            // Registrar pago usando hora exacta de Tijuana
             await t.none(
                 `INSERT INTO emoon.emoon_payments(user_id, amount, payment_method, paid_at)
-                 VALUES($1, $2, $3, CURRENT_TIMESTAMP)`,
+                 VALUES($1, $2, $3, (NOW() AT TIME ZONE 'America/Tijuana'))`,
                 [userId, paymentInfo.amount || 250, paymentInfo.method || 'Efectivo']
             );
 
             return reservation;
         }
 
-        // 4. OPCIÓN B: DESCUENTO DE CRÉDITO DE PAQUETE ACTIVO
+        // 4. OPCIÓN B: DESCUENTO DE CRÉDITO DE PAQUETE ACTIVO (Comparando fecha de Tijuana)
         const activePackage = await t.oneOrNone(
             `SELECT id, remaining_classes, class_count
              FROM emoon.emoon_user_packages
              WHERE user_id = $1
                AND status = 'active'
-               AND (expiration_date IS NULL OR expiration_date >= CURRENT_DATE)
+               AND (expiration_date IS NULL OR expiration_date >= (NOW() AT TIME ZONE 'America/Tijuana')::date)
                AND (remaining_classes > 0 OR class_count IS NULL)
              ORDER BY expiration_date ASC NULLS LAST
              LIMIT 1`,
@@ -80,7 +80,6 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         // Descontar 1 crédito al paquete
         if (activePackage.remaining_classes !== null) {
             const newRemaining = activePackage.remaining_classes - 1;
-            // CAMBIO AQUÍ: Usar 'depleted' en lugar de 'exhausted'
             const newStatus = newRemaining <= 0 ? 'depleted' : 'active';
             
             await t.none(
