@@ -6,13 +6,21 @@ const EmoonScheduledClass = {};
 EmoonScheduledClass.create = async (classTypeId, instructorId, scheduledDate) => {
     const sql = `
         INSERT INTO emoon.emoon_scheduled_classes(
-            class_type_id, instructor_id, scheduled_datetime, status
+            class_type_id, 
+            instructor_id, 
+            scheduled_datetime, 
+            status
         )
-        VALUES($1, $2, $3, 'scheduled') 
+        VALUES(
+            $1, 
+            $2, 
+            ($3::timestamp AT TIME ZONE 'America/Tijuana'), 
+            'scheduled'
+        ) 
         RETURNING *;
     `;
     return db.oneOrNone(sql, [classTypeId, instructorId, scheduledDate]);
-};  
+};
 
 
 
