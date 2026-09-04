@@ -95,6 +95,8 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
     });
 };
 
+
+
 EmoonReservation.getByClassId = (scheduledClassId) => {
     const sql = `
         SELECT 
