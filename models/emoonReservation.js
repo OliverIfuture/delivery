@@ -182,7 +182,7 @@ EmoonReservation.getByClassId = (scheduledClassId) => {
 
 
 
-EmoonReservation.getByUserId = (userId) => {
+EmoonReservation.getByUserId = async (userId) => {
     const sql = `
         SELECT 
             r.id AS reservation_id,
@@ -191,8 +191,9 @@ EmoonReservation.getByUserId = (userId) => {
             r.status AS reservation_status,
             r.reserved_at,
             r.cancelled_at,
-            sc.scheduled_datetime::date AS scheduled_date,
-            to_char(sc.scheduled_datetime, 'HH24:MI') AS start_time,
+            sc.scheduled_datetime AS raw_scheduled_datetime,
+            (sc.scheduled_datetime AT TIME ZONE 'America/Tijuana')::date AS scheduled_date,
+            to_char(sc.scheduled_datetime AT TIME ZONE 'America/Tijuana', 'HH24:MI') AS start_time,
             COALESCE(NULLIF(TRIM(CONCAT(u_inst.first_name, ' ', u_inst.last_name)), ''), 'Instructor Studio') AS instructor_name,
             COALESCE(ct.name, 'Clase Reformer') AS class_name
         FROM emoon.emoon_reservations r
@@ -202,9 +203,28 @@ EmoonReservation.getByUserId = (userId) => {
         WHERE r.user_id = $1
         ORDER BY sc.scheduled_datetime DESC;
     `;
-    return db.manyOrNone(sql, [userId]);
-};
 
+    const results = await db.manyOrNone(sql, [userId]);
+
+    console.log('---------------- [DEBUG RESERVATIONS BY USER ID START] ----------------');
+    console.log(`[DEBUG getByUserId] Usuario ID: ${userId} | Total reservas encontradas: ${results ? results.length : 0}`);
+
+    if (results && results.length > 0) {
+        results.forEach((row, index) => {
+            console.log(`[DEBUG getByUserId Registro ${index + 1}]`, {
+                reservation_id: row.reservation_id,
+                raw_scheduled_datetime_utc: row.raw_scheduled_datetime,
+                scheduled_date_tijuana: row.scheduled_date,
+                start_time_tijuana: row.start_time,
+                class_name: row.class_name,
+                status: row.reservation_status
+            });
+        });
+    }
+    console.log('---------------- [DEBUG RESERVATIONS BY USER ID END] ------------------');
+
+    return results;
+};
 EmoonReservation.updateStatus = (reservationId, status) => {
     const sql = `
         UPDATE emoon.emoon_reservations
