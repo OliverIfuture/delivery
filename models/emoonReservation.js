@@ -160,14 +160,17 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
             throw new Error('Reserva no encontrada o ya cancelada.');
         }
 
-        const settingsRes = await t.oneOrNone(`SELECT booking_settings FROM emoon.emoon_settings LIMIT 1`);
+        // Se cambia 'booking_settings' por 'booking_rules'
+        const settingsRes = await t.oneOrNone(`SELECT booking_rules FROM emoon.emoon_settings LIMIT 1`);
         let cancellationHours = 12;
-        if (settingsRes && settingsRes.booking_settings) {
-            const bSettings = typeof settingsRes.booking_settings === 'string'
-                ? JSON.parse(settingsRes.booking_settings)
-                : settingsRes.booking_settings;
-            if (bSettings.cancellationWindowHours) {
-                cancellationHours = parseInt(bSettings.cancellationWindowHours);
+
+        if (settingsRes && settingsRes.booking_rules) {
+            const bRules = typeof settingsRes.booking_rules === 'string'
+                ? JSON.parse(settingsRes.booking_rules)
+                : settingsRes.booking_rules;
+
+            if (bRules.cancellationWindowHours !== undefined) {
+                cancellationHours = parseInt(bRules.cancellationWindowHours, 10);
             }
         }
 
