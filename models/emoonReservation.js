@@ -34,19 +34,18 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             throw new Error('La clase está llena. No hay cupos disponibles.');
         }
 
-        // 3. OPCIÓN A: COBRO DIRECTO EN SUCURSAL (Drop-in / Pago por clase suelta)
+        // 3. OPCIÓN A: COBRO DIRECTO EN SUCURSAL
         if (paymentInfo && paymentInfo.type === 'direct') {
             const reservation = await t.one(
                 `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at)
-                 VALUES($1, $2, 'active', (NOW() AT TIME ZONE 'America/Tijuana'))
+                 VALUES($1, $2, 'active', CURRENT_TIMESTAMP)
                  RETURNING *`,
                 [userId, scheduledClassId]
             );
 
-            // Registrar el ingreso monetario con la hora exacta de Tijuana
             await t.none(
                 `INSERT INTO emoon.emoon_payments(user_id, amount, payment_method, paid_at)
-                 VALUES($1, $2, $3, (NOW() AT TIME ZONE 'America/Tijuana'))`,
+                 VALUES($1, $2, $3, CURRENT_TIMESTAMP)`,
                 [userId, paymentInfo.amount || 250, paymentInfo.method || 'Efectivo']
             );
 
@@ -75,15 +74,14 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             throw new Error('El cliente no tiene créditos ni membresía activa disponible. Selecciona "Cobro en Sucursal" para cobrar la clase individual.');
         }
 
-        // Insertar la reserva forzando la hora exacta de Tijuana
         const reservation = await t.one(
             `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at)
-             VALUES($1, $2, 'active', (NOW() AT TIME ZONE 'America/Tijuana'))
+             VALUES($1, $2, 'active', CURRENT_TIMESTAMP)
              RETURNING *`,
             [userId, scheduledClassId]
         );
 
-        // 5. Solo descontar crédito si el paquete NO es de tipo 'membership'
+        // 5. Solo descontar crédito si NO es membresía
         const isMembership = activePackage.type_id === 'membership';
 
         if (!isMembership && activePackage.remaining_classes !== null) {
@@ -101,7 +99,6 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         return reservation;
     });
 };
-
 
 
 
@@ -123,6 +120,8 @@ EmoonReservation.getByClassId = (scheduledClassId) => {
     `;
     return db.manyOrNone(sql, [scheduledClassId]);
 };
+
+
 
 
 
