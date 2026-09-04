@@ -31,10 +31,12 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             throw new Error('El cliente ya tiene una reserva activa para esta clase.');
         }
 
-        // 2. Consultar la clase programada y extraer su scheduled_datetime EXACTO
+        // 2. Consultar la clase programada con conversiones explícitas de Zona Horaria desde PostgreSQL
         const scheduledClass = await t.oneOrNone(
             `SELECT sc.id, 
                     sc.scheduled_datetime,
+                    (sc.scheduled_datetime AT TIME ZONE 'America/Tijuana') AS scheduled_datetime_tijuana_db,
+                    (sc.scheduled_datetime AT TIME ZONE 'UTC') AS scheduled_datetime_utc_db,
                     COALESCE(sc.override_capacity, ct.max_capacity, 10) AS capacity,
                     (SELECT COUNT(*)::int FROM emoon.emoon_reservations r WHERE r.scheduled_class_id = sc.id AND r.status != 'cancelled') AS booked_spots
              FROM emoon.emoon_scheduled_classes sc
@@ -48,14 +50,25 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             throw new Error('La clase seleccionada no está disponible o fue cancelada.');
         }
 
-        console.log('[DEBUG 6] Datos RAW de la clase programada:', {
-            id: scheduledClass.id,
-            scheduled_datetime_raw: scheduledClass.scheduled_datetime,
-            scheduled_datetime_type: typeof scheduledClass.scheduled_datetime,
-            scheduled_datetime_iso: scheduledClass.scheduled_datetime ? new Date(scheduledClass.scheduled_datetime).toISOString() : null,
-            booked_spots: scheduledClass.booked_spots,
-            capacity: scheduledClass.capacity
-        });
+        // LOGS EXHAUSTIVOS DE FECHA Y HORA DE LA CLASE PROGRAMADA
+        const rawDt = scheduledClass.scheduled_datetime;
+        const dtObj = rawDt ? new Date(rawDt) : null;
+
+        console.log('---------------- [DEBUG CLASE DETALLE DE HORAS] ----------------');
+        console.log('[DEBUG 6a] ID de Clase:', scheduledClass.id);
+        console.log('[DEBUG 6b] Valor directo Postgres (sc.scheduled_datetime):', rawDt);
+        console.log('[DEBUG 6c] Postgres AT TIME ZONE Tijuana:', scheduledClass.scheduled_datetime_tijuana_db);
+        console.log('[DEBUG 6d] Postgres AT TIME ZONE UTC:', scheduledClass.scheduled_datetime_utc_db);
+        console.log('[DEBUG 6e] JS Date .toISOString():', dtObj ? dtObj.toISOString() : 'N/A');
+        console.log('[DEBUG 6f] JS Date .toString() [Hora local Node]:', dtObj ? dtObj.toString() : 'N/A');
+        console.log('[DEBUG 6g] JS Date .toLocaleString("es-MX", { timeZone: "America/Tijuana" }):', 
+            dtObj ? dtObj.toLocaleString('es-MX', { timeZone: 'America/Tijuana' }) : 'N/A'
+        );
+        console.log('[DEBUG 6h] JS Date .toLocaleString("es-MX", { timeZone: "UTC" }):', 
+            dtObj ? dtObj.toLocaleString('es-MX', { timeZone: 'UTC' }) : 'N/A'
+        );
+        console.log('[DEBUG 6i] Lugares reservados / Capacidad:', `${scheduledClass.booked_spots}/${scheduledClass.capacity}`);
+        console.log('----------------------------------------------------------------');
 
         if (parseInt(scheduledClass.booked_spots) >= parseInt(scheduledClass.capacity)) {
             throw new Error('La clase está llena. No hay cupos disponibles.');
@@ -141,7 +154,6 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         return reservation;
     });
 };
-
 
 
 EmoonReservation.getByClassId = (scheduledClassId) => {
