@@ -91,6 +91,15 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
                 [userId, paymentInfo.amount || 250, paymentInfo.method || 'Efectivo']
             );
 
+            // NUEVO: Sumar 1 a stats_classes_attended del usuario
+            await t.none(
+                `UPDATE emoon.emoon_users
+                 SET stats_classes_attended = COALESCE(stats_classes_attended, 0) + 1
+                 WHERE id = $1`,
+                [userId]
+            );
+            console.log('[DEBUG 7b] stats_classes_attended incrementado para usuario:', userId);
+
             console.log('================ [DEBUG RESERVATION END] ================');
             return reservation;
         }
@@ -149,6 +158,15 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
                 [newRemaining, newStatus, activePackage.id]
             );
         }
+
+        // NUEVO: Sumar 1 a stats_classes_attended del usuario
+        await t.none(
+            `UPDATE emoon.emoon_users
+             SET stats_classes_attended = COALESCE(stats_classes_attended, 0) + 1
+             WHERE id = $1`,
+            [userId]
+        );
+        console.log('[DEBUG 11] stats_classes_attended incrementado para usuario:', userId);
 
         console.log('================ [DEBUG RESERVATION END] ================');
         return reservation;
