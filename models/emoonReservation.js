@@ -94,7 +94,7 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
                  WHERE id = $3`,
                 [newRemaining, newStatus, activePackage.id]
             );
-        }
+        } 
 
         return reservation;
     });
