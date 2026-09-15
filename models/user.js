@@ -1664,7 +1664,7 @@ User.updateClientSubscription = (sub) => {
         WHERE id = $1;
 
         UPDATE public.users SET
-            id_entrenador = 1,
+            id_entrenador = $10,
             access_level = 2
         WHERE id = $9;
     `;
@@ -1678,7 +1678,8 @@ User.updateClientSubscription = (sub) => {
         sub.current_period_end,     // $6
         sub.temp_email,             // $7
         new Date(),                 // $8 (updated_at)
-        sub.id_client               // $9 (Esencial para el WHERE de users)
+        sub.id_client,
+        sub.id_company               // $9 (Esencial para el WHERE de users)
     ]);
 };
 
