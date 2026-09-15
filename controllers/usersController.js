@@ -2109,7 +2109,7 @@ module.exports = {
         try {
             const subscription = req.body;
             const db = require('../config/config');
-
+console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
             // 1. Llamamos al modelo para actualizar en BD (Aplica el estado canceled o los cambios de fecha)
             await User.updateClientSubscription(subscription);
 
