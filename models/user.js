@@ -2762,4 +2762,36 @@ User.getRecentActivity = async (id_client, limit = 10) => {
         .slice(0, limit);
 };
 
+// =============================================================================
+// NUEVO — Cuestionario más reciente de un cliente (panel del entrenador,
+// Vue). Alimenta las tarjetas "Información" y "Perfil alimentario" de la
+// ficha del cliente con datos reales (sexo/estatura/alergias/preferencias)
+// en vez de texto hardcodeado.
+// `user_questionnaires` no tiene UPSERT — cada envío desde la app del
+// cliente inserta una fila nueva (ver User.createQuestionnaire /
+// usersController.submitQuestionnaire) — así que puede haber varias filas
+// históricas por email; aquí solo se trae la más reciente.
+// La columna `questionnaire_data` es jsonb libre y sin validar del lado del
+// servidor (viene tal cual la mandó la app del cliente), así que no se
+// garantiza que todas las llaves existan siempre — quien consuma esto debe
+// tratar cada campo como opcional.
+// Es de solo lectura: no inserta, actualiza ni borra nada.
+// =============================================================================
+User.getLatestQuestionnaire = (email) => {
+    const sql = `
+        SELECT
+            questionnaire_data,
+            photo_frontal,
+            photo_espalda,
+            photo_lateral_izq,
+            photo_lateral_der,
+            created_at
+        FROM user_questionnaires
+        WHERE user_email = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+    `;
+    return db.oneOrNone(sql, [email]);
+};
+
 module.exports = User;
