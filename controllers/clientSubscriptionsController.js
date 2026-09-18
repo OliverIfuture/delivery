@@ -1638,6 +1638,38 @@ async stripeWebhook12(req, res, next) {
         }
     },
 
+    // =================================================================
+    // NUEVO — Pestaña "Configuración" de la ficha del cliente (panel del
+    // entrenador, Vue). Trae la última membresía del cliente (sea cual sea
+    // su estado) + su historial de pagos. Se valida que el cliente
+    // pertenezca a la compañía del entrenador logueado antes de responder,
+    // para no exponer membresías de clientes de otro entrenador. Es de
+    // solo lectura — no crea, modifica ni cancela nada.
+    // =================================================================
+    async getClientMembership(req, res) {
+        try {
+            const id_client = req.params.id_client;
+            const id_company = req.user.mi_store;
 
+            const membership = await ClientSubscription.findLatestByClient(id_client);
+            if (membership && Number(membership.id_company) !== Number(id_company)) {
+                return res.status(403).json({ success: false, message: 'No autorizado para ver esta membresía.' });
+            }
+
+            const history = await ClientSubscription.getPaymentHistoryByClient(id_client, 20);
+
+            return res.status(200).json({
+                success: true,
+                data: { membership, history }
+            });
+        } catch (error) {
+            console.log(`Error en getClientMembership: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener la membresía del cliente',
+                error: error.message
+            });
+        }
+    },
 
 };

@@ -251,4 +251,55 @@ ClientSubscription.findById = (id) => {
 }
 
 
+// =============================================================================
+// NUEVO — Pestaña "Configuración" de la ficha del cliente (panel del
+// entrenador, Vue). A diferencia de `findActiveByClient` (que solo mira
+// suscripciones 'active'/'past_due'/'PENDING' y es para el cliente mismo),
+// aquí se trae la ÚLTIMA suscripción sin importar su estado (incluye
+// 'canceled') porque el trainer sí necesita ver membresías vencidas o
+// canceladas en su panel de configuración. Es de solo lectura.
+// =============================================================================
+ClientSubscription.findLatestByClient = (id_client) => {
+    const sql = `
+        SELECT
+            cs.id,
+            cs.id_company,
+            cs.id_plan,
+            cs.stripe_subscription_id,
+            cs.stripe_customer_id,
+            cs.status,
+            cs.current_period_end,
+            cs.created_at,
+            p.name AS plan_name,
+            p.price AS plan_price,
+            p.currency AS plan_currency
+        FROM client_subscriptions cs
+        LEFT JOIN subscription_plans p ON cs.id_plan = p.id
+        WHERE cs.id_client = $1
+        ORDER BY cs.created_at DESC
+        LIMIT 1
+    `;
+    return db.oneOrNone(sql, id_client);
+};
+
+// Historial de pagos reales de un cliente (tabla `payment_history`), con el
+// nombre del plan al que corresponde cada pago. Solo lectura.
+ClientSubscription.getPaymentHistoryByClient = (id_client, limit = 20) => {
+    const sql = `
+        SELECT
+            ph.id,
+            ph.amount,
+            ph.payment_date,
+            ph.stripe_invoice_id,
+            ph.is_manual,
+            sp.name AS plan_name
+        FROM payment_history ph
+        LEFT JOIN subscription_plans sp ON sp.id = ph.id_plan
+        WHERE ph.id_client = $1
+        ORDER BY ph.payment_date DESC
+        LIMIT $2
+    `;
+    return db.manyOrNone(sql, [id_client, limit]);
+};
+
 module.exports = ClientSubscription;

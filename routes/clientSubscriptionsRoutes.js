@@ -38,6 +38,10 @@ module.exports = (app) => {
     // Cancelar suscripción activa
     app.post('/api/subscriptions/cancel', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.cancelSubscription);
 
+    // NUEVO — Membresía + historial de pagos de UN cliente específico, para
+    // la pestaña "Configuración" de su ficha en el panel del entrenador.
+    app.get('/api/subscriptions/clientMembership/:id_client', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getClientMembership);
+
 
 
     app.post(

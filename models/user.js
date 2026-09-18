@@ -2859,4 +2859,19 @@ User.upsertClientProfile = async (email, {
     return { id: row.id };
 };
 
+// =============================================================================
+// NUEVO — Datos de cuenta de un cliente para la pestaña "Configuración" de
+// su ficha (panel del entrenador, Vue). Se filtra por `id_entrenador` para
+// que un entrenador no pueda leer los datos de un cliente que no es suyo.
+// Es de solo lectura.
+// =============================================================================
+User.getClientAccountInfo = (id_client, id_company) => {
+    const sql = `
+        SELECT id, email, name, lastname, phone, image, created_at
+        FROM users
+        WHERE id = $1 AND id_entrenador = $2
+    `;
+    return db.oneOrNone(sql, [id_client, id_company]);
+};
+
 module.exports = User;

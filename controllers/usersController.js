@@ -3548,6 +3548,29 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
                 error: error.message
             });
         }
+    },
+
+    // =========================================================================
+    // NUEVO — Datos de cuenta de un cliente para la pestaña "Configuración"
+    // de su ficha (panel del entrenador, Vue). Ver User.getClientAccountInfo.
+    // =========================================================================
+    async getClientAccountInfo(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const id_company = req.user.mi_store;
+            const data = await User.getClientAccountInfo(id_client, id_company);
+            if (!data) {
+                return res.status(404).json({ success: false, message: 'Cliente no encontrado.' });
+            }
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.log(`Error en usersController.getClientAccountInfo: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener los datos del cliente',
+                error: error.message
+            });
+        }
     }
 
 };

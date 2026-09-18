@@ -183,5 +183,9 @@ module.exports = (app, upload) => {
     // NUEVO — editar el perfil de un cliente (sexo/fecha de nacimiento/
     // estatura/modalidad) desde el panel del entrenador.
     app.put('/api/users/clientProfile', passport.authenticate('jwt', { session: false }), UsersController.upsertClientProfile);
+
+    // NUEVO — datos de cuenta (nombre/email/teléfono/fecha de alta) de un
+    // cliente, para la pestaña "Configuración" de su ficha.
+    app.get('/api/users/getClientAccountInfo/:id_client', passport.authenticate('jwt', { session: false }), UsersController.getClientAccountInfo);
 }
 
