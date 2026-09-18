@@ -1,8 +1,10 @@
 const Stripe = require('stripe');
 const EmoonPackage = require('../models/emoonPackage');
 const EmoonSettings = require('../models/emoonSettings');
+const keys = require('../config/keys');
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
+// Misma key admin de Stripe que usa el resto de la plataforma (config/keys.js -> STRIPE_ADMIN_SECRET_KEY en Heroku).
+const stripeSecretKey = keys.stripeAdminSecretKey || process.env.STRIPE_SECRET_KEY || '';
 const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
 
 module.exports = {
