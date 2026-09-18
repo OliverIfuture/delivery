@@ -2688,4 +2688,78 @@ User.getPastGiveaways = (id_entrenador) => {
     `;
     return db.manyOrNone(sql, id_entrenador);
 };
+// =============================================================================
+// NUEVO — Actividad reciente de un cliente (panel del entrenador, Vue).
+// Combina dos fuentes reales que ya existían pero nunca se habían unido:
+//   1) `workout_logs`: una fila por SET, así que para saber "qué días
+//      entrenó" hay que agruparlas por fecha calendario. `day_name_key` es
+//      el nombre del día dentro de la rutina (ej. "Pecho y tríceps"), no el
+//      nombre de la rutina en sí — por eso se hace LEFT JOIN con `routines`
+//      para traer también `routines.name`.
+//   2) `payment_history`: un pago ya es una fila por evento, así que no
+//      hace falta agrupar — solo se le pega el nombre del plan
+//      (`subscription_plans.name`) si existe.
+// Las dos listas se combinan y se ordenan por fecha en JavaScript (no con
+// UNION en SQL) para que el formateo de texto que se muestra en la UI
+// (título/detalle) se resuelva del lado del frontend, no aquí — este
+// endpoint solo entrega los datos crudos que ya tenemos.
+// Es de solo lectura: no inserta, actualiza ni borra nada.
+// =============================================================================
+User.getRecentActivity = async (id_client, limit = 20) => {
+    const sqlTraining = `
+        SELECT
+            (wl.created_at AT TIME ZONE 'America/Mexico_City')::date AS event_date,
+            MAX(wl.created_at) AS event_at,
+            -- De todos los sets registrados ese día, tomamos el day_name_key
+            -- y el nombre de rutina del registro más reciente de ese día.
+            (ARRAY_AGG(wl.day_name_key ORDER BY wl.created_at DESC))[1] AS day_name_key,
+            (ARRAY_AGG(r.name ORDER BY wl.created_at DESC))[1] AS routine_name,
+            COUNT(DISTINCT wl.exercise_name) AS exercises_count
+        FROM workout_logs wl
+        LEFT JOIN routines r ON r.id = wl.id_routine
+        WHERE wl.id_client = $1
+        GROUP BY (wl.created_at AT TIME ZONE 'America/Mexico_City')::date
+        ORDER BY event_at DESC
+        LIMIT $2
+    `;
+
+    const sqlPayments = `
+        SELECT
+            ph.payment_date AS event_at,
+            ph.amount,
+            sp.name AS plan_name
+        FROM payment_history ph
+        LEFT JOIN subscription_plans sp ON sp.id = ph.id_plan
+        WHERE ph.id_client = $1
+        ORDER BY ph.payment_date DESC
+        LIMIT $2
+    `;
+
+    const [trainingRows, paymentRows] = await Promise.all([
+        db.manyOrNone(sqlTraining, [id_client, limit]),
+        db.manyOrNone(sqlPayments, [id_client, limit])
+    ]);
+
+    const trainingEvents = trainingRows.map(row => ({
+        type: 'entrenamiento',
+        event_at: row.event_at,
+        day_name_key: row.day_name_key,
+        routine_name: row.routine_name,
+        exercises_count: Number(row.exercises_count) || 0
+    }));
+
+    const paymentEvents = paymentRows.map(row => ({
+        type: 'pago',
+        event_at: row.event_at,
+        amount: row.amount != null ? parseFloat(row.amount) : null,
+        plan_name: row.plan_name
+    }));
+
+    // Se combinan ambas listas y se recorta al límite pedido, ya ordenadas
+    // por fecha descendente (más reciente primero).
+    return [...trainingEvents, ...paymentEvents]
+        .sort((a, b) => new Date(b.event_at) - new Date(a.event_at))
+        .slice(0, limit);
+};
+
 module.exports = User;

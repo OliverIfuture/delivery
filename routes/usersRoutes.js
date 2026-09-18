@@ -169,5 +169,10 @@ module.exports = (app, upload) => {
     app.get('/cobi/api/users/getteam', passport.authenticate('cobi-jwt', { session: false }), UsersController.getMembers);
     app.post('/cobi/api/users/invite', passport.authenticate('cobi-jwt', { session: false }), UsersController.inviteMember);
     app.delete('/cobi/api/users/team/:memberId', passport.authenticate('cobi-jwt', { session: false }), UsersController.removeMember);
+
+    // NUEVO — actividad reciente de un cliente (entrenamientos completados +
+    // pagos recibidos), usada por la ficha de detalle del cliente en el
+    // panel del entrenador (Vue). Solo lectura.
+    app.get('/api/users/getRecentActivity/:id_client', passport.authenticate('jwt', { session: false }), UsersController.getRecentActivity);
 }
 

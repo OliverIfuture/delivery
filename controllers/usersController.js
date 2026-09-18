@@ -3479,6 +3479,28 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
         } catch (error) {
             return res.status(501).json({ success: false, message: 'Error al eliminar', error: error.message });
         }
+    },
+
+    // =========================================================================
+    // NUEVO — Actividad reciente de un cliente (panel del entrenador, Vue).
+    // Solo lectura: junta entrenamientos completados (workout_logs, agrupados
+    // por día) y pagos recibidos (payment_history) para un mismo cliente.
+    // Ver el detalle de las queries en models/user.js -> User.getRecentActivity.
+    // =========================================================================
+    async getRecentActivity(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const limit = parseInt(req.query.limit) || 20;
+            const data = await User.getRecentActivity(id_client, limit);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en usersController.getRecentActivity: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener la actividad reciente del cliente',
+                error: error.message
+            });
+        }
     }
 
 };
