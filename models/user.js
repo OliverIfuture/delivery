@@ -2794,4 +2794,59 @@ User.getLatestQuestionnaire = (email) => {
     return db.oneOrNone(sql, [email]);
 };
 
+// =============================================================================
+// NUEVO — CRUD para que el ENTRENADOR edite el perfil de un cliente (sexo,
+// fecha de nacimiento, estatura, modalidad) desde el panel. No existe
+// ninguna columna real para sexo/edad en `users` ni en el cuestionario —
+// así que, igual que el resto de "current_status"/"training_preferences",
+// se guarda dentro de `user_questionnaires.questionnaire_data` (jsonb
+// libre, sin validar). `sex` es una llave NUEVA que el cuestionario de la
+// app del cliente no maneja todavía — agregarla no rompe nada porque ese
+// jsonb no está validado ni tiene un esquema fijo.
+//
+// `user_questionnaires` no tiene UNIQUE(user_email) — un cliente puede
+// tener varias filas históricas (una por cada vez que llenó el
+// cuestionario desde su app). Por eso este UPSERT primero busca la fila
+// MÁS RECIENTE de ese email: si existe, la ACTUALIZA en su lugar (fusiona
+// los campos nuevos sin pisar diet_preferences/health_and_allergies que el
+// cliente ya haya contestado); si no existe ninguna, crea una fila nueva.
+// =============================================================================
+User.upsertClientProfile = async (email, { sex, birth_date, height_cm, modality } = {}) => {
+    const existing = await db.oneOrNone(`
+        SELECT id, questionnaire_data
+        FROM user_questionnaires
+        WHERE user_email = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+    `, [email]);
+
+    const base = existing?.questionnaire_data || {};
+    const merged = {
+        ...base,
+        user_email: email,
+        current_status: { ...(base.current_status || {}) },
+        training_preferences: { ...(base.training_preferences || {}) }
+    };
+    if (sex !== undefined) merged.current_status.sex = sex;
+    if (birth_date !== undefined) merged.current_status.birth_date = birth_date;
+    if (height_cm !== undefined) merged.current_status.height_cm = height_cm;
+    if (modality !== undefined) merged.training_preferences.location = modality;
+
+    if (existing) {
+        await db.none(`
+            UPDATE user_questionnaires
+            SET questionnaire_data = $2, updated_at = NOW()
+            WHERE id = $1
+        `, [existing.id, merged]);
+        return { id: existing.id };
+    }
+
+    const row = await db.one(`
+        INSERT INTO user_questionnaires (user_email, questionnaire_data, created_at, updated_at)
+        VALUES ($1, $2, NOW(), NOW())
+        RETURNING id
+    `, [email, merged]);
+    return { id: row.id };
+};
+
 module.exports = User;

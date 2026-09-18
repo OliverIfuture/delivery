@@ -3522,6 +3522,29 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
                 error: error.message
             });
         }
+    },
+
+    // =========================================================================
+    // NUEVO — Editar el perfil de un cliente (sexo, fecha de nacimiento,
+    // estatura, modalidad) desde el panel del entrenador. Ver el detalle
+    // completo en models/user.js -> User.upsertClientProfile.
+    // =========================================================================
+    async upsertClientProfile(req, res, next) {
+        try {
+            const { email, sex, birth_date, height_cm, modality } = req.body;
+            if (!email) {
+                return res.status(400).json({ success: false, message: 'Falta email.' });
+            }
+            const data = await User.upsertClientProfile(email, { sex, birth_date, height_cm, modality });
+            return res.status(200).json({ success: true, message: 'Perfil actualizado correctamente.', data });
+        } catch (error) {
+            console.log(`Error en usersController.upsertClientProfile: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al actualizar el perfil del cliente',
+                error: error.message
+            });
+        }
     }
 
 };

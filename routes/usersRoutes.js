@@ -179,5 +179,9 @@ module.exports = (app, upload) => {
     // alergias/preferencias), usado por la ficha de detalle del cliente en
     // el panel del entrenador (Vue). Solo lectura.
     app.get('/api/users/getLatestQuestionnaire/:email', passport.authenticate('jwt', { session: false }), UsersController.getLatestQuestionnaire);
+
+    // NUEVO — editar el perfil de un cliente (sexo/fecha de nacimiento/
+    // estatura/modalidad) desde el panel del entrenador.
+    app.put('/api/users/clientProfile', passport.authenticate('jwt', { session: false }), UsersController.upsertClientProfile);
 }
 
