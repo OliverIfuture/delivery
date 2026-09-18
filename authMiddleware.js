@@ -19,6 +19,22 @@ module.exports = {
         
         // Si el ID es correcto, pasa a la siguiente función (el controlador)
         next();
+    },
+
+    /**
+     * Middleware para restringir rutas de Emoon a usuarios con role 'admin'.
+     * Debe usarse después de passport.authenticate('emoon-jwt'), que ya deja
+     * el registro completo de emoon.emoon_users (incluyendo `role`) en req.user.
+     */
+    async requireEmoonAdmin(req, res, next) {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Acceso denegado. Se requieren permisos de administrador.'
+            });
+        }
+
+        next();
     }
 
 };

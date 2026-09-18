@@ -3501,27 +3501,6 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
                 error: error.message
             });
         }
-    },
-
-    // =========================================================================
-    // NUEVO — Cuestionario más reciente de un cliente (panel del entrenador,
-    // Vue). Ver el detalle en models/user.js -> User.getLatestQuestionnaire.
-    // `email` va en la URL codificado (encodeURIComponent) porque puede
-    // traer "@" y ".".
-    // =========================================================================
-    async getLatestQuestionnaire(req, res, next) {
-        try {
-            const email = decodeURIComponent(req.params.email);
-            const data = await User.getLatestQuestionnaire(email);
-            return res.status(200).json(data);
-        } catch (error) {
-            console.log(`Error en usersController.getLatestQuestionnaire: ${error}`);
-            return res.status(501).json({
-                success: false,
-                message: 'Error al obtener el cuestionario del cliente',
-                error: error.message
-            });
-        }
     }
 
 };

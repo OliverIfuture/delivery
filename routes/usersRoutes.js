@@ -174,10 +174,5 @@ module.exports = (app, upload) => {
     // pagos recibidos), usada por la ficha de detalle del cliente en el
     // panel del entrenador (Vue). Solo lectura.
     app.get('/api/users/getRecentActivity/:id_client', passport.authenticate('jwt', { session: false }), UsersController.getRecentActivity);
-
-    // NUEVO — cuestionario más reciente de un cliente (sexo/estatura/
-    // alergias/preferencias), usado por la ficha de detalle del cliente en
-    // el panel del entrenador (Vue). Solo lectura.
-    app.get('/api/users/getLatestQuestionnaire/:email', passport.authenticate('jwt', { session: false }), UsersController.getLatestQuestionnaire);
 }
 
