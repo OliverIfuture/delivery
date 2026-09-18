@@ -3490,7 +3490,7 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
     async getRecentActivity(req, res, next) {
         try {
             const id_client = req.params.id_client;
-            const limit = parseInt(req.query.limit) || 20;
+            const limit = parseInt(req.query.limit) || 10;
             const data = await User.getRecentActivity(id_client, limit);
             return res.status(200).json(data);
         } catch (error) {

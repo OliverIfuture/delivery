@@ -2705,7 +2705,7 @@ User.getPastGiveaways = (id_entrenador) => {
 // endpoint solo entrega los datos crudos que ya tenemos.
 // Es de solo lectura: no inserta, actualiza ni borra nada.
 // =============================================================================
-User.getRecentActivity = async (id_client, limit = 20) => {
+User.getRecentActivity = async (id_client, limit = 10) => {
     const sqlTraining = `
         SELECT
             (wl.created_at AT TIME ZONE 'America/Mexico_City')::date AS event_date,
