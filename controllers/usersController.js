@@ -3531,11 +3531,14 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
     // =========================================================================
     async upsertClientProfile(req, res, next) {
         try {
-            const { email, sex, birth_date, height_cm, modality } = req.body;
+            const { email, sex, birth_date, height_cm, modality, allergies, special_conditions, excluded_ingredients, diet_additional_info } = req.body;
             if (!email) {
                 return res.status(400).json({ success: false, message: 'Falta email.' });
             }
-            const data = await User.upsertClientProfile(email, { sex, birth_date, height_cm, modality });
+            const data = await User.upsertClientProfile(email, {
+                sex, birth_date, height_cm, modality,
+                allergies, special_conditions, excluded_ingredients, diet_additional_info
+            });
             return res.status(200).json({ success: true, message: 'Perfil actualizado correctamente.', data });
         } catch (error) {
             console.log(`Error en usersController.upsertClientProfile: ${error}`);

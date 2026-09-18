@@ -2796,22 +2796,26 @@ User.getLatestQuestionnaire = (email) => {
 
 // =============================================================================
 // NUEVO — CRUD para que el ENTRENADOR edite el perfil de un cliente (sexo,
-// fecha de nacimiento, estatura, modalidad) desde el panel. No existe
-// ninguna columna real para sexo/edad en `users` ni en el cuestionario —
-// así que, igual que el resto de "current_status"/"training_preferences",
-// se guarda dentro de `user_questionnaires.questionnaire_data` (jsonb
-// libre, sin validar). `sex` es una llave NUEVA que el cuestionario de la
-// app del cliente no maneja todavía — agregarla no rompe nada porque ese
-// jsonb no está validado ni tiene un esquema fijo.
+// fecha de nacimiento, estatura, modalidad, alergias/condiciones/
+// exclusiones alimentarias) desde el panel. No existen columnas reales
+// para nada de esto en `users` ni en el cuestionario — así que, igual que
+// el resto de "current_status"/"training_preferences", se guarda dentro de
+// `user_questionnaires.questionnaire_data` (jsonb libre, sin validar).
+// `sex` es una llave NUEVA que el cuestionario de la app del cliente no
+// maneja todavía — agregarla no rompe nada porque ese jsonb no está
+// validado ni tiene un esquema fijo.
 //
 // `user_questionnaires` no tiene UNIQUE(user_email) — un cliente puede
 // tener varias filas históricas (una por cada vez que llenó el
 // cuestionario desde su app). Por eso este UPSERT primero busca la fila
 // MÁS RECIENTE de ese email: si existe, la ACTUALIZA en su lugar (fusiona
-// los campos nuevos sin pisar diet_preferences/health_and_allergies que el
-// cliente ya haya contestado); si no existe ninguna, crea una fila nueva.
+// los campos nuevos sin pisar el resto de lo que el cliente ya haya
+// contestado); si no existe ninguna, crea una fila nueva.
 // =============================================================================
-User.upsertClientProfile = async (email, { sex, birth_date, height_cm, modality } = {}) => {
+User.upsertClientProfile = async (email, {
+    sex, birth_date, height_cm, modality,
+    allergies, special_conditions, excluded_ingredients, diet_additional_info
+} = {}) => {
     const existing = await db.oneOrNone(`
         SELECT id, questionnaire_data
         FROM user_questionnaires
@@ -2825,12 +2829,18 @@ User.upsertClientProfile = async (email, { sex, birth_date, height_cm, modality 
         ...base,
         user_email: email,
         current_status: { ...(base.current_status || {}) },
-        training_preferences: { ...(base.training_preferences || {}) }
+        training_preferences: { ...(base.training_preferences || {}) },
+        health_and_allergies: { ...(base.health_and_allergies || {}) },
+        diet_preferences: { ...(base.diet_preferences || {}) }
     };
     if (sex !== undefined) merged.current_status.sex = sex;
     if (birth_date !== undefined) merged.current_status.birth_date = birth_date;
     if (height_cm !== undefined) merged.current_status.height_cm = height_cm;
     if (modality !== undefined) merged.training_preferences.location = modality;
+    if (allergies !== undefined) merged.health_and_allergies.allergies = allergies;
+    if (special_conditions !== undefined) merged.health_and_allergies.special_conditions = special_conditions;
+    if (excluded_ingredients !== undefined) merged.health_and_allergies.excluded_ingredients = excluded_ingredients;
+    if (diet_additional_info !== undefined) merged.diet_preferences.additional_info = diet_additional_info;
 
     if (existing) {
         await db.none(`
