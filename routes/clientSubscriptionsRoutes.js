@@ -42,6 +42,10 @@ module.exports = (app) => {
     // la pestaña "Configuración" de su ficha en el panel del entrenador.
     app.get('/api/subscriptions/clientMembership/:id_client', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getClientMembership);
 
+    // NUEVO — Reactivar una membresía con una fecha de vencimiento elegida
+    // a mano (semana/mes/personalizado), en vez de la duración fija del plan.
+    app.put('/api/subscriptions/reactivateWithDate', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.reactivateWithDate);
+
 
 
     app.post(

@@ -302,4 +302,28 @@ ClientSubscription.getPaymentHistoryByClient = (id_client, limit = 20) => {
     return db.manyOrNone(sql, [id_client, limit]);
 };
 
+// =============================================================================
+// NUEVO — Reactivar una membresía (cancelada o vencida) con una fecha de
+// vencimiento elegida a mano por el entrenador, en vez de usar siempre la
+// duración fija del plan (`approveRequest`/durationInDays). Hace falta
+// porque no todos los entrenadores cobran igual: hay quien cobra por
+// semana, por mes o con una duración totalmente personalizada. Devuelve
+// `id_company` para que el controller pueda validar a quién pertenece
+// antes de aplicar el cambio.
+// =============================================================================
+ClientSubscription.findCompanyById = (id_subscription) => {
+    const sql = `SELECT id_company FROM client_subscriptions WHERE id = $1`;
+    return db.oneOrNone(sql, id_subscription);
+};
+ClientSubscription.reactivateWithDate = (id_subscription, new_period_end) => {
+    const sql = `
+        UPDATE client_subscriptions
+        SET status = 'active',
+            current_period_end = $2,
+            updated_at = NOW()
+        WHERE id = $1
+    `;
+    return db.none(sql, [id_subscription, new_period_end]);
+};
+
 module.exports = ClientSubscription;

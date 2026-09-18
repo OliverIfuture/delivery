@@ -1672,4 +1672,39 @@ async stripeWebhook12(req, res, next) {
         }
     },
 
+    // =================================================================
+    // NUEVO — Reactivar una membresía cancelada o vencida con una fecha de
+    // vencimiento elegida por el entrenador (calendario en Vue), en vez de
+    // depender de la duración fija del plan. Se valida que la suscripción
+    // pertenezca a la compañía del entrenador logueado antes de tocarla.
+    // =================================================================
+    async reactivateWithDate(req, res) {
+        try {
+            const { id_subscription, new_period_end } = req.body;
+            const id_company = req.user.mi_store;
+
+            if (!id_subscription || !new_period_end) {
+                return res.status(400).json({ success: false, message: 'Falta id_subscription o new_period_end.' });
+            }
+
+            const sub = await ClientSubscription.findCompanyById(id_subscription);
+            if (!sub) {
+                return res.status(404).json({ success: false, message: 'Suscripción no encontrada.' });
+            }
+            if (Number(sub.id_company) !== Number(id_company)) {
+                return res.status(403).json({ success: false, message: 'No autorizado.' });
+            }
+
+            await ClientSubscription.reactivateWithDate(id_subscription, new_period_end);
+            return res.status(200).json({ success: true, message: 'Membresía reactivada.' });
+        } catch (error) {
+            console.log(`Error en reactivateWithDate: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al reactivar la membresía',
+                error: error.message
+            });
+        }
+    },
+
 };
