@@ -31,4 +31,13 @@ module.exports = (app) => {
         clientProgressController.analyzeProgressAI
     );
 
+    // NUEVO — CRUD de métricas corporales completas (catálogo de ~27
+    // métricas, no solo peso/%grasa/cintura), para que el ENTRENADOR
+    // registre/edite/borre a nombre de un cliente. Ver controllers/
+    // clientProgressController.js y models/clientProgress.js.
+    app.post('/api/progress/fullMetric', passport.authenticate('jwt', { session: false }), clientProgressController.upsertFullMetric);
+    app.get('/api/progress/fullMetrics/:id_client', passport.authenticate('jwt', { session: false }), clientProgressController.getFullMetrics);
+    app.put('/api/progress/fullMetric/:log_id', passport.authenticate('jwt', { session: false }), clientProgressController.updateFullMetric);
+    app.delete('/api/progress/fullMetric/:log_id', passport.authenticate('jwt', { session: false }), clientProgressController.deleteFullMetric);
+
 };

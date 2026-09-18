@@ -301,5 +301,73 @@ module.exports = {
                 error: error.message || error
             });
         }
+    },
+
+    // =========================================================================
+    // NUEVO — CRUD de métricas corporales completas para que el ENTRENADOR
+    // registre cualquiera de las ~27 métricas del catálogo a nombre de un
+    // cliente. Ver el detalle de las queries en models/clientProgress.js.
+    // El id del entrenador (id_company) sale del JWT (req.user.mi_store) —
+    // nunca del body, para que un entrenador no pueda escribir a nombre de
+    // otra empresa. El id del cliente (id_client) sí va explícito en el
+    // body/params porque es el CLIENTE, no quien hace la petición.
+    // =========================================================================
+
+    // CREATE (o actualiza si ya existe un registro de ese cliente en esa fecha)
+    async upsertFullMetric(req, res, next) {
+        try {
+            const { id_client, date_logged, notes, values } = req.body;
+            if (!id_client) {
+                return res.status(400).json({ success: false, message: 'Falta id_client.' });
+            }
+            const data = await ClientProgress.upsertFullMetric({
+                id_client,
+                id_company: req.user.mi_store || null,
+                date_logged,
+                notes,
+                values
+            });
+            return res.status(201).json({ success: true, message: 'Métricas guardadas correctamente.', data });
+        } catch (error) {
+            console.log(`Error en clientProgressController.upsertFullMetric: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al guardar las métricas', error: error.message });
+        }
+    },
+
+    // READ — historial completo de un cliente (columnas propias + client_metric_values ya fusionados)
+    async getFullMetrics(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const data = await ClientProgress.getFullMetrics(id_client);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en clientProgressController.getFullMetrics: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener las métricas', error: error.message });
+        }
+    },
+
+    // UPDATE — edita un registro existente por su propio id
+    async updateFullMetric(req, res, next) {
+        try {
+            const log_id = req.params.log_id;
+            const { date_logged, notes, values } = req.body;
+            await ClientProgress.updateFullMetric(log_id, { date_logged, notes, values });
+            return res.status(200).json({ success: true, message: 'Registro actualizado correctamente.' });
+        } catch (error) {
+            console.log(`Error en clientProgressController.updateFullMetric: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al actualizar el registro', error: error.message });
+        }
+    },
+
+    // DELETE — borra un registro completo (sus valores extra se van solos por el CASCADE)
+    async deleteFullMetric(req, res, next) {
+        try {
+            const log_id = req.params.log_id;
+            await ClientProgress.deleteFullMetric(log_id);
+            return res.status(200).json({ success: true, message: 'Registro eliminado correctamente.' });
+        } catch (error) {
+            console.log(`Error en clientProgressController.deleteFullMetric: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al eliminar el registro', error: error.message });
+        }
     }
 };
