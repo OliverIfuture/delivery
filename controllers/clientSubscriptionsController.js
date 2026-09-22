@@ -21,6 +21,24 @@ const stripe = require('stripe')(stripeKey);
 const endpointSecret = keys.stripeWebhookSecret;
 const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 
+// NUEVO — clasifica client_subscriptions.stripe_subscription_id en los 3
+// casos reales que puede tener (verificado leyendo directo cómo se llena
+// cada uno):
+//   'manual'    -> transferencia/efectivo, ClientSubscription.createManual
+//                  guarda un id falso 'sub_MANUAL_<timestamp>'.
+//   'onetime'   -> tarjeta de pago único, el webhook (arriba,
+//                  payment_intent.succeeded) guarda paymentIntent.id
+//                  ('pi_...') — NO es un id de Suscripción real.
+//   'recurring' -> tarjeta domiciliada, el webhook (invoice.paid) guarda
+//                  invoice.subscription ('sub_...'), una Suscripción real.
+// Solo 'recurring' tiene una Suscripción real en Stripe que se pueda
+// pausar/reanudar/reintentar/cancelar ahí — los otros dos son control
+// puramente local.
+function classifySubscription(stripeSubscriptionId) {
+    if (!stripeSubscriptionId || stripeSubscriptionId.startsWith('sub_MANUAL_')) return 'manual';
+    if (stripeSubscriptionId.startsWith('pi_')) return 'onetime';
+    return 'recurring';
+}
 
 module.exports = {
 
@@ -249,8 +267,10 @@ module.exports = {
             if (!sub || String(sub.id_company) !== String(id_company)) {
                 return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
             }
-            if (!sub.stripe_subscription_id || sub.stripe_subscription_id.startsWith('sub_MANUAL_')) {
-                return res.status(400).json({ success: false, message: 'Esta membresía no está domiciliada con Stripe, no se puede pausar.' });
+            const kind = classifySubscription(sub.stripe_subscription_id);
+            if (kind !== 'recurring') {
+                const reason = kind === 'manual' ? 'es de transferencia' : 'es un pago único';
+                return res.status(400).json({ success: false, message: `Esta membresía no se puede pausar porque ${reason}, no tiene cobros recurrentes.` });
             }
 
             const User = require('../models/user.js');
@@ -284,6 +304,9 @@ module.exports = {
             const sub = await ClientSubscription.findByIdFull(id_subscription);
             if (!sub || String(sub.id_company) !== String(id_company)) {
                 return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
+            }
+            if (classifySubscription(sub.stripe_subscription_id) !== 'recurring') {
+                return res.status(400).json({ success: false, message: 'Esta membresía no tiene una suscripción de Stripe que reanudar.' });
             }
 
             const User = require('../models/user.js');
@@ -322,8 +345,8 @@ module.exports = {
             if (!sub || String(sub.id_company) !== String(id_company)) {
                 return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
             }
-            if (!sub.stripe_subscription_id || sub.stripe_subscription_id.startsWith('sub_MANUAL_')) {
-                return res.status(400).json({ success: false, message: 'Esta membresía no está domiciliada con Stripe.' });
+            if (classifySubscription(sub.stripe_subscription_id) !== 'recurring') {
+                return res.status(400).json({ success: false, message: 'Esta membresía no tiene una suscripción de Stripe con facturas que reintentar.' });
             }
 
             const User = require('../models/user.js');
@@ -345,6 +368,69 @@ module.exports = {
         } catch (error) {
             console.log(`Error en getRetryLink: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al obtener el enlace de pago', error: error.message });
+        }
+    },
+
+    // NUEVO — reemplaza a cancelSubscription (de arriba) para el panel del
+    // entrenador: esa función solo reconocía 'manual' con el prefijo
+    // 'manual_', que NINGÚN dato real usa (transferencia usa
+    // 'sub_MANUAL_', pago único usa el id del PaymentIntent 'pi_...') —
+    // verificado leyendo directo cómo los guarda cada flujo (ver
+    // classifySubscription arriba). En la práctica esto significaba que
+    // cancelar una membresía de transferencia o de pago único tronaba
+    // intentando cancelar en Stripe un id que ahí no existe. Aquí se
+    // clasifica bien y solo se llama a Stripe cuando de verdad hay una
+    // Suscripción real que cancelar — acotado a req.user.mi_store.
+    async cancelMembership(req, res) {
+        try {
+            const { id_subscription } = req.body;
+            const id_company = req.user.mi_store;
+            if (!id_subscription || !id_company) {
+                return res.status(400).json({ success: false, message: 'Falta id_subscription o no tienes una compañía asignada.' });
+            }
+
+            const sub = await ClientSubscription.findByIdFull(id_subscription);
+            if (!sub || String(sub.id_company) !== String(id_company)) {
+                return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
+            }
+
+            const kind = classifySubscription(sub.stripe_subscription_id);
+            if (kind === 'recurring') {
+                const User = require('../models/user.js');
+                const company = await User.findCompanyById(id_company);
+                if (!company || !company.stripeAccountId) {
+                    return res.status(400).json({ success: false, message: 'No se encontró la cuenta de Stripe del entrenador.' });
+                }
+                await adminStripe.subscriptions.cancel(sub.stripe_subscription_id, { stripeAccount: company.stripeAccountId });
+
+                // Igual que la cancelSubscription vieja: se limpia el cobro
+                // de ESTE mes (era el próximo cobro recurrente que ya no va
+                // a pasar). Solo aplica aquí — un pago único o una
+                // transferencia ya cobrados de verdad no se borran del
+                // historial, esa plata sí entró.
+                try {
+                    const result = await db.result(`
+                        DELETE FROM payment_history
+                        WHERE stripe_subscription_id = $1
+                        AND DATE_TRUNC('month', payment_date) = DATE_TRUNC('month', CURRENT_DATE)
+                    `, [sub.stripe_subscription_id]);
+                    console.log(`🧹 Historial de pagos limpiado: ${result.rowCount} registro(s) para ${sub.stripe_subscription_id}.`);
+                } catch (dbError) {
+                    console.log(`⚠️ No se pudo limpiar el historial de pago del mes: ${dbError.message}`);
+                }
+            }
+
+            await ClientSubscription.setStatusById(id_subscription, 'canceled');
+
+            const messages = {
+                recurring: 'Suscripción domiciliada cancelada en Stripe.',
+                onetime: 'Acceso cancelado. El pago único ya cobrado no se reembolsa automáticamente.',
+                manual: 'Membresía de transferencia cancelada.'
+            };
+            return res.status(200).json({ success: true, message: messages[kind] });
+        } catch (error) {
+            console.log(`Error en cancelMembership: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al cancelar la membresía', error: error.message });
         }
     },
 
