@@ -6,6 +6,7 @@ const CobiCheckout = require('../models/cobiCheckout.js');
 const User = require('../models/user.js');
 const SubscriptionPlan = require('../models/subscriptionPlan.js');
 const ClientSubscription = require('../models/clientSubscription.js');
+const Rol = require('../models/rol.js');
 const keys = require('../config/keys.js');
 const crypto = require('crypto');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
@@ -136,6 +137,15 @@ module.exports = {
             // Buscar o crear el cliente (contraseña generada al azar — no
             // hace falta pedírsela para pagar; puede recuperarla después
             // desde la app si necesita entrar).
+            //
+            // OJO — findByEmail hace INNER JOIN con user_has_roles, así
+            // que un usuario sin rol asignado es invisible para esa
+            // consulta (verificado en vivo: sin este paso, una segunda
+            // compra con el mismo correo intentaba crear el usuario de
+            // nuevo y truena por email duplicado). Por eso, igual que
+            // hace el registro público (registerWithOutImage), se le
+            // asigna el rol por defecto (1 = Cliente) justo después de
+            // crearlo.
             let user = await User.findByEmail(email);
             if (!user) {
                 const randomPassword = crypto.randomBytes(12).toString('hex');
@@ -148,6 +158,7 @@ module.exports = {
                     password: randomPassword,
                     id_entrenador: id_company
                 });
+                await Rol.create(created.id, 1);
                 user = { id: created.id, email };
             }
 
