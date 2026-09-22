@@ -22,10 +22,25 @@ const endpointSecret = keys.stripeWebhookSecret;
 const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 
 // NUEVO — clasifica client_subscriptions.stripe_subscription_id en los 3
-// casos reales que puede tener (verificado leyendo directo cómo se llena
-// cada uno):
-//   'manual'    -> transferencia/efectivo, ClientSubscription.createManual
-//                  guarda un id falso 'sub_MANUAL_<timestamp>'.
+// casos reales que puede tener.
+//
+// OJO — CORREGIDO tras revisar los datos reales en vivo (no solo el
+// código): hay VARIAS convenciones de id falso para transferencia,
+// generadas por distintos caminos con los años —
+//   - ClientSubscription.createManual (el más nuevo, createManualRequest)
+//     genera 'sub_MANUAL_<timestamp>' — solo 1 fila real así hoy.
+//   - El flujo real que de verdad se usa (79 filas reales) manda el id ya
+//     armado desde el cliente como 'manual_sub_<timestamp>' — ver
+//     User.createClientSubscription/updateClientSubscription en
+//     usersController.js, que insertan tal cual el stripe_subscription_id
+//     que les llega en el body.
+// La primera versión de este helper solo reconocía 'sub_MANUAL_' y
+// mandaba TODAS las filas 'manual_sub_' (la inmensa mayoría de las
+// transferencias reales) a pausar/cancelar como si fueran suscripciones
+// de Stripe de verdad — de ahí que pausar/cancelar tronara con "No such
+// subscription" en clientes reales. Ahora se reconoce cualquier variante
+// que empiece con 'manual_' (cubre 'manual_sub_' Y 'sub_MANUAL_' no
+// coincide con ese prefijo, así que se revisan los dos por separado).
 //   'onetime'   -> tarjeta de pago único, el webhook (arriba,
 //                  payment_intent.succeeded) guarda paymentIntent.id
 //                  ('pi_...') — NO es un id de Suscripción real.
@@ -35,7 +50,8 @@ const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 // pausar/reanudar/reintentar/cancelar ahí — los otros dos son control
 // puramente local.
 function classifySubscription(stripeSubscriptionId) {
-    if (!stripeSubscriptionId || stripeSubscriptionId.startsWith('sub_MANUAL_')) return 'manual';
+    if (!stripeSubscriptionId) return 'manual';
+    if (stripeSubscriptionId.startsWith('manual_') || stripeSubscriptionId.startsWith('sub_MANUAL_')) return 'manual';
     if (stripeSubscriptionId.startsWith('pi_')) return 'onetime';
     return 'recurring';
 }
