@@ -25,6 +25,14 @@ module.exports = (app) => {
         stripeConnectController.cobiCreateConnectAccount
     );
 
+    // NUEVO — "COBI PAYMENTS": info directa de BD (incluye el
+    // stripeAccountId real, que account-status no devuelve).
+    app.get(
+        '/api/stripe/connect/account-info',
+        passport.authenticate('jwt', { session: false }),
+        stripeConnectController.getAccountInfo
+    );
+
     /**
      * GET: /api/stripe/connect/account-status
      * * La app llama a esto después de que el WebView se cierra

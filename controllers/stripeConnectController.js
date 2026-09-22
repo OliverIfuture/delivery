@@ -77,6 +77,32 @@ module.exports = {
         }
     },
 
+    // NUEVO — "COBI PAYMENTS" (panel Vue): el front necesitaba el
+    // stripeAccountId (acct_...) de verdad para pedir los movimientos
+    // reales (getChargesList), pero getAccountStatus (de abajo) nunca lo
+    // devuelve — solo un booleano. Antes el front intentaba usar el dato
+    // guardado en el login, que puede quedar viejo o nunca haber llegado
+    // (por eso una cuenta ya conectada aparecía como "no conectada").
+    // Simple lectura de BD (sin llamar a Stripe) — el id no cambia una
+    // vez creado, así que no hace falta ir a consultarlo a Stripe cada vez.
+    async getAccountInfo(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const company = await User.findCompanyById(id_company);
+            if (!company) {
+                return res.status(404).json({ success: false, message: 'No se encontró la compañía del entrenador.' });
+            }
+            return res.status(200).json({
+                success: true,
+                stripeAccountId: company.stripeAccountId || null,
+                chargesEnabled: !!company.chargesEnabled
+            });
+        } catch (error) {
+            console.log(`Error en getAccountInfo: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener la información de la cuenta', error: error.message });
+        }
+    },
+
     /**
      * Verifica el estado de la cuenta y MIGRA PLANES si está activa
      */
