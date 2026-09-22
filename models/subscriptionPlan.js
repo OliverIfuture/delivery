@@ -2,6 +2,26 @@ const db = require('../config/config.js');
 
 const SubscriptionPlan = {};
 
+// NUEVO — pagos recientes para el feed de "Actividad" (panel del
+// entrenador): a diferencia de getPaymentHistory (subscriptionsRange,
+// requiere un rango de fechas), este solo trae los últimos N, como el
+// resto de fuentes del feed.
+SubscriptionPlan.getRecentPayments = (id_company, limit = 30) => {
+    const sql = `
+        SELECT
+            p.id, p.payment_date, p.amount,
+            u.id AS client_id, u.name AS client_name, u.lastname AS client_lastname, u.image AS client_image,
+            COALESCE(s.name, 'Plan eliminado/manual') AS plan_name
+        FROM payment_history p
+        LEFT JOIN subscription_plans s ON p.id_plan = s.id
+        LEFT JOIN users u ON u.id = p.id_client
+        WHERE p.id_company = $1
+        ORDER BY p.payment_date DESC
+        LIMIT $2
+    `;
+    return db.manyOrNone(sql, [id_company, limit]);
+};
+
 // NUEVO — para procesar el cobro real de COBI: findByIdPublic (de abajo,
 // ya existente) NO trae payment_type/billing_mode/trial_period_days, así
 // que no sirve para decidir cómo cobrar. Esta sí los trae.

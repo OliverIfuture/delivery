@@ -99,4 +99,49 @@ Community.findUserLikeOnPost = (id_post, id_user) => {
     );
 };
 
+// =========================================================================
+// NUEVO — Feed de "Actividad" del entrenador (panel Vue): qué pasó hoy en
+// su comunidad. likes_publish/coments_post no tenían columna de fecha —
+// se agregó `created_at` por migración aditiva (antes era imposible saber
+// CUÁNDO pasó un like o comentario, solo que existía).
+// =========================================================================
+Community.getRecentPosts = (id_company, limit = 30) => {
+    const sql = `
+        SELECT P.id, P.description, P.post_type, P.image_post, P.created_at,
+               U.id AS author_id, U.name AS author_name, U.image AS author_photo
+        FROM post P INNER JOIN users U ON U.id = P.id_user
+        WHERE P.id_company::varchar = $1
+        ORDER BY P.created_at DESC LIMIT $2
+    `;
+    return db.manyOrNone(sql, [id_company, limit]);
+};
+
+Community.getRecentLikes = (id_company, limit = 30) => {
+    const sql = `
+        SELECT LP.id, LP.created_at, U.id AS liker_id, U.name AS liker_name, U.image AS liker_photo,
+               P.id AS post_id, P.description AS post_description, PU.name AS post_author_name
+        FROM likes_publish LP
+        INNER JOIN post P ON P.id = LP.id_publish
+        INNER JOIN users U ON U.id = LP.id_user
+        INNER JOIN users PU ON PU.id = P.id_user
+        WHERE P.id_company::varchar = $1 AND LP.useremail != '0'
+        ORDER BY LP.created_at DESC LIMIT $2
+    `;
+    return db.manyOrNone(sql, [id_company, limit]);
+};
+
+Community.getRecentComments = (id_company, limit = 30) => {
+    const sql = `
+        SELECT C.id, C.coment, C.created_at, U.id AS commenter_id, U.name AS commenter_name, U.image AS commenter_photo,
+               P.id AS post_id, P.description AS post_description, PU.name AS post_author_name
+        FROM coments_post C
+        INNER JOIN post P ON P.id = C.id_post
+        INNER JOIN users U ON U.id = C.id_user
+        INNER JOIN users PU ON PU.id = P.id_user
+        WHERE P.id_company::varchar = $1
+        ORDER BY C.created_at DESC LIMIT $2
+    `;
+    return db.manyOrNone(sql, [id_company, limit]);
+};
+
 module.exports = Community;

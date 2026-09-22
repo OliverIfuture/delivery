@@ -2770,6 +2770,34 @@ User.getRecentActivity = async (id_client, limit = 10) => {
 };
 
 // =============================================================================
+// NUEVO — Misma agrupación de workout_logs que getRecentActivity de arriba,
+// pero para TODOS los clientes del entrenador a la vez (feed de
+// "Actividad" del panel, no la ficha de un cliente). workout_logs ya
+// tiene id_company directo en la fila, así que no hace falta pasar por
+// id_entrenador de users para acotarlo.
+// =============================================================================
+User.getCompanyWorkoutActivity = (id_company, limit = 30) => {
+    const sql = `
+        SELECT
+            wl.id_client,
+            u.name AS client_name, u.lastname AS client_lastname, u.image AS client_image,
+            (wl.created_at AT TIME ZONE 'America/Mexico_City')::date AS event_date,
+            MAX(wl.created_at) AS event_at,
+            (ARRAY_AGG(wl.day_name_key ORDER BY wl.created_at DESC))[1] AS day_name_key,
+            (ARRAY_AGG(r.name ORDER BY wl.created_at DESC))[1] AS routine_name,
+            COUNT(DISTINCT wl.exercise_name) AS exercises_count
+        FROM workout_logs wl
+        INNER JOIN users u ON u.id = wl.id_client
+        LEFT JOIN routines r ON r.id = wl.id_routine
+        WHERE wl.id_company = $1
+        GROUP BY wl.id_client, u.name, u.lastname, u.image, (wl.created_at AT TIME ZONE 'America/Mexico_City')::date
+        ORDER BY event_at DESC
+        LIMIT $2
+    `;
+    return db.manyOrNone(sql, [id_company, limit]);
+};
+
+// =============================================================================
 // NUEVO — Cuestionario más reciente de un cliente (panel del entrenador,
 // Vue). Alimenta las tarjetas "Información" y "Perfil alimentario" de la
 // ficha del cliente con datos reales (sexo/estatura/alergias/preferencias)
