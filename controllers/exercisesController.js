@@ -24,6 +24,29 @@ module.exports = {
         }
     },
 
+    // NUEVO — igual que findByCompany (de arriba) pero seguro: esa ruta
+    // pide sesión, pero no valida que el :id_company de la URL sea el del
+    // usuario logueado, así que cualquier cuenta con token podía ver la
+    // biblioteca de ejercicios de OTRO entrenador solo cambiando el
+    // número. Aquí el id sale siempre de req.user.mi_store.
+    async getMyExercises(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'No tienes una compañía asignada.' });
+            }
+            const data = await Exercise.findByCompany(id_company);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en exercisesController.getMyExercises: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener tus ejercicios',
+                error: error.message
+            });
+        }
+    },
+
     /**
      * Crea un nuevo ejercicio, subiendo una imagen si existe.
      */

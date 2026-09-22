@@ -94,6 +94,8 @@ module.exports = (app, upload) => {
     app.post('/api/users/createWholesaleUser', UsersController.createWholesaleUser);
     app.get('/api/users/getWholesaleUsersByCompany/:id', passport.authenticate('jwt', { session: false }), UsersController.getWholesaleUsersByCompany);
     app.get('/api/users/getClientsByCompany/:id_company', UsersController.getClientsByCompany);
+    // NUEVO — versión segura: el id de compañía sale del token (ver la nota en getMyClients).
+    app.get('/api/users/myClients', passport.authenticate('jwt', { session: false }), UsersController.getMyClients);
     app.post('/api/users/inviteClient', passport.authenticate('jwt', { session: false }), UsersController.inviteClient);
     app.get('/api/users/getAvailableTrainers', passport.authenticate('jwt', { session: false }), UsersController.getAvailableTrainers);
     app.get('/api/users/getActiveGiveaway', passport.authenticate('jwt', { session: false }), UsersController.getActiveGiveaway);

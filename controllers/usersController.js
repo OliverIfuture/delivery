@@ -2366,6 +2366,31 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
         }
     },
 
+    // NUEVO — igual que getClientsByCompany (de arriba) pero seguro: esa
+    // ruta no pide sesión y confía en el id_company que venga en la URL,
+    // así que cualquiera podía pedir la lista completa de clientes
+    // (correo, teléfono, foto, estado de membresía) de OTRO entrenador
+    // solo cambiando el número — verificado en vivo. Aquí el id sale
+    // siempre del token (req.user.mi_store), nunca de lo que mande el
+    // cliente.
+    async getMyClients(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'No tienes una compañía asignada.' });
+            }
+            const data = await User.getClientsByCompany(id_company);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.log(`Error en getMyClients: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener tus clientes',
+                error: error.message
+            });
+        }
+    },
+
     async inviteClient(req, res, next) {
         try {
             const email = req.body.email;

@@ -11,6 +11,12 @@ module.exports = (app, upload) => {
         passport.authenticate('jwt', { session: false }),
         exercisesController.findByCompany
     );
+    // NUEVO — versión segura: el id de compañía sale del token (ver la nota en getMyExercises).
+    app.get(
+        '/api/exercises/mine',
+        passport.authenticate('jwt', { session: false }),
+        exercisesController.getMyExercises
+    );
 
     // NUEVA RUTA
     app.get('/api/exercises/getGlobal', passport.authenticate('jwt', { session: false }), exercisesController.getGlobal);
