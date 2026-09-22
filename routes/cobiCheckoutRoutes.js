@@ -10,4 +10,9 @@ module.exports = (app) => {
     // Público, sin login — lo usa la página de pago del cliente.
     app.get('/api/cobi/design/public/:id_trainer', cobiCheckoutController.getPublicDesign);
 
+    // NUEVO — planes reales + el pago en sí, ambos públicos (el visitante
+    // todavía no tiene cuenta cuando abre el enlace de pago).
+    app.get('/api/cobi/plans/:id_trainer', cobiCheckoutController.getPublicPlans);
+    app.post('/api/cobi/checkout', cobiCheckoutController.createCheckout);
+
 };

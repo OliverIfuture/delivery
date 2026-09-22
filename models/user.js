@@ -1813,6 +1813,13 @@ User.updateInvitationStatus = (email) => {
     `;
     return db.none(sql, email);
 };
+// NUEVO — el enlace público de COBI usa el users.id del entrenador
+// (trainerId), no su id_company — esto resuelve uno a partir del otro
+// para poder buscar planes/Stripe Connect de esa compañía.
+User.findTrainerCompanyId = (id_trainer) => {
+    return db.oneOrNone(`SELECT mi_store FROM users WHERE id = $1`, [id_trainer]);
+};
+
 User.findCompanyById = (id_company) => {
     // Asumiendo que tu tabla se llama 'company'
     // **AÑADIDAS COMILLAS DOBLES para respetar el camelCase**

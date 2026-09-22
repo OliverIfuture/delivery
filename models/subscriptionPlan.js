@@ -2,6 +2,20 @@ const db = require('../config/config.js');
 
 const SubscriptionPlan = {};
 
+// NUEVO — para la página pública de pago de COBI (sin login): solo los
+// campos seguros para mostrar/cobrar (nada de ids internos de más).
+SubscriptionPlan.findPublicByCompany = (id_company) => {
+    const sql = `
+        SELECT
+            id, name, description, price, currency, "durationInDays",
+            payment_type, billing_mode, trial_period_days, stripe_price_id
+        FROM subscription_plans
+        WHERE id_company = $1 AND active = true
+        ORDER BY price ASC
+    `;
+    return db.manyOrNone(sql, [id_company]);
+};
+
 // =========================================================================
 // NUEVO — "COBI PAYMENTS" (panel Vue). Crea el plan ya con Stripe Connect
 // real (no la llave suelta `company.stripeSecretKey` que usa el `create`
