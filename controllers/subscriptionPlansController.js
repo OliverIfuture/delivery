@@ -86,6 +86,129 @@ module.exports = {
         }
     },
 
+    // =========================================================================
+    // NUEVO — "COBI PAYMENTS": crear un plan usando Stripe Connect de verdad
+    // (stripe.products/prices.create con { stripeAccount: company.stripeAccountId }
+    // y la llave de PLATAFORMA — el mismo patrón ya usado en
+    // stripeConnectController.js/_migrateManualPlans, NO el camino viejo de
+    // `create()` de arriba que usaba una llave secreta suelta guardada en
+    // `company.stripeSecretKey`).
+    //
+    // payment_type: 'card' | 'transfer'. Si es 'transfer' se guarda como
+    // manual (igual que ya hacía `create()` cuando la compañía no tenía
+    // Stripe configurado) — el cobro se gestiona por fuera, con el flujo ya
+    // real de solicitudes manuales (createManualRequest/getPendingRequests/
+    // approveRequest en clientSubscriptionsController.js).
+    //
+    // billing_mode: 'recurring' | 'one_time' (solo aplica con payment_type
+    // 'card'). Para 'recurring' el Price usa interval:'day' + interval_count
+    // = durationInDays — así el cobro siempre calza con la duración real del
+    // plan sin importar si es semanal/mensual/trimestral/anual, sin inventar
+    // un campo de "intervalo" aparte. trial_period_days (si > 0) se manda
+    // en `recurring.trial_period_days` — es el "cobrar después del día N"
+    // que pidió el entrenador (días de gracia antes del primer cobro).
+    async createConnect(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una compañía asignada.' });
+            }
+
+            const { name, description, price, durationInDays, paymentType, billingMode, trialPeriodDays } = req.body;
+            if (!name || !price || !durationInDays) {
+                return res.status(400).json({ success: false, message: 'Faltan name, price o durationInDays.' });
+            }
+
+            const company = await User.findCompanyById(id_company);
+            if (!company) {
+                return res.status(404).json({ success: false, message: 'Empresa no encontrada.' });
+            }
+
+            const plan = {
+                id_company,
+                name,
+                description: description || '',
+                price,
+                durationInDays,
+                payment_type: paymentType === 'transfer' ? 'transfer' : 'card',
+                billing_mode: billingMode === 'one_time' ? 'one_time' : 'recurring',
+                trial_period_days: Number(trialPeriodDays) || 0
+            };
+
+            if (plan.payment_type === 'transfer') {
+                plan.stripe_product_id = 'MANUAL';
+                plan.stripe_price_id = 'MANUAL';
+                plan.is_manual = true;
+            } else {
+                if (!company.stripeAccountId || !company.chargesEnabled) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Debes completar tu registro en Stripe (y que Stripe habilite los cobros) antes de crear planes con tarjeta.'
+                    });
+                }
+
+                const stripe = require('stripe')(keys.stripeAdminSecretKey);
+
+                const stripeProduct = await stripe.products.create(
+                    { name: plan.name, description: plan.description, type: 'service' },
+                    { stripeAccount: company.stripeAccountId }
+                );
+
+                const priceData = {
+                    product: stripeProduct.id,
+                    unit_amount: Math.round(Number(plan.price) * 100),
+                    currency: 'mxn'
+                };
+                if (plan.billing_mode === 'recurring') {
+                    priceData.recurring = { interval: 'day', interval_count: Number(plan.durationInDays) };
+                    if (plan.trial_period_days > 0) {
+                        priceData.recurring.trial_period_days = plan.trial_period_days;
+                    }
+                }
+                const stripePrice = await stripe.prices.create(priceData, { stripeAccount: company.stripeAccountId });
+
+                plan.stripe_product_id = stripeProduct.id;
+                plan.stripe_price_id = stripePrice.id;
+                plan.is_manual = false;
+            }
+
+            const created = await SubscriptionPlan.createV2(plan);
+
+            return res.status(201).json({
+                success: true,
+                message: 'El plan se ha creado correctamente.',
+                data: { id: created.id }
+            });
+        } catch (error) {
+            console.log(`Error en subscriptionPlansController.createConnect: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al crear el plan de suscripción',
+                error: error.message
+            });
+        }
+    },
+
+    // NUEVO — lista completa (con payment_type/billing_mode/trial_period_days/
+    // is_manual) para el propio dashboard "COBI PAYMENTS" del entrenador.
+    async findByCompanyManaged(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Acceso denegado.' });
+            }
+            const data = await SubscriptionPlan.findByCompanyManaged(id_company);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.log(`Error en subscriptionPlansController.findByCompanyManaged: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener tus planes',
+                error: error.message
+            });
+        }
+    },
+
     /**
      * Eliminar (Desactivar) un plan
      */

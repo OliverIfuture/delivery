@@ -9,10 +9,14 @@ module.exports = (app) => {
     // Obtener todos los planes creados por un entrenador
     app.get('/api/subscriptionPlans/findByCompany/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.findByCompany);
     app.get('/api/subscriptionPlans/findByCompanyDash/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.findByCompanyDash);
+    // NUEVO — lista completa (con payment_type/billing_mode/trial_period_days) para "COBI PAYMENTS".
+    app.get('/api/subscriptionPlans/findByCompanyManaged/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.findByCompanyManaged);
 
     // --- POST ---
     // Crear un nuevo plan de suscripción
     app.post('/api/subscriptionPlans/create', passport.authenticate('jwt', { session: false }), subscriptionPlansController.create);
+    // NUEVO — crear plan con Stripe Connect real (tarjeta recurrente/pago único con días de gracia, o transferencia).
+    app.post('/api/subscriptionPlans/createConnect', passport.authenticate('jwt', { session: false }), subscriptionPlansController.createConnect);
 
     // --- DELETE ---
     // Eliminar (desactivar) un plan de suscripción

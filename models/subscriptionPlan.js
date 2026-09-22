@@ -2,6 +2,58 @@ const db = require('../config/config.js');
 
 const SubscriptionPlan = {};
 
+// =========================================================================
+// NUEVO — "COBI PAYMENTS" (panel Vue). Crea el plan ya con Stripe Connect
+// real (no la llave suelta `company.stripeSecretKey` que usa el `create`
+// de abajo) más los 3 campos nuevos (payment_type/billing_mode/
+// trial_period_days) — ver controllers/subscriptionPlansController.js
+// createConnect() para el detalle de cómo arma stripe_product_id/
+// stripe_price_id antes de llamar aquí.
+SubscriptionPlan.createV2 = (plan) => {
+    const sql = `
+        INSERT INTO subscription_plans(
+            id_company, name, price, currency, stripe_product_id, stripe_price_id,
+            created_at, updated_at, description, is_manual, "durationInDays",
+            payment_type, billing_mode, trial_period_days
+        )
+        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING id
+    `;
+    return db.one(sql, [
+        plan.id_company,
+        plan.name,
+        plan.price,
+        plan.currency || 'mxn',
+        plan.stripe_product_id,
+        plan.stripe_price_id,
+        new Date(),
+        new Date(),
+        plan.description,
+        plan.is_manual,
+        plan.durationInDays,
+        plan.payment_type,
+        plan.billing_mode,
+        plan.trial_period_days
+    ]);
+};
+
+// Lista completa (con los campos nuevos) para el propio dashboard del
+// entrenador en "COBI PAYMENTS" — findByCompanyDash (de abajo) no trae
+// payment_type/billing_mode/trial_period_days/is_manual, así que no sirve
+// para mostrar esos badges en la UI de gestión.
+SubscriptionPlan.findByCompanyManaged = (id_company) => {
+    const sql = `
+        SELECT
+            id, id_company, name, description, price, currency,
+            stripe_product_id, stripe_price_id, "durationInDays",
+            is_manual, active, payment_type, billing_mode, trial_period_days, created_at
+        FROM subscription_plans
+        WHERE id_company = $1 AND active = true
+        ORDER BY created_at DESC
+    `;
+    return db.manyOrNone(sql, [id_company]);
+};
+
 /**
  * Crea un nuevo plan de suscripción
  */
