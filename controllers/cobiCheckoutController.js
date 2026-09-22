@@ -129,7 +129,7 @@ module.exports = {
             }
             const id_company = companyRow.mi_store;
 
-            const plan = await SubscriptionPlan.findByIdPublic(planId);
+            const plan = await SubscriptionPlan.findByIdForCheckout(planId);
             if (!plan || String(plan.id_company) !== String(id_company)) {
                 return res.status(404).json({ success: false, message: 'El plan no existe o no pertenece a este entrenador.' });
             }

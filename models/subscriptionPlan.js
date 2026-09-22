@@ -2,6 +2,21 @@ const db = require('../config/config.js');
 
 const SubscriptionPlan = {};
 
+// NUEVO — para procesar el cobro real de COBI: findByIdPublic (de abajo,
+// ya existente) NO trae payment_type/billing_mode/trial_period_days, así
+// que no sirve para decidir cómo cobrar. Esta sí los trae.
+SubscriptionPlan.findByIdForCheckout = (id_plan) => {
+    const sql = `
+        SELECT
+            id, id_company, name, description, price, currency,
+            stripe_product_id, stripe_price_id, "durationInDays",
+            is_manual, payment_type, billing_mode, trial_period_days
+        FROM subscription_plans
+        WHERE id = $1 AND active = true
+    `;
+    return db.oneOrNone(sql, [id_plan]);
+};
+
 // NUEVO — para la página pública de pago de COBI (sin login): solo los
 // campos seguros para mostrar/cobrar (nada de ids internos de más).
 SubscriptionPlan.findPublicByCompany = (id_company) => {
