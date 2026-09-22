@@ -434,6 +434,41 @@ module.exports = {
         }
     },
 
+    // NUEVO — pasar una membresía de COBI a transferencia manual (panel del
+    // entrenador). Pensado para usarse DESPUÉS de cancelMembership (el
+    // frontend primero cancela la suscripción real en Stripe, y solo
+    // entonces llama aquí) — crea una fila nueva de transferencia que
+    // conserva la misma fecha de vencimiento, así el cliente no pierde el
+    // periodo que ya tenía pagado.
+    async convertToManual(req, res) {
+        try {
+            const { id_subscription } = req.body;
+            const id_company = req.user.mi_store;
+            if (!id_subscription || !id_company) {
+                return res.status(400).json({ success: false, message: 'Falta id_subscription o no tienes una compañía asignada.' });
+            }
+
+            const sub = await ClientSubscription.findByIdFull(id_subscription);
+            if (!sub || String(sub.id_company) !== String(id_company)) {
+                return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
+            }
+            if (classifySubscription(sub.stripe_subscription_id) === 'manual') {
+                return res.status(400).json({ success: false, message: 'Esta membresía ya es de transferencia.' });
+            }
+
+            const created = await ClientSubscription.convertToManual(sub.id_client, id_company, sub.id_plan, sub.current_period_end);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Membresía pasada a transferencia — conserva su fecha de vencimiento actual.',
+                data: { id: created.id }
+            });
+        } catch (error) {
+            console.log(`Error en convertToManual: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al pasar la membresía a transferencia', error: error.message });
+        }
+    },
+
     async getPaymentHistory(req, res) {
         try {
             const stripe_subscription_id = req.params.stripe_subscription_id;

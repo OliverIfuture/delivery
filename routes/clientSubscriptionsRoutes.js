@@ -53,6 +53,8 @@ module.exports = (app) => {
     // NUEVO — reemplaza a /api/subscriptions/cancel para el panel: esa
     // reconoce mal el tipo de membresía (ver la nota en cancelMembership).
     app.put('/api/subscriptions/cancelMembership', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.cancelMembership);
+    // NUEVO — pasar una membresía de COBI a transferencia manual (ver la nota en el controller).
+    app.put('/api/subscriptions/convertToManual', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.convertToManual);
     app.put('/api/subscriptions/resume', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.resumeMembership);
     app.get('/api/subscriptions/retryLink/:id_subscription', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getRetryLink);
 

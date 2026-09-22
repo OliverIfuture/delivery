@@ -333,12 +333,35 @@ ClientSubscription.reactivateWithDate = (id_subscription, new_period_end) => {
 // Stripe.
 // =============================================================================
 ClientSubscription.findByIdFull = (id_subscription) => {
-    const sql = `SELECT id, id_company, id_client, stripe_subscription_id, status FROM client_subscriptions WHERE id = $1`;
+    const sql = `
+        SELECT id, id_company, id_client, id_plan, stripe_subscription_id, status, current_period_end
+        FROM client_subscriptions WHERE id = $1
+    `;
     return db.oneOrNone(sql, [id_subscription]);
 };
 ClientSubscription.setStatusById = (id_subscription, status) => {
     const sql = `UPDATE client_subscriptions SET status = $2, updated_at = NOW() WHERE id = $1`;
     return db.none(sql, [id_subscription, status]);
+};
+
+// =============================================================================
+// NUEVO — Pasar una membresía de COBI (Stripe, ya cancelada) a transferencia
+// manual: crea una fila NUEVA (no reutiliza la vieja — mismo patrón que
+// createManual) con un id falso 'sub_MANUAL_...' y el MISMO
+// current_period_end que ya tenía, para no cortarle el acceso al cliente a
+// mitad de su periodo ya pagado. A propósito NO toca payment_history — no
+// hubo un cobro nuevo, solo cambia cómo se va a gestionar de aquí en
+// adelante.
+// =============================================================================
+ClientSubscription.convertToManual = (id_client, id_company, id_plan, current_period_end) => {
+    const fakeSubId = `sub_MANUAL_${Date.now()}`;
+    const fakeCusId = `cus_MANUAL_${Date.now()}`;
+    const sql = `
+        INSERT INTO client_subscriptions(id_client, id_company, id_plan, stripe_subscription_id, stripe_customer_id, status, current_period_end, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, 'active', $6, NOW(), NOW())
+        RETURNING id
+    `;
+    return db.one(sql, [id_client, id_company, id_plan, fakeSubId, fakeCusId, current_period_end]);
 };
 
 module.exports = ClientSubscription;
