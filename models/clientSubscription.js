@@ -326,4 +326,19 @@ ClientSubscription.reactivateWithDate = (id_subscription, new_period_end) => {
     return db.none(sql, [id_subscription, new_period_end]);
 };
 
+// =============================================================================
+// NUEVO — Pausar/reanudar/reintentar cobro (panel del entrenador, Vue).
+// A diferencia de findCompanyById (que solo trae id_company para validar),
+// aquí se necesita también el stripe_subscription_id para poder llamar a
+// Stripe.
+// =============================================================================
+ClientSubscription.findByIdFull = (id_subscription) => {
+    const sql = `SELECT id, id_company, id_client, stripe_subscription_id, status FROM client_subscriptions WHERE id = $1`;
+    return db.oneOrNone(sql, [id_subscription]);
+};
+ClientSubscription.setStatusById = (id_subscription, status) => {
+    const sql = `UPDATE client_subscriptions SET status = $2, updated_at = NOW() WHERE id = $1`;
+    return db.none(sql, [id_subscription, status]);
+};
+
 module.exports = ClientSubscription;

@@ -220,6 +220,134 @@ module.exports = {
         }
     },
 
+    // =================================================================
+    // NUEVO — PAUSAR / REANUDAR / REINTENTAR COBRO (panel del entrenador)
+    // =================================================================
+    // OJO — verificado en vivo: las suscripciones nuevas de COBI (ver
+    // cobiCheckoutController.js -> createCheckout) se crean como "Direct
+    // charge" con la llave de plataforma + { stripeAccount }, así que
+    // viven DENTRO del namespace de la cuenta conectada del entrenador —
+    // para volver a encontrarlas hay que consultar con ese MISMO patrón
+    // (llave de plataforma + { stripeAccount }), no con
+    // company.stripeSecretKey a secas (el patrón que sí usa
+    // cancelSubscription, de arriba, para las suscripciones del flujo
+    // viejo). Por eso estas 3 funciones nuevas usan siempre { stripeAccount }.
+    //
+    // También quedan bien acotadas a req.user.mi_store (a diferencia de
+    // cancelSubscription, que confía en el id_company que le manden) —
+    // así un entrenador no puede pausar/reanudar la membresía de un
+    // cliente de otro entrenador adivinando el id.
+    async pauseMembership(req, res) {
+        try {
+            const { id_subscription } = req.body;
+            const id_company = req.user.mi_store;
+            if (!id_subscription || !id_company) {
+                return res.status(400).json({ success: false, message: 'Falta id_subscription o no tienes una compañía asignada.' });
+            }
+
+            const sub = await ClientSubscription.findByIdFull(id_subscription);
+            if (!sub || String(sub.id_company) !== String(id_company)) {
+                return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
+            }
+            if (!sub.stripe_subscription_id || sub.stripe_subscription_id.startsWith('sub_MANUAL_')) {
+                return res.status(400).json({ success: false, message: 'Esta membresía no está domiciliada con Stripe, no se puede pausar.' });
+            }
+
+            const User = require('../models/user.js');
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeAccountId) {
+                return res.status(400).json({ success: false, message: 'No se encontró la cuenta de Stripe del entrenador.' });
+            }
+
+            await adminStripe.subscriptions.update(
+                sub.stripe_subscription_id,
+                { pause_collection: { behavior: 'void' } },
+                { stripeAccount: company.stripeAccountId }
+            );
+            await ClientSubscription.setStatusById(id_subscription, 'paused');
+
+            return res.status(200).json({ success: true, message: 'Membresía pausada. No se generarán cobros hasta que la reanudes.' });
+        } catch (error) {
+            console.log(`Error en pauseMembership: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al pausar la membresía', error: error.message });
+        }
+    },
+
+    async resumeMembership(req, res) {
+        try {
+            const { id_subscription } = req.body;
+            const id_company = req.user.mi_store;
+            if (!id_subscription || !id_company) {
+                return res.status(400).json({ success: false, message: 'Falta id_subscription o no tienes una compañía asignada.' });
+            }
+
+            const sub = await ClientSubscription.findByIdFull(id_subscription);
+            if (!sub || String(sub.id_company) !== String(id_company)) {
+                return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
+            }
+
+            const User = require('../models/user.js');
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeAccountId) {
+                return res.status(400).json({ success: false, message: 'No se encontró la cuenta de Stripe del entrenador.' });
+            }
+
+            await adminStripe.subscriptions.update(
+                sub.stripe_subscription_id,
+                { pause_collection: null },
+                { stripeAccount: company.stripeAccountId }
+            );
+            await ClientSubscription.setStatusById(id_subscription, 'active');
+
+            return res.status(200).json({ success: true, message: 'Membresía reanudada.' });
+        } catch (error) {
+            console.log(`Error en resumeMembership: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al reanudar la membresía', error: error.message });
+        }
+    },
+
+    // Enlace real de Stripe para que el cliente pague la factura vencida
+    // (mismo mecanismo que getRetryPaymentLink de abajo, pero acotado al
+    // entrenador dueño de la membresía y usando { stripeAccount } — ver
+    // la nota completa arriba de pauseMembership).
+    async getRetryLink(req, res) {
+        try {
+            const id_subscription = req.params.id_subscription;
+            const id_company = req.user.mi_store;
+            if (!id_subscription || !id_company) {
+                return res.status(400).json({ success: false, message: 'Falta id_subscription o no tienes una compañía asignada.' });
+            }
+
+            const sub = await ClientSubscription.findByIdFull(id_subscription);
+            if (!sub || String(sub.id_company) !== String(id_company)) {
+                return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
+            }
+            if (!sub.stripe_subscription_id || sub.stripe_subscription_id.startsWith('sub_MANUAL_')) {
+                return res.status(400).json({ success: false, message: 'Esta membresía no está domiciliada con Stripe.' });
+            }
+
+            const User = require('../models/user.js');
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeAccountId) {
+                return res.status(400).json({ success: false, message: 'No se encontró la cuenta de Stripe del entrenador.' });
+            }
+
+            const invoices = await adminStripe.invoices.list(
+                { subscription: sub.stripe_subscription_id, status: 'open', limit: 1 },
+                { stripeAccount: company.stripeAccountId }
+            );
+
+            if (!invoices.data.length) {
+                return res.status(404).json({ success: false, message: 'No hay una factura pendiente de pago para esta membresía.' });
+            }
+
+            return res.status(200).json({ success: true, url: invoices.data[0].hosted_invoice_url });
+        } catch (error) {
+            console.log(`Error en getRetryLink: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener el enlace de pago', error: error.message });
+        }
+    },
+
     async getPaymentHistory(req, res) {
         try {
             const stripe_subscription_id = req.params.stripe_subscription_id;

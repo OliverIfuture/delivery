@@ -46,6 +46,13 @@ module.exports = (app) => {
     // a mano (semana/mes/personalizado), en vez de la duración fija del plan.
     app.put('/api/subscriptions/reactivateWithDate', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.reactivateWithDate);
 
+    // NUEVO — Pausar/reanudar una membresía domiciliada, y el enlace real
+    // de Stripe para reintentar un cobro vencido (ver la nota completa en
+    // el controller, junto a pauseMembership).
+    app.put('/api/subscriptions/pause', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.pauseMembership);
+    app.put('/api/subscriptions/resume', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.resumeMembership);
+    app.get('/api/subscriptions/retryLink/:id_subscription', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getRetryLink);
+
 
 
     app.post(
