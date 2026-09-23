@@ -2909,4 +2909,35 @@ User.getClientAccountInfo = (id_client, id_company) => {
     return db.oneOrNone(sql, [id_client, id_company]);
 };
 
+// NUEVO — "Coach Community": ranking de entrenadores por cuántos clientes
+// tienen, no por puntos de actividad (eso ya lo cubre getLeaderboard, para
+// la comunidad de CADA gym). OJO — verificado en vivo que `id_entrenador`
+// en la fila de un cliente NO es el `users.id` del entrenador, es su
+// `company.id` (mi_store) — por eso el join real es
+// cl.id_entrenador = company.id, y de ahí a company.user_id para llegar
+// al entrenador dueño. Antes de esto asumía que id_entrenador apuntaba
+// directo al entrenador y el ranking salía vacío/incompleto para company
+// ids que no coinciden por casualidad con el id del propio entrenador.
+User.getCoachClientLeaderboard = (period, limit = 5) => {
+    let dateFilter = '';
+    if (period === '7d') dateFilter = "AND cl.created_at >= NOW() - INTERVAL '7 days'";
+    else if (period === '30d') dateFilter = "AND cl.created_at >= NOW() - INTERVAL '30 days'";
+    // 'alltime' (o cualquier otro valor): sin filtro de fecha.
+
+    const sql = `
+        SELECT
+            t.id AS trainer_id, t.name, t.lastname, t.image AS photo, c.name AS company_name,
+            COUNT(cl.id) AS client_count
+        FROM company c
+        INNER JOIN users t ON t.id = c.user_id
+        INNER JOIN users cl ON cl.id_entrenador::text = c.id::text ${dateFilter}
+        WHERE t.is_trainer = 'true'
+        GROUP BY t.id, t.name, t.lastname, t.image, c.name
+        HAVING COUNT(cl.id) > 0
+        ORDER BY client_count DESC
+        LIMIT $1
+    `;
+    return db.manyOrNone(sql, [limit]);
+};
+
 module.exports = User;

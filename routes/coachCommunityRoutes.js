@@ -12,5 +12,7 @@ module.exports = (app, upload) => {
     app.get('/api/coach-community/feed', passport.authenticate('jwt', { session: false }), coachCommunityController.getFeed);
     app.post('/api/coach-community/post', passport.authenticate('jwt', { session: false }), upload.array('image', 10), coachCommunityController.createPost);
     app.delete('/api/coach-community/post/:id_post', passport.authenticate('jwt', { session: false }), coachCommunityController.deletePost);
+    // NUEVO — ranking de entrenadores por número de clientes (semana/mes/siempre).
+    app.get('/api/coach-community/leaderboard/:period', passport.authenticate('jwt', { session: false }), coachCommunityController.getLeaderboard);
 
 };

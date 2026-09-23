@@ -18,6 +18,7 @@
 // duplicar nada aquí.
 const Community = require('../models/community.js');
 const Product = require('../models/product.js');
+const User = require('../models/user.js');
 const storage = require('../utils/cloud_storage.js');
 
 const COACH_COMMUNITY_ID = '1389';
@@ -88,6 +89,20 @@ module.exports = {
         } catch (error) {
             console.log(`Error en coachCommunityController.deletePost: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al eliminar la publicación', error: error.message });
+        }
+    },
+
+    // NUEVO — ranking de entrenadores por número de clientes (no por
+    // puntos de actividad, ese es otro leaderboard ya existente para la
+    // comunidad de cada gym). period: '7d' | '30d' | 'alltime'.
+    async getLeaderboard(req, res) {
+        try {
+            const period = ['7d', '30d', 'alltime'].includes(req.params.period) ? req.params.period : 'alltime';
+            const data = await User.getCoachClientLeaderboard(period, 5);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.log(`Error en coachCommunityController.getLeaderboard: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener el leaderboard', error: error.message });
         }
     }
 
