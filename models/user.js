@@ -2943,4 +2943,67 @@ User.getCoachClientLeaderboard = (period, limit = 5) => {
     return db.manyOrNone(sql, [limit]);
 };
 
+// =========================================================================
+// NUEVO — Panel de "Configuración" del entrenador (Perfil/Apariencia/
+// Suscripción, ver controllers/membershipController.js). A propósito NO se
+// reutiliza User.updateCompanyDetails (ya existente): esa función exige
+// las 20 columnas completas de la fila o corre el riesgo real de dejar en
+// NULL cosas como stripeSecretKey/membership_status si algún caller omite
+// un campo — estas de aquí solo tocan las columnas que en verdad cambian.
+User.updateCompanyProfile = (id_company, { name, logo }) => {
+    const sql = `UPDATE company SET name = COALESCE($2, name), logo = COALESCE($3, logo) WHERE id = $1`;
+    return db.none(sql, [id_company, name ?? null, logo ?? null]);
+};
+
+// A propósito NO se reutiliza User.findById (ya existente): esa función es
+// de estilo callback (`(id, callback) => ...`), no regresa una Promise —
+// usarla con await aquí lanzaría "callback is not a function".
+User.findProfileFields = (id_user) => {
+    const sql = `
+        SELECT name, lastname, email, image, username, title, bio, specializations, instagram_url, website_url
+        FROM users
+        WHERE id = $1
+    `;
+    return db.oneOrNone(sql, [id_user]);
+};
+
+// Datos personales del entrenador (no de su empresa) — nombre real,
+// avatar, y los campos de perfil público (bio/especialidades/redes) que
+// antes solo existían como UI de mentira en PerfilView.vue.
+User.updateOwnProfile = (id_user, { name, lastname, image, username, title, bio, specializations, instagramUrl, websiteUrl }) => {
+    const sql = `
+        UPDATE users SET
+            name = COALESCE($2, name),
+            lastname = COALESCE($3, lastname),
+            image = COALESCE($4, image),
+            username = COALESCE($5, username),
+            title = COALESCE($6, title),
+            bio = COALESCE($7, bio),
+            specializations = COALESCE($8, specializations),
+            instagram_url = COALESCE($9, instagram_url),
+            website_url = COALESCE($10, website_url)
+        WHERE id = $1
+    `;
+    return db.none(sql, [
+        id_user, name ?? null, lastname ?? null, image ?? null, username ?? null,
+        title ?? null, bio ?? null, specializations ? JSON.stringify(specializations) : null,
+        instagramUrl ?? null, websiteUrl ?? null
+    ]);
+};
+
+User.updateCompanyAppearance = (id_company, { brandColor }) => {
+    const sql = `UPDATE company SET brand_color = $2 WHERE id = $1`;
+    return db.none(sql, [id_company, brandColor]);
+};
+
+User.getCompanyMembershipInfo = (id_company) => {
+    const sql = `
+        SELECT id, membership_plan, membership_status, membership_expires_at,
+               membership_stripe_customer_id, membership_stripe_subscription_id
+        FROM company
+        WHERE id = $1
+    `;
+    return db.oneOrNone(sql, [id_company]);
+};
+
 module.exports = User;

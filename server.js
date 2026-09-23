@@ -158,7 +158,7 @@ calendarEvents(app);
 community(app, upload);
 coachCommunity(app, upload);
 flexAssistant(app);
-membership(app);
+membership(app, upload);
 googleAuth(app);
 giveaways(app, upload);
 activity(app);
