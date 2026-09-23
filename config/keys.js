@@ -13,5 +13,11 @@ module.exports = {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY,
     // Configurable por si Anthropic libera un modelo nuevo — no hay que
     // tocar código para cambiarlo, solo la variable en Heroku.
-    anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929'
+    anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929',
+
+    // NUEVO — "Continuar con Google" real (ver controllers/googleAuthController.js).
+    // El Client ID de OAuth es público (no es secreto, va también en el
+    // frontend) — se necesita aquí solo para validar que el token que
+    // Google firmó de verdad fue emitido para nuestra app (el "audience").
+    googleClientId: process.env.GOOGLE_CLIENT_ID
 }
