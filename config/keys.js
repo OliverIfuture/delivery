@@ -5,5 +5,13 @@ module.exports = {
     
     // **ESTA ES LA LÍNEA QUE FALTA O ES INCORRECTA:**
     // Lee la variable de Heroku y la exporta como 'stripeWebhookSecret'
-    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+
+    // NUEVO — asistente "Flex" (ver controllers/flexAssistantController.js).
+    // Clave real de console.anthropic.com, se lee de Heroku Config Vars,
+    // igual que el resto de llaves de este archivo.
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+    // Configurable por si Anthropic libera un modelo nuevo — no hay que
+    // tocar código para cambiarlo, solo la variable en Heroku.
+    anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929'
 }
