@@ -65,11 +65,64 @@ module.exports = {
 
     // PÚBLICO, sin login — la página de pago que abre el cliente desde el
     // enlace del entrenador necesita leer esto sin estar autenticada.
+    //
+    // OJO — antes, si el entrenador nunca había abierto el editor de COBI
+    // y guardado un diseño, esto devolvía null y la página pública
+    // mostraba "no configurada" — para CUALQUIER entrenador real con
+    // planes reales, no solo uno en particular. Ahora, sin diseño
+    // guardado, se arma uno por defecto dinámico con el nombre y el logo
+    // REALES del entrenador (sacados de users/company por su propio id,
+    // no hardcodeados) — así el enlace de pago funciona de una vez para
+    // cualquier cuenta, y el editor solo sirve para personalizarlo después.
     async getPublicDesign(req, res) {
         try {
             const id_trainer = req.params.id_trainer;
             const row = await CobiCheckout.getByTrainer(id_trainer);
-            return res.status(200).json({ success: true, data: row ? row.design : null });
+            if (row) {
+                return res.status(200).json({ success: true, data: row.design });
+            }
+
+            const branding = await CobiCheckout.getTrainerBranding(id_trainer);
+            if (!branding) {
+                return res.status(404).json({ success: false, message: 'Entrenador no encontrado.' });
+            }
+
+            const trainerName = [branding.name, branding.lastname].filter(Boolean).join(' ') || 'Entrenador';
+            const defaultDesign = {
+                templateKey: 'azul',
+                bgMode: 'gradient',
+                bgFrom: '#1E3A8A',
+                bgTo: '#0B1748',
+                bgSolid: '#1E3A8A',
+                backdropColor: '#4F46E5',
+                backdropIntensity: 65,
+                backdropShape: 'diagonal',
+                logoBgColor: '#FFFFFF',
+                accentColor: '#3B82F6',
+                clientCardName: branding.company_name || trainerName,
+                clientCardCredits: 'Portal de pagos',
+                methodsTitle: 'Elige el método de pago',
+                paymentMethods: [
+                    { key: 'card', label: 'Tarjeta (crédito o débito)' },
+                    { key: 'transfer', label: 'Transferencia bancaria' }
+                ],
+                selectedMethod: 'card',
+                totalLabel: 'Total a pagar',
+                totalAmount: '',
+                securityText: 'Tus pagos están protegidos con encriptación de 256-bit SSL',
+                socialLinks: { instagram: '', facebook: '', whatsapp: '', tiktok: '' },
+                bankDetails: {
+                    bankName: '',
+                    accountHolder: branding.company_name || trainerName,
+                    clabe: '',
+                    reference: 'Pago de membresía'
+                },
+                positions: {},
+                trainerName,
+                companyLogo: branding.company_logo || null
+            };
+
+            return res.status(200).json({ success: true, data: defaultDesign });
         } catch (error) {
             console.log(`Error en cobiCheckoutController.getPublicDesign: ${error}`);
             return res.status(501).json({

@@ -24,4 +24,20 @@ CobiCheckout.upsert = async (id_trainer, design) => {
     return { id: row.id };
 };
 
+// NUEVO — datos reales (nombre + logo) del entrenador dueño del enlace
+// público, para armar un diseño por defecto dinámico cuando todavía no
+// guardó ninguno (ver getPublicDesign en el controller). Antes, sin un
+// diseño guardado a mano, CUALQUIER entrenador con planes reales veía
+// "página no configurada" en su propio enlace — esto lo resuelve sin
+// depender de que alguien abra el editor primero.
+CobiCheckout.getTrainerBranding = (id_trainer) => {
+    const sql = `
+        SELECT u.name, u.lastname, c.name AS company_name, c.logo AS company_logo
+        FROM users u
+        LEFT JOIN company c ON c.id = u.mi_store
+        WHERE u.id = $1
+    `;
+    return db.oneOrNone(sql, [id_trainer]);
+};
+
 module.exports = CobiCheckout;
