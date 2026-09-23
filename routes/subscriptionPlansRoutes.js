@@ -11,12 +11,16 @@ module.exports = (app) => {
     app.get('/api/subscriptionPlans/findByCompanyDash/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.findByCompanyDash);
     // NUEVO — lista completa (con payment_type/billing_mode/trial_period_days) para "COBI PAYMENTS".
     app.get('/api/subscriptionPlans/findByCompanyManaged/:id_company', passport.authenticate('jwt', { session: false }), subscriptionPlansController.findByCompanyManaged);
+    // NUEVO — planes de tarjeta cuyo Price quedó en una cuenta de Stripe vieja (no Connect) y necesitan "Activar para COBI".
+    app.get('/api/subscriptionPlans/checkConnectStatus', passport.authenticate('jwt', { session: false }), subscriptionPlansController.checkConnectStatus);
 
     // --- POST ---
     // Crear un nuevo plan de suscripción
     app.post('/api/subscriptionPlans/create', passport.authenticate('jwt', { session: false }), subscriptionPlansController.create);
     // NUEVO — crear plan con Stripe Connect real (tarjeta recurrente/pago único con días de gracia, o transferencia).
     app.post('/api/subscriptionPlans/createConnect', passport.authenticate('jwt', { session: false }), subscriptionPlansController.createConnect);
+    // NUEVO — recrea el Product/Price de un plan existente dentro de la cuenta Connect real ("Activar para COBI").
+    app.post('/api/subscriptionPlans/activateConnect/:id_plan', passport.authenticate('jwt', { session: false }), subscriptionPlansController.activateConnect);
 
     // --- DELETE ---
     // Eliminar (desactivar) un plan de suscripción

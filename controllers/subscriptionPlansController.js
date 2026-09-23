@@ -209,6 +209,121 @@ module.exports = {
         }
     },
 
+    // NUEVO — "COBI PAYMENTS": algunos planes de tarjeta ya tenían un
+    // stripe_product_id/stripe_price_id de ANTES de que existiera Connect
+    // (creados por el `create()` viejo de arriba, con la llave suelta
+    // `company.stripeSecretKey` — verificado en vivo que esa llave
+    // pertenece a una cuenta de Stripe DISTINTA a `company.stripeAccountId`,
+    // así que su Price es invisible para el cobro real por Connect y el
+    // checkout de COBI truena con "No such price"). Esto detecta cuáles de
+    // los planes del entrenador quedaron en ese estado, para poder
+    // mostrarle un aviso y el botón "Activar para COBI" (ver
+    // activateConnect abajo) en vez de que el cliente final se tope con el
+    // error hasta el checkout.
+    async checkConnectStatus(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Acceso denegado.' });
+            }
+
+            const company = await User.findCompanyById(id_company);
+            const plans = await SubscriptionPlan.findByCompanyManaged(id_company);
+            const cardPlans = plans.filter(p => p.payment_type === 'card' && !p.is_manual && p.stripe_price_id && p.stripe_price_id !== 'MANUAL');
+
+            if (cardPlans.length === 0 || !company || !company.stripeAccountId) {
+                return res.status(200).json({ success: true, data: [] });
+            }
+
+            const stripe = require('stripe')(keys.stripeAdminSecretKey);
+            const results = await Promise.all(cardPlans.map(async (plan) => {
+                try {
+                    await stripe.prices.retrieve(plan.stripe_price_id, { stripeAccount: company.stripeAccountId });
+                    return { id: plan.id, name: plan.name, needsMigration: false };
+                } catch (e) {
+                    return { id: plan.id, name: plan.name, needsMigration: true };
+                }
+            }));
+
+            return res.status(200).json({ success: true, data: results.filter(r => r.needsMigration) });
+        } catch (error) {
+            console.log(`Error en subscriptionPlansController.checkConnectStatus: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al verificar tus planes',
+                error: error.message
+            });
+        }
+    },
+
+    // NUEVO — recrea el Product/Price de un plan existente YA DENTRO de la
+    // cuenta Connect real del entrenador (mismo patrón de createConnect:
+    // interval:'day' + interval_count=durationInDays, trial_period_days si
+    // aplica), y actualiza el plan con los ids nuevos vía el
+    // updateStripeIds ya existente (el mismo que usa la migración de
+    // planes manuales). No toca el plan si no es de tarjeta o si el
+    // entrenador no tiene su cuenta Connect lista.
+    async activateConnect(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const id_plan = req.params.id_plan;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Acceso denegado.' });
+            }
+
+            const plan = await SubscriptionPlan.findById(id_plan, id_company);
+            if (!plan) {
+                return res.status(404).json({ success: false, message: 'Plan no encontrado.' });
+            }
+            if (plan.payment_type !== 'card') {
+                return res.status(400).json({ success: false, message: 'Este plan no es de tarjeta, no necesita activarse en Connect.' });
+            }
+
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeAccountId || !company.chargesEnabled) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Debes completar tu registro en Stripe (y que Stripe habilite los cobros) antes de activar este plan.'
+                });
+            }
+
+            const stripe = require('stripe')(keys.stripeAdminSecretKey);
+
+            const stripeProduct = await stripe.products.create(
+                { name: plan.name, description: plan.description || '', type: 'service' },
+                { stripeAccount: company.stripeAccountId }
+            );
+
+            const priceData = {
+                product: stripeProduct.id,
+                unit_amount: Math.round(Number(plan.price) * 100),
+                currency: plan.currency || 'mxn'
+            };
+            if (plan.billing_mode === 'recurring') {
+                priceData.recurring = { interval: 'day', interval_count: Number(plan.durationInDays) };
+                if (Number(plan.trial_period_days) > 0) {
+                    priceData.recurring.trial_period_days = Number(plan.trial_period_days);
+                }
+            }
+            const stripePrice = await stripe.prices.create(priceData, { stripeAccount: company.stripeAccountId });
+
+            await SubscriptionPlan.updateStripeIds(plan.id, stripeProduct.id, stripePrice.id);
+
+            return res.status(200).json({
+                success: true,
+                message: 'El plan ya está activado para cobrar por COBI.',
+                data: { stripe_product_id: stripeProduct.id, stripe_price_id: stripePrice.id }
+            });
+        } catch (error) {
+            console.log(`Error en subscriptionPlansController.activateConnect: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al activar el plan',
+                error: error.message
+            });
+        }
+    },
+
     /**
      * Eliminar (Desactivar) un plan
      */
