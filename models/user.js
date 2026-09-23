@@ -2918,6 +2918,10 @@ User.getClientAccountInfo = (id_client, id_company) => {
 // al entrenador dueño. Antes de esto asumía que id_entrenador apuntaba
 // directo al entrenador y el ranking salía vacío/incompleto para company
 // ids que no coinciden por casualidad con el id del propio entrenador.
+// OJO 2 — NO se filtra por users.is_trainer='true': verificado en vivo
+// que hay entrenadores reales y activos (dueños de su company, con
+// clientes reales) con ese flag en 'false' (ej. id 19030, 179 clientes) —
+// ser dueño de una company (company.user_id) ya es la señal confiable.
 User.getCoachClientLeaderboard = (period, limit = 5) => {
     let dateFilter = '';
     if (period === '7d') dateFilter = "AND cl.created_at >= NOW() - INTERVAL '7 days'";
@@ -2931,7 +2935,6 @@ User.getCoachClientLeaderboard = (period, limit = 5) => {
         FROM company c
         INNER JOIN users t ON t.id = c.user_id
         INNER JOIN users cl ON cl.id_entrenador::text = c.id::text ${dateFilter}
-        WHERE t.is_trainer = 'true'
         GROUP BY t.id, t.name, t.lastname, t.image, c.name
         HAVING COUNT(cl.id) > 0
         ORDER BY client_count DESC
