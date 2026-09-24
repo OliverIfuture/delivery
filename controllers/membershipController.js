@@ -508,6 +508,29 @@ module.exports = {
             console.log(`Error en membershipController.deactivateAddon: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al desactivar el complemento', error: error.message });
         }
+    },
+
+    // ===================== Cancelar membresía de plataforma =====================
+    // Cancela al final del periodo ya pagado (cancel_at_period_end) — el
+    // entrenador conserva acceso hasta membership_expires_at, no se le
+    // corta de golpe algo que ya pagó.
+    async cancelMembership(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            const company = await User.getCompanyMembershipInfo(id_company);
+            if (!company?.membership_stripe_subscription_id) {
+                return res.status(400).json({ success: false, message: 'No tienes una suscripción activa que cancelar.' });
+            }
+            await stripe.subscriptions.update(company.membership_stripe_subscription_id, { cancel_at_period_end: true });
+            await db.none(`UPDATE company SET membership_status = 'canceling' WHERE id = $1`, [id_company]);
+            return res.status(200).json({ success: true, message: 'Tu membresía se cancelará al final de tu periodo actual.' });
+        } catch (error) {
+            console.log(`Error en membershipController.cancelMembership: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al cancelar tu membresía', error: error.message });
+        }
     }
 
 };

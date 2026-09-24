@@ -32,5 +32,6 @@ module.exports = (app, upload) => {
     app.get('/api/membership/addons', passport.authenticate('jwt', { session: false }), membershipController.getAddons);
     app.post('/api/membership/addons/activate', passport.authenticate('jwt', { session: false }), membershipController.activateAddon);
     app.post('/api/membership/addons/deactivate', passport.authenticate('jwt', { session: false }), membershipController.deactivateAddon);
+    app.post('/api/membership/cancel', passport.authenticate('jwt', { session: false }), membershipController.cancelMembership);
 
 };
