@@ -20,6 +20,10 @@ const storage = require('../utils/cloud_storage.js');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
 const PLATFORM_FEE_PERCENT = '9.5';
+// Días de gracia reales de los PLANES BASE (fundador/monthly/quarterly/
+// plan_50) — se cobra hasta el día 6. Flex Ilimitado NO tiene periodo de
+// gracia (ver activateAddon) — se cobra de inmediato al activarlo.
+const MEMBERSHIP_TRIAL_DAYS = 5;
 
 module.exports = {
 
@@ -66,7 +70,7 @@ module.exports = {
                     product: product.id,
                     unit_amount: Math.round(Number(plan.price) * 100),
                     currency: 'mxn',
-                    recurring: { interval: 'month', interval_count: plan.duration_in_months }
+                    recurring: { interval: 'month', interval_count: plan.duration_in_months, trial_period_days: MEMBERSHIP_TRIAL_DAYS }
                 });
                 await MembershipPlan.saveStripeIds(plan.id, product.id, price.id);
                 stripePriceId = price.id;
@@ -253,6 +257,11 @@ module.exports = {
     // Usado para: (a) bloquear la app si venció, (b) mostrar el popup de
     // "cambia de plan" cuando el entrenador ya llegó a su límite de
     // clientes de verdad.
+    // Verifica el estado REAL con Stripe (no solo el que quedó guardado
+    // en company.membership_status) — si un cobro de renovación falla
+    // (tarjeta rechazada, etc.) Stripe marca la suscripción como
+    // 'past_due'/'unpaid'/'canceled' y eso debe bloquear la app de
+    // inmediato, sin esperar a que llegue membership_expires_at.
     async getMyMembershipStatus(req, res) {
         try {
             const id_company = req.user.mi_store;
@@ -267,20 +276,40 @@ module.exports = {
 
             const now = new Date();
             const expiresAt = company?.membership_expires_at ? new Date(company.membership_expires_at) : null;
-            const isExpired = !!expiresAt && expiresAt.getTime() < now.getTime();
+            let isExpired = !!expiresAt && expiresAt.getTime() < now.getTime();
+            let liveStatus = company?.membership_status || 'inactive';
+
+            if (company?.membership_stripe_subscription_id) {
+                try {
+                    const sub = await stripe.subscriptions.retrieve(company.membership_stripe_subscription_id);
+                    const BLOCKING_STATUSES = ['past_due', 'unpaid', 'canceled', 'incomplete_expired'];
+                    if (BLOCKING_STATUSES.includes(sub.status)) {
+                        isExpired = true;
+                        liveStatus = sub.status;
+                    }
+                } catch (stripeErr) {
+                    console.log(`No se pudo verificar la suscripción real en Stripe: ${stripeErr.message}`);
+                }
+            }
+
             const daysUntilExpiry = expiresAt ? Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+            // Complementos activos reales — para el selector de "qué
+            // suscripción quieres cancelar" (ver cancelAddonOrMembership).
+            const activeAddons = await MembershipAddon.findActiveByCompany(id_company);
 
             return res.status(200).json({
                 success: true,
                 data: {
                     plan: plan ? { id: plan.id, name: plan.name, price: Number(plan.price), clientLimit } : null,
-                    status: company?.membership_status || 'inactive',
+                    status: liveStatus,
                     expiresAt: company?.membership_expires_at || null,
                     isExpired,
                     daysUntilExpiry,
                     clientCount,
                     clientLimit,
-                    isOverClientLimit: clientLimit != null && clientCount >= clientLimit
+                    isOverClientLimit: clientLimit != null && clientCount >= clientLimit,
+                    activeAddons: activeAddons.map((a) => ({ id: a.id_addon, name: a.name, price: Number(a.price) }))
                 }
             });
         } catch (error) {
@@ -404,7 +433,7 @@ module.exports = {
                 const product = await stripe.products.create({ name: newPlan.name, description: `Membresía Trainer Partners — ${newPlan.name}`, type: 'service' });
                 const price = await stripe.prices.create({
                     product: product.id, unit_amount: Math.round(Number(newPlan.price) * 100), currency: 'mxn',
-                    recurring: { interval: 'month', interval_count: newPlan.duration_in_months }
+                    recurring: { interval: 'month', interval_count: newPlan.duration_in_months, trial_period_days: MEMBERSHIP_TRIAL_DAYS }
                 });
                 await MembershipPlan.saveStripeIds(newPlan.id, product.id, price.id);
                 stripePriceId = price.id;
@@ -445,8 +474,15 @@ module.exports = {
         }
     },
 
-    // Se cobra en la MISMA suscripción/fecha que el plan base — se agrega
-    // como un segundo item dentro de la misma suscripción de Stripe.
+    // NUEVO — Flex Ilimitado (y cualquier complemento futuro) es su PROPIA
+    // suscripción de Stripe, con su propia fecha de corte (el día que se
+    // activa), NO la misma fecha que el plan base. Sin periodo de gracia
+    // — se cobra de inmediato, reutilizando la tarjeta que ya está
+    // guardada (no se le pide llenar nada de nuevo): se toma el primer
+    // método de pago real del customer y se cobra "fuera de sesión" con
+    // payment_behavior:'error_if_incomplete', que hace que Stripe
+    // regrese un error real de una vez si la tarjeta es rechazada, en vez
+    // de dejar la suscripción a medias en estado "incomplete".
     async activateAddon(req, res) {
         try {
             const id_company = req.user.mi_store;
@@ -459,8 +495,14 @@ module.exports = {
                 return res.status(404).json({ success: false, message: 'Complemento no encontrado.' });
             }
             const company = await User.getCompanyMembershipInfo(id_company);
-            if (!company?.membership_stripe_subscription_id) {
-                return res.status(400).json({ success: false, message: 'Todavía no tienes una suscripción activa.' });
+            if (!company?.membership_stripe_customer_id) {
+                return res.status(400).json({ success: false, message: 'Todavía no tienes una cuenta de facturación iniciada.' });
+            }
+
+            const methods = await stripe.paymentMethods.list({ customer: company.membership_stripe_customer_id, type: 'card', limit: 1 });
+            const paymentMethodId = methods.data[0]?.id;
+            if (!paymentMethodId) {
+                return res.status(400).json({ success: false, message: 'Agrega primero un método de pago en "Pagos y facturación" antes de activar este complemento.' });
             }
 
             let stripePriceId = addon.stripe_price_id;
@@ -468,23 +510,29 @@ module.exports = {
                 const product = await stripe.products.create({ name: addon.name, description: addon.description || '', type: 'service' });
                 const price = await stripe.prices.create({
                     product: product.id, unit_amount: Math.round(Number(addon.price) * 100), currency: 'mxn',
-                    recurring: { interval: 'month' }
+                    recurring: { interval: 'month' } // sin trial_period_days a propósito
                 });
                 await MembershipAddon.saveStripeIds(addon.id, product.id, price.id);
                 stripePriceId = price.id;
             }
 
-            const item = await stripe.subscriptionItems.create({
-                subscription: company.membership_stripe_subscription_id,
-                price: stripePriceId,
-                proration_behavior: 'create_prorations'
+            const subscription = await stripe.subscriptions.create({
+                customer: company.membership_stripe_customer_id,
+                items: [{ price: stripePriceId }],
+                default_payment_method: paymentMethodId,
+                payment_behavior: 'error_if_incomplete',
+                collection_method: 'charge_automatically',
+                metadata: { type: 'membership_addon', id_company: String(id_company), id_addon: addon.id }
             });
 
-            await MembershipAddon.activate(id_company, id_addon, item.id);
-            return res.status(200).json({ success: true, message: 'Complemento activado.' });
+            await MembershipAddon.activate(id_company, id_addon, subscription.id);
+            return res.status(200).json({ success: true, message: 'Complemento activado y cobrado.' });
         } catch (error) {
             console.log(`Error en membershipController.activateAddon: ${error}`);
-            return res.status(501).json({ success: false, message: 'Error al activar el complemento', error: error.message });
+            const message = error.type === 'StripeCardError'
+                ? `No se pudo cobrar tu tarjeta: ${error.message}`
+                : 'Error al activar el complemento';
+            return res.status(501).json({ success: false, message, error: error.message });
         }
     },
 
@@ -499,8 +547,8 @@ module.exports = {
             if (!companyAddon) {
                 return res.status(404).json({ success: false, message: 'No tienes ese complemento activo.' });
             }
-            if (companyAddon.stripe_subscription_item_id) {
-                await stripe.subscriptionItems.del(companyAddon.stripe_subscription_item_id, { proration_behavior: 'create_prorations' });
+            if (companyAddon.stripe_subscription_id) {
+                await stripe.subscriptions.cancel(companyAddon.stripe_subscription_id);
             }
             await MembershipAddon.deactivate(id_company, id_addon);
             return res.status(200).json({ success: true, message: 'Complemento desactivado.' });
