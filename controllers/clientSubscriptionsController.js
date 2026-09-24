@@ -1371,6 +1371,50 @@ async stripeWebhook12(req, res, next) {
         }
     },
 
+    // NUEVO — mover un "prospecto" (cliente sin NINGUNA fila en
+    // client_subscriptions, ej. creado directo con User.create o vía el
+    // enlace de invitación) a cliente activo. Distinto de approveRequest:
+    // ese aprueba una solicitud 'PENDING' que el cliente ya generó desde la
+    // app (createManualRequest); este es para cuando no existe ninguna
+    // solicitud y el propio entrenador elige el plan a mano desde el menú
+    // de "⋮" en Prospectos (ProspectosView.vue).
+    async activateProspect(req, res) {
+        try {
+            const { id_client, id_plan } = req.body;
+            const id_company = req.user.mi_store;
+
+            if (!id_client || !id_plan || !id_company) {
+                return res.status(400).json({ success: false, message: 'Falta el cliente o el plan.' });
+            }
+
+            const client = await db.oneOrNone('SELECT id_entrenador FROM users WHERE id = $1', [id_client]);
+            if (!client || Number(client.id_entrenador) !== Number(id_company)) {
+                return res.status(403).json({ success: false, message: 'Este cliente no pertenece a tu cuenta.' });
+            }
+
+            const SubscriptionPlan = require('../models/subscriptionPlan.js');
+            const plan = await SubscriptionPlan.findById(id_plan, id_company);
+            if (!plan) {
+                return res.status(404).json({ success: false, message: 'El plan no existe o no es tuyo.' });
+            }
+
+            const data = await ClientSubscription.createManual({
+                id_client,
+                id_company,
+                id_plan,
+                duration_days: plan.durationInDays,
+                status: 'active'
+            });
+
+            await User.updateAccessLevel(id_client, 2);
+
+            return res.status(201).json({ success: true, message: 'Cliente activado correctamente.', data: { id: data.id } });
+        } catch (error) {
+            console.log(`Error en activateProspect: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al activar el cliente', error: error.message });
+        }
+    },
+
 
     async createRecurringRegistrationIntent(req, res, next) {
         try {

@@ -35,6 +35,9 @@ module.exports = (app) => {
 
     app.get('/api/subscriptions/pending', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.getPendingRequests);
     app.put('/api/subscriptions/approve', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.approveRequest);
+    // NUEVO — activar un prospecto (sin ninguna solicitud pendiente) con un
+    // plan elegido a mano por el entrenador. Ver ProspectosView.vue (menú ⋮).
+    app.put('/api/subscriptions/activateProspect', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.activateProspect);
     // Cancelar suscripción activa
     app.post('/api/subscriptions/cancel', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.cancelSubscription);
 
