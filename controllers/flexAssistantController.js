@@ -35,16 +35,34 @@ function weekdaysForCount(n) {
     return spaced[n] || DAYS.slice(0, n);
 }
 
-function buildSystemPrompt(trainerName, companyName) {
+function buildSystemPrompt(trainerName, companyName, clients, exercises) {
+    // Antes Claude tenía que llamar list_clients/list_exercises como
+    // primer(os) turno(s) SIEMPRE que hacía falta un id — cada llamada es
+    // una ida y vuelta completa a la API (varios segundos) antes de poder
+    // hacer lo que el entrenador pidió. Verificado en vivo: crear una
+    // rutina completa podía tardar 2-3 minutos por esto. Mandando ya
+    // resuelta la lista de clientes y el catálogo de ejercicios (mismo
+    // dato que list_clients/list_exercises() devolverían, mismo criterio
+    // que ya usa el generador dedicado — runTrainingPlanGeneration manda
+    // el catálogo completo desde el primer mensaje) Claude puede resolver
+    // nombres a ids y elegir ejercicios reales en el MISMO turno que
+    // decide actuar, sin ida y vuelta extra.
+    const clientsBlock = (clients || []).map(c => ({ id: Number(c.id), name: `${c.name || ''} ${c.lastname || ''}`.trim() }));
+    const exercisesBlock = (exercises || []).map(e => ({ id: Number(e.id), name: e.name, muscle_group: e.muscle_group }));
+
     return `Eres Flex, el asistente de IA dentro del panel de administración de ${companyName || 'un negocio de entrenamiento'}. Hablas con ${trainerName || 'el entrenador'}, NO con un cliente final — tienes permiso de ejecutar acciones reales (crear/editar rutinas, recetas, asignar dietas, etc.) usando las herramientas disponibles, siempre a nombre de este entrenador y solo sobre sus propios datos.
+
+Ya tienes estos datos reales de esta cuenta — NO llames list_clients ni list_exercises para resolverlos, están aquí mismo. Solo usa esas herramientas si necesitas algo que no aparece en estas listas (ej. buscar un ejercicio nuevo que no esté en el catálogo).
+Clientes: ${JSON.stringify(clientsBlock)}
+Catálogo de ejercicios (id/nombre/grupo muscular): ${JSON.stringify(exercisesBlock)}
 
 Reglas:
 - Si vas a crear o modificar algo (rutina, receta, ejercicio, dieta) y falta información clave (a qué cliente, cuántas semanas, qué ejercicios), pregúntale al entrenador antes de inventar datos.
-- MUY IMPORTANTE — nunca anuncies una acción sin ejecutarla en ese mismo turno: si ya tienes toda la información necesaria para actuar (cliente resuelto, ejercicios resueltos, etc.), llama a la herramienta correspondiente EN ESE MISMO mensaje — no respondas solo con texto tipo "listo, ahora lo hago" o "dame un momento" y te detengas ahí, porque el entrenador no puede "darte" ese momento: cada mensaje tuyo es la única oportunidad de actuar, no hay un turno automático después. Si necesitas primero resolver un id (list_clients, list_exercises, etc.), llama a esa herramienta de una vez en lugar de anunciar que la vas a llamar.
+- MUY IMPORTANTE — nunca anuncies una acción sin ejecutarla en ese mismo turno: si ya tienes toda la información necesaria para actuar (cliente resuelto, ejercicios resueltos, etc.), llama a la herramienta correspondiente EN ESE MISMO mensaje — no respondas solo con texto tipo "listo, ahora lo hago" o "dame un momento" y te detengas ahí, porque el entrenador no puede "darte" ese momento: cada mensaje tuyo es la única oportunidad de actuar, no hay un turno automático después.
 - Antes de BORRAR algo (ejercicio, rutina), confirma con el entrenador en tu respuesta de texto salvo que ya haya sido explícito y claro en su mensaje.
-- Usa list_clients/list_exercises/list_recipes/list_routines para resolver nombres a ids reales antes de actuar — nunca inventes un id.
-- MUY IMPORTANTE — para armar una rutina completa, llama list_exercises UNA SOLA VEZ sin "query" (trae TODA la biblioteca del entrenador de un jalón) y elige de ahí todos los ejercicios que necesites — no hagas una llamada de búsqueda por cada ejercicio o grupo muscular por separado, eso gasta turnos que necesitas para llegar a create_routine.
-- Al crear una rutina (create_routine) con ejercicios reales: arma un split semanal balanceado y coherente (nunca el mismo grupo muscular dominante todos los días salvo que el entrenador lo pida explícitamente), agrupa en un mismo bloque los ejercicios que deban hacerse juntos (bi-series/tri-series/circuitos) en vez de un ejercicio por bloque siempre, y sigue al pie de la letra cualquier instrucción específica del entrenador (ej. "agrega bi-series", "sin cardio") — no la trates como sugerencia opcional.
+- Usa list_recipes/list_routines para resolver esos ids (no vienen precargados) — nunca inventes un id.
+- MUY IMPORTANTE — al crear una rutina completa (create_routine), TODOS los ejercicios que uses deben venir del catálogo de arriba (por su "id" exacto) — nunca inventes un ejercicio ni un id que no esté en esa lista.
+- Al crear una rutina (create_routine) con ejercicios reales: arma un split semanal balanceado y coherente (nunca el mismo grupo muscular dominante todos los días salvo que el entrenador lo pida explícitamente), agrupa en un mismo bloque los ejercicios que deban hacerse juntos (bi-series/tri-series/circuitos) en vez de un ejercicio por bloque siempre, y sigue al pie de la letra cualquier instrucción específica del entrenador (ej. "agrega bi-series", "sin cardio") — no la trates como sugerencia opcional. TODOS los días de entrenamiento deben tener al menos un bloque con al menos un ejercicio real — nunca dejes un día vacío.
 - MUY IMPORTANTE — en plan_data.weeks[].days, la llave de cada día debe ser SIEMPRE el nombre real del día de la semana en español (Lunes, Martes, Miércoles, Jueves, Viernes, Sábado o Domingo) — nunca "Día 1", "Día 2" ni ningún otro texto. Si el entrenador pide un número de días (ej. "3 días"), tú decides cuáles días reales de la semana usar, repartidos de forma balanceada (ej. Lunes/Miércoles/Viernes para 3 días).
 - Cuando el entrenador pida algo "masivo" (ej. varias recetas para un cliente), usa assign_diet_to_client con el arreglo completo de recetas en una sola llamada.
 - Responde siempre en español, de forma breve y directa, como lo haría un asistente competente por chat — no des explicaciones largas de más.
@@ -206,8 +224,15 @@ module.exports = {
 async function runChatTurn(jobId, id_company, trainerName, messages, message, req) {
     const anthropic = new Anthropic({ apiKey: keys.anthropicApiKey });
 
-    const company = await User.findCompanyById(id_company).catch(() => null);
-    const systemPrompt = buildSystemPrompt(trainerName, company?.name);
+    // En paralelo — ver comentario en buildSystemPrompt: esto evita que
+    // Claude tenga que llamar list_clients/list_exercises como primer
+    // turno para poder actuar en el segundo.
+    const [company, clients, exercises] = await Promise.all([
+        User.findCompanyById(id_company).catch(() => null),
+        User.getClientsByCompany(id_company).catch(() => []),
+        Exercise.findByCompany(id_company).catch(() => [])
+    ]);
+    const systemPrompt = buildSystemPrompt(trainerName, company?.name, clients, exercises);
 
     // Se simplifica el historial previo a turnos de texto plano — Claude
     // no necesita ver los bloques tool_use/tool_result crudos de turnos
@@ -276,6 +301,26 @@ async function runChatTurn(jobId, id_company, trainerName, messages, message, re
             for (const block of toolUseBlocks) {
                 let payload;
                 try {
+                    // Visto en vivo: create_routine a veces "tenía éxito"
+                    // (insertaba la fila) con un plan_data sin ningún
+                    // ejercicio real — el entrenador veía la rutina vacía
+                    // en el creador y sentía que "no pasó nada". Se valida
+                    // ANTES de llamar a la herramienta (para no crear la
+                    // fila vacía) y, si está vacío, se reporta como error
+                    // para que Claude lo corrija de inmediato en el mismo
+                    // job en vez de "tener éxito" con nada.
+                    if (block.name === 'create_routine' || block.name === 'update_routine') {
+                        const pd = (block.input && block.input.plan_data) || null;
+                        if (pd) {
+                            const weeks = Array.isArray(pd.weeks) ? pd.weeks : [];
+                            const hasContent = weeks.some((w) => w && w.days && Object.values(w.days).some(
+                                (d) => d && Array.isArray(d.blocks) && d.blocks.some((b) => b && Array.isArray(b.exercises) && b.exercises.length > 0)
+                            ));
+                            if (!hasContent) {
+                                throw new Error('plan_data no tiene ningún día con bloques de ejercicios reales — no se guardó nada. Vuelve a llamar esta herramienta con al menos un ejercicio real (del catálogo de arriba) en cada día de entrenamiento.');
+                            }
+                        }
+                    }
                     const result = await executeTool(block.name, block.input || {}, req);
                     payload = { ok: true, data: result };
                     // `data` viaja también al frontend (antes se
