@@ -502,4 +502,85 @@ Diet.getRecipesByCompany = (id_company) => {
     return db.manyOrNone(sql, id_company);
 };
 
+// ===================== NUEVO — v2 real, aditivo =====================
+// getRecipesByCompany (arriba) tiene dos problemas reales que se dejan
+// intactos para no tocar una función existente: (1) alias inconsistentes
+// (calories/protein_grams/... en vez de total_calories/total_protein/...,
+// que es lo que ya espera normalizeDietRecipe.js del frontend) y (2)
+// "or r.id_company = 1" hardcodea a la empresa 1 como catálogo global en
+// vez de usar id_company IS NULL. Esta versión nueva corrige ambas cosas
+// sin tocar la vieja (que sigue sin usarse desde el frontend real).
+Diet.findRecipesByCompanyV2 = (id_company) => {
+    const sql = `
+        SELECT
+            r.id, r.id_company, r.default_meal_category, r.title, r.image_url,
+            r.prep_time_minutes, r.preparation_steps,
+            r.total_calories, r.total_protein, r.total_carbs, r.total_fats,
+            r.created_at,
+            (
+                SELECT COALESCE(json_agg(
+                    json_build_object(
+                        'id', m.id,
+                        'id_recipe', m.id_recipe,
+                        'id_ingredient', i.id,
+                        'default_qty', m.default_qty,
+                        'ingredient', json_build_object(
+                            'id', i.id, 'id_company', i.id_company, 'name', i.name, 'unit', i.unit,
+                            'base_qty', i.base_qty, 'calories', i.calories, 'protein', i.protein,
+                            'carbs', i.carbs, 'fats', i.fats, 'category', i.category, 'image_url', i.image_url
+                        )
+                    )
+                ), '[]'::json)
+                FROM recipe_ingredients_map m
+                INNER JOIN master_ingredients i ON m.id_ingredient = i.id
+                WHERE m.id_recipe = r.id
+            ) AS ingredients
+        FROM diet_recipes_v2 r
+        WHERE r.id_company = $1 OR r.id_company IS NULL
+        ORDER BY r.id DESC
+    `;
+    return db.manyOrNone(sql, [id_company]);
+};
+
+Diet.findRecipeByIdV2 = (id) => {
+    const sql = `
+        SELECT r.id, r.id_company, r.default_meal_category, r.title, r.image_url,
+               r.prep_time_minutes, r.preparation_steps,
+               r.total_calories, r.total_protein, r.total_carbs, r.total_fats, r.created_at
+        FROM diet_recipes_v2 r WHERE r.id = $1
+    `;
+    return db.oneOrNone(sql, [id]);
+};
+
+Diet.updateRecipe = (id, recipe) => {
+    let cleanSteps = recipe.preparation_steps || [];
+    if (typeof cleanSteps === 'string') {
+        try { cleanSteps = JSON.parse(cleanSteps); } catch (e) { cleanSteps = []; }
+    }
+    const sql = `
+        UPDATE diet_recipes_v2
+        SET default_meal_category = $2, title = $3, image_url = $4, prep_time_minutes = $5,
+            preparation_steps = $6::jsonb, total_calories = $7, total_protein = $8,
+            total_carbs = $9, total_fats = $10
+        WHERE id = $1
+    `;
+    return db.none(sql, [
+        id, recipe.default_meal_category, recipe.title, recipe.image_url,
+        recipe.prep_time_minutes, JSON.stringify(cleanSteps),
+        recipe.total_calories, recipe.total_protein, recipe.total_carbs, recipe.total_fats
+    ]);
+};
+
+Diet.deleteRecipe = (id) => {
+    return db.none('DELETE FROM diet_recipes_v2 WHERE id = $1', [id]);
+};
+
+// Se usa antes de re-insertar con insertIngredientsMap al editar una
+// receta (mismo criterio que "borra y vuelve a armar" que ya usa el
+// frontend real para client_diets_v2 cuando cambia la categoría de
+// comida — ver comentario en nutritionController.js).
+Diet.deleteIngredientsMap = (idRecipe) => {
+    return db.none('DELETE FROM recipe_ingredients_map WHERE id_recipe = $1', [idRecipe]);
+};
+
 module.exports = Diet;
