@@ -17,6 +17,7 @@ const Exercise = require('../models/exercise.js');
 const AiPlanJob = require('../models/aiPlanJob.js');
 const TrainingDayPhoto = require('../models/trainingDayPhoto.js');
 const { TOOL_DEFINITIONS, executeTool } = require('../utils/flexTools.js');
+const { hasFlexAddon } = require('../utils/membershipGate.js');
 
 // Antes 6 — verificado en vivo que armar una rutina completa a veces
 // necesita: resolver el cliente, resolver los ejercicios, y crear la
@@ -100,6 +101,16 @@ module.exports = {
             if (!id_company) {
                 return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
             }
+            // NUEVO — Flex es un complemento de pago (membership_addons:
+            // 'flex_ilimitado'); antes cualquier entrenador autenticado
+            // podía usarlo sin haberlo activado.
+            if (!(await hasFlexAddon(id_company))) {
+                return res.status(402).json({
+                    success: false,
+                    code: 'FLEX_ADDON_REQUIRED',
+                    message: 'Flex es un complemento de pago — actívalo en Suscripción para usar el asistente de IA.'
+                });
+            }
 
             const jobId = await AiPlanJob.create(id_company);
             // No se espera (sin await) — corre en segundo plano mientras
@@ -172,6 +183,15 @@ module.exports = {
             const id_company = req.user.mi_store;
             if (!id_company) {
                 return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            // NUEVO — mismo complemento de pago que chat() (ver
+            // utils/membershipGate.js) — "Crear plan con IA" también es IA.
+            if (!(await hasFlexAddon(id_company))) {
+                return res.status(402).json({
+                    success: false,
+                    code: 'FLEX_ADDON_REQUIRED',
+                    message: 'Flex es un complemento de pago — actívalo en Suscripción para generar planes con IA.'
+                });
             }
 
             const catalog = await Exercise.findByCompany(id_company);

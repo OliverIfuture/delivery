@@ -22,6 +22,7 @@ const Invite = require('../models/invite.js');
 const ClientSubscription = require('../models/clientSubscription.js');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { checkClientLimit } = require('../utils/membershipGate.js');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -293,6 +294,62 @@ module.exports = {
         } catch (error) {
             console.error('Error en inviteController.acceptInvite:', error);
             return res.status(501).json({ success: false, message: 'Error al aceptar la invitación.' });
+        }
+    },
+
+    // NUEVO — wrapper que agrega el límite de clientes del plan ANTES de
+    // delegar en sendClientInvite (existente, sin tocar) — ver
+    // utils/membershipGate.js. sendClientInvite nunca validaba ningún
+    // límite; este es el primer punto de contacto (invitación por correo).
+    async sendClientInviteChecked(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            const limit = await checkClientLimit(id_company);
+            if (!limit.allowed) {
+                return res.status(403).json({
+                    success: false,
+                    code: 'CLIENT_LIMIT_REACHED',
+                    message: `Ya tienes ${limit.clientCount} de ${limit.clientLimit} clientes permitidos en tu plan${limit.planName ? ` (${limit.planName})` : ''}. Actualiza tu plan para invitar más clientes.`
+                });
+            }
+            return module.exports.sendClientInvite(req, res);
+        } catch (error) {
+            console.error('Error en inviteController.sendClientInviteChecked:', error);
+            return res.status(501).json({ success: false, message: 'Error al validar tu límite de clientes.' });
+        }
+    },
+
+    // NUEVO — mismo criterio para acceptInvite (público). El enlace
+    // genérico ("comparte tu enlace") es reutilizable — sendClientInvite
+    // por sí solo no cierra el hueco real, porque un entrenador ya en su
+    // límite puede seguir compartiendo el mismo link. Se valida de nuevo
+    // justo antes de aceptar, que es el punto real donde se adjunta el
+    // cliente a la empresa.
+    async acceptInviteChecked(req, res) {
+        try {
+            const { token } = req.body;
+            if (!token) {
+                return res.status(400).json({ success: false, message: 'Faltan datos para aceptar la invitación.' });
+            }
+            const companyRow = await Invite.resolveCompanyByToken(token);
+            if (!companyRow) {
+                return res.status(404).json({ success: false, message: 'Este enlace de invitación no es válido.' });
+            }
+            const limit = await checkClientLimit(companyRow.id_company);
+            if (!limit.allowed) {
+                return res.status(403).json({
+                    success: false,
+                    code: 'CLIENT_LIMIT_REACHED',
+                    message: `${trainerDisplayName(companyRow)} ya llegó al límite de clientes de su plan actual. Pídele que actualice su plan antes de unirte.`
+                });
+            }
+            return module.exports.acceptInvite(req, res);
+        } catch (error) {
+            console.error('Error en inviteController.acceptInviteChecked:', error);
+            return res.status(501).json({ success: false, message: 'Error al validar el límite de clientes.' });
         }
     }
 };
