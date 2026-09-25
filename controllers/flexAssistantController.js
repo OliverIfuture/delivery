@@ -279,6 +279,15 @@ async function runChatTurn(jobId, id_company, trainerName, messages, message, re
             system: systemPrompt,
             tools: TOOL_DEFINITIONS,
             messages: anthropicMessages
+        }, {
+            // Visto en vivo: un job se quedó en 'pending' más de 5
+            // minutos sin avanzar ni fallar — sin timeout, una llamada de
+            // red colgada puede dejar el job huérfano para siempre (el
+            // frontend eventualmente se rinde, pero el job nunca se
+            // marca ni 'done' ni 'error', y el entrenador nunca sabe qué
+            // pasó). Un tope explícito por llamada convierte ese cuelgue
+            // en un error real y reportado, en vez de un silencio eterno.
+            timeout: 60000
         });
 
         anthropicMessages.push({ role: 'assistant', content: response.content });
@@ -515,6 +524,10 @@ ${JSON.stringify(catalogForPrompt)}`;
         tools: [planTool],
         tool_choice: { type: 'tool', name: 'generate_plan' },
         messages: [{ role: 'user', content: userContent }]
+    }, {
+        // Mismo tope defensivo que runChatTurn — sin esto, una llamada de
+        // red colgada deja el job en 'pending' para siempre.
+        timeout: 90000
     });
 
     const toolUse = response.content.find(b => b.type === 'tool_use' && b.name === 'generate_plan');
