@@ -25,6 +25,14 @@ module.exports = (app, upload) => {
         chatController.uploadImage
     );
 
+    // NUEVO — subida genérica de foto/video/audio (ver uploadMedia en el controller).
+    app.post(
+        '/api/chat/uploadMedia',
+        passport.authenticate('jwt', { session: false }),
+        upload.single('file'),
+        chatController.uploadMedia
+    );
+
     app.delete(
         '/api/chat/deleteMessage/:chatRoomId/:messageId',
         passport.authenticate('jwt', { session: false }),

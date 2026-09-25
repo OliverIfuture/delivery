@@ -172,6 +172,39 @@ module.exports = {
         }
     },
 
+    // NUEVO — subida genérica de foto/video/audio para el chat (antes solo
+    // existía uploadImage). `storage()` (utils/cloud_storage.js) ya es
+    // agnóstico al mimetype — solo cambia el prefijo de carpeta para no
+    // mezclar archivos de video/audio bajo "chat_images/".
+    async uploadMedia(req, res, next) {
+        try {
+            const file = req.file;
+            if (!file) {
+                return res.status(400).json({ success: false, message: 'No se ha enviado ningún archivo.' });
+            }
+
+            const path = `chat_media/user_${req.user.id}_${Date.now()}`;
+            const url = await storage(file, path);
+
+            if (!url) {
+                return res.status(500).json({ success: false, message: 'Error al obtener la URL del archivo.' });
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: 'Archivo subido correctamente',
+                data: url
+            });
+        } catch (error) {
+            console.log(`Error en chatController.uploadMedia: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al subir el archivo',
+                error: error.message
+            });
+        }
+    },
+
     // ... otras funciones ...
 
     async deleteMessage(req, res, next) {
