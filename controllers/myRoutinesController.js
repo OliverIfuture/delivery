@@ -38,6 +38,22 @@ module.exports = {
 
     // ===================== Rutinas =====================
 
+    // Todas las rutinas de CLIENTES de esta empresa (sin plantillas — el
+    // INNER JOIN de Routine.findByTrainer ya las excluye porque id_client
+    // es NULL en una plantilla) — para pintar el estatus real de cada
+    // cliente en la columna de "Mis Clientes" sin un fetch por cliente.
+    async getMyClientRoutines(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            const data = await Routine.findByTrainer(id_company);
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.log(`Error en myRoutinesController.getMyClientRoutines: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener tus rutinas' });
+        }
+    },
+
     async getMyTemplates(req, res) {
         try {
             const id_company = req.user.mi_store;

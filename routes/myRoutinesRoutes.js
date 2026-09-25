@@ -7,6 +7,7 @@ const myRoutinesController = require('../controllers/myRoutinesController.js');
 module.exports = (app) => {
     const auth = passport.authenticate('jwt', { session: false });
 
+    app.get('/api/my-routines/all-client-routines', auth, myRoutinesController.getMyClientRoutines);
     app.get('/api/my-routines/templates', auth, myRoutinesController.getMyTemplates);
     app.get('/api/my-routines/client/:id_client', auth, myRoutinesController.getClientRoutines);
     app.put('/api/my-routines/update', auth, myRoutinesController.updateMyRoutine);
