@@ -2456,6 +2456,24 @@ Product.createModule = (moduleData) => {
     ]);
 }
 
+// NUEVO — antes solo existía updateModuleImage (para la portada); esto
+// actualiza título/descripción/nivel/activo de un módulo ya existente.
+Product.updateModuleText = (moduleData) => {
+    const sql = `
+        UPDATE classroom_modules
+        SET title = $1, description = $2, required_level = $3, is_active = $4, updated_at = $5
+        WHERE id = $6
+    `;
+    return db.none(sql, [
+        moduleData.title,
+        moduleData.description,
+        moduleData.required_level,
+        moduleData.is_active,
+        new Date(),
+        moduleData.id
+    ]);
+}
+
 Product.updateModuleImage = (idModule, coverUrl) => {
     const sql = `
     UPDATE 
