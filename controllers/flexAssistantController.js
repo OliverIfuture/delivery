@@ -14,6 +14,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const keys = require('../config/keys.js');
 const User = require('../models/user.js');
 const Exercise = require('../models/exercise.js');
+const AiPlanJob = require('../models/aiPlanJob.js');
 const { TOOL_DEFINITIONS, executeTool } = require('../utils/flexTools.js');
 
 const MAX_TOOL_TURNS = 6;
@@ -142,6 +143,14 @@ module.exports = {
     // (progresión real de series/reps/descanso/ejercicios), y si se piden
     // más semanas que eso, el bloque se repite en ciclos (mismo criterio
     // que un entrenador real reutilizando un mesociclo de 4 semanas).
+    //
+    // ASÍNCRONO POR JOB — medido en vivo: generar hasta 4 semanas distintas
+    // con Claude puede tardar más de 30s, y Heroku mata (H12/503) cualquier
+    // request HTTP que tarde más que eso. Por eso este endpoint YA NO
+    // espera la respuesta completa: crea un job en ai_plan_jobs, responde
+    // de inmediato con su id, y la generación real corre en segundo plano
+    // (runTrainingPlanGeneration) — el frontend hace polling a
+    // GET /api/flex/generate-training-plan/:jobId hasta que quede listo.
     async generateTrainingPlan(req, res) {
         try {
             if (!keys.anthropicApiKey) {
@@ -156,29 +165,71 @@ module.exports = {
                 return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
             }
 
-            const { clientName, days, objetivo, nivel, zona, equipo, lesiones, notas, freeText, semanas, referenceImage } = req.body;
-            const dayCount = Math.min(7, Math.max(1, parseInt(days, 10) || 4));
-            const assignedDays = weekdaysForCount(dayCount);
-            const semanasSolicitadas = Math.min(12, Math.max(1, parseInt(semanas, 10) || 1));
-            const MAX_DISTINCT_WEEKS = 4;
-            const distinctWeeks = Math.min(MAX_DISTINCT_WEEKS, semanasSolicitadas);
-
             const catalog = await Exercise.findByCompany(id_company);
             if (!catalog.length) {
                 return res.status(422).json({ success: false, message: 'Todavía no tienes ejercicios en tu catálogo — agrega algunos en "Ejercicios" antes de generar un plan con IA.' });
             }
-            const catalogById = new Map(catalog.map(e => [Number(e.id), e]));
-            // Solo mandamos lo necesario para elegir (id/nombre/grupo/equipo) —
-            // las descripciones largas no ayudan a Claude a elegir y gastan tokens.
-            const catalogForPrompt = catalog.map(e => ({ id: Number(e.id), name: e.name, muscle_group: e.muscle_group, equipment: e.equipment || '' }));
 
-            const anthropic = new Anthropic({ apiKey: keys.anthropicApiKey });
+            const jobId = await AiPlanJob.create(id_company);
+            // No se espera (sin await) — corre en segundo plano mientras ya
+            // respondimos. Cualquier error se guarda en el job, nunca tumba
+            // el proceso (el dyno sigue vivo atendiendo otros requests).
+            runTrainingPlanGeneration(jobId, id_company, catalog, req.body).catch((err) => {
+                console.log(`Error en runTrainingPlanGeneration (job ${jobId}): ${err}`);
+                AiPlanJob.markError(jobId, err.message || 'Error desconocido').catch(() => {});
+            });
 
-            const systemPrompt = `Eres un entrenador experto diseñando un plan de entrenamiento para ${clientName || 'un cliente'}. Debes usar EXCLUSIVAMENTE ejercicios de la lista de catálogo que te doy (por su "id" exacto) — nunca inventes un ejercicio ni un id que no esté en la lista. Distribuye los grupos musculares de forma sensata entre los días (evita repetir el mismo grupo dominante en días consecutivos si el objetivo no es full body). Ajusta series/reps/descanso según el objetivo y nivel. Si el cliente tiene lesiones o limitaciones, evita ejercicios claramente riesgosos para eso y dilo en la nota del ejercicio afectado.
+            return res.status(202).json({ success: true, data: { jobId } });
+        } catch (error) {
+            console.log(`Error en flexAssistantController.generateTrainingPlan: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al iniciar la generación del plan', error: error.message });
+        }
+    },
+
+    // Polling del job — ver comentario de arriba.
+    async getTrainingPlanJob(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            const job = await AiPlanJob.findById(req.params.jobId, id_company);
+            if (!job) {
+                return res.status(404).json({ success: false, message: 'No se encontró ese trabajo de generación.' });
+            }
+            if (job.status === 'error') {
+                return res.status(200).json({ success: true, data: { status: 'error', message: job.error_message } });
+            }
+            if (job.status === 'done') {
+                return res.status(200).json({ success: true, data: { status: 'done', result: job.result } });
+            }
+            return res.status(200).json({ success: true, data: { status: 'pending' } });
+        } catch (error) {
+            console.log(`Error en flexAssistantController.getTrainingPlanJob: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al consultar el trabajo', error: error.message });
+        }
+    }
+
+};
+
+// ===================== Worker en segundo plano =====================
+async function runTrainingPlanGeneration(jobId, id_company, catalog, body) {
+    const { clientName, days, objetivo, nivel, zona, equipo, lesiones, notas, freeText, semanas, referenceImage } = body;
+    const dayCount = Math.min(7, Math.max(1, parseInt(days, 10) || 4));
+    const assignedDays = weekdaysForCount(dayCount);
+    const semanasSolicitadas = Math.min(12, Math.max(1, parseInt(semanas, 10) || 1));
+    const MAX_DISTINCT_WEEKS = 4;
+    const distinctWeeks = Math.min(MAX_DISTINCT_WEEKS, semanasSolicitadas);
+
+    const catalogById = new Map(catalog.map(e => [Number(e.id), e]));
+    // Solo mandamos lo necesario para elegir (id/nombre/grupo/equipo) —
+    // las descripciones largas no ayudan a Claude a elegir y gastan tokens.
+    const catalogForPrompt = catalog.map(e => ({ id: Number(e.id), name: e.name, muscle_group: e.muscle_group, equipment: e.equipment || '' }));
+
+    const anthropic = new Anthropic({ apiKey: keys.anthropicApiKey });
+
+    const systemPrompt = `Eres un entrenador experto diseñando un plan de entrenamiento para ${clientName || 'un cliente'}. Debes usar EXCLUSIVAMENTE ejercicios de la lista de catálogo que te doy (por su "id" exacto) — nunca inventes un ejercicio ni un id que no esté en la lista. Distribuye los grupos musculares de forma sensata entre los días (evita repetir el mismo grupo dominante en días consecutivos si el objetivo no es full body). Ajusta series/reps/descanso según el objetivo y nivel. Si el cliente tiene lesiones o limitaciones, evita ejercicios claramente riesgosos para eso y dilo en la nota del ejercicio afectado.
 
 MUY IMPORTANTE — sobrecarga progresiva real: vas a diseñar ${distinctWeeks} semana(s) DISTINTAS que forman un mesociclo. Cada semana debe representar un avance real respecto a la anterior (más repeticiones, más series, menos descanso, mayor dificultad de variante, o una nota explícita de aumentar peso) — NUNCA repitas la semana anterior idéntica. Si diseñas 4 semanas, la última puede ser la de mayor intensidad o, si tiene sentido para el objetivo/nivel, una semana de descarga (deload) con volumen reducido — decide tú según el caso y dilo en su nota.${referenceImage ? ' El entrenador adjuntó una imagen de referencia (equipo disponible o una rutina en papel) —úsala como contexto real para tu plan.' : ''}`;
 
-            const userPrompt = `Genera el mesociclo con estos datos:
+    const userPrompt = `Genera el mesociclo con estos datos:
 - Días de entrenamiento por semana: ${dayCount} (usa exactamente estos días de la semana, uno por cada día de entrenamiento: ${assignedDays.join(', ')})
 - Semanas distintas a diseñar: ${distinctWeeks}
 - Objetivo: ${objetivo || 'no especificado'}
@@ -192,143 +243,133 @@ MUY IMPORTANTE — sobrecarga progresiva real: vas a diseñar ${distinctWeeks} s
 Catálogo de ejercicios disponibles (usa solo estos ids):
 ${JSON.stringify(catalogForPrompt)}`;
 
-            const dayItemSchema = {
-                type: 'object',
-                properties: {
-                    weekday: { type: 'string', enum: assignedDays },
-                    day_name: { type: 'string', description: 'Título del día, ej. "Pierna: Cuádriceps y Glúteo"' },
-                    exercises: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            properties: {
-                                exercise_id: { type: 'integer', description: 'Debe existir en el catálogo dado.' },
-                                sets: { type: 'integer' },
-                                reps: { type: 'string', description: 'Ej. "8-12". Vacío si el ejercicio es por tiempo.' },
-                                rest_seconds: { type: 'string' },
-                                time_seconds: { type: 'string', description: 'Solo para ejercicios de cardio/tiempo (ej. caminadora, bici).' },
-                                note: { type: 'string' }
-                            },
-                            required: ['exercise_id', 'sets']
-                        }
-                    }
-                },
-                required: ['weekday', 'day_name', 'exercises']
-            };
-
-            const planTool = {
-                name: 'generate_plan',
-                description: 'Entrega el plan de entrenamiento generado con la estructura exacta pedida — un mesociclo de semanas progresivas.',
-                input_schema: {
+    const dayItemSchema = {
+        type: 'object',
+        properties: {
+            weekday: { type: 'string', enum: assignedDays },
+            day_name: { type: 'string', description: 'Título del día, ej. "Pierna: Cuádriceps y Glúteo"' },
+            exercises: {
+                type: 'array',
+                items: {
                     type: 'object',
                     properties: {
-                        name: { type: 'string', description: 'Nombre corto y natural del plan (nada de "Plan IA"), ej. "Hipertrofia Total – 4 Días"' },
-                        general_note: { type: 'string', description: 'Resumen breve del enfoque del plan, la progresión entre semanas, y adaptaciones por lesión, si aplica.' },
-                        rest_default: { type: 'integer', description: 'Segundos de descanso por defecto entre series' },
-                        weeks: {
-                            type: 'array',
-                            minItems: distinctWeeks,
-                            maxItems: distinctWeeks,
-                            description: 'Una entrada por cada semana distinta del mesociclo, en orden (semana 1, semana 2, ...), cada una con más carga/dificultad que la anterior.',
-                            items: {
-                                type: 'object',
-                                properties: {
-                                    week_note: { type: 'string', description: 'Qué cambia en esta semana respecto a la anterior (ej. "+1 serie por ejercicio" o "semana de descarga").' },
-                                    days: { type: 'array', minItems: dayCount, maxItems: dayCount, items: dayItemSchema }
-                                },
-                                required: ['days']
-                            }
-                        }
+                        exercise_id: { type: 'integer', description: 'Debe existir en el catálogo dado.' },
+                        sets: { type: 'integer' },
+                        reps: { type: 'string', description: 'Ej. "8-12". Vacío si el ejercicio es por tiempo.' },
+                        rest_seconds: { type: 'string' },
+                        time_seconds: { type: 'string', description: 'Solo para ejercicios de cardio/tiempo (ej. caminadora, bici).' },
+                        note: { type: 'string' }
                     },
-                    required: ['name', 'weeks']
+                    required: ['exercise_id', 'sets']
                 }
-            };
-
-            const userContent = [{ type: 'text', text: userPrompt }];
-            if (referenceImage && referenceImage.mediaType && referenceImage.base64) {
-                userContent.unshift({
-                    type: 'image',
-                    source: { type: 'base64', media_type: referenceImage.mediaType, data: referenceImage.base64 }
-                });
             }
+        },
+        required: ['weekday', 'day_name', 'exercises']
+    };
 
-            const response = await anthropic.messages.create({
-                model: keys.anthropicModel,
-                max_tokens: 8192,
-                system: systemPrompt,
-                tools: [planTool],
-                tool_choice: { type: 'tool', name: 'generate_plan' },
-                messages: [{ role: 'user', content: userContent }]
-            });
-
-            const toolUse = response.content.find(b => b.type === 'tool_use' && b.name === 'generate_plan');
-            if (!toolUse) {
-                return res.status(501).json({ success: false, message: 'La IA no devolvió un plan válido, intenta de nuevo.' });
-            }
-            const raw = toolUse.input;
-
-            // Traducimos los ids a los ejercicios reales completos (con
-            // media/thumbnail) y armamos, por cada semana distinta que
-            // diseñó Claude, el mismo mapa por día de la semana que ya
-            // esperaba el frontend — ahora como un ARRAY de semanas en vez
-            // de un solo objeto, para que PlantillasView.vue las use como
-            // base real de la sobrecarga progresiva en vez de clonarlas.
-            function buildDaysMap(days) {
-                const daysMap = {};
-                for (const d of (days || [])) {
-                    const exercises = (d.exercises || [])
-                        .map(ex => {
-                            const catEx = catalogById.get(Number(ex.exercise_id));
-                            if (!catEx) return null;
-                            const byTime = catEx.muscle_group === 'Cardio';
-                            const setCount = Math.min(6, Math.max(1, parseInt(ex.sets, 10) || 3));
-                            return {
-                                id: String(catEx.id),
-                                name: catEx.name,
-                                muscleGroup: catEx.muscle_group,
-                                byTime,
-                                mediaUrl: catEx.media_url || '',
-                                thumbnail_url: catEx.thumbnail_url || '',
-                                description: catEx.description || '',
-                                notes: '',
-                                sets: Array.from({ length: setCount }, () => ({
-                                    reps: byTime ? '' : (ex.reps || ''),
-                                    rest: ex.rest_seconds || '',
-                                    time: byTime ? (ex.time_seconds || '900') : '',
-                                    weight: '',
-                                    comment: ex.note || ''
-                                }))
-                            };
-                        })
-                        .filter(Boolean);
-
-                    daysMap[d.weekday] = {
-                        day_name: d.day_name || '',
-                        day_image: '',
-                        blocks: exercises.map(ex => ({ block_type: 'Sencillo', block_notes: '', exercises: [ex] }))
-                    };
+    const planTool = {
+        name: 'generate_plan',
+        description: 'Entrega el plan de entrenamiento generado con la estructura exacta pedida — un mesociclo de semanas progresivas.',
+        input_schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string', description: 'Nombre corto y natural del plan (nada de "Plan IA"), ej. "Hipertrofia Total – 4 Días"' },
+                general_note: { type: 'string', description: 'Resumen breve del enfoque del plan, la progresión entre semanas, y adaptaciones por lesión, si aplica.' },
+                rest_default: { type: 'integer', description: 'Segundos de descanso por defecto entre series' },
+                weeks: {
+                    type: 'array',
+                    minItems: distinctWeeks,
+                    maxItems: distinctWeeks,
+                    description: 'Una entrada por cada semana distinta del mesociclo, en orden (semana 1, semana 2, ...), cada una con más carga/dificultad que la anterior.',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            week_note: { type: 'string', description: 'Qué cambia en esta semana respecto a la anterior (ej. "+1 serie por ejercicio" o "semana de descarga").' },
+                            days: { type: 'array', minItems: dayCount, maxItems: dayCount, items: dayItemSchema }
+                        },
+                        required: ['days']
+                    }
                 }
-                return daysMap;
-            }
-
-            const weeksTemplate = (raw.weeks || []).map(w => ({
-                weekNote: w.week_note || '',
-                days: buildDaysMap(w.days)
-            }));
-
-            return res.status(200).json({
-                success: true,
-                data: {
-                    name: raw.name || 'Plan Personalizado',
-                    generalNote: raw.general_note || '',
-                    restDefault: raw.rest_default || 90,
-                    weeksTemplate
-                }
-            });
-        } catch (error) {
-            console.log(`Error en flexAssistantController.generateTrainingPlan: ${error}`);
-            return res.status(501).json({ success: false, message: 'Error al generar el plan con IA', error: error.message });
+            },
+            required: ['name', 'weeks']
         }
+    };
+
+    const userContent = [{ type: 'text', text: userPrompt }];
+    if (referenceImage && referenceImage.mediaType && referenceImage.base64) {
+        userContent.unshift({
+            type: 'image',
+            source: { type: 'base64', media_type: referenceImage.mediaType, data: referenceImage.base64 }
+        });
     }
 
-};
+    const response = await anthropic.messages.create({
+        model: keys.anthropicModel,
+        max_tokens: 8192,
+        system: systemPrompt,
+        tools: [planTool],
+        tool_choice: { type: 'tool', name: 'generate_plan' },
+        messages: [{ role: 'user', content: userContent }]
+    });
+
+    const toolUse = response.content.find(b => b.type === 'tool_use' && b.name === 'generate_plan');
+    if (!toolUse) {
+        throw new Error('La IA no devolvió un plan válido, intenta de nuevo.');
+    }
+    const raw = toolUse.input;
+
+    // Traducimos los ids a los ejercicios reales completos (con
+    // media/thumbnail) y armamos, por cada semana distinta que diseñó
+    // Claude, el mismo mapa por día de la semana que ya esperaba el
+    // frontend — como un ARRAY de semanas para que PlantillasView.vue las
+    // use como base real de la sobrecarga progresiva en vez de clonarlas.
+    function buildDaysMap(days) {
+        const daysMap = {};
+        for (const d of (days || [])) {
+            const exercises = (d.exercises || [])
+                .map(ex => {
+                    const catEx = catalogById.get(Number(ex.exercise_id));
+                    if (!catEx) return null;
+                    const byTime = catEx.muscle_group === 'Cardio';
+                    const setCount = Math.min(6, Math.max(1, parseInt(ex.sets, 10) || 3));
+                    return {
+                        id: String(catEx.id),
+                        name: catEx.name,
+                        muscleGroup: catEx.muscle_group,
+                        byTime,
+                        mediaUrl: catEx.media_url || '',
+                        thumbnail_url: catEx.thumbnail_url || '',
+                        description: catEx.description || '',
+                        notes: '',
+                        sets: Array.from({ length: setCount }, () => ({
+                            reps: byTime ? '' : (ex.reps || ''),
+                            rest: ex.rest_seconds || '',
+                            time: byTime ? (ex.time_seconds || '900') : '',
+                            weight: '',
+                            comment: ex.note || ''
+                        }))
+                    };
+                })
+                .filter(Boolean);
+
+            daysMap[d.weekday] = {
+                day_name: d.day_name || '',
+                day_image: '',
+                blocks: exercises.map(ex => ({ block_type: 'Sencillo', block_notes: '', exercises: [ex] }))
+            };
+        }
+        return daysMap;
+    }
+
+    const weeksTemplate = (raw.weeks || []).map(w => ({
+        weekNote: w.week_note || '',
+        days: buildDaysMap(w.days)
+    }));
+
+    await AiPlanJob.markDone(jobId, {
+        name: raw.name || 'Plan Personalizado',
+        generalNote: raw.general_note || '',
+        restDefault: raw.rest_default || 90,
+        weeksTemplate
+    });
+}
