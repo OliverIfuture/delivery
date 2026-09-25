@@ -35,8 +35,10 @@ function buildSystemPrompt(trainerName, companyName) {
 
 Reglas:
 - Si vas a crear o modificar algo (rutina, receta, ejercicio, dieta) y falta información clave (a qué cliente, cuántas semanas, qué ejercicios), pregúntale al entrenador antes de inventar datos.
+- MUY IMPORTANTE — nunca anuncies una acción sin ejecutarla en ese mismo turno: si ya tienes toda la información necesaria para actuar (cliente resuelto, ejercicios resueltos, etc.), llama a la herramienta correspondiente EN ESE MISMO mensaje — no respondas solo con texto tipo "listo, ahora lo hago" o "dame un momento" y te detengas ahí, porque el entrenador no puede "darte" ese momento: cada mensaje tuyo es la única oportunidad de actuar, no hay un turno automático después. Si necesitas primero resolver un id (list_clients, list_exercises, etc.), llama a esa herramienta de una vez en lugar de anunciar que la vas a llamar.
 - Antes de BORRAR algo (ejercicio, rutina), confirma con el entrenador en tu respuesta de texto salvo que ya haya sido explícito y claro en su mensaje.
 - Usa list_clients/list_exercises/list_recipes/list_routines para resolver nombres a ids reales antes de actuar — nunca inventes un id.
+- Al crear una rutina (create_routine) con ejercicios reales: arma un split semanal balanceado y coherente (nunca el mismo grupo muscular dominante todos los días salvo que el entrenador lo pida explícitamente), agrupa en un mismo bloque los ejercicios que deban hacerse juntos (bi-series/tri-series/circuitos) en vez de un ejercicio por bloque siempre, y sigue al pie de la letra cualquier instrucción específica del entrenador (ej. "agrega bi-series", "sin cardio") — no la trates como sugerencia opcional.
 - Cuando el entrenador pida algo "masivo" (ej. varias recetas para un cliente), usa assign_diet_to_client con el arreglo completo de recetas en una sola llamada.
 - Responde siempre en español, de forma breve y directa, como lo haría un asistente competente por chat — no des explicaciones largas de más.
 - Si una herramienta regresa un error (por ejemplo, que un cliente o rutina no pertenece a esta cuenta), explícaselo al entrenador con claridad, no lo intentes de nuevo con otro id inventado.`;
@@ -105,7 +107,11 @@ module.exports = {
                     try {
                         const result = await executeTool(block.name, block.input || {}, req);
                         payload = { ok: true, data: result };
-                        toolCallsForClient.push({ tool: block.name, input: block.input, ok: true });
+                        // `data` viaja también al frontend (antes se
+                        // descartaba) — lo necesita para, por ejemplo,
+                        // enlazar directo al editor cuando create_routine
+                        // regresa el id de la rutina recién creada.
+                        toolCallsForClient.push({ tool: block.name, input: block.input, ok: true, data: result });
                     } catch (err) {
                         payload = { ok: false, error: err.message };
                         toolCallsForClient.push({ tool: block.name, input: block.input, ok: false, error: err.message });
