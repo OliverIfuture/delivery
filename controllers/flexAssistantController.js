@@ -82,6 +82,25 @@ module.exports = {
 
             const toolCallsForClient = [];
             let finalText = '';
+            // Visto en vivo (probando de verdad, no en teoría): a veces
+            // Claude resuelve un id (list_clients, list_exercises, etc.)
+            // y en el SIGUIENTE turno, en vez de llamar ya a la
+            // herramienta real (create_routine...), responde solo con
+            // texto tipo "voy a crear tu rutina ahora" y ahí se detiene
+            // para siempre — no hay "turno automático" después en esta
+            // arquitectura, así que ese mensaje se queda huérfano. Si el
+            // turno anterior fue puramente de "resolver" (lectura, nunca
+            // una acción real) y este responde solo con texto, se empuja
+            // un mensaje para forzar la acción real en vez de cortar ahí
+            // — solo una vez, para no generar un loop infinito si sigue
+            // sin actuar.
+            const RESOLVER_ONLY_TOOLS = new Set([
+                'list_clients', 'list_exercises', 'list_recipes', 'list_ingredients', 'list_routines',
+                'get_client_active_routine', 'get_client_diet', 'get_client_workout_history',
+                'get_client_exercise_history', 'get_client_body_metrics'
+            ]);
+            let lastTurnWasResolverOnly = false;
+            let alreadyNudged = false;
 
             for (let turn = 0; turn < MAX_TOOL_TURNS; turn++) {
                 const response = await anthropic.messages.create({
@@ -99,8 +118,23 @@ module.exports = {
 
                 const toolUseBlocks = response.content.filter((b) => b.type === 'tool_use');
                 if (response.stop_reason !== 'tool_use' || toolUseBlocks.length === 0) {
+                    // No se empuja si el texto parece una pregunta real al
+                    // entrenador (ej. "¿cuál de los dos Juan?") — ahí sí
+                    // hace falta una respuesta humana, forzar la acción
+                    // sería adivinar en lugar de preguntar.
+                    const looksLikeQuestion = /[?¿]/.test(finalText);
+                    if (lastTurnWasResolverOnly && !alreadyNudged && !looksLikeQuestion && turn < MAX_TOOL_TURNS - 1) {
+                        alreadyNudged = true;
+                        anthropicMessages.push({
+                            role: 'user',
+                            content: 'No anuncies la acción, ejecútala ahora mismo llamando a la herramienta correspondiente en este mismo mensaje.'
+                        });
+                        continue;
+                    }
                     break;
                 }
+
+                lastTurnWasResolverOnly = toolUseBlocks.every((b) => RESOLVER_ONLY_TOOLS.has(b.name));
 
                 const toolResultContent = [];
                 for (const block of toolUseBlocks) {
