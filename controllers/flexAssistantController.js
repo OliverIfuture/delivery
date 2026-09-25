@@ -288,7 +288,13 @@ async function runChatTurn(jobId, id_company, trainerName, messages, message, re
             // marca ni 'done' ni 'error', y el entrenador nunca sabe qué
             // pasó). Un tope explícito por llamada convierte ese cuelgue
             // en un error real y reportado, en vez de un silencio eterno.
-            timeout: 60000
+            // maxRetries:0 — el SDK reintenta 2 veces por default, lo
+            // cual TRIPLICA en silencio el tiempo real de esta llamada
+            // (60s x 3 intentos) antes de fallar; con un timeout ya
+            // puesto, esos reintentos automáticos solo repiten la misma
+            // demora en vez de ayudar.
+            timeout: 60000,
+            maxRetries: 0
         });
 
         anthropicMessages.push({ role: 'assistant', content: response.content });
@@ -527,8 +533,11 @@ ${JSON.stringify(catalogForPrompt)}`;
         messages: [{ role: 'user', content: userContent }]
     }, {
         // Mismo tope defensivo que runChatTurn — sin esto, una llamada de
-        // red colgada deja el job en 'pending' para siempre.
-        timeout: 90000
+        // red colgada deja el job en 'pending' para siempre. maxRetries:0
+        // por la misma razón (el SDK reintenta 2 veces por default, lo
+        // que triplica en silencio el tiempo real de espera).
+        timeout: 90000,
+        maxRetries: 0
     });
 
     const toolUse = response.content.find(b => b.type === 'tool_use' && b.name === 'generate_plan');
