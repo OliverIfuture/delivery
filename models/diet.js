@@ -536,7 +536,7 @@ Diet.findRecipesByCompanyV2 = (id_company) => {
                 WHERE m.id_recipe = r.id
             ) AS ingredients
         FROM diet_recipes_v2 r
-        WHERE r.id_company = $1 OR r.id_company IS NULL
+        WHERE r.id_company = $1 OR r.id_company = 1 OR r.id_company IS NULL
         ORDER BY r.id DESC
     `;
     return db.manyOrNone(sql, [id_company]);
