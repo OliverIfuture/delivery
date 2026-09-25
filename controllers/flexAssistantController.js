@@ -18,7 +18,12 @@ const AiPlanJob = require('../models/aiPlanJob.js');
 const TrainingDayPhoto = require('../models/trainingDayPhoto.js');
 const { TOOL_DEFINITIONS, executeTool } = require('../utils/flexTools.js');
 
-const MAX_TOOL_TURNS = 6;
+// Antes 6 — verificado en vivo que armar una rutina completa a veces
+// necesita: resolver el cliente, resolver los ejercicios, y crear la
+// rutina — 3 turnos mínimo, y si Claude busca ejercicios en varias
+// llamadas (aunque ya se le pidió explícitamente no hacerlo) se puede
+// quedar sin turnos antes de llegar a create_routine.
+const MAX_TOOL_TURNS = 10;
 const MAX_TOOL_RESULT_CHARS = 8000;
 
 // Mismo reparto de días que antes usaba el generador ficticio del
@@ -38,6 +43,7 @@ Reglas:
 - MUY IMPORTANTE — nunca anuncies una acción sin ejecutarla en ese mismo turno: si ya tienes toda la información necesaria para actuar (cliente resuelto, ejercicios resueltos, etc.), llama a la herramienta correspondiente EN ESE MISMO mensaje — no respondas solo con texto tipo "listo, ahora lo hago" o "dame un momento" y te detengas ahí, porque el entrenador no puede "darte" ese momento: cada mensaje tuyo es la única oportunidad de actuar, no hay un turno automático después. Si necesitas primero resolver un id (list_clients, list_exercises, etc.), llama a esa herramienta de una vez en lugar de anunciar que la vas a llamar.
 - Antes de BORRAR algo (ejercicio, rutina), confirma con el entrenador en tu respuesta de texto salvo que ya haya sido explícito y claro en su mensaje.
 - Usa list_clients/list_exercises/list_recipes/list_routines para resolver nombres a ids reales antes de actuar — nunca inventes un id.
+- MUY IMPORTANTE — para armar una rutina completa, llama list_exercises UNA SOLA VEZ sin "query" (trae TODA la biblioteca del entrenador de un jalón) y elige de ahí todos los ejercicios que necesites — no hagas una llamada de búsqueda por cada ejercicio o grupo muscular por separado, eso gasta turnos que necesitas para llegar a create_routine.
 - Al crear una rutina (create_routine) con ejercicios reales: arma un split semanal balanceado y coherente (nunca el mismo grupo muscular dominante todos los días salvo que el entrenador lo pida explícitamente), agrupa en un mismo bloque los ejercicios que deban hacerse juntos (bi-series/tri-series/circuitos) en vez de un ejercicio por bloque siempre, y sigue al pie de la letra cualquier instrucción específica del entrenador (ej. "agrega bi-series", "sin cardio") — no la trates como sugerencia opcional.
 - MUY IMPORTANTE — en plan_data.weeks[].days, la llave de cada día debe ser SIEMPRE el nombre real del día de la semana en español (Lunes, Martes, Miércoles, Jueves, Viernes, Sábado o Domingo) — nunca "Día 1", "Día 2" ni ningún otro texto. Si el entrenador pide un número de días (ej. "3 días"), tú decides cuáles días reales de la semana usar, repartidos de forma balanceada (ej. Lunes/Miércoles/Viernes para 3 días).
 - Cuando el entrenador pida algo "masivo" (ej. varias recetas para un cliente), usa assign_diet_to_client con el arreglo completo de recetas en una sola llamada.
