@@ -105,7 +105,15 @@ module.exports = {
             for (let turn = 0; turn < MAX_TOOL_TURNS; turn++) {
                 const response = await anthropic.messages.create({
                     model: keys.anthropicModel,
-                    max_tokens: 2048,
+                    // Antes 2048 — verificado en vivo que una rutina de
+                    // varios días/semanas con ejercicios reales trunca el
+                    // tool_use de create_routine a medio JSON (stop_reason
+                    // 'max_tokens'), lo que además revienta la SIGUIENTE
+                    // llamada a la API (un tool_use sin su tool_result es
+                    // inválido). Mismo valor que ya usa el generador
+                    // dedicado (runTrainingPlanGeneration) para el mismo
+                    // tipo de payload grande.
+                    max_tokens: 8192,
                     system: systemPrompt,
                     tools: TOOL_DEFINITIONS,
                     messages: anthropicMessages
@@ -117,47 +125,55 @@ module.exports = {
                 if (textBlocks.length) finalText = textBlocks.map((b) => b.text).join('\n').trim();
 
                 const toolUseBlocks = response.content.filter((b) => b.type === 'tool_use');
-                if (response.stop_reason !== 'tool_use' || toolUseBlocks.length === 0) {
-                    // No se empuja si el texto parece una pregunta real al
-                    // entrenador (ej. "¿cuál de los dos Juan?") — ahí sí
-                    // hace falta una respuesta humana, forzar la acción
-                    // sería adivinar en lugar de preguntar.
-                    const looksLikeQuestion = /[?¿]/.test(finalText);
-                    if (lastTurnWasResolverOnly && !alreadyNudged && !looksLikeQuestion && turn < MAX_TOOL_TURNS - 1) {
-                        alreadyNudged = true;
-                        anthropicMessages.push({
-                            role: 'user',
-                            content: 'No anuncies la acción, ejecútala ahora mismo llamando a la herramienta correspondiente en este mismo mensaje.'
-                        });
-                        continue;
+
+                // Se resuelve CUALQUIER tool_use presente sin importar
+                // stop_reason — la API exige un tool_result por cada uno
+                // en el siguiente mensaje sí o sí, incluso si vino
+                // truncado por max_tokens a medio armar (ahí executeTool
+                // simplemente fallará al parsear/validar el input, lo cual
+                // se reporta como cualquier otro error de herramienta).
+                if (toolUseBlocks.length > 0) {
+                    lastTurnWasResolverOnly = toolUseBlocks.every((b) => RESOLVER_ONLY_TOOLS.has(b.name));
+
+                    const toolResultContent = [];
+                    for (const block of toolUseBlocks) {
+                        let payload;
+                        try {
+                            const result = await executeTool(block.name, block.input || {}, req);
+                            payload = { ok: true, data: result };
+                            // `data` viaja también al frontend (antes se
+                            // descartaba) — lo necesita para, por ejemplo,
+                            // enlazar directo al editor cuando create_routine
+                            // regresa el id de la rutina recién creada.
+                            toolCallsForClient.push({ tool: block.name, input: block.input, ok: true, data: result });
+                        } catch (err) {
+                            payload = { ok: false, error: err.message };
+                            toolCallsForClient.push({ tool: block.name, input: block.input, ok: false, error: err.message });
+                        }
+                        let serialized = JSON.stringify(payload);
+                        if (serialized.length > MAX_TOOL_RESULT_CHARS) {
+                            serialized = serialized.slice(0, MAX_TOOL_RESULT_CHARS) + '... (resultado truncado)';
+                        }
+                        toolResultContent.push({ type: 'tool_result', tool_use_id: block.id, content: serialized });
                     }
-                    break;
+                    anthropicMessages.push({ role: 'user', content: toolResultContent });
+                    continue;
                 }
 
-                lastTurnWasResolverOnly = toolUseBlocks.every((b) => RESOLVER_ONLY_TOOLS.has(b.name));
-
-                const toolResultContent = [];
-                for (const block of toolUseBlocks) {
-                    let payload;
-                    try {
-                        const result = await executeTool(block.name, block.input || {}, req);
-                        payload = { ok: true, data: result };
-                        // `data` viaja también al frontend (antes se
-                        // descartaba) — lo necesita para, por ejemplo,
-                        // enlazar directo al editor cuando create_routine
-                        // regresa el id de la rutina recién creada.
-                        toolCallsForClient.push({ tool: block.name, input: block.input, ok: true, data: result });
-                    } catch (err) {
-                        payload = { ok: false, error: err.message };
-                        toolCallsForClient.push({ tool: block.name, input: block.input, ok: false, error: err.message });
-                    }
-                    let serialized = JSON.stringify(payload);
-                    if (serialized.length > MAX_TOOL_RESULT_CHARS) {
-                        serialized = serialized.slice(0, MAX_TOOL_RESULT_CHARS) + '... (resultado truncado)';
-                    }
-                    toolResultContent.push({ type: 'tool_result', tool_use_id: block.id, content: serialized });
+                // Sin tool_use en este turno — no se empuja si el texto
+                // parece una pregunta real al entrenador (ej. "¿cuál de
+                // los dos Juan?"): ahí sí hace falta una respuesta humana,
+                // forzar la acción sería adivinar en lugar de preguntar.
+                const looksLikeQuestion = /[?¿]/.test(finalText);
+                if (lastTurnWasResolverOnly && !alreadyNudged && !looksLikeQuestion && turn < MAX_TOOL_TURNS - 1) {
+                    alreadyNudged = true;
+                    anthropicMessages.push({
+                        role: 'user',
+                        content: 'No anuncies la acción, ejecútala ahora mismo llamando a la herramienta correspondiente en este mismo mensaje.'
+                    });
+                    continue;
                 }
-                anthropicMessages.push({ role: 'user', content: toolResultContent });
+                break;
             }
 
             return res.status(200).json({
