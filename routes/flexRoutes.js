@@ -5,7 +5,9 @@ module.exports = (app) => {
 
     // PREFIJO: /api/flex — asistente de IA real del entrenador (ver
     // controllers/flexAssistantController.js).
+    // Por job (no un solo request) — ver comentario en el controller.
     app.post('/api/flex/chat', passport.authenticate('jwt', { session: false }), flexAssistantController.chat);
+    app.get('/api/flex/chat/:jobId', passport.authenticate('jwt', { session: false }), flexAssistantController.getChatJob);
     // NUEVO — genera un plan de entrenamiento real (ver AiTrainingPlanModal.vue).
     // Responde rápido con un jobId (la generación real corre en segundo
     // plano — ver comentario en el controller) — el frontend hace polling

@@ -47,6 +47,17 @@ Reglas:
 
 module.exports = {
 
+    // ASÍNCRONO POR JOB — antes esto respondía en el mismo request (como
+    // el resto de esta función). Verificado en vivo: una conversación que
+    // necesita resolver un cliente/ejercicio Y LUEGO generar una rutina
+    // real de varios días/semanas implica 2-3 idas y vueltas reales con
+    // Claude (max_tokens 8192 cada una) y puede tardar más de 30s en
+    // total — Heroku mata (H12/503) cualquier respuesta HTTP más lenta
+    // que eso. Mismo patrón que generateTrainingPlan: se crea un job
+    // (reusa la tabla genérica ai_plan_jobs), se responde de inmediato
+    // con su id, y la conversación real corre en segundo plano
+    // (runChatTurn) — el frontend hace polling a
+    // GET /api/flex/chat/:jobId hasta que quede lista.
     async chat(req, res) {
         try {
             if (!keys.anthropicApiKey) {
@@ -60,129 +71,44 @@ module.exports = {
             if (!message || !String(message).trim()) {
                 return res.status(400).json({ success: false, message: 'Falta el mensaje.' });
             }
-            if (!req.user.mi_store) {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
                 return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
             }
 
-            const anthropic = new Anthropic({ apiKey: keys.anthropicApiKey });
-
-            const company = await User.findCompanyById(req.user.mi_store).catch(() => null);
-            const systemPrompt = buildSystemPrompt(req.user.name, company?.name);
-
-            // Se simplifica el historial previo a turnos de texto plano —
-            // Claude no necesita ver los bloques tool_use/tool_result
-            // crudos de turnos ya resueltos, solo qué se dijo.
-            const anthropicMessages = (Array.isArray(messages) ? messages : [])
-                .filter((m) => m && m.content)
-                .map((m) => ({
-                    role: m.role === 'assistant' ? 'assistant' : 'user',
-                    content: String(m.content)
-                }));
-            anthropicMessages.push({ role: 'user', content: String(message) });
-
-            const toolCallsForClient = [];
-            let finalText = '';
-            // Visto en vivo (probando de verdad, no en teoría): a veces
-            // Claude resuelve un id (list_clients, list_exercises, etc.)
-            // y en el SIGUIENTE turno, en vez de llamar ya a la
-            // herramienta real (create_routine...), responde solo con
-            // texto tipo "voy a crear tu rutina ahora" y ahí se detiene
-            // para siempre — no hay "turno automático" después en esta
-            // arquitectura, así que ese mensaje se queda huérfano. Si el
-            // turno anterior fue puramente de "resolver" (lectura, nunca
-            // una acción real) y este responde solo con texto, se empuja
-            // un mensaje para forzar la acción real en vez de cortar ahí
-            // — solo una vez, para no generar un loop infinito si sigue
-            // sin actuar.
-            const RESOLVER_ONLY_TOOLS = new Set([
-                'list_clients', 'list_exercises', 'list_recipes', 'list_ingredients', 'list_routines',
-                'get_client_active_routine', 'get_client_diet', 'get_client_workout_history',
-                'get_client_exercise_history', 'get_client_body_metrics'
-            ]);
-            let lastTurnWasResolverOnly = false;
-            let alreadyNudged = false;
-
-            for (let turn = 0; turn < MAX_TOOL_TURNS; turn++) {
-                const response = await anthropic.messages.create({
-                    model: keys.anthropicModel,
-                    // Antes 2048 — verificado en vivo que una rutina de
-                    // varios días/semanas con ejercicios reales trunca el
-                    // tool_use de create_routine a medio JSON (stop_reason
-                    // 'max_tokens'), lo que además revienta la SIGUIENTE
-                    // llamada a la API (un tool_use sin su tool_result es
-                    // inválido). Mismo valor que ya usa el generador
-                    // dedicado (runTrainingPlanGeneration) para el mismo
-                    // tipo de payload grande.
-                    max_tokens: 8192,
-                    system: systemPrompt,
-                    tools: TOOL_DEFINITIONS,
-                    messages: anthropicMessages
-                });
-
-                anthropicMessages.push({ role: 'assistant', content: response.content });
-
-                const textBlocks = response.content.filter((b) => b.type === 'text');
-                if (textBlocks.length) finalText = textBlocks.map((b) => b.text).join('\n').trim();
-
-                const toolUseBlocks = response.content.filter((b) => b.type === 'tool_use');
-
-                // Se resuelve CUALQUIER tool_use presente sin importar
-                // stop_reason — la API exige un tool_result por cada uno
-                // en el siguiente mensaje sí o sí, incluso si vino
-                // truncado por max_tokens a medio armar (ahí executeTool
-                // simplemente fallará al parsear/validar el input, lo cual
-                // se reporta como cualquier otro error de herramienta).
-                if (toolUseBlocks.length > 0) {
-                    lastTurnWasResolverOnly = toolUseBlocks.every((b) => RESOLVER_ONLY_TOOLS.has(b.name));
-
-                    const toolResultContent = [];
-                    for (const block of toolUseBlocks) {
-                        let payload;
-                        try {
-                            const result = await executeTool(block.name, block.input || {}, req);
-                            payload = { ok: true, data: result };
-                            // `data` viaja también al frontend (antes se
-                            // descartaba) — lo necesita para, por ejemplo,
-                            // enlazar directo al editor cuando create_routine
-                            // regresa el id de la rutina recién creada.
-                            toolCallsForClient.push({ tool: block.name, input: block.input, ok: true, data: result });
-                        } catch (err) {
-                            payload = { ok: false, error: err.message };
-                            toolCallsForClient.push({ tool: block.name, input: block.input, ok: false, error: err.message });
-                        }
-                        let serialized = JSON.stringify(payload);
-                        if (serialized.length > MAX_TOOL_RESULT_CHARS) {
-                            serialized = serialized.slice(0, MAX_TOOL_RESULT_CHARS) + '... (resultado truncado)';
-                        }
-                        toolResultContent.push({ type: 'tool_result', tool_use_id: block.id, content: serialized });
-                    }
-                    anthropicMessages.push({ role: 'user', content: toolResultContent });
-                    continue;
-                }
-
-                // Sin tool_use en este turno — no se empuja si el texto
-                // parece una pregunta real al entrenador (ej. "¿cuál de
-                // los dos Juan?"): ahí sí hace falta una respuesta humana,
-                // forzar la acción sería adivinar en lugar de preguntar.
-                const looksLikeQuestion = /[?¿]/.test(finalText);
-                if (lastTurnWasResolverOnly && !alreadyNudged && !looksLikeQuestion && turn < MAX_TOOL_TURNS - 1) {
-                    alreadyNudged = true;
-                    anthropicMessages.push({
-                        role: 'user',
-                        content: 'No anuncies la acción, ejecútala ahora mismo llamando a la herramienta correspondiente en este mismo mensaje.'
-                    });
-                    continue;
-                }
-                break;
-            }
-
-            return res.status(200).json({
-                success: true,
-                data: { text: finalText || 'No tengo una respuesta para eso todavía.', toolCalls: toolCallsForClient }
+            const jobId = await AiPlanJob.create(id_company);
+            // No se espera (sin await) — corre en segundo plano mientras
+            // ya respondimos. Cualquier error se guarda en el job.
+            runChatTurn(jobId, id_company, req.user.name, messages, message, req).catch((err) => {
+                console.log(`Error en runChatTurn (job ${jobId}): ${err}`);
+                AiPlanJob.markError(jobId, err.message || 'Error desconocido').catch(() => {});
             });
+
+            return res.status(202).json({ success: true, data: { jobId } });
         } catch (error) {
             console.log(`Error en flexAssistantController.chat: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al conectar con Flex', error: error.message });
+        }
+    },
+
+    // Polling del job de chat — ver comentario de arriba.
+    async getChatJob(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            const job = await AiPlanJob.findById(req.params.jobId, id_company);
+            if (!job) {
+                return res.status(404).json({ success: false, message: 'No se encontró esa conversación.' });
+            }
+            if (job.status === 'error') {
+                return res.status(200).json({ success: true, data: { status: 'error', message: job.error_message } });
+            }
+            if (job.status === 'done') {
+                return res.status(200).json({ success: true, data: { status: 'done', result: job.result } });
+            }
+            return res.status(200).json({ success: true, data: { status: 'pending' } });
+        } catch (error) {
+            console.log(`Error en flexAssistantController.getChatJob: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al consultar la conversación', error: error.message });
         }
     },
 
@@ -268,6 +194,125 @@ module.exports = {
 };
 
 // ===================== Worker en segundo plano =====================
+
+// Un turno completo de chat de Flex (puede implicar varias idas y vueltas
+// reales con Claude por el tool-calling) — ver comentario de chat() arriba.
+async function runChatTurn(jobId, id_company, trainerName, messages, message, req) {
+    const anthropic = new Anthropic({ apiKey: keys.anthropicApiKey });
+
+    const company = await User.findCompanyById(id_company).catch(() => null);
+    const systemPrompt = buildSystemPrompt(trainerName, company?.name);
+
+    // Se simplifica el historial previo a turnos de texto plano — Claude
+    // no necesita ver los bloques tool_use/tool_result crudos de turnos
+    // ya resueltos, solo qué se dijo.
+    const anthropicMessages = (Array.isArray(messages) ? messages : [])
+        .filter((m) => m && m.content)
+        .map((m) => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: String(m.content)
+        }));
+    anthropicMessages.push({ role: 'user', content: String(message) });
+
+    const toolCallsForClient = [];
+    let finalText = '';
+    // Visto en vivo (probando de verdad, no en teoría): a veces Claude
+    // resuelve un id (list_clients, list_exercises, etc.) y en el
+    // SIGUIENTE turno, en vez de llamar ya a la herramienta real
+    // (create_routine...), responde solo con texto tipo "voy a crear tu
+    // rutina ahora" y ahí se detiene para siempre — no hay "turno
+    // automático" después en esta arquitectura, así que ese mensaje se
+    // queda huérfano. Si el turno anterior fue puramente de "resolver"
+    // (lectura, nunca una acción real) y este responde solo con texto, se
+    // empuja un mensaje para forzar la acción real en vez de cortar ahí —
+    // solo una vez, para no generar un loop infinito si sigue sin actuar.
+    const RESOLVER_ONLY_TOOLS = new Set([
+        'list_clients', 'list_exercises', 'list_recipes', 'list_ingredients', 'list_routines',
+        'get_client_active_routine', 'get_client_diet', 'get_client_workout_history',
+        'get_client_exercise_history', 'get_client_body_metrics'
+    ]);
+    let lastTurnWasResolverOnly = false;
+    let alreadyNudged = false;
+
+    for (let turn = 0; turn < MAX_TOOL_TURNS; turn++) {
+        const response = await anthropic.messages.create({
+            model: keys.anthropicModel,
+            // Antes 2048 — verificado en vivo que una rutina de varios
+            // días/semanas con ejercicios reales trunca el tool_use de
+            // create_routine a medio JSON (stop_reason 'max_tokens'), lo
+            // que además revienta la SIGUIENTE llamada a la API (un
+            // tool_use sin su tool_result es inválido). Mismo valor que
+            // ya usa el generador dedicado (runTrainingPlanGeneration)
+            // para el mismo tipo de payload grande.
+            max_tokens: 8192,
+            system: systemPrompt,
+            tools: TOOL_DEFINITIONS,
+            messages: anthropicMessages
+        });
+
+        anthropicMessages.push({ role: 'assistant', content: response.content });
+
+        const textBlocks = response.content.filter((b) => b.type === 'text');
+        if (textBlocks.length) finalText = textBlocks.map((b) => b.text).join('\n').trim();
+
+        const toolUseBlocks = response.content.filter((b) => b.type === 'tool_use');
+
+        // Se resuelve CUALQUIER tool_use presente sin importar
+        // stop_reason — la API exige un tool_result por cada uno en el
+        // siguiente mensaje sí o sí, incluso si vino truncado por
+        // max_tokens a medio armar (ahí executeTool simplemente fallará
+        // al parsear/validar el input, lo cual se reporta como cualquier
+        // otro error de herramienta).
+        if (toolUseBlocks.length > 0) {
+            lastTurnWasResolverOnly = toolUseBlocks.every((b) => RESOLVER_ONLY_TOOLS.has(b.name));
+
+            const toolResultContent = [];
+            for (const block of toolUseBlocks) {
+                let payload;
+                try {
+                    const result = await executeTool(block.name, block.input || {}, req);
+                    payload = { ok: true, data: result };
+                    // `data` viaja también al frontend (antes se
+                    // descartaba) — lo necesita para, por ejemplo,
+                    // enlazar directo al editor cuando create_routine
+                    // regresa el id de la rutina recién creada.
+                    toolCallsForClient.push({ tool: block.name, input: block.input, ok: true, data: result });
+                } catch (err) {
+                    payload = { ok: false, error: err.message };
+                    toolCallsForClient.push({ tool: block.name, input: block.input, ok: false, error: err.message });
+                }
+                let serialized = JSON.stringify(payload);
+                if (serialized.length > MAX_TOOL_RESULT_CHARS) {
+                    serialized = serialized.slice(0, MAX_TOOL_RESULT_CHARS) + '... (resultado truncado)';
+                }
+                toolResultContent.push({ type: 'tool_result', tool_use_id: block.id, content: serialized });
+            }
+            anthropicMessages.push({ role: 'user', content: toolResultContent });
+            continue;
+        }
+
+        // Sin tool_use en este turno — no se empuja si el texto parece
+        // una pregunta real al entrenador (ej. "¿cuál de los dos Juan?"):
+        // ahí sí hace falta una respuesta humana, forzar la acción sería
+        // adivinar en lugar de preguntar.
+        const looksLikeQuestion = /[?¿]/.test(finalText);
+        if (lastTurnWasResolverOnly && !alreadyNudged && !looksLikeQuestion && turn < MAX_TOOL_TURNS - 1) {
+            alreadyNudged = true;
+            anthropicMessages.push({
+                role: 'user',
+                content: 'No anuncies la acción, ejecútala ahora mismo llamando a la herramienta correspondiente en este mismo mensaje.'
+            });
+            continue;
+        }
+        break;
+    }
+
+    await AiPlanJob.markDone(jobId, {
+        text: finalText || 'No tengo una respuesta para eso todavía.',
+        toolCalls: toolCallsForClient
+    });
+}
+
 async function runTrainingPlanGeneration(jobId, id_company, catalog, body) {
     const { clientName, days, objetivo, nivel, zona, equipo, lesiones, notas, freeText, semanas, referenceImage, trainingStyles } = body;
     const dayCount = Math.min(7, Math.max(1, parseInt(days, 10) || 4));
