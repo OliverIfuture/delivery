@@ -15,6 +15,7 @@ const keys = require('../config/keys.js');
 const User = require('../models/user.js');
 const Exercise = require('../models/exercise.js');
 const AiPlanJob = require('../models/aiPlanJob.js');
+const TrainingDayPhoto = require('../models/trainingDayPhoto.js');
 const { TOOL_DEFINITIONS, executeTool } = require('../utils/flexTools.js');
 
 const MAX_TOOL_TURNS = 6;
@@ -224,6 +225,39 @@ async function runTrainingPlanGeneration(jobId, id_company, catalog, body) {
     // las descripciones largas no ayudan a Claude a elegir y gastan tokens.
     const catalogForPrompt = catalog.map(e => ({ id: Number(e.id), name: e.name, muscle_group: e.muscle_group, equipment: e.equipment || '' }));
 
+    // Galería de fotos "fondo del día" del entrenador (ver
+    // models/trainingDayPhoto.js) — agrupadas por categoría (mismo
+    // vocabulario que muscle_group) para que la IA pueda ponerle una foto
+    // real del entrenador al día según el grupo muscular dominante de ese
+    // día, en vez de dejar day_image siempre vacío.
+    const dayPhotos = await TrainingDayPhoto.findByCompany(id_company);
+    const photosByCategory = new Map();
+    for (const p of dayPhotos) {
+        const key = String(p.category || '').trim().toLowerCase();
+        if (!key) continue;
+        if (!photosByCategory.has(key)) photosByCategory.set(key, []);
+        photosByCategory.get(key).push(p.url);
+    }
+    function pickPhotoForGroup(muscleGroup) {
+        if (!muscleGroup) return '';
+        const list = photosByCategory.get(String(muscleGroup).trim().toLowerCase());
+        if (!list || !list.length) return '';
+        return list[Math.floor(Math.random() * list.length)];
+    }
+    function dominantMuscleGroup(blocks) {
+        const counts = {};
+        for (const b of blocks) {
+            for (const ex of b.exercises) {
+                counts[ex.muscleGroup] = (counts[ex.muscleGroup] || 0) + 1;
+            }
+        }
+        let best = null, bestCount = 0;
+        for (const [g, c] of Object.entries(counts)) {
+            if (c > bestCount) { best = g; bestCount = c; }
+        }
+        return best;
+    }
+
     const anthropic = new Anthropic({ apiKey: keys.anthropicApiKey });
 
     const systemPrompt = `Eres un entrenador experto diseñando un plan de entrenamiento para ${clientName || 'un cliente'}. Debes usar EXCLUSIVAMENTE ejercicios de la lista de catálogo que te doy (por su "id" exacto) — nunca inventes un ejercicio ni un id que no esté en la lista. Ajusta series/reps/descanso según el objetivo y nivel. Si el cliente tiene lesiones o limitaciones, evita ejercicios claramente riesgosos para eso y dilo en la nota del ejercicio afectado.
@@ -391,7 +425,7 @@ ${JSON.stringify(catalogForPrompt)}`;
 
             daysMap[d.weekday] = {
                 day_name: d.day_name || '',
-                day_image: '',
+                day_image: pickPhotoForGroup(dominantMuscleGroup(blocks)),
                 blocks
             };
         }
