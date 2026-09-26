@@ -289,14 +289,13 @@ async function runChatTurn(jobId, id_company, trainerName, messages, message, re
     for (let turn = 0; turn < MAX_TOOL_TURNS; turn++) {
         const response = await anthropic.messages.create({
             model: keys.anthropicModel,
-            // Antes 2048 — verificado en vivo que una rutina de varios
-            // días/semanas con ejercicios reales trunca el tool_use de
-            // create_routine a medio JSON (stop_reason 'max_tokens'), lo
-            // que además revienta la SIGUIENTE llamada a la API (un
-            // tool_use sin su tool_result es inválido). Mismo valor que
-            // ya usa el generador dedicado (runTrainingPlanGeneration)
-            // para el mismo tipo de payload grande.
-            max_tokens: 8192,
+            // Antes 2048, luego 8192 — verificado en vivo (ver
+            // runTrainingPlanGeneration) que 8192 seguía truncando un
+            // create_routine con varios días/bloques a medio JSON
+            // (stop_reason 'max_tokens'), lo que además revienta la
+            // SIGUIENTE llamada a la API (un tool_use sin su tool_result
+            // es inválido). Mismo valor que el generador dedicado.
+            max_tokens: 24576,
             system: systemPrompt,
             tools: TOOL_DEFINITIONS,
             messages: anthropicMessages
@@ -349,6 +348,17 @@ async function runChatTurn(jobId, id_company, trainerName, messages, message, re
                         const pd = (block.input && block.input.plan_data) || null;
                         if (pd) {
                             const weeks = Array.isArray(pd.weeks) ? pd.weeks : [];
+                            // Respaldo a nivel código de la regla de arriba
+                            // (una sola semana por chat) — la instrucción
+                            // del prompt es solo una sugerencia para
+                            // Claude, no algo que la API valide; este tope
+                            // duro evita que un mesociclo de más de 8
+                            // semanas (pedido directo o por error del
+                            // modelo) se guarde de todos modos.
+                            const MAX_CHAT_WEEKS = 8;
+                            if (weeks.length > MAX_CHAT_WEEKS) {
+                                throw new Error(`plan_data trae ${weeks.length} semanas — el máximo permitido es ${MAX_CHAT_WEEKS}. Reduce el número de semanas o usa "Crear plan con IA" en la ficha del cliente para un mesociclo largo con progresión real.`);
+                            }
                             const hasContent = weeks.some((w) => w && w.days && Object.values(w.days).some(
                                 (d) => d && Array.isArray(d.blocks) && d.blocks.some((b) => b && Array.isArray(b.exercises) && b.exercises.length > 0)
                             ));
@@ -404,7 +414,11 @@ async function runTrainingPlanGeneration(jobId, id_company, catalog, body) {
     const { clientName, days, objetivo, nivel, zona, equipo, lesiones, notas, freeText, semanas, referenceImage, trainingStyles } = body;
     const dayCount = Math.min(7, Math.max(1, parseInt(days, 10) || 4));
     const assignedDays = weekdaysForCount(dayCount);
-    const semanasSolicitadas = Math.min(12, Math.max(1, parseInt(semanas, 10) || 1));
+    // Antes tope de 12 — mesociclos de esa duración se topaban seguido con
+    // el límite de tokens de salida al armar el plan completo (ver el
+    // truncamiento real que corregimos abajo). 8 semanas es un mesociclo
+    // ya largo en la práctica y deja mucho más margen de seguridad.
+    const semanasSolicitadas = Math.min(8, Math.max(1, parseInt(semanas, 10) || 1));
     const MAX_DISTINCT_WEEKS = 4;
     const distinctWeeks = Math.min(MAX_DISTINCT_WEEKS, semanasSolicitadas);
     const styles = Array.isArray(trainingStyles) ? trainingStyles.filter(Boolean) : [];
@@ -546,7 +560,15 @@ ${JSON.stringify(catalogForPrompt)}`;
 
     const response = await anthropic.messages.create({
         model: keys.anthropicModel,
-        max_tokens: 8192,
+        // Antes 8192 — visto en vivo (job id 59, company 1389): con
+        // distinctWeeks=4 el tool_use de generate_plan a veces se trunca a
+        // medio JSON (stop_reason 'max_tokens') DESPUÉS de completar
+        // "name"/"general_note" pero ANTES de terminar de escribir el
+        // arreglo "weeks" (el campo más pesado, va al final del schema) —
+        // el job terminaba marcado 'done' con weeksTemplate: [] en vez de
+        // fallar con un error claro. 24576 le da mucho más margen real sin
+        // acercarse al techo del modelo.
+        max_tokens: 24576,
         system: systemPrompt,
         tools: [planTool],
         tool_choice: { type: 'tool', name: 'generate_plan' },
@@ -556,7 +578,7 @@ ${JSON.stringify(catalogForPrompt)}`;
         // red colgada deja el job en 'pending' para siempre. maxRetries:0
         // por la misma razón (el SDK reintenta 2 veces por default, lo
         // que triplica en silencio el tiempo real de espera).
-        timeout: 90000,
+        timeout: 120000,
         maxRetries: 0
     });
 
@@ -564,7 +586,17 @@ ${JSON.stringify(catalogForPrompt)}`;
     if (!toolUse) {
         throw new Error('La IA no devolvió un plan válido, intenta de nuevo.');
     }
+    if (response.stop_reason === 'max_tokens') {
+        throw new Error('El plan pedido es demasiado grande para generarse de una sola vez (se cortó a medio armar). Intenta con menos días por semana o menos semanas.');
+    }
     const raw = toolUse.input;
+    const gotWeeks = Array.isArray(raw.weeks) ? raw.weeks.length : 0;
+    if (gotWeeks < distinctWeeks) {
+        // Nunca marcar el job 'done' con un plan a medias — antes esto
+        // pasaba silenciosamente (weeksTemplate quedaba vacío o corto) y
+        // el entrenador veía un plan roto sin ningún aviso de qué pasó.
+        throw new Error(`La IA generó un plan incompleto (${gotWeeks} de ${distinctWeeks} semanas). Intenta de nuevo o reduce los días/semanas pedidos.`);
+    }
 
     // Traducimos los ids a los ejercicios reales completos (con
     // media/thumbnail) y armamos, por cada semana distinta que diseñó
