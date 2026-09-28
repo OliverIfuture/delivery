@@ -99,14 +99,21 @@ module.exports = {
         try {
             const id_company = req.user.mi_store;
             const id_client = req.params.id_client;
+            // ownsClient ya valida contra el id_entrenador REAL de hoy — un
+            // cliente migrado (ver getMyClientRoutines más abajo) pasa esta
+            // validación sin problema. Por eso el SELECT filtra solo por
+            // id_client (no por id_company): las rutinas ya existentes de
+            // ese cliente pueden traer un id_company viejo, de la empresa
+            // con la que se crearon originalmente, y no deben tocarse —
+            // esto es un SELECT, nunca escribe nada en routines.
             if (!(await ownsClient(id_client, id_company))) {
                 return res.status(403).json({ success: false, message: 'Ese cliente no es tuyo.' });
             }
             const rows = await db.manyOrNone(
                 `SELECT id, id_company, id_client, name, description, image, is_active, is_template,
                         rest_time, current_week, plan_data, created_at, updated_at
-                 FROM routines WHERE id_client = $1 AND id_company = $2 ORDER BY updated_at DESC`,
-                [id_client, id_company]
+                 FROM routines WHERE id_client = $1 ORDER BY updated_at DESC`,
+                [id_client]
             );
             return res.status(200).json({ success: true, data: rows });
         } catch (error) {
