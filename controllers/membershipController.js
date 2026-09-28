@@ -275,7 +275,7 @@ module.exports = {
             const clientLimit = plan ? Number(plan.client_limit) : null;
 
             const now = new Date();
-            const expiresAt = company?.membership_expires_at ? new Date(company.membership_expires_at) : null;
+            let expiresAt = company?.membership_expires_at ? new Date(company.membership_expires_at) : null;
             let isExpired = !!expiresAt && expiresAt.getTime() < now.getTime();
             let liveStatus = company?.membership_status || 'inactive';
 
@@ -286,6 +286,23 @@ module.exports = {
                     if (BLOCKING_STATUSES.includes(sub.status)) {
                         isExpired = true;
                         liveStatus = sub.status;
+                    } else if ((sub.status === 'active' || sub.status === 'trialing') && sub.current_period_end) {
+                        // No hay webhook que avise de las RENOVACIONES
+                        // automáticas de esta suscripción (solo del primer
+                        // cobro, ver confirmPayment) — así que aquí, cada
+                        // vez que se consulta el estado real, se
+                        // sincroniza membership_expires_at contra el corte
+                        // real de Stripe. Sin esto, después del primer
+                        // periodo la fecha guardada se queda congelada y
+                        // MembershipExpiredGate.vue terminaría bloqueando a
+                        // un cliente que sigue pagando de verdad.
+                        const stripeExpiresAt = new Date(sub.current_period_end * 1000);
+                        if (!expiresAt || Math.abs(stripeExpiresAt.getTime() - expiresAt.getTime()) > 60000) {
+                            await db.none(`UPDATE company SET membership_expires_at = $2, membership_status = 'active' WHERE id = $1`, [id_company, stripeExpiresAt]);
+                            expiresAt = stripeExpiresAt;
+                        }
+                        isExpired = false;
+                        liveStatus = 'active';
                     }
                 } catch (stripeErr) {
                     console.log(`No se pudo verificar la suscripción real en Stripe: ${stripeErr.message}`);
@@ -303,7 +320,7 @@ module.exports = {
                 data: {
                     plan: plan ? { id: plan.id, name: plan.name, price: Number(plan.price), clientLimit } : null,
                     status: liveStatus,
-                    expiresAt: company?.membership_expires_at || null,
+                    expiresAt: expiresAt ? expiresAt.toISOString() : null,
                     isExpired,
                     daysUntilExpiry,
                     clientCount,
