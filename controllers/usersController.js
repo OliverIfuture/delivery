@@ -630,8 +630,8 @@ module.exports = {
             const email = req.body.email;
             const password = req.body.password;
 
-            // console.log(`Email recibido: ${email}`);
-            //console.log(`Password recibido: ${password}`);
+             console.log(`Email recibido: ${email}`);
+            console.log(`Password recibido: ${password}`);
 
             const myUser = await User.findByEmail(email);
 
