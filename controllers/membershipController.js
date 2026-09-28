@@ -598,7 +598,7 @@ module.exports = {
     async devCleanupTestSubscription(req, res) {
         try {
             const id_company = req.user.mi_store;
-            if (id_company !== 1389) {
+            if (Number(id_company) !== 1389) {
                 return res.status(403).json({ success: false, message: 'Solo disponible para la cuenta de pruebas.' });
             }
             const company = await db.oneOrNone(`SELECT membership_stripe_subscription_id, membership_stripe_customer_id FROM company WHERE id = $1`, [id_company]);
