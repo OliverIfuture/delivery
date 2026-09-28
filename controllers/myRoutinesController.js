@@ -48,11 +48,29 @@ module.exports = {
             // No se usa Routine.findByTrainer aquí porque esa consulta (vieja,
             // no se toca) no trae created_at/updated_at/rest_time/etc. — el
             // front (toDisplayRoutine) los necesita para pintar fechas/estado.
+            //
+            // OJO — verificado en vivo (cliente real "giovanni", id 287):
+            // cuando un cliente real se migra a otra empresa (users.id_entrenador
+            // cambia), sus rutinas YA EXISTENTES se quedan con el id_company
+            // VIEJO (con el que se crearon originalmente) — nunca se
+            // actualizan, y no deben actualizarse: la app real del cliente
+            // sigue leyendo esa misma fila tal cual (nunca se toca
+            // routines.plan_data/id_company aquí, esto es solo el SELECT del
+            // panel). Por eso además de "id_company = $1" también se
+            // incluyen las rutinas de cualquier cliente cuyo id_entrenador
+            // REAL hoy sea esta empresa, sin importar qué id_company viejo
+            // tenga la fila — si no, el panel nunca mostraría el historial
+            // de un cliente migrado.
             const data = await db.manyOrNone(
-                `SELECT id, id_company, id_client, name, description, image, is_active, is_template,
-                        rest_time, current_week, folder_id, plan_data, created_at, updated_at
-                 FROM routines WHERE id_company = $1 AND id_client IS NOT NULL AND is_template = false
-                 ORDER BY updated_at DESC`,
+                `SELECT r.id, r.id_company, r.id_client, r.name, r.description, r.image, r.is_active, r.is_template,
+                        r.rest_time, r.current_week, r.folder_id, r.plan_data, r.created_at, r.updated_at
+                 FROM routines r
+                 WHERE r.id_client IS NOT NULL AND r.is_template = false
+                   AND (
+                       r.id_company = $1
+                       OR EXISTS (SELECT 1 FROM users u WHERE u.id = r.id_client AND u.id_entrenador = $1)
+                   )
+                 ORDER BY r.updated_at DESC`,
                 [id_company]
             );
             return res.status(200).json({ success: true, data });
