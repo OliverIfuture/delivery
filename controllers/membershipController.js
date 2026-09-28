@@ -25,6 +25,21 @@ const PLATFORM_FEE_PERCENT = '9.5';
 // gracia (ver activateAddon) — se cobra de inmediato al activarlo.
 const MEMBERSHIP_TRIAL_DAYS = 5;
 
+// Antes PLATFORM_FEE_PERCENT solo viajaba como metadata informativa (ver
+// nota arriba de createCheckout) — el dinero completo se quedaba en la
+// cuenta admin (COBI) sin ningún movimiento real. Pedido explícito:
+// transferir de verdad el (100 - PLATFORM_FEE_PERCENT)% de cada cobro
+// (primer pago Y renovaciones automáticas, transfer_data es una
+// propiedad de la suscripción, no de un solo invoice) a esta cuenta de
+// Stripe Connect — COBI se queda con el PLATFORM_FEE_PERCENT restante.
+// Hardcodeado a propósito por ahora (pedido explícito) — si en el futuro
+// hay que hacerlo configurable, sacarlo a keys.js o a una tabla real.
+const MEMBERSHIP_PAYOUT_DESTINATION_ACCOUNT_ID = 'acct_1ShJ6XFREGUwQ83V';
+const MEMBERSHIP_TRANSFER_DATA = {
+    destination: MEMBERSHIP_PAYOUT_DESTINATION_ACCOUNT_ID,
+    amount_percent: 100 - Number(PLATFORM_FEE_PERCENT)
+};
+
 module.exports = {
 
     // PÚBLICO — se usa durante el registro, antes de que exista la cuenta.
@@ -97,6 +112,7 @@ module.exports = {
                 payment_behavior: 'default_incomplete',
                 payment_settings: { save_default_payment_method: 'on_subscription' },
                 expand: ['latest_invoice.payment_intent'],
+                transfer_data: MEMBERSHIP_TRANSFER_DATA,
                 metadata: {
                     type: 'membership_payment',
                     id_company: String(id_company),
@@ -562,6 +578,7 @@ module.exports = {
                 default_payment_method: paymentMethodId,
                 payment_behavior: 'error_if_incomplete',
                 collection_method: 'charge_automatically',
+                transfer_data: MEMBERSHIP_TRANSFER_DATA,
                 metadata: { type: 'membership_addon', id_company: String(id_company), id_addon: addon.id }
             });
 
