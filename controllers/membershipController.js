@@ -588,6 +588,31 @@ module.exports = {
             console.log(`Error en membershipController.cancelMembership: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al cancelar tu membresía', error: error.message });
         }
+    },
+
+    // TEMPORAL — limpieza de una suscripción de prueba 'incomplete' (nunca
+    // pagada) creada al verificar el flujo de "primer checkout" en la
+    // cuenta de pruebas (company 1389). Cancela de verdad en Stripe y
+    // borra los ids en company para dejarla como antes de la prueba.
+    // Quitar este endpoint y su ruta una vez usado.
+    async devCleanupTestSubscription(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            if (id_company !== 1389) {
+                return res.status(403).json({ success: false, message: 'Solo disponible para la cuenta de pruebas.' });
+            }
+            const company = await db.oneOrNone(`SELECT membership_stripe_subscription_id, membership_stripe_customer_id FROM company WHERE id = $1`, [id_company]);
+            if (company?.membership_stripe_subscription_id) {
+                await stripe.subscriptions.cancel(company.membership_stripe_subscription_id).catch((e) => console.log('cancel sub:', e.message));
+            }
+            if (company?.membership_stripe_customer_id) {
+                await stripe.customers.del(company.membership_stripe_customer_id).catch((e) => console.log('del customer:', e.message));
+            }
+            await db.none(`UPDATE company SET membership_stripe_subscription_id = NULL, membership_stripe_customer_id = NULL WHERE id = $1`, [id_company]);
+            return res.status(200).json({ success: true, message: 'Limpiado.' });
+        } catch (error) {
+            return res.status(501).json({ success: false, message: 'Error al limpiar', error: error.message });
+        }
     }
 
 };

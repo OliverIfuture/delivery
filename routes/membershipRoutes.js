@@ -34,4 +34,7 @@ module.exports = (app, upload) => {
     app.post('/api/membership/addons/deactivate', passport.authenticate('jwt', { session: false }), membershipController.deactivateAddon);
     app.post('/api/membership/cancel', passport.authenticate('jwt', { session: false }), membershipController.cancelMembership);
 
+    // TEMPORAL — ver nota en el controller, quitar junto con esta línea.
+    app.post('/api/membership/dev-cleanup-test-subscription', passport.authenticate('jwt', { session: false }), membershipController.devCleanupTestSubscription);
+
 };
