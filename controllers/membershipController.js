@@ -309,7 +309,16 @@ module.exports = {
                     clientCount,
                     clientLimit,
                     isOverClientLimit: clientLimit != null && clientCount >= clientLimit,
-                    activeAddons: activeAddons.map((a) => ({ id: a.id_addon, name: a.name, price: Number(a.price) }))
+                    activeAddons: activeAddons.map((a) => ({ id: a.id_addon, name: a.name, price: Number(a.price) })),
+                    // Cuentas migradas/antiguas tienen membership_plan (ej.
+                    // 'fundador') pero NUNCA pasaron por /membership/checkout
+                    // -> no tienen membership_stripe_subscription_id. El
+                    // frontend usa esto para decidir si "elegir un plan"
+                    // debe iniciar un checkout nuevo (con Payment Element,
+                    // primera tarjeta) en vez de intentar actualizar una
+                    // suscripción de Stripe que no existe (cambiar de plan
+                    // sí la requiere).
+                    hasStripeSubscription: !!company?.membership_stripe_subscription_id
                 }
             });
         } catch (error) {
