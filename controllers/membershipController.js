@@ -278,10 +278,24 @@ module.exports = {
             let expiresAt = company?.membership_expires_at ? new Date(company.membership_expires_at) : null;
             let isExpired = !!expiresAt && expiresAt.getTime() < now.getTime();
             let liveStatus = company?.membership_status || 'inactive';
+            // Por defecto, igual que antes: "tiene suscripción" = hay un id
+            // guardado. Se corrige abajo si Stripe dice que ese id nunca
+            // llegó a completar el primer pago (ver 'incomplete').
+            let hasStripeSubscription = !!company?.membership_stripe_subscription_id;
 
             if (company?.membership_stripe_subscription_id) {
                 try {
                     const sub = await stripe.subscriptions.retrieve(company.membership_stripe_subscription_id);
+                    // Un checkout abandonado a medias (el entrenador cerró
+                    // sin terminar de capturar la tarjeta) deja el id
+                    // guardado pero la suscripción real nunca cobró nada —
+                    // sin esto, "elegir un plan" se veía como
+                    // "Actualizar plan" (falla al no haber nada que
+                    // actualizar de verdad) en vez de ofrecer un checkout
+                    // nuevo otra vez.
+                    if (sub.status === 'incomplete' || sub.status === 'incomplete_expired') {
+                        hasStripeSubscription = false;
+                    }
                     const BLOCKING_STATUSES = ['past_due', 'unpaid', 'canceled', 'incomplete_expired'];
                     if (BLOCKING_STATUSES.includes(sub.status)) {
                         isExpired = true;
@@ -335,7 +349,7 @@ module.exports = {
                     // primera tarjeta) en vez de intentar actualizar una
                     // suscripción de Stripe que no existe (cambiar de plan
                     // sí la requiere).
-                    hasStripeSubscription: !!company?.membership_stripe_subscription_id
+                    hasStripeSubscription
                 }
             });
         } catch (error) {
