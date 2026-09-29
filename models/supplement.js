@@ -51,8 +51,11 @@ Supplement.create = (s) => {
     ]);
 };
 
+// Antes db.none (no regresaba nada) — igual que MasterIngredient.update,
+// el frontend terminaba mezclando el FORM crudo (con la URL de imagen
+// vieja) en vez de la fila real ya actualizada.
 Supplement.update = (id, s) => {
-    return db.none(`
+    return db.one(`
         UPDATE supplements_v2 SET
             name = $2, brand = $3, category = $4, format = $5, image_url = $6,
             portion_qty = $7, portion_unit = $8, portion_weight = $9, provides_calories = $10,
@@ -60,6 +63,7 @@ Supplement.update = (id, s) => {
             timing = $16, frequency = $17, usage_notes = $18, allergens = $19::jsonb, warnings = $20::jsonb,
             updated_at = now()
         WHERE id = $1
+        RETURNING ${COLUMNS}
     `, [
         id, s.name, s.brand || null, s.category || null, s.format || null, s.image_url || null,
         s.portion_qty || null, s.portion_unit || null, s.portion_weight || null, !!s.provides_calories,

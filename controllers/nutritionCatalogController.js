@@ -91,7 +91,7 @@ module.exports = {
                 image_url = await storage(files[0], `master_ingredients/company_${id_company}_${Date.now()}`);
             }
 
-            await MasterIngredient.update(body.id, {
+            const updated = await MasterIngredient.update(body.id, {
                 name: body.name,
                 unit: body.unit,
                 base_qty: numOrZero(body.base_qty) || 100,
@@ -103,7 +103,7 @@ module.exports = {
                 image_url,
                 brand: body.brand
             });
-            return res.status(200).json({ success: true, message: 'Ingrediente actualizado.' });
+            return res.status(200).json({ success: true, message: 'Ingrediente actualizado.', data: updated });
         } catch (error) {
             console.log(`Error en nutritionCatalogController.updateMyIngredient: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al actualizar el ingrediente' });
@@ -289,8 +289,8 @@ module.exports = {
                 image_url = await storage(files[0], `supplements/company_${id_company}_${Date.now()}`);
             }
 
-            await Supplement.update(body.id, { ...body, image_url });
-            return res.status(200).json({ success: true, message: 'Suplemento actualizado.' });
+            const updated = await Supplement.update(body.id, { ...body, image_url });
+            return res.status(200).json({ success: true, message: 'Suplemento actualizado.', data: updated });
         } catch (error) {
             console.log(`Error en nutritionCatalogController.updateMySupplement: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al actualizar el suplemento' });

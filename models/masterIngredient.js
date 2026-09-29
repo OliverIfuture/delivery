@@ -50,12 +50,18 @@ MasterIngredient.create = (ing) => {
     ]);
 };
 
+// Antes db.none (no regresaba nada) — el frontend terminaba mezclando el
+// FORM crudo (con la URL de imagen VIEJA, mandada a propósito para no
+// perderla si no se subió una nueva) en vez de la fila real ya
+// actualizada. Reportado en vivo: al editar con una foto nueva, el panel
+// se quedaba con la imagen anterior hasta refrescar.
 MasterIngredient.update = (id, ing) => {
-    return db.none(`
+    return db.one(`
         UPDATE master_ingredients
         SET name = $2, unit = $3, base_qty = $4, calories = $5, protein = $6, carbs = $7, fats = $8,
             category = $9, image_url = $10, brand = $11
         WHERE id = $1
+        RETURNING id, id_company, name, unit, base_qty, calories, protein, carbs, fats, category, image_url, brand, created_at
     `, [
         id, ing.name, ing.unit || 'g', ing.base_qty ?? 100,
         ing.calories ?? 0, ing.protein ?? 0, ing.carbs ?? 0, ing.fats ?? 0,
