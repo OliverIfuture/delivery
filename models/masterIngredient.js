@@ -14,6 +14,23 @@ const db = require('../config/config.js');
 
 const MasterIngredient = {};
 
+// Reportado en vivo: un ingrediente con foto real (ej. "nuveo", id 538,
+// image_url real en la fila) seguía mostrando el placeholder en el panel
+// después de recargar. Causa real: el catálogo completo se leía con
+// Diet.findByCompanyMasetr (vieja, no se toca) — su SELECT lista columnas
+// a mano y nunca se actualizó cuando category/image_url/brand se agregaron
+// a la tabla (ALTER TABLE posterior), así que esas columnas nunca
+// llegaban ni al backend. Esta función nueva sí las trae; mismo filtro
+// (id_company propio o NULL = catálogo global) y orden que la vieja.
+MasterIngredient.findByCompany = (id_company) => {
+    return db.manyOrNone(`
+        SELECT id, id_company, name, unit, base_qty, calories, protein, carbs, fats, category, image_url, brand, created_at
+        FROM master_ingredients
+        WHERE id_company = $1 OR id_company IS NULL
+        ORDER BY name ASC
+    `, [id_company]);
+};
+
 MasterIngredient.findById = (id) => {
     return db.oneOrNone(`
         SELECT id, id_company, name, unit, base_qty, calories, protein, carbs, fats, category, image_url, brand, created_at

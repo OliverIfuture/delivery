@@ -35,7 +35,7 @@ module.exports = {
         try {
             const id_company = req.user.mi_store;
             if (!id_company) return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
-            const rows = await Diet.findByCompanyMasetr(id_company);
+            const rows = await MasterIngredient.findByCompany(id_company);
             return res.status(200).json({ success: true, data: rows });
         } catch (error) {
             console.log(`Error en nutritionCatalogController.getMyIngredients: ${error}`);
