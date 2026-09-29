@@ -19,14 +19,25 @@ const db = require('../config/config.js');
 const Routine = require('../models/routine.js');
 const RoutineFolder = require('../models/routineFolder.js');
 
-async function ownsRoutine(id_routine, id_company) {
-    const row = await db.oneOrNone('SELECT id_company FROM routines WHERE id = $1', [id_routine]);
-    return !!row && Number(row.id_company) === Number(id_company);
-}
-
 async function ownsClient(id_client, id_company) {
     const row = await db.oneOrNone('SELECT id_entrenador FROM users WHERE id = $1', [id_client]);
     return !!row && Number(row.id_entrenador) === Number(id_company);
+}
+
+// Reportado en vivo: "Esa rutina no es tuya" al intentar GUARDAR (no solo
+// listar) la rutina de un cliente real migrado a otra empresa — mismo caso
+// que getMyClientRoutines/getClientRoutines (ver ahí): la rutina se queda
+// con el id_company viejo, con el que se creó, y nunca se actualiza. Antes
+// esta función solo miraba routines.id_company; ahora también acepta la
+// rutina si su id_client pertenece HOY a esta empresa (mismo criterio que
+// ownsClient) — sin eso, editar/activar/borrar el historial de un cliente
+// migrado quedaba bloqueado aunque ya se pudiera VER en el panel.
+async function ownsRoutine(id_routine, id_company) {
+    const row = await db.oneOrNone('SELECT id_company, id_client FROM routines WHERE id = $1', [id_routine]);
+    if (!row) return false;
+    if (Number(row.id_company) === Number(id_company)) return true;
+    if (row.id_client) return ownsClient(row.id_client, id_company);
+    return false;
 }
 
 async function ownsFolder(id_folder, id_company) {
