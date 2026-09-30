@@ -411,7 +411,13 @@ async function runChatTurn(jobId, id_company, trainerName, messages, message, re
 }
 
 async function runTrainingPlanGeneration(jobId, id_company, catalog, body) {
-    const { clientName, days, objetivo, nivel, zona, equipo, lesiones, notas, freeText, semanas, referenceImage, trainingStyles } = body;
+    const { clientName, days, objetivo, nivel, zona, equipo, lesiones, notas, freeText, semanas, referenceImage, trainingStyles, weightUnit, intensityMetric } = body;
+    // Unidad/métrica que el entrenador ya usa en el editor de series real
+    // (ver SetConfigModal.vue: exercise.weightUnit/exercise.intensityMetric)
+    // — es una preferencia GLOBAL del entrenador, no algo que decida Claude
+    // por ejercicio, así que se fija aquí y se aplica igual a todos.
+    const planWeightUnit = weightUnit === 'lb' ? 'lb' : 'kg';
+    const planIntensityMetric = intensityMetric === 'RPE' ? 'RPE' : 'RIR';
     const dayCount = Math.min(7, Math.max(1, parseInt(days, 10) || 4));
     const assignedDays = weekdaysForCount(dayCount);
     // Antes tope de 12 — mesociclos de esa duración se topaban seguido con
@@ -484,9 +490,20 @@ MUY IMPORTANTE — sobrecarga progresiva real: vas a diseñar ${distinctWeeks} s
 - Lesiones o limitaciones: ${lesiones || 'ninguna reportada'}
 - Notas del entrenador (instrucción directa, síguela literalmente): ${notas || 'ninguna'}
 - Instrucción libre adicional: ${freeText || 'ninguna'}
+- Métrica de intensidad a prescribir por ejercicio: ${planIntensityMetric} (respeta el rango indicado en el schema del campo "rir")
 
 Catálogo de ejercicios disponibles (usa solo estos ids):
 ${JSON.stringify(catalogForPrompt)}`;
+
+    // Mismo catálogo fijo de técnicas de intensificación que ya usa el
+    // editor manual de series (ver TECHNIQUES en SetConfigModal.vue del
+    // frontend) — se duplica aquí a propósito (sin import cruzado
+    // frontend/backend) para que los "key" que la IA puede devolver
+    // siempre sean exactamente los que el editor sabe mostrar.
+    const TECHNIQUE_KEYS = [
+        'normal', 'dropset', 'restpause', 'cluster', 'myoreps', 'dropset_mecanico',
+        'parciales_final', 'tempo_controlado', 'isometria_final', 'negativas_asistidas', 'reps_forzadas'
+    ];
 
     const exerciseItemSchema = {
         type: 'object',
@@ -496,7 +513,18 @@ ${JSON.stringify(catalogForPrompt)}`;
             reps: { type: 'string', description: 'Ej. "8-12". Vacío si el ejercicio es por tiempo.' },
             rest_seconds: { type: 'string' },
             time_seconds: { type: 'string', description: 'Solo para ejercicios de cardio/tiempo (ej. caminadora, bici).' },
-            note: { type: 'string' }
+            note: { type: 'string' },
+            rir: {
+                type: 'integer',
+                description: planIntensityMetric === 'RPE'
+                    ? 'Esfuerzo prescrito en escala RPE (6-10, donde 10 es al fallo absoluto). Elige un valor realista según el objetivo/nivel.'
+                    : 'Repeticiones en reserva (RIR) prescritas, de 0 a 4 (0 = al fallo). Elige un valor realista según el objetivo/nivel.'
+            },
+            technique: {
+                type: 'string',
+                enum: TECHNIQUE_KEYS,
+                description: 'Técnica de intensificación para la ÚLTIMA serie de este ejercicio únicamente (las demás series son normales). "normal" si no aplica ninguna — NO abuses de técnicas avanzadas, resérvalas para ejercicios de aislamiento/accesorios, nunca para el levantamiento pesado/compuesto principal del día.'
+            }
         },
         required: ['exercise_id', 'sets']
     };
@@ -636,12 +664,24 @@ ${JSON.stringify(catalogForPrompt)}`;
                                 thumbnail_url: catEx.thumbnail_url || '',
                                 description: catEx.description || '',
                                 notes: '',
-                                sets: Array.from({ length: setCount }, () => ({
+                                // Unidad/métrica: preferencia global del entrenador (ver
+                                // planWeightUnit/planIntensityMetric arriba), no algo que
+                                // decida Claude. El peso en sí se deja vacío a propósito —
+                                // un número de carga inventado sin el historial real del
+                                // cliente sería un dato fabricado, no una prescripción real.
+                                weightUnit: planWeightUnit,
+                                intensityMetric: planIntensityMetric,
+                                sets: Array.from({ length: setCount }, (_, i) => ({
                                     reps: byTime ? '' : (ex.reps || ''),
                                     rest: ex.rest_seconds || '',
                                     time: byTime ? (ex.time_seconds || '900') : '',
                                     weight: '',
-                                    comment: ex.note || ''
+                                    comment: ex.note || '',
+                                    rir: Number.isFinite(Number(ex.rir)) ? String(ex.rir) : '',
+                                    // La técnica de intensificación (si la IA eligió una) solo
+                                    // aplica a la ÚLTIMA serie — el resto quedan normales, igual
+                                    // que lo prescribiría un entrenador real.
+                                    technique: (i === setCount - 1 && ex.technique) ? ex.technique : 'normal'
                                 }))
                             };
                         })
