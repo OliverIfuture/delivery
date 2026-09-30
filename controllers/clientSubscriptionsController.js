@@ -1415,6 +1415,117 @@ async stripeWebhook12(req, res, next) {
         }
     },
 
+    // =============================================================================
+    // NUEVO — pasar una membresía de transferencia (manual) a domiciliada
+    // (COBI/Stripe real). No se puede forzar un cobro con tarjeta desde el
+    // panel del entrenador (PCI) — el cliente tiene que completarlo él
+    // mismo. Genera un Checkout Session real de Stripe (hospedado por
+    // Stripe, no por nosotros) para el MISMO plan que ya tenía, y se le
+    // manda ese enlace al cliente (WhatsApp/email) fuera de la app.
+    //
+    // Mismo patrón de Connect (transfer_data + application_fee_percent 4.5%
+    // con la propia stripeSecretKey del entrenador) que ya usa
+    // createSubscriptionIntentAutom (arriba) para suscripciones reales
+    // nuevas — no se inventa un esquema de cobro distinto.
+    //
+    // La metadata de subscription_data usa EXACTAMENTE las mismas llaves
+    // que ya espera el webhook existente para 'client_subscription_payment'
+    // (ver invoice.payment_succeeded arriba) — así la suscripción real que
+    // resulte se guarda sola en client_subscriptions sin tocar ese switch
+    // para nada. old_manual_subscription_id es la única llave extra, y la
+    // usa confirmDomiciliation (abajo) para cancelar la membresía manual
+    // vieja una vez que el pago se confirma.
+    async createDomiciliationLink(req, res) {
+        try {
+            const { id_subscription } = req.body;
+            const id_company = req.user.mi_store;
+            if (!id_subscription || !id_company) {
+                return res.status(400).json({ success: false, message: 'Falta id_subscription o no tienes una compañía asignada.' });
+            }
+
+            const sub = await ClientSubscription.findByIdFull(id_subscription);
+            if (!sub || String(sub.id_company) !== String(id_company)) {
+                return res.status(404).json({ success: false, message: 'Membresía no encontrada.' });
+            }
+            if (classifySubscription(sub.stripe_subscription_id) !== 'manual') {
+                return res.status(400).json({ success: false, message: 'Esta membresía ya es domiciliada.' });
+            }
+
+            const SubscriptionPlan = require('../models/subscriptionPlan.js');
+            const plan = await SubscriptionPlan.findById(sub.id_plan, id_company);
+            if (!plan) {
+                return res.status(404).json({ success: false, message: 'El plan de esta membresía ya no existe.' });
+            }
+            if (!plan.stripe_price_id) {
+                return res.status(400).json({ success: false, message: 'Este plan todavía no tiene un precio de Stripe configurado — créalo primero en Suscripción > Planes.' });
+            }
+
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeSecretKey || !company.stripeAccountId) {
+                return res.status(400).json({ success: false, message: 'Todavía no tienes pagos con tarjeta configurados (Stripe Connect).' });
+            }
+
+            const clientRow = await db.oneOrNone('SELECT email FROM users WHERE id = $1', [sub.id_client]);
+            if (!clientRow || !clientRow.email) {
+                return res.status(404).json({ success: false, message: 'No se encontró el email de este cliente.' });
+            }
+
+            const stripeInstance = require('stripe')(company.stripeSecretKey);
+            const baseUrl = 'https://thetrainer-app.site';
+            const session = await stripeInstance.checkout.sessions.create({
+                mode: 'subscription',
+                line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+                customer_email: clientRow.email.toLowerCase(),
+                success_url: `${baseUrl}/api/subscriptions/confirmDomiciliation?session_id={CHECKOUT_SESSION_ID}&old_subscription_id=${sub.id}&id_company=${id_company}`,
+                cancel_url: `${baseUrl}/newdash/domiciliacion/cancelado`,
+                subscription_data: {
+                    transfer_data: { destination: company.stripeAccountId },
+                    application_fee_percent: 4.5,
+                    metadata: {
+                        type: 'client_subscription_payment',
+                        id_company: String(id_company),
+                        id_plan: String(sub.id_plan),
+                        duration_days: String(plan.durationInDays || 30),
+                        temp_email: clientRow.email.toLowerCase(),
+                        old_manual_subscription_id: String(sub.id)
+                    }
+                }
+            });
+
+            return res.status(200).json({ success: true, url: session.url });
+        } catch (error) {
+            console.log(`Error en createDomiciliationLink: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al generar el enlace de domiciliación', error: error.message });
+        }
+    },
+
+    // Redirect público (sin JWT — lo abre el CLIENTE desde el navegador,
+    // no el entrenador) al que Stripe manda tras completar el Checkout de
+    // arriba. Confirma el pago y cancela la membresía manual vieja para
+    // que nunca queden dos membresías activas del mismo cliente — el
+    // webhook (invoice.payment_succeeded, sin tocar) ya se encarga de
+    // crear la fila real nueva por su cuenta, esto solo limpia la vieja.
+    async confirmDomiciliation(req, res) {
+        try {
+            const { session_id, old_subscription_id, id_company } = req.query;
+            const fallback = 'https://thetrainer-app.site/newdash/domiciliacion/error';
+            if (!session_id || !old_subscription_id || !id_company) return res.redirect(fallback);
+
+            const company = await User.findCompanyById(id_company);
+            if (!company || !company.stripeSecretKey) return res.redirect(fallback);
+
+            const stripeInstance = require('stripe')(company.stripeSecretKey);
+            const session = await stripeInstance.checkout.sessions.retrieve(session_id);
+            if (session.payment_status !== 'paid' && session.status !== 'complete') return res.redirect(fallback);
+
+            await ClientSubscription.setStatusById(old_subscription_id, 'canceled');
+            return res.redirect('https://thetrainer-app.site/newdash/domiciliacion/exito');
+        } catch (error) {
+            console.log(`Error en confirmDomiciliation: ${error}`);
+            return res.redirect('https://thetrainer-app.site/newdash/domiciliacion/error');
+        }
+    },
+
 
     async createRecurringRegistrationIntent(req, res, next) {
         try {

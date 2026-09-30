@@ -38,6 +38,12 @@ module.exports = (app) => {
     // NUEVO — activar un prospecto (sin ninguna solicitud pendiente) con un
     // plan elegido a mano por el entrenador. Ver ProspectosView.vue (menú ⋮).
     app.put('/api/subscriptions/activateProspect', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.activateProspect);
+    // NUEVO — generar liga real de Stripe Checkout para pasar una membresía
+    // de transferencia a domiciliada (ver ClientDetailView.vue, switch
+    // "Forma de pago"). confirmDomiciliation es pública a propósito — la
+    // abre el CLIENTE en su navegador tras pagar, no el entrenador.
+    app.post('/api/subscriptions/createDomiciliationLink', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.createDomiciliationLink);
+    app.get('/api/subscriptions/confirmDomiciliation', clientSubscriptionsController.confirmDomiciliation);
     // Cancelar suscripción activa
     app.post('/api/subscriptions/cancel', passport.authenticate('jwt', { session: false }), clientSubscriptionsController.cancelSubscription);
 
