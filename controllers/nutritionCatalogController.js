@@ -231,6 +231,16 @@ module.exports = {
             if (!(await ownsRecipe(id, id_company))) {
                 return res.status(403).json({ success: false, message: 'Esa receta no es tuya.' });
             }
+            // client_diets_v2.id_recipe tiene FK hacia diet_recipes_v2 sin
+            // cascada — si sigue asignada a algún cliente, un DELETE directo
+            // reventaba con la violación de constraint cruda. Avisamos antes.
+            const assignedCount = await Diet.countRecipeAssignments(id);
+            if (assignedCount > 0) {
+                return res.status(409).json({
+                    success: false,
+                    message: `Esta receta está asignada en la dieta de ${assignedCount} cliente${assignedCount === 1 ? '' : 's'} — quítala de ahí antes de eliminarla.`
+                });
+            }
             await Diet.deleteIngredientsMap(id);
             await Diet.deleteRecipe(id);
             return res.status(200).json({ success: true, message: 'Receta eliminada.' });

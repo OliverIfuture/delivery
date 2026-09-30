@@ -364,10 +364,20 @@ ORDER BY cda.created_at DESC
 
 Diet.deleteByClientAndRecipe = (id_client, id_recipe) => {
     const sql = `
-        DELETE FROM client_diets_v2 
+        DELETE FROM client_diets_v2
         WHERE id_client = $1 AND id_recipe = $2
     `;
     return db.none(sql, [id_client, id_recipe]);
+};
+
+// Antes de borrar una receta de diet_recipes_v2 hay que revisar esto —
+// client_diets_v2.id_recipe tiene FK hacia diet_recipes_v2 y no hay
+// ON DELETE CASCADE, así que un DELETE directo sobre una receta todavía
+// asignada revienta con una violación de constraint cruda (500 feo en
+// vez de un aviso claro al entrenador).
+Diet.countRecipeAssignments = (id_recipe) => {
+    return db.one('SELECT COUNT(*)::int AS count FROM client_diets_v2 WHERE id_recipe = $1', [id_recipe])
+        .then(row => row.count);
 };
 
 
