@@ -34,8 +34,13 @@ async function checkClientLimit(id_company) {
     if (clientLimit == null) {
         return { allowed: true, clientCount: null, clientLimit: null, planName: plan?.name || null };
     }
+    // Mismo criterio que getMyMembershipStatus: solo cuenta quien tiene
+    // una membresía vigente AHORA mismo (activa o vencida/past_due) —
+    // cancelada o sin ninguna suscripción (status_plan null) no cuenta,
+    // esos son Prospectos (ver clientsWithMembership/prospects en
+    // useRealClients.js del frontend), no clientes reales contra el límite.
     const clients = await User.getClientsByCompany(id_company);
-    const clientCount = clients.length;
+    const clientCount = clients.filter((c) => c.status_plan === 'active' || c.status_plan === 'past_due').length;
     return { allowed: clientCount < clientLimit, clientCount, clientLimit, planName: plan.name };
 }
 

@@ -288,18 +288,18 @@ module.exports = {
             const company = await User.getCompanyMembershipInfo(id_company);
             const plan = company?.membership_plan ? await MembershipPlan.findById(company.membership_plan) : null;
             // Solo cuenta contra el límite del plan quien de verdad tiene
-            // (o tuvo) una membresía asignada — client_subscriptions, EN
-            // CUALQUIER ESTADO (activa, en prueba, vencida, cancelada...).
-            // Reportado en vivo: un prospecto sin ninguna suscripción
-            // (nunca se le asignó plan) empujaba el conteo por encima del
-            // límite aunque no fuera un cliente real todavía — y la fila
-            // "de sí mismo" (ver models/selfClient.js, is_self_client)
-            // tampoco debe contar nunca.
+            // una membresía vigente AHORA (activa o vencida/past_due) —
+            // cancelada ya no cuenta (ese cliente pasa a Prospectos en el
+            // frontend, ver clientsWithMembership/prospects en
+            // useRealClients.js) ni tampoco quien nunca tuvo ninguna
+            // suscripción — y la fila "de sí mismo" (ver models/
+            // selfClient.js, is_self_client) tampoco cuenta nunca.
             const clientCountRow = await db.one(
                 `SELECT COUNT(DISTINCT u.id)::int AS n
                  FROM users u
                  INNER JOIN client_subscriptions cs ON cs.id_client = u.id
-                 WHERE u.id_entrenador = $1 AND u.is_self_client IS NOT TRUE`,
+                 WHERE u.id_entrenador = $1 AND u.is_self_client IS NOT TRUE
+                   AND cs.status IN ('active', 'past_due')`,
                 [id_company]
             );
             const clientCount = clientCountRow.n;
