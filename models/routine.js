@@ -355,7 +355,7 @@ Routine.activateTemplate = (id_client, id_system_routine) => {
 // semana de plan_data.weeks[] está vigente ahora mismo.
 Routine.findActiveByTrainer = (id_company) => {
     const sql = `
-        SELECT id, id_client, current_week, plan_data
+        SELECT id, id_client, name, current_week, plan_data
         FROM routines
         WHERE id_company = $1 AND is_active = true
     `;

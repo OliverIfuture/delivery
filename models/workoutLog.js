@@ -346,4 +346,17 @@ WorkoutLog.getWeeklyTrainedDaysByCompany = (id_company) => {
     return db.manyOrNone(sql, [id_company]);
 };
 
+// NUEVO — último set registrado por cliente, TODA la historia (no solo
+// esta semana) — para "Última actividad" en la lista de Clientes. Un
+// solo query agregado para toda la empresa, ver clientAdherenceController.js.
+WorkoutLog.getLastActivityByCompany = (id_company) => {
+    const sql = `
+        SELECT id_client, MAX(created_at) AS last_activity
+        FROM workout_logs
+        WHERE id_company = $1
+        GROUP BY id_client
+    `;
+    return db.manyOrNone(sql, [id_company]);
+};
+
 module.exports = WorkoutLog;
