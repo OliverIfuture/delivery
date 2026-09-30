@@ -355,7 +355,11 @@ module.exports = {
                     daysUntilExpiry,
                     clientCount,
                     clientLimit,
-                    isOverClientLimit: clientLimit != null && clientCount >= clientLimit,
+                    // Antes usaba >= — un plan "Hasta N clientes" marcaba a un
+                    // entrenador con EXACTAMENTE N clientes (dentro de lo que
+                    // su plan permite) como "pasado del límite", bloqueándolo
+                    // sin que en realidad se hubiera excedido de nada.
+                    isOverClientLimit: clientLimit != null && clientCount > clientLimit,
                     activeAddons: activeAddons.map((a) => ({ id: a.id_addon, name: a.name, price: Number(a.price) })),
                     // Cuentas migradas/antiguas tienen membership_plan (ej.
                     // 'fundador') pero NUNCA pasaron por /membership/checkout
