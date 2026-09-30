@@ -53,6 +53,30 @@ async function recipeIngredientsSnapshot(id_recipe) {
     }));
 }
 
+// La app del cliente (Flutter, client-diet_page_new.dart) pinta EXACTAMENTE
+// 5 secciones fijas y filtra por igualdad exacta de texto: "Desayuno",
+// "Snack", "Almuerzo", "Merienda", "Cena" — nada más. Reportado en vivo:
+// se agregaron 3 recetas a cada uno de los 4 tiempos de comida por
+// default del plan ("Desayuno", "Comida", "Colación", "Cena", ver
+// defaultMealTimes() en useNutritionCalc.js del frontend) y solo
+// aparecían Desayuno y Cena — "Comida"/"Colación" no calzan con ninguna
+// de las 5 secciones de la app, así que esas recetas quedaban guardadas
+// pero invisibles. Es solo lectura del lado de la app (no se toca ese
+// código) — el fix va aquí, mapeando al nombre canónico antes de guardar.
+const MEAL_CATEGORY_TO_APP_CANONICAL = {
+    'Desayuno': 'Desayuno',
+    'Comida': 'Almuerzo',
+    'Almuerzo': 'Almuerzo',
+    'Colación': 'Snack',
+    'Colacion': 'Snack',
+    'Snack': 'Snack',
+    'Merienda': 'Merienda',
+    'Cena': 'Cena'
+};
+function toAppCanonicalMealCategory(name) {
+    return MEAL_CATEGORY_TO_APP_CANONICAL[name] || name;
+}
+
 // Traduce las sugerencias de menú del plan (recetas reales ya elegidas por
 // tiempo de comida, ver generateMealSuggestions en useNutritionAi.js del
 // frontend) al formato que ya espera Diet.assignMultiple — mismo mecanismo
@@ -61,7 +85,7 @@ async function recipeIngredientsSnapshot(id_recipe) {
 async function buildAssignmentsFromPlan(plan) {
     const grams = planMacroGrams(plan.target_kcal, plan.macro_percents);
     const mealNameById = {};
-    (plan.meal_times || []).forEach((m) => { mealNameById[m.id] = m.name; });
+    (plan.meal_times || []).forEach((m) => { mealNameById[m.id] = toAppCanonicalMealCategory(m.name); });
 
     const picks = [];
     const suggestions = plan.suggestions || {};
