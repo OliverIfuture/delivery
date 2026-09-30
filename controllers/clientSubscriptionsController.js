@@ -1456,8 +1456,15 @@ async stripeWebhook12(req, res, next) {
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'El plan de esta membresía ya no existe.' });
             }
-            if (!plan.stripe_price_id) {
-                return res.status(400).json({ success: false, message: 'Este plan todavía no tiene un precio de Stripe configurado — créalo primero en Suscripción > Planes.' });
+            // 'MANUAL' es el valor centinela real que usan
+            // subscriptionPlansController.js/cobiCheckoutController.js para
+            // "este plan no tiene precio de Stripe" — un plan creado solo
+            // para transferencia lo trae así, nunca en null. Sin este
+            // chequeo, Stripe rechazaba 'MANUAL' como price id y el error
+            // que veía el entrenador era el genérico de la 501, sin decir
+            // por qué.
+            if (!plan.stripe_price_id || plan.stripe_price_id === 'MANUAL') {
+                return res.status(400).json({ success: false, message: 'Este plan es solo de transferencia — no tiene un precio de Stripe real. Créalo o edítalo en Suscripción > Planes para poder domiciliarlo.' });
             }
 
             const company = await User.findCompanyById(id_company);
