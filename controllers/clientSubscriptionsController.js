@@ -1437,7 +1437,13 @@ async stripeWebhook12(req, res, next) {
     // vieja una vez que el pago se confirma.
     async createDomiciliationLink(req, res) {
         try {
-            const { id_subscription } = req.body;
+            // id_plan (opcional): el plan actual del cliente puede ser solo
+            // de transferencia (sin precio real de Stripe) — el entrenador
+            // puede elegir en su lugar cualquier otro de SUS planes con
+            // tarjeta ya configurados (mismo listado que ya usa el
+            // frontend para "Crear plan"/Prospectos). Si no se manda, se
+            // usa el plan que la membresía ya tenía.
+            const { id_subscription, id_plan } = req.body;
             const id_company = req.user.mi_store;
             if (!id_subscription || !id_company) {
                 return res.status(400).json({ success: false, message: 'Falta id_subscription o no tienes una compañía asignada.' });
@@ -1452,7 +1458,7 @@ async stripeWebhook12(req, res, next) {
             }
 
             const SubscriptionPlan = require('../models/subscriptionPlan.js');
-            const plan = await SubscriptionPlan.findById(sub.id_plan, id_company);
+            const plan = await SubscriptionPlan.findById(id_plan || sub.id_plan, id_company);
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'El plan de esta membresía ya no existe.' });
             }
@@ -1491,7 +1497,7 @@ async stripeWebhook12(req, res, next) {
                     metadata: {
                         type: 'client_subscription_payment',
                         id_company: String(id_company),
-                        id_plan: String(sub.id_plan),
+                        id_plan: String(plan.id),
                         duration_days: String(plan.durationInDays || 30),
                         temp_email: clientRow.email.toLowerCase(),
                         old_manual_subscription_id: String(sub.id)
