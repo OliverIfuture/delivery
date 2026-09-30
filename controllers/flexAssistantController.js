@@ -491,6 +491,7 @@ MUY IMPORTANTE — sobrecarga progresiva real: vas a diseñar ${distinctWeeks} s
 - Notas del entrenador (instrucción directa, síguela literalmente): ${notas || 'ninguna'}
 - Instrucción libre adicional: ${freeText || 'ninguna'}
 - Métrica de intensidad a prescribir por ejercicio: ${planIntensityMetric} (respeta el rango indicado en el schema del campo "rir")
+- Por cada ejercicio DEBES incluir también "rir" (o RPE, según la métrica), "weight_percent" (0 si no aplica) y "technique" — no los dejes vacíos ni los omitas, son obligatorios en el schema.
 
 Catálogo de ejercicios disponibles (usa solo estos ids):
 ${JSON.stringify(catalogForPrompt)}`;
@@ -517,16 +518,20 @@ ${JSON.stringify(catalogForPrompt)}`;
             rir: {
                 type: 'integer',
                 description: planIntensityMetric === 'RPE'
-                    ? 'Esfuerzo prescrito en escala RPE (6-10, donde 10 es al fallo absoluto). Elige un valor realista según el objetivo/nivel.'
-                    : 'Repeticiones en reserva (RIR) prescritas, de 0 a 4 (0 = al fallo). Elige un valor realista según el objetivo/nivel.'
+                    ? 'OBLIGATORIO. Esfuerzo prescrito en escala RPE (6-10, donde 10 es al fallo absoluto). Elige un valor realista según el objetivo/nivel — nunca lo dejes vacío.'
+                    : 'OBLIGATORIO. Repeticiones en reserva (RIR) prescritas, de 0 a 4 (0 = al fallo). Elige un valor realista según el objetivo/nivel — nunca lo dejes vacío.'
+            },
+            weight_percent: {
+                type: 'integer',
+                description: 'OBLIGATORIO para ejercicios con carga externa (barra, mancuerna, máquina, polea): porcentaje de carga relativa a usar (ej. 70), como referencia de intensidad — el cliente no necesita un 1RM medido, es solo una guía razonable según objetivo/nivel/rango de reps. Usa 0 si el ejercicio es con el propio peso corporal o de cardio/tiempo, donde no aplica.'
             },
             technique: {
                 type: 'string',
                 enum: TECHNIQUE_KEYS,
-                description: 'Técnica de intensificación para la ÚLTIMA serie de este ejercicio únicamente (las demás series son normales). "normal" si no aplica ninguna — NO abuses de técnicas avanzadas, resérvalas para ejercicios de aislamiento/accesorios, nunca para el levantamiento pesado/compuesto principal del día.'
+                description: 'OBLIGATORIO. Técnica de intensificación para la ÚLTIMA serie de este ejercicio únicamente (las demás series son normales) — siempre incluye el campo, usa "normal" si no aplica ninguna. NO abuses de técnicas avanzadas, resérvalas para ejercicios de aislamiento/accesorios, nunca para el levantamiento pesado/compuesto principal del día.'
             }
         },
-        required: ['exercise_id', 'sets']
+        required: ['exercise_id', 'sets', 'rir', 'weight_percent', 'technique']
     };
 
     const dayItemSchema = {
@@ -666,16 +671,20 @@ ${JSON.stringify(catalogForPrompt)}`;
                                 notes: '',
                                 // Unidad/métrica: preferencia global del entrenador (ver
                                 // planWeightUnit/planIntensityMetric arriba), no algo que
-                                // decida Claude. El peso en sí se deja vacío a propósito —
-                                // un número de carga inventado sin el historial real del
-                                // cliente sería un dato fabricado, no una prescripción real.
+                                // decida Claude. El peso en sí NO lo inventa como número
+                                // absoluto (kg/lb) sin el historial real del cliente — en
+                                // cambio la IA prescribe un % de carga relativa (weight_percent,
+                                // ej. "70%"), el mismo modo "Porcentaje" que ya existe en el
+                                // editor manual (ver weightMode en SetConfigModal.vue): una
+                                // referencia real de intensidad sin fingir un 1RM medido.
                                 weightUnit: planWeightUnit,
                                 intensityMetric: planIntensityMetric,
                                 sets: Array.from({ length: setCount }, (_, i) => ({
                                     reps: byTime ? '' : (ex.reps || ''),
                                     rest: ex.rest_seconds || '',
                                     time: byTime ? (ex.time_seconds || '900') : '',
-                                    weight: '',
+                                    weight: (!byTime && Number(ex.weight_percent) > 0) ? String(Math.round(Number(ex.weight_percent))) : '',
+                                    weightMode: (!byTime && Number(ex.weight_percent) > 0) ? 'percent' : 'fixed',
                                     comment: ex.note || '',
                                     rir: Number.isFinite(Number(ex.rir)) ? String(ex.rir) : '',
                                     // La técnica de intensificación (si la IA eligió una) solo
