@@ -287,7 +287,13 @@ module.exports = {
             const company = await User.getCompanyMembershipInfo(id_company);
             const plan = company?.membership_plan ? await MembershipPlan.findById(company.membership_plan) : null;
             const clients = await User.getClientsByCompany(id_company);
-            const clientCount = clients.length;
+            // El entrenador puede tener una fila "de sí mismo" (ver
+            // models/selfClient.js, is_self_client) para poder programarse
+            // rutinas/nutrición a él mismo — no debe contar contra el
+            // límite de clientes de su plan. getClientsByCompany
+            // (pre-existente) no trae esa columna, así que se cuenta aparte.
+            const selfClientRow = await db.oneOrNone('SELECT id FROM users WHERE id_entrenador = $1 AND is_self_client = true', [id_company]);
+            const clientCount = clients.length - (selfClientRow ? 1 : 0);
             const clientLimit = plan ? Number(plan.client_limit) : null;
 
             const now = new Date();

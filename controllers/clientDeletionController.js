@@ -16,6 +16,12 @@ module.exports = {
             if (!client) {
                 return res.status(404).json({ success: false, message: 'Cliente no encontrado.' });
             }
+            // "Tú" (self-client, ver models/selfClient.js) nunca se puede
+            // eliminar — es la fila que le permite al entrenador programarse
+            // rutinas/nutrición a sí mismo.
+            if (client.is_self_client) {
+                return res.status(403).json({ success: false, message: 'No puedes eliminarte a ti mismo de tu lista de clientes.' });
+            }
 
             // 1. Siempre se limpia todo lo que es del panel de entrenador.
             await ClientDeletion.purgeTrainerData(id_client, client.email);

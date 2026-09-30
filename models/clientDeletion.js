@@ -35,7 +35,7 @@ const CROSS_PRODUCT_CHECKS = [
 // nada, y de paso trae su email (hace falta para limpiar user_questionnaires,
 // que no tiene FK a users — se liga por email).
 ClientDeletion.belongsToTrainer = (id_client, id_company) => {
-    return db.oneOrNone(`SELECT id, email FROM users WHERE id = $1 AND id_entrenador = $2`, [id_client, id_company]);
+    return db.oneOrNone(`SELECT id, email, is_self_client FROM users WHERE id = $1 AND id_entrenador = $2`, [id_client, id_company]);
 };
 
 ClientDeletion.getCrossProductActivity = async (id_client) => {
