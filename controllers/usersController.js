@@ -2380,7 +2380,14 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
                 return res.status(403).json({ success: false, message: 'No tienes una compañía asignada.' });
             }
             const data = await User.getClientsByCompany(id_company);
-            return res.status(200).json({ success: true, data });
+            // getClientsByCompany no trae is_self_client (columna nueva,
+            // ver models/selfClient.js) — se marca aquí para que el
+            // frontend pueda fijarlo primero en la lista y ocultar "eliminar".
+            const selfRow = await db.oneOrNone('SELECT id FROM users WHERE id_entrenador = $1 AND is_self_client = true', [id_company]);
+            const withSelfFlag = selfRow
+                ? data.map((c) => (String(c.id) === String(selfRow.id) ? { ...c, is_self_client: true } : c))
+                : data;
+            return res.status(200).json({ success: true, data: withSelfFlag });
         } catch (error) {
             console.log(`Error en getMyClients: ${error}`);
             return res.status(501).json({
