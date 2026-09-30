@@ -83,4 +83,71 @@ NutritionPlan.remove = (id) => {
     return db.none('DELETE FROM nutrition_plans WHERE id = $1', [id]);
 };
 
+// ===================== Efecto real sobre client_diets_v2 =====================
+// Reportado en vivo: al crear un plan nuevo para el mismo cliente, las
+// recetas del plan VIEJO se quedaban asignadas para siempre — Diet.assign
+// Multiple (pre-existente) nunca las limpia, y client_diets_v2 no tenía
+// forma de saber a qué plan pertenecía cada fila. El entrenador veía la
+// UNIÓN de las recetas de TODOS los planes que alguna vez tuvo el cliente
+// en vez de solo las del plan vigente — muy confuso. id_nutrition_plan
+// (columna nueva, aditiva) ahora marca de qué plan viene cada asignación.
+
+// Mismo upsert que Diet.assignMultiple (mismo constraint real
+// id_client+id_recipe+categoría), pero además guarda id_nutrition_plan —
+// no se pudo reusar esa función porque su INSERT no incluye esa columna
+// y es pre-existente (no se toca).
+NutritionPlan.applyRecipeAssignments = (id_nutrition_plan, assignments) => {
+    return db.tx('apply-nutrition-plan-assignments', async (t) => {
+        const queries = assignments.map((a) => t.none(
+            `INSERT INTO client_diets_v2 (
+                id_client, id_recipe, assigned_meal_category, custom_ingredients,
+                final_calories, final_protein, final_carbs, final_fats, notes,
+                id_nutrition_plan, created_at
+            ) VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10, $11)
+            ON CONFLICT (id_client, id_recipe, assigned_meal_category)
+            DO UPDATE SET
+                custom_ingredients = EXCLUDED.custom_ingredients,
+                final_calories = EXCLUDED.final_calories,
+                final_protein = EXCLUDED.final_protein,
+                final_carbs = EXCLUDED.final_carbs,
+                final_fats = EXCLUDED.final_fats,
+                notes = EXCLUDED.notes,
+                id_nutrition_plan = EXCLUDED.id_nutrition_plan`,
+            [
+                a.id_client, a.id_recipe, a.assigned_meal_category,
+                JSON.stringify(a.custom_ingredients || []),
+                a.final_calories || 0, a.final_protein || 0, a.final_carbs || 0, a.final_fats || 0,
+                a.notes || '', id_nutrition_plan, new Date()
+            ]
+        ));
+        if (assignments.length) {
+            const first = assignments[0];
+            queries.push(t.none(
+                'UPDATE users SET target_protein = $1, target_carbs = $2, target_fats = $3, target_calories = $4 WHERE id = $5',
+                [first.target_protein || 0, first.target_carbs || 0, first.target_fats || 0, first.target_calories || 0, first.id_client]
+            ));
+        }
+        return t.batch(queries);
+    });
+};
+
+// Al activar un plan, las asignaciones de OTROS planes del mismo cliente
+// (los que quedaron desactivados) dejan de ser vigentes — se borran para
+// que el cliente ya no las vea mezcladas con las del plan actual.
+// Asignaciones manuales sueltas (id_nutrition_plan IS NULL, ver
+// assignRecipesToClient/saveRecipeEdit en el frontend) NUNCA se tocan
+// aquí — solo pertenecen a otro plan de nutrición, no a ninguno.
+NutritionPlan.clearOtherPlanAssignments = (id_client, keepPlanId) => {
+    return db.none(
+        'DELETE FROM client_diets_v2 WHERE id_client = $1 AND id_nutrition_plan IS NOT NULL AND id_nutrition_plan != $2',
+        [id_client, keepPlanId]
+    );
+};
+
+// Se usa al guardar un plan como borrador (ya no debe tener efecto real
+// sobre el cliente) y al eliminarlo por completo.
+NutritionPlan.clearAssignmentsForPlan = (id_nutrition_plan) => {
+    return db.none('DELETE FROM client_diets_v2 WHERE id_nutrition_plan = $1', [id_nutrition_plan]);
+};
+
 module.exports = NutritionPlan;

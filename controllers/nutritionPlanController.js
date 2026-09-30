@@ -97,13 +97,21 @@ async function buildAssignmentsFromPlan(plan) {
     }));
 }
 
-// Cuando el plan queda activo, refleja SIEMPRE el objetivo de calorías/
-// macros en users (aunque todavía no haya ninguna receta elegida) y, si ya
-// hay sugerencias reales, también las asigna en client_diets_v2.
-async function applyActivePlanEffects(plan) {
+// Refleja el estado del plan sobre el cliente real. Activo: desactiva las
+// asignaciones (client_diets_v2) de CUALQUIER OTRO plan de este cliente
+// (para no mezclar el menú del plan viejo con el nuevo — antes se quedaban
+// para siempre) y aplica el objetivo de calorías/macros + las recetas de
+// ESTE plan. Borrador: limpia sus propias asignaciones, si tenía — un
+// plan que ya no está activo no debe seguir afectando al cliente.
+async function applyPlanEffects(plan) {
+    if (!plan.active) {
+        await NutritionPlan.clearAssignmentsForPlan(plan.id);
+        return;
+    }
+    await NutritionPlan.clearOtherPlanAssignments(plan.id_client, plan.id);
     const assignments = await buildAssignmentsFromPlan(plan);
     if (assignments.length) {
-        await Diet.assignMultiple(assignments);
+        await NutritionPlan.applyRecipeAssignments(plan.id, assignments);
         return;
     }
     const grams = planMacroGrams(plan.target_kcal, plan.macro_percents);
@@ -138,7 +146,7 @@ module.exports = {
                 return res.status(403).json({ success: false, message: 'Ese cliente no es tuyo.' });
             }
             const created = await NutritionPlan.create({ ...body, id_company });
-            if (created.active) await applyActivePlanEffects(created);
+            await applyPlanEffects(created);
             return res.status(201).json({ success: true, message: 'Plan de nutrición creado.', data: created });
         } catch (error) {
             console.log(`Error en nutritionPlanController.createPlan: ${error}`);
@@ -154,7 +162,7 @@ module.exports = {
                 return res.status(403).json({ success: false, message: 'Ese plan no es tuyo.' });
             }
             const updated = await NutritionPlan.update(body.id, body);
-            if (updated.active) await applyActivePlanEffects(updated);
+            await applyPlanEffects(updated);
             return res.status(200).json({ success: true, message: 'Plan de nutrición actualizado.', data: updated });
         } catch (error) {
             console.log(`Error en nutritionPlanController.updatePlan: ${error}`);
@@ -169,6 +177,7 @@ module.exports = {
             if (!(await ownsPlan(id, id_company))) {
                 return res.status(403).json({ success: false, message: 'Ese plan no es tuyo.' });
             }
+            await NutritionPlan.clearAssignmentsForPlan(id);
             await NutritionPlan.remove(id);
             return res.status(200).json({ success: true, message: 'Plan de nutrición eliminado.' });
         } catch (error) {
