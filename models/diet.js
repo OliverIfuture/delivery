@@ -370,18 +370,6 @@ Diet.deleteByClientAndRecipe = (id_client, id_recipe) => {
     return db.none(sql, [id_client, id_recipe]);
 };
 
-// Antes de borrar una receta de diet_recipes_v2 hay que revisar esto —
-// client_diets_v2.id_recipe tiene FK hacia diet_recipes_v2 y no hay
-// ON DELETE CASCADE, así que un DELETE directo sobre una receta todavía
-// asignada revienta con una violación de constraint cruda (500 feo en
-// vez de un aviso claro al entrenador).
-Diet.countRecipeAssignments = (id_recipe) => {
-    return db.one('SELECT COUNT(*)::int AS count FROM client_diets_v2 WHERE id_recipe = $1', [id_recipe])
-        .then(row => row.count);
-};
-
-
-
 Diet.getAssignedDietByClient = (id_client) => {
     // Esta consulta trae la dieta personalizada exacta que el entrenador armó
     const sql = `
@@ -546,7 +534,7 @@ Diet.findRecipesByCompanyV2 = (id_company) => {
                 WHERE m.id_recipe = r.id
             ) AS ingredients
         FROM diet_recipes_v2 r
-        WHERE r.id_company = $1 OR r.id_company = 1 OR r.id_company IS NULL
+        WHERE (r.id_company = $1 OR r.id_company = 1 OR r.id_company IS NULL) AND r.is_deleted = false
         ORDER BY r.id DESC
     `;
     return db.manyOrNone(sql, [id_company]);
@@ -581,8 +569,15 @@ Diet.updateRecipe = (id, recipe) => {
     ]);
 };
 
+// Soft delete — client_diets_v2.id_recipe tiene FK hacia diet_recipes_v2
+// sin ON DELETE CASCADE, así que un DELETE físico sobre una receta que
+// sigue asignada en la dieta de algún cliente revienta con una violación
+// de constraint cruda. En vez de eso, marcamos is_deleted = true: la
+// receta desaparece del catálogo del entrenador (findRecipesByCompanyV2
+// ya filtra por is_deleted = false) pero el registro sigue existiendo,
+// así que las dietas de clientes que ya la tenían asignada no se rompen.
 Diet.deleteRecipe = (id) => {
-    return db.none('DELETE FROM diet_recipes_v2 WHERE id = $1', [id]);
+    return db.none('UPDATE diet_recipes_v2 SET is_deleted = true WHERE id = $1', [id]);
 };
 
 // Se usa antes de re-insertar con insertIngredientsMap al editar una
