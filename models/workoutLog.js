@@ -327,5 +327,23 @@ WorkoutLog.getLogsLast30Days = (id_client, exercise_id) => {
     return db.manyOrNone(sql, [id_client, exercise_id]);
 };
 
+// NUEVO — días DISTINTOS con al menos un set registrado, por cliente,
+// desde el domingo de la semana en curso (mismo criterio domingo→sábado
+// que trainingStats.js del frontend, para que cuenten lo mismo). Un
+// query agregado para toda la empresa en vez de uno por cliente — ver
+// clientAdherenceController.js.
+WorkoutLog.getWeeklyTrainedDaysByCompany = (id_company) => {
+    const sql = `
+        SELECT id_client, COUNT(DISTINCT (created_at AT TIME ZONE 'America/Tijuana')::date)::int AS days_trained
+        FROM workout_logs
+        WHERE id_company = $1
+          AND (created_at AT TIME ZONE 'America/Tijuana')::date >= (
+              (NOW() AT TIME ZONE 'America/Tijuana')::date
+              - (EXTRACT(DOW FROM (NOW() AT TIME ZONE 'America/Tijuana'))::int)
+          )
+        GROUP BY id_client
+    `;
+    return db.manyOrNone(sql, [id_company]);
+};
 
 module.exports = WorkoutLog;

@@ -349,5 +349,17 @@ Routine.activateTemplate = (id_client, id_system_routine) => {
     });
 };
 
+// NUEVO — solo las rutinas ACTIVAS (una por cliente normalmente) con lo
+// mínimo para calcular "cuántos días de entrenamiento real le tocan esta
+// semana" (ver clientAdherenceController.js): current_week dice cuál
+// semana de plan_data.weeks[] está vigente ahora mismo.
+Routine.findActiveByTrainer = (id_company) => {
+    const sql = `
+        SELECT id, id_client, current_week, plan_data
+        FROM routines
+        WHERE id_company = $1 AND is_active = true
+    `;
+    return db.manyOrNone(sql, [id_company]);
+};
 
 module.exports = Routine;
