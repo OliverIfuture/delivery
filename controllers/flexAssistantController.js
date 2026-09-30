@@ -607,11 +607,19 @@ ${JSON.stringify(catalogForPrompt)}`;
         tool_choice: { type: 'tool', name: 'generate_plan' },
         messages: [{ role: 'user', content: userContent }]
     }, {
-        // Mismo tope defensivo que runChatTurn — sin esto, una llamada de
-        // red colgada deja el job en 'pending' para siempre. maxRetries:0
-        // por la misma razón (el SDK reintenta 2 veces por default, lo
-        // que triplica en silencio el tiempo real de espera).
-        timeout: 120000,
+        // Antes 120000 — confirmado en vivo (visible en el frontend como
+        // "Request timed out.", el mensaje textual que tira el SDK de
+        // Anthropic al vencer ESTE timeout, ver APIConnectionTimeoutError)
+        // que un mesociclo grande (distinctWeeks=4, varios días, y ahora
+        // más campos obligatorios por ejercicio: rir/weight_percent/
+        // technique) puede tardar más de 2 minutos en generarse de verdad,
+        // sin que nada esté realmente "colgado". 240000 (4 min) le da
+        // margen real; el polling del frontend (generateTrainingPlan en
+        // flexController.js) se extendió igual para no rendirse antes.
+        // maxRetries:0 porque el SDK reintenta 2 veces por default, lo que
+        // triplicaría en silencio el tiempo real de espera de una llamada
+        // colgada.
+        timeout: 240000,
         maxRetries: 0
     });
 
