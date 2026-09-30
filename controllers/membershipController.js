@@ -16,6 +16,7 @@ const db = require('../config/config.js');
 const MembershipPlan = require('../models/membershipPlan.js');
 const MembershipAddon = require('../models/membershipAddon.js');
 const User = require('../models/user.js');
+const { UNRESTRICTED_COMPANY_IDS } = require('../utils/membershipGate.js');
 const storage = require('../utils/cloud_storage.js');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
@@ -359,13 +360,22 @@ module.exports = {
             // suscripción quieres cancelar" (ver cancelAddonOrMembership).
             const activeAddons = await MembershipAddon.findActiveByCompany(id_company);
 
+            // Empresas exentas (ver UNRESTRICTED_COMPANY_IDS en
+            // membershipGate.js, mismo set que ya bloquea de verdad al
+            // invitar clientes) — nunca deben ver el gate de membresía
+            // vencida ni el popup de límite de clientes, sin importar el
+            // plan/estado real que tengan asignado.
+            const isUnrestricted = UNRESTRICTED_COMPANY_IDS.has(Number(id_company));
+            const finalIsExpired = isUnrestricted ? false : isExpired;
+            const finalIsOverClientLimit = isUnrestricted ? false : (clientLimit != null && clientCount > clientLimit);
+
             return res.status(200).json({
                 success: true,
                 data: {
                     plan: plan ? { id: plan.id, name: plan.name, price: Number(plan.price), clientLimit } : null,
                     status: liveStatus,
                     expiresAt: expiresAt ? expiresAt.toISOString() : null,
-                    isExpired,
+                    isExpired: finalIsExpired,
                     daysUntilExpiry,
                     clientCount,
                     clientLimit,
@@ -373,7 +383,7 @@ module.exports = {
                     // entrenador con EXACTAMENTE N clientes (dentro de lo que
                     // su plan permite) como "pasado del límite", bloqueándolo
                     // sin que en realidad se hubiera excedido de nada.
-                    isOverClientLimit: clientLimit != null && clientCount > clientLimit,
+                    isOverClientLimit: finalIsOverClientLimit,
                     activeAddons: activeAddons.map((a) => ({ id: a.id_addon, name: a.name, price: Number(a.price) })),
                     // Cuentas migradas/antiguas tienen membership_plan (ej.
                     // 'fundador') pero NUNCA pasaron por /membership/checkout

@@ -12,12 +12,22 @@ const User = require('../models/user.js');
 const MembershipPlan = require('../models/membershipPlan.js');
 const MembershipAddon = require('../models/membershipAddon.js');
 
+// Empresas exentas del límite de clientes y del bloqueo por membresía
+// vencida (ver getMyMembershipStatus en membershipController.js, que usa
+// este mismo set) — cuentas internas/de cortesía, no algo que dependa del
+// plan que tengan asignado en la tabla compartida membership_plans (eso
+// afectaría a TODAS las demás empresas con ese mismo plan).
+const UNRESTRICTED_COMPANY_IDS = new Set([1]);
+
 // { allowed, clientCount, clientLimit, planName } — allowed=false quiere
 // decir que ya está en (o sobre) el límite de clientes de su plan actual.
 // Sin plan asignado o plan sin límite definido -> allowed=true (no se
 // bloquea a un entrenador que no tiene plan configurado; eso lo cubre ya
 // el bloqueo por membresía vencida, un caso distinto).
 async function checkClientLimit(id_company) {
+    if (UNRESTRICTED_COMPANY_IDS.has(Number(id_company))) {
+        return { allowed: true, clientCount: null, clientLimit: null, planName: null };
+    }
     const company = await User.getCompanyMembershipInfo(id_company);
     const plan = company?.membership_plan ? await MembershipPlan.findById(company.membership_plan) : null;
     const clientLimit = plan ? Number(plan.client_limit) : null;
@@ -37,4 +47,4 @@ async function hasFlexAddon(id_company) {
     return !!row && row.status === 'active';
 }
 
-module.exports = { checkClientLimit, hasFlexAddon, FLEX_ADDON_ID };
+module.exports = { checkClientLimit, hasFlexAddon, FLEX_ADDON_ID, UNRESTRICTED_COMPANY_IDS };
