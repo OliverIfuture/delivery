@@ -588,4 +588,24 @@ Diet.deleteIngredientsMap = (idRecipe) => {
     return db.none('DELETE FROM recipe_ingredients_map WHERE id_recipe = $1', [idRecipe]);
 };
 
+// Ingredientes reales de una receta (recipe_ingredients_map + master_ingredients)
+// — se usa para armar el snapshot de client_diets_v2.custom_ingredients al
+// asignar una receta por primera vez. Reportado en vivo: un plan de
+// nutrición recién asignado se veía bien en la app (título, imagen,
+// calorías) pero SIN ingredientes — nutritionPlanController.js guardaba
+// custom_ingredients como [] en vez de copiar los reales de la receta, y
+// getAssignedDietByClient (arriba) nunca hace join con
+// recipe_ingredients_map, solo lee la columna ya guardada.
+Diet.getRecipeIngredients = (id_recipe) => {
+    const sql = `
+        SELECT
+            m.id_ingredient, m.default_qty,
+            i.name, i.unit, i.calories, i.protein, i.carbs, i.fats
+        FROM recipe_ingredients_map m
+        INNER JOIN master_ingredients i ON m.id_ingredient = i.id
+        WHERE m.id_recipe = $1
+    `;
+    return db.manyOrNone(sql, [id_recipe]);
+};
+
 module.exports = Diet;

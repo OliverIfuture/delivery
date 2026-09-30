@@ -31,47 +31,77 @@ function planMacroGrams(target_kcal, macro_percents) {
     };
 }
 
+// Snapshot de los ingredientes REALES de una receta, en la forma que ya
+// espera el frontend real (recipeEditDraft.customIngredients, ver
+// ClientDetailView.vue) — id_ingredient/custom_qty para los cálculos de
+// macros + name/unit para que se puedan mostrar sin tener que volver a
+// consultar master_ingredients. getAssignedDietByClient (la consulta que
+// de verdad lee la app del cliente) nunca hace join con
+// recipe_ingredients_map — solo lee esta columna ya guardada, así que si
+// se guarda vacía el cliente ve el platillo sin ningún ingrediente.
+async function recipeIngredientsSnapshot(id_recipe) {
+    const rows = await Diet.getRecipeIngredients(id_recipe);
+    return rows.map((r) => ({
+        id_ingredient: r.id_ingredient,
+        custom_qty: Number(r.default_qty) || 0,
+        name: r.name,
+        unit: r.unit,
+        calories: Number(r.calories) || 0,
+        protein: Number(r.protein) || 0,
+        carbs: Number(r.carbs) || 0,
+        fats: Number(r.fats) || 0
+    }));
+}
+
 // Traduce las sugerencias de menú del plan (recetas reales ya elegidas por
 // tiempo de comida, ver generateMealSuggestions en useNutritionAi.js del
 // frontend) al formato que ya espera Diet.assignMultiple — mismo mecanismo
 // que usa "asignar receta" en RecetasView/ClientDetailView, así que el
 // cliente lo ve en su app exactamente igual que una asignación manual.
-function buildAssignmentsFromPlan(plan) {
+async function buildAssignmentsFromPlan(plan) {
     const grams = planMacroGrams(plan.target_kcal, plan.macro_percents);
     const mealNameById = {};
     (plan.meal_times || []).forEach((m) => { mealNameById[m.id] = m.name; });
 
-    const assignments = [];
+    const picks = [];
     const suggestions = plan.suggestions || {};
     Object.keys(suggestions).forEach((mealId) => {
         const mealName = mealNameById[mealId] || 'General';
         (suggestions[mealId] || []).forEach((s) => {
-            if (!s || !s.recipeId) return;
-            assignments.push({
-                id_client: plan.id_client,
-                id_recipe: s.recipeId,
-                assigned_meal_category: mealName,
-                custom_ingredients: [],
-                final_calories: Math.round(Number(s.kcal) || 0),
-                final_protein: Math.round(Number(s.prot) || 0),
-                final_carbs: Math.round(Number(s.cho) || 0),
-                final_fats: Math.round(Number(s.lip) || 0),
-                notes: plan.notes || '',
-                target_calories: Math.round(Number(plan.target_kcal) || 0),
-                target_protein: grams.prot,
-                target_carbs: grams.cho,
-                target_fats: grams.lip
-            });
+            if (s && s.recipeId) picks.push({ s, mealName });
         });
     });
-    return assignments;
+
+    // Una misma receta puede repetirse en varios tiempos de comida — no
+    // hace falta pedir sus ingredientes más de una vez.
+    const uniqueRecipeIds = [...new Set(picks.map((p) => p.s.recipeId))];
+    const ingredientsByRecipe = {};
+    await Promise.all(uniqueRecipeIds.map(async (id) => {
+        ingredientsByRecipe[id] = await recipeIngredientsSnapshot(id);
+    }));
+
+    return picks.map(({ s, mealName }) => ({
+        id_client: plan.id_client,
+        id_recipe: s.recipeId,
+        assigned_meal_category: mealName,
+        custom_ingredients: ingredientsByRecipe[s.recipeId] || [],
+        final_calories: Math.round(Number(s.kcal) || 0),
+        final_protein: Math.round(Number(s.prot) || 0),
+        final_carbs: Math.round(Number(s.cho) || 0),
+        final_fats: Math.round(Number(s.lip) || 0),
+        notes: plan.notes || '',
+        target_calories: Math.round(Number(plan.target_kcal) || 0),
+        target_protein: grams.prot,
+        target_carbs: grams.cho,
+        target_fats: grams.lip
+    }));
 }
 
 // Cuando el plan queda activo, refleja SIEMPRE el objetivo de calorías/
 // macros en users (aunque todavía no haya ninguna receta elegida) y, si ya
 // hay sugerencias reales, también las asigna en client_diets_v2.
 async function applyActivePlanEffects(plan) {
-    const assignments = buildAssignmentsFromPlan(plan);
+    const assignments = await buildAssignmentsFromPlan(plan);
     if (assignments.length) {
         await Diet.assignMultiple(assignments);
         return;
