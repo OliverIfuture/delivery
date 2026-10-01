@@ -197,6 +197,119 @@ module.exports = {
         }
     },
 
+    // NUEVO — para una cuenta que hasta ahora se manejaba SOLO por
+    // transferencia manual (membership_stripe_subscription_id nulo o una
+    // suscripción vieja que nunca llegó a cobrar, ver getMyMembershipStatus)
+    // y que ahora sí quiere domiciliarse de verdad. A diferencia de
+    // createCheckout (Payment Element embebido, cobra de inmediato), aquí
+    // se manda un Checkout Session real (página hospedada de Stripe) para
+    // que el entrenador pueda abrirlo desde donde sea — y con `trial_end`
+    // opcional para no cobrar nada hoy si ya pagó manual su periodo actual:
+    // el primer cobro real ocurre justo en esa fecha, y de ahí en
+    // adelante se renueva solo. Mismo patrón que
+    // createDomiciliationLink/confirmDomiciliation en
+    // clientSubscriptionsController.js, pero contra la cuenta de Stripe de
+    // LA PLATAFORMA (no Connect) — ver header de este archivo.
+    async createDomiciliationCheckout(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            const { id_plan, start_billing_at } = req.body;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            if (!id_plan) {
+                return res.status(400).json({ success: false, message: 'Falta id_plan.' });
+            }
+            const plan = await MembershipPlan.findById(id_plan);
+            if (!plan) {
+                return res.status(404).json({ success: false, message: 'Plan no encontrado.' });
+            }
+            if (!plan.stripe_price_id) {
+                return res.status(400).json({ success: false, message: 'Este plan todavía no tiene un precio real de Stripe.' });
+            }
+
+            const existing = await db.oneOrNone(`SELECT membership_stripe_customer_id FROM company WHERE id = $1`, [id_company]);
+            let customerId = existing?.membership_stripe_customer_id || null;
+            if (!customerId) {
+                const customer = await stripe.customers.create({
+                    email: req.user.email,
+                    name: req.user.name,
+                    metadata: { id_company: String(id_company) }
+                });
+                customerId = customer.id;
+                await db.none(`UPDATE company SET membership_stripe_customer_id = $2 WHERE id = $1`, [id_company, customerId]);
+            }
+
+            const subscriptionData = {
+                transfer_data: MEMBERSHIP_TRANSFER_DATA,
+                metadata: {
+                    type: 'membership_payment',
+                    id_company: String(id_company),
+                    id_plan: plan.id,
+                    platform_fee_percent: PLATFORM_FEE_PERCENT
+                }
+            };
+            // start_billing_at (opcional): fecha ISO a partir de la cual debe
+            // ocurrir el PRIMER cobro real — para una cuenta que ya traía un
+            // periodo pagado manual y no se le debe cobrar doble hoy.
+            if (start_billing_at) {
+                const trialEnd = Math.floor(new Date(start_billing_at).getTime() / 1000);
+                if (!Number.isFinite(trialEnd) || trialEnd <= Math.floor(Date.now() / 1000)) {
+                    return res.status(400).json({ success: false, message: 'start_billing_at debe ser una fecha real en el futuro.' });
+                }
+                subscriptionData.trial_end = trialEnd;
+            }
+
+            const baseUrl = 'https://deliveryserver.herokuapp.com';
+            const session = await stripe.checkout.sessions.create({
+                mode: 'subscription',
+                customer: customerId,
+                line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+                success_url: `${baseUrl}/api/membership/confirmDomiciliation?session_id={CHECKOUT_SESSION_ID}&id_company=${id_company}&id_plan=${plan.id}`,
+                cancel_url: `${baseUrl}/api/membership/domiciliacionCancelada`,
+                subscription_data: subscriptionData
+            });
+
+            return res.status(200).json({ success: true, data: { url: session.url } });
+        } catch (error) {
+            console.log(`Error en membershipController.createDomiciliationCheckout: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al generar el enlace de domiciliación', error: error.message });
+        }
+    },
+
+    // PÚBLICO — a donde Stripe redirige el navegador al terminar el
+    // Checkout Session de arriba (nunca se confía en query params solos:
+    // se vuelve a consultar la sesión real con Stripe antes de activar nada).
+    async confirmDomiciliation(req, res) {
+        try {
+            const { session_id, id_company, id_plan } = req.query;
+            if (!session_id || !id_company) return res.status(400).send('Faltan datos para confirmar.');
+
+            const session = await stripe.checkout.sessions.retrieve(session_id, { expand: ['subscription'] });
+            if (session.status !== 'complete' || !session.subscription) {
+                return res.status(400).send('El pago todavía no se completó.');
+            }
+            const subscription = session.subscription;
+            const expiresAt = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+
+            await db.none(`
+                UPDATE company
+                SET membership_stripe_subscription_id = $2, membership_status = $3, membership_expires_at = $4
+                    ${id_plan ? ', membership_plan = $5' : ''}
+                WHERE id = $1
+            `, id_plan ? [id_company, subscription.id, subscription.status, expiresAt, id_plan] : [id_company, subscription.id, subscription.status, expiresAt]);
+
+            return res.send('<h2>¡Listo! Tu membresía ya quedó domiciliada.</h2><p>Puedes cerrar esta ventana.</p>');
+        } catch (error) {
+            console.log(`Error en membershipController.confirmDomiciliation: ${error}`);
+            return res.status(501).send('No se pudo confirmar la domiciliación.');
+        }
+    },
+
+    async domiciliacionCancelada(req, res) {
+        return res.send('<h2>Domiciliación cancelada.</h2><p>No se guardó ningún cambio. Puedes cerrar esta ventana.</p>');
+    },
+
     // ===================== Perfil (pestaña "Perfil") =====================
     async getMyProfile(req, res) {
         try {

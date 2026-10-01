@@ -14,6 +14,15 @@ module.exports = (app, upload) => {
     app.post('/api/membership/checkout', passport.authenticate('jwt', { session: false }), membershipController.createCheckout);
     app.post('/api/membership/confirm', passport.authenticate('jwt', { session: false }), membershipController.confirmPayment);
 
+    // NUEVO — domiciliar de verdad una cuenta que hasta ahora se manejaba
+    // solo por transferencia manual (ver createDomiciliationCheckout).
+    // confirmDomiciliation/domiciliacionCancelada son PÚBLICOS a propósito
+    // — es a donde Stripe redirige el navegador al terminar el checkout,
+    // sin ningún JWT disponible ahí.
+    app.post('/api/membership/createDomiciliationCheckout', passport.authenticate('jwt', { session: false }), membershipController.createDomiciliationCheckout);
+    app.get('/api/membership/confirmDomiciliation', membershipController.confirmDomiciliation);
+    app.get('/api/membership/domiciliacionCancelada', membershipController.domiciliacionCancelada);
+
     // NUEVO — panel de Configuración (Perfil/Apariencia/Suscripción real).
     app.get('/api/membership/profile', passport.authenticate('jwt', { session: false }), membershipController.getMyProfile);
     app.post(
