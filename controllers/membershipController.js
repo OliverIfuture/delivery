@@ -530,6 +530,15 @@ module.exports = {
     },
 
     // ===================== Método de pago real =====================
+    // Antes solo buscaba type:'card' — un checkout pagado con Stripe Link
+    // (ver botón "Link" en el Checkout hospedado) guarda un PaymentMethod
+    // real de type:'link', NO 'card', así que ese filtro lo dejaba
+    // invisible aquí (mostraba "sin tarjeta guardada" aunque el cobro
+    // automático del día de corte sí va a funcionar igual — Link solo
+    // envuelve la tarjeta real del cliente). Ahora se piden ambos tipos y
+    // se arma una respuesta distinta para Link (no expone brand/last4,
+    // Stripe tampoco los expone ahí — ver su propio Dashboard) para que
+    // el frontend al menos diga "Link" + el correo en vez de nada.
     async getMyPaymentMethod(req, res) {
         try {
             const id_company = req.user.mi_store;
@@ -537,12 +546,20 @@ module.exports = {
             if (!company?.membership_stripe_customer_id) {
                 return res.status(200).json({ success: true, data: null });
             }
-            const methods = await stripe.paymentMethods.list({ customer: company.membership_stripe_customer_id, type: 'card' });
-            const card = methods.data[0]?.card;
-            if (!card) {
-                return res.status(200).json({ success: true, data: null });
+            const customerId = company.membership_stripe_customer_id;
+            const [cardMethods, linkMethods] = await Promise.all([
+                stripe.paymentMethods.list({ customer: customerId, type: 'card' }),
+                stripe.paymentMethods.list({ customer: customerId, type: 'link' })
+            ]);
+            const card = cardMethods.data[0]?.card;
+            if (card) {
+                return res.status(200).json({ success: true, data: { type: 'card', brand: card.brand, last4: card.last4, expMonth: card.exp_month, expYear: card.exp_year } });
             }
-            return res.status(200).json({ success: true, data: { brand: card.brand, last4: card.last4, expMonth: card.exp_month, expYear: card.exp_year } });
+            const link = linkMethods.data[0]?.link;
+            if (link) {
+                return res.status(200).json({ success: true, data: { type: 'link', email: link.email || null } });
+            }
+            return res.status(200).json({ success: true, data: null });
         } catch (error) {
             console.log(`Error en membershipController.getMyPaymentMethod: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al obtener tu método de pago', error: error.message });
