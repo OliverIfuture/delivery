@@ -23,6 +23,7 @@ const ClientSubscription = require('../models/clientSubscription.js');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const { checkClientLimit } = require('../utils/membershipGate.js');
+const TrainerNotification = require('../models/trainerNotification.js'); // <-- Notificación real al entrenador cuando un prospecto acepta su invitación
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -251,6 +252,18 @@ module.exports = {
                 await User.updateTrainer(existingUser.id, id_company);
                 await User.checkAndClaimInvitation(email, existingUser.id).catch(() => {});
 
+                // --- NUEVO: notificación real para la campana del panel ---
+                TrainerNotification.resolveTrainerUserId(id_company).then((trainerUserId) => {
+                    if (!trainerUserId) return;
+                    TrainerNotification.create({
+                        id_user: trainerUserId,
+                        type: 'client',
+                        title: 'Nuevo prospecto registrado',
+                        body: `${existingUser.name || email} se registró desde tu enlace de invitación`,
+                        link: `/dashboard/clients/${existingUser.id}`
+                    });
+                }).catch((notifErr) => console.log(`No se pudo crear la notificación de invitación: ${notifErr.message}`));
+
                 return res.status(200).json({
                     success: true,
                     isNewUser: false,
@@ -285,6 +298,18 @@ module.exports = {
                 brandColor,
                 logo: companyRow.company_logo
             });
+
+            // --- NUEVO: notificación real para la campana del panel ---
+            TrainerNotification.resolveTrainerUserId(id_company).then((trainerUserId) => {
+                if (!trainerUserId) return;
+                TrainerNotification.create({
+                    id_user: trainerUserId,
+                    type: 'client',
+                    title: 'Nuevo prospecto registrado',
+                    body: `${name} se registró desde tu enlace de invitación`,
+                    link: `/dashboard/clients/${data.id}`
+                });
+            }).catch((notifErr) => console.log(`No se pudo crear la notificación de invitación: ${notifErr.message}`));
 
             return res.status(201).json({
                 success: true,

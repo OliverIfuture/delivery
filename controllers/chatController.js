@@ -1,6 +1,36 @@
 const User = require('../models/user.js');
 const admin = require('firebase-admin');
 const storage = require('../utils/cloud_storage.js');
+const db = require('../config/config.js');
+const TrainerNotification = require('../models/trainerNotification.js');
+
+// Mismo mapa de "kind" que el panel web (ver trainer-partners/src/
+// controllers/chatController.js: KNOWN_KINDS) — para que el cuerpo de la
+// notificación diga algo legible ("📷 Foto") en vez del JSON crudo
+// cuando el mensaje es un media/reporte en lugar de texto plano.
+function friendlyNotificationBody(messageContent) {
+    const trimmed = (messageContent || '').trim();
+    if (!trimmed.startsWith('{')) {
+        return trimmed.length > 90 ? `${trimmed.slice(0, 90)}…` : trimmed;
+    }
+    try {
+        const parsed = JSON.parse(trimmed);
+        switch (parsed.kind) {
+            case 'media':
+                if (parsed.mediaType === 'image') return '📷 Foto';
+                if (parsed.mediaType === 'video') return '🎥 Video';
+                if (parsed.mediaType === 'audio') return '🎙️ Nota de voz';
+                return 'Archivo adjunto';
+            case 'metrics-report': return '📊 Reporte de progreso';
+            case 'photo-comparison': return '📸 Comparación de fotos';
+            case 'event-reminder': return `📅 ${parsed.event?.title || 'Recordatorio'}`;
+            case 'plan-card': return `${parsed.type === 'dieta' ? '🍽️' : '🏋️'} ${parsed.title || 'Plan'}`;
+            default: return trimmed.length > 90 ? `${trimmed.slice(0, 90)}…` : trimmed;
+        }
+    } catch (_) {
+        return trimmed.length > 90 ? `${trimmed.slice(0, 90)}…` : trimmed;
+    }
+}
 
 // --- ¡LÓGICA DE INICIALIZACIÓN (LA DEJAREMOS IGUAL)! ---
 let serviceAccountChat;
@@ -82,6 +112,25 @@ module.exports = {
                 .doc(chatRoomId)
                 .collection('messages')
                 .add(messageData);
+
+            // --- NUEVO: notificación real para la campana del panel web ---
+            // Si el destinatario es un entrenador (tiene mi_store), le
+            // dejamos una notificación enlazada a esta conversación — el
+            // panel abre /dashboard/chat?clientId=<quien mandó el mensaje>.
+            try {
+                const recipientRow = await db.oneOrNone(`SELECT mi_store FROM users WHERE id = $1`, [recipientId]);
+                if (recipientRow && recipientRow.mi_store && String(recipientRow.mi_store) !== '0') {
+                    await TrainerNotification.create({
+                        id_user: recipientId,
+                        type: 'message',
+                        title: `Nuevo mensaje de ${senderName}`,
+                        body: friendlyNotificationBody(messageContent),
+                        link: `/dashboard/chat?clientId=${senderId}`
+                    });
+                }
+            } catch (notifErr) {
+                console.log(`No se pudo crear la notificación de chat: ${notifErr.message}`);
+            }
 
             // --- **PRUEBA DE DEPURACIÓN: NOTIFICACIONES DESACTIVADAS TEMPORALMENTE** ---
 

@@ -8,6 +8,7 @@ const Affiliate = require('../models/affiliate.js');
 const keys = require('../config/keys.js');
 const Gym = require('../models/gym.js'); // <-- Modelo clave para Gimnasios
 const Pos = require('../models/pos.js'); // <-- Modelo clave para el Webhook
+const TrainerNotification = require('../models/trainerNotification.js'); // <-- Notificación real al entrenador cuando un cliente le paga
 
 // Manejo seguro de llaves por si config/keys.js no está en este proyecto
 let stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -628,6 +629,23 @@ module.exports = {
                                 paymentDate
                             ]);
                             console.log(`💰 Historial de pago (Recurrente) registrado: $${amountPaid} para la sub ${invoice.subscription}`);
+
+                            // --- NUEVO: notificación real para la campana del panel ---
+                            try {
+                                const trainerUserId = await TrainerNotification.resolveTrainerUserId(id_company);
+                                if (trainerUserId) {
+                                    const clientName = user ? (user.name || temp_email) : temp_email;
+                                    await TrainerNotification.create({
+                                        id_user: trainerUserId,
+                                        type: 'payment',
+                                        title: `${clientName} pagó su mensualidad`,
+                                        body: `$${amountPaid.toLocaleString('es-MX')} MXN`,
+                                        link: user ? `/dashboard/clients/${user.id}` : null
+                                    });
+                                }
+                            } catch (notifErr) {
+                                console.log(`No se pudo crear la notificación de pago: ${notifErr.message}`);
+                            }
                         } catch (e) {
                             console.log(`❌ Error guardando historial de pago (Recurrente): ${e.message}`);
                         }
@@ -699,6 +717,24 @@ module.exports = {
                             await db.none(`UPDATE users SET access_level = 2, updated_at = NOW() WHERE id = $1`, [id_client]);
                         }
                         console.log(`✅ Pago único completado y nivel VIP (2) otorgado para ${id_client}`);
+
+                        // --- NUEVO: notificación real para la campana del panel ---
+                        try {
+                            const trainerUserId = await TrainerNotification.resolveTrainerUserId(id_company);
+                            if (trainerUserId && id_client) {
+                                const clientRow = await db.oneOrNone(`SELECT name FROM users WHERE id = $1`, [id_client]);
+                                const amountPaid = paymentIntent.amount / 100;
+                                await TrainerNotification.create({
+                                    id_user: trainerUserId,
+                                    type: 'payment',
+                                    title: `${clientRow?.name || 'Un cliente'} pagó su plan`,
+                                    body: `$${amountPaid.toLocaleString('es-MX')} MXN`,
+                                    link: `/dashboard/clients/${id_client}`
+                                });
+                            }
+                        } catch (notifErr) {
+                            console.log(`No se pudo crear la notificación de pago único: ${notifErr.message}`);
+                        }
                     } catch (e) {
                         console.log(`❌ Error guardando pago único: ${e.message}`);
                     }
@@ -733,6 +769,23 @@ module.exports = {
                             payment_id: paymentIntent.id, id_shift: activeShift ? activeShift.id : null
                         });
                         console.log(`✅ Membresía Gym registrada para ${id_client}`);
+
+                        // --- NUEVO: notificación real para la campana del panel ---
+                        try {
+                            const trainerUserId = await TrainerNotification.resolveTrainerUserId(plan.id_company);
+                            if (trainerUserId && id_client) {
+                                const clientRow = await db.oneOrNone(`SELECT name FROM users WHERE id = $1`, [id_client]);
+                                await TrainerNotification.create({
+                                    id_user: trainerUserId,
+                                    type: 'payment',
+                                    title: `${clientRow?.name || 'Un cliente'} pagó su membresía de gimnasio`,
+                                    body: `${plan.name} · $${Number(plan.price).toLocaleString('es-MX')} MXN`,
+                                    link: `/dashboard/clients/${id_client}`
+                                });
+                            }
+                        } catch (notifErr) {
+                            console.log(`No se pudo crear la notificación de pago de gimnasio: ${notifErr.message}`);
+                        }
                     } catch (e) {
                         console.log(`❌ Error procesando Gym Membership: ${e.message}`);
                     }
