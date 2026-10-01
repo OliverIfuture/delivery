@@ -56,6 +56,21 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// Fix real (reportado en vivo): getLeaderboard/getActiveGiveaway/
+// getPastGiveaways resolvían la comunidad con `id_entrenador || mi_store`
+// — una cuenta con company PROPIA (mi_store) pero que además tenía un
+// id_entrenador viejo (de cuando fue cliente de otra company) siempre veía
+// la comunidad equivocada, porque ese `||` prioriza id_entrenador si
+// existe. mi_store de un cliente real normal NO es null, es el STRING
+// '0' (confirmado en vivo) — '0' es verdadero en JS, así que hay que
+// tratarlo explícitamente como "sin company propia" en vez de un `||`
+// ingenuo, o se rompería la resolución de todos los clientes reales.
+function resolveCommunityIdForUser(reqUser) {
+    const hasRealCompanyId = reqUser.mi_store != null && String(reqUser.mi_store) !== '0' && String(reqUser.mi_store).trim() !== '';
+    const id = hasRealCompanyId ? reqUser.mi_store : reqUser.id_entrenador;
+    return id || null;
+}
+
 module.exports = {
 
     async findDeliveryMan(req, res, next) {
@@ -3081,7 +3096,7 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
             // 🔥 EXTRAEMOS LA COMUNIDAD DEL USUARIO QUE HACE LA PETICIÓN
             // Si es cliente, su comunidad es 'id_entrenador'. 
             // Si es el entrenador, su comunidad es 'mi_store'.
-            const id_comunidad = req.user.id_entrenador || req.user.mi_store;
+            const id_comunidad = resolveCommunityIdForUser(req.user);
 
             if (!id_comunidad) {
                 return res.status(400).json({
@@ -3120,7 +3135,7 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
             console.log(`req.user.id_entrenador: ${req.user.id_entrenador}`);
             console.log(`req.user.mi_store: ${req.user.mi_store}`);
 
-            const id_comunidad = req.user.id_entrenador || req.user.mi_store;
+            const id_comunidad = resolveCommunityIdForUser(req.user);
 
             // 2. Vemos con qué ID final se va a hacer la búsqueda en SQL
             console.log(`ID COMUNIDAD RESUELTO PARA LA BÚSQUEDA: ${id_comunidad}`);
@@ -3145,7 +3160,7 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
             console.log(`req.user.id_entrenador: ${req.user.id_entrenador}`);
             console.log(`req.user.mi_store: ${req.user.mi_store}`);
 
-            const id_comunidad = req.user.id_entrenador || req.user.mi_store;
+            const id_comunidad = resolveCommunityIdForUser(req.user);
             console.log(`ID COMUNIDAD RESUELTO PARA LA BÚSQUEDA: ${id_comunidad}`);
 
             const data = await User.getPastGiveaways(id_comunidad);
