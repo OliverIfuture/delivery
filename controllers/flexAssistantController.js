@@ -104,7 +104,7 @@ module.exports = {
             // NUEVO — Flex es un complemento de pago (membership_addons:
             // 'flex_ilimitado'); antes cualquier entrenador autenticado
             // podía usarlo sin haberlo activado.
-            if (!(await hasFlexAddon(id_company))) {
+            if (!(await hasFlexAddon(id_company, req.user.email))) {
                 return res.status(402).json({
                     success: false,
                     code: 'FLEX_ADDON_REQUIRED',
@@ -186,7 +186,7 @@ module.exports = {
             }
             // NUEVO — mismo complemento de pago que chat() (ver
             // utils/membershipGate.js) — "Crear plan con IA" también es IA.
-            if (!(await hasFlexAddon(id_company))) {
+            if (!(await hasFlexAddon(id_company, req.user.email))) {
                 return res.status(402).json({
                     success: false,
                     code: 'FLEX_ADDON_REQUIRED',

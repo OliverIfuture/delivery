@@ -19,13 +19,26 @@ const MembershipAddon = require('../models/membershipAddon.js');
 // afectaría a TODAS las demás empresas con ese mismo plan).
 const UNRESTRICTED_COMPANY_IDS = new Set([1]);
 
+// Mismo trato, pero por CORREO en vez de id de company — para una cuenta
+// de pruebas real que anda cambiando a mano a qué company apunta su
+// mi_store (ver conversación: "estaré hardcodeando el id de las company").
+// Como el id cambia, la exención tiene que ir atada a quién es la persona,
+// no a qué company esté usando en ese momento.
+const UNRESTRICTED_EMAILS = new Set(['oliverjdm22@gmail.com']);
+
+function isUnrestricted(id_company, email) {
+    if (UNRESTRICTED_COMPANY_IDS.has(Number(id_company))) return true;
+    if (email && UNRESTRICTED_EMAILS.has(String(email).trim().toLowerCase())) return true;
+    return false;
+}
+
 // { allowed, clientCount, clientLimit, planName } — allowed=false quiere
 // decir que ya está en (o sobre) el límite de clientes de su plan actual.
 // Sin plan asignado o plan sin límite definido -> allowed=true (no se
 // bloquea a un entrenador que no tiene plan configurado; eso lo cubre ya
 // el bloqueo por membresía vencida, un caso distinto).
-async function checkClientLimit(id_company) {
-    if (UNRESTRICTED_COMPANY_IDS.has(Number(id_company))) {
+async function checkClientLimit(id_company, email) {
+    if (isUnrestricted(id_company, email)) {
         return { allowed: true, clientCount: null, clientLimit: null, planName: null };
     }
     const company = await User.getCompanyMembershipInfo(id_company);
@@ -47,9 +60,10 @@ async function checkClientLimit(id_company) {
 const FLEX_ADDON_ID = 'flex_ilimitado';
 
 // true si la empresa tiene activo el complemento de pago de Flex.
-async function hasFlexAddon(id_company) {
+async function hasFlexAddon(id_company, email) {
+    if (isUnrestricted(id_company, email)) return true;
     const row = await MembershipAddon.findCompanyAddon(id_company, FLEX_ADDON_ID);
     return !!row && row.status === 'active';
 }
 
-module.exports = { checkClientLimit, hasFlexAddon, FLEX_ADDON_ID, UNRESTRICTED_COMPANY_IDS };
+module.exports = { checkClientLimit, hasFlexAddon, FLEX_ADDON_ID, UNRESTRICTED_COMPANY_IDS, UNRESTRICTED_EMAILS, isUnrestricted };

@@ -16,7 +16,7 @@ const db = require('../config/config.js');
 const MembershipPlan = require('../models/membershipPlan.js');
 const MembershipAddon = require('../models/membershipAddon.js');
 const User = require('../models/user.js');
-const { UNRESTRICTED_COMPANY_IDS } = require('../utils/membershipGate.js');
+const { isUnrestricted: isUnrestrictedUser, FLEX_ADDON_ID } = require('../utils/membershipGate.js');
 const storage = require('../utils/cloud_storage.js');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
@@ -360,14 +360,28 @@ module.exports = {
             // suscripción quieres cancelar" (ver cancelAddonOrMembership).
             const activeAddons = await MembershipAddon.findActiveByCompany(id_company);
 
-            // Empresas exentas (ver UNRESTRICTED_COMPANY_IDS en
-            // membershipGate.js, mismo set que ya bloquea de verdad al
-            // invitar clientes) — nunca deben ver el gate de membresía
-            // vencida ni el popup de límite de clientes, sin importar el
-            // plan/estado real que tengan asignado.
-            const isUnrestricted = UNRESTRICTED_COMPANY_IDS.has(Number(id_company));
+            // Empresas/cuentas exentas (ver isUnrestricted en
+            // membershipGate.js, misma función que ya bloquea de verdad al
+            // invitar clientes y al usar Flex) — nunca deben ver el gate de
+            // membresía vencida ni el popup de límite de clientes, sin
+            // importar el plan/estado real que tengan asignado. Por correo
+            // (no solo por id de company) para cubrir una cuenta de pruebas
+            // que cambia a mano de company (ver UNRESTRICTED_EMAILS).
+            const isUnrestricted = isUnrestrictedUser(id_company, req.user.email);
             const finalIsExpired = isUnrestricted ? false : isExpired;
             const finalIsOverClientLimit = isUnrestricted ? false : (clientLimit != null && clientCount > clientLimit);
+            // El gate real de Flex (hasFlexAddon en membershipGate.js) ya
+            // deja pasar a esta cuenta sin importar la company — pero el
+            // frontend decide si MOSTRAR la UI de IA mirando activeAddons
+            // (ver hasFlexAddon computed en useMembershipGate.js), que viene
+            // de la fila real en company_addons de LA COMPANY ACTUAL. Como
+            // esta cuenta cambia de company a mano, casi nunca tendría esa
+            // fila ahí — sin esto, el botón de "Crear plan con IA" se
+            // escondería aunque el backend sí lo dejaría generar.
+            const activeAddonsOut = activeAddons.map((a) => ({ id: a.id_addon, name: a.name, price: Number(a.price) }));
+            if (isUnrestricted && !activeAddonsOut.some((a) => a.id === FLEX_ADDON_ID)) {
+                activeAddonsOut.push({ id: FLEX_ADDON_ID, name: 'Flex Ilimitado', price: 0 });
+            }
 
             return res.status(200).json({
                 success: true,
@@ -384,7 +398,7 @@ module.exports = {
                     // su plan permite) como "pasado del límite", bloqueándolo
                     // sin que en realidad se hubiera excedido de nada.
                     isOverClientLimit: finalIsOverClientLimit,
-                    activeAddons: activeAddons.map((a) => ({ id: a.id_addon, name: a.name, price: Number(a.price) })),
+                    activeAddons: activeAddonsOut,
                     // Cuentas migradas/antiguas tienen membership_plan (ej.
                     // 'fundador') pero NUNCA pasaron por /membership/checkout
                     // -> no tienen membership_stripe_subscription_id. El

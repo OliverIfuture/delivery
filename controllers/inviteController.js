@@ -307,7 +307,7 @@ module.exports = {
             if (!id_company) {
                 return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
             }
-            const limit = await checkClientLimit(id_company);
+            const limit = await checkClientLimit(id_company, req.user.email);
             if (!limit.allowed) {
                 return res.status(403).json({
                     success: false,
