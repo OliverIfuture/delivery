@@ -4,7 +4,7 @@
 // que ya existían (dar like, comentar, votar, fijar, reportar, bloquear)
 // se reutilizan tal cual desde Product (models/product.js) — no se
 // duplica nada de eso. Lo nuevo aquí es: resolver bien la comunidad del
-// entrenador (id_entrenador || mi_store, ver nota en models/community.js),
+// entrenador (mi_store || id_entrenador, ver nota en models/community.js),
 // crear el post con tipo/logro, y un toggle de like que decide solo si
 // tiene que dar o quitar el like (evita que el frontend tenga que llevar
 // ese estado y se desincronice).
@@ -12,8 +12,22 @@ const Community = require('../models/community.js');
 const Product = require('../models/product.js');
 const storage = require('../utils/cloud_storage.js');
 
+// Reportado en vivo: una cuenta con AMBOS campos (mi_store propio Y un
+// id_entrenador viejo de cuando fue cliente de otra company) traía la
+// comunidad equivocada — `id_entrenador || mi_store` siempre prioriza
+// id_entrenador si existe, aunque la cuenta tenga su PROPIA company. El
+// dueño de una company (mi_store) siempre debe ver SU PROPIA comunidad
+// primero; id_entrenador solo aplica a un cliente puro.
+//
+// OJO: mi_store de un cliente real normal NO es NULL, es el STRING '0'
+// (confirmado en vivo: 410 cuentas así) — '0' es verdadero en JS, así que
+// un `mi_store || id_entrenador` ingenuo elegiría ese '0' en vez de caer
+// a id_entrenador y rompería la comunidad de todos esos clientes.
+function hasRealCompanyId(v) {
+    return v != null && String(v) !== '0' && String(v).trim() !== '';
+}
 function resolveCommunityId(req) {
-    const id = req.user.id_entrenador || req.user.mi_store;
+    const id = hasRealCompanyId(req.user.mi_store) ? req.user.mi_store : req.user.id_entrenador;
     return id ? String(id) : null;
 }
 
