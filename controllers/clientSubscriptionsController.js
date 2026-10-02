@@ -900,8 +900,8 @@ module.exports = {
                 items: [{ price: stripe_price_id }],
                 transfer_data: { destination: company.stripeAccountId },
 
-                // 🔥 LA MAGIA: Retenemos el 4.5% para que Stripe se lo cobre de ahí 🔥
-                application_fee_percent: 4.5,
+                // 🔥 LA MAGIA: Retenemos el 11% (subido de 4.5%, pedido urgente) para cubrir lo que Stripe cobra de verdad 🔥
+                application_fee_percent: 11,
 
                 payment_behavior: 'default_incomplete',
                 expand: ['latest_invoice.payment_intent'],
@@ -1546,7 +1546,7 @@ async stripeWebhook12(req, res, next) {
                 cancel_url: `${baseUrl}/newdash/domiciliacion/cancelado`,
                 subscription_data: {
                     transfer_data: { destination: company.stripeAccountId },
-                    application_fee_percent: 4.5,
+                    application_fee_percent: 11,
                     metadata: {
                         type: 'client_subscription_payment',
                         id_company: String(id_company),
@@ -1612,8 +1612,8 @@ async stripeWebhook12(req, res, next) {
                 items: [{ price: stripe_price_id }],
                 transfer_data: { destination: company.stripeAccountId },
 
-                // 🔥 LA MAGIA: Retenemos el 4.5% para que Stripe se lo cobre de ahí 🔥
-                application_fee_percent: 4.5,
+                // 🔥 LA MAGIA: Retenemos el 11% (subido de 4.5%, pedido urgente) para cubrir lo que Stripe cobra de verdad 🔥
+                application_fee_percent: 11,
 
                 payment_behavior: 'default_incomplete',
                 expand: ['latest_invoice.payment_intent'],
@@ -1876,8 +1876,8 @@ async stripeWebhook12(req, res, next) {
                     destination: company.stripeAccountId,
                 },
 
-                // 🔥 LA MAGIA: Retenemos el 4.5% para cubrir comisiones 🔥
-                application_fee_percent: 4.5,
+                // 🔥 LA MAGIA: Retenemos el 11% (subido de 4.5%, pedido urgente) para cubrir comisiones 🔥
+                application_fee_percent: 11,
 
                 metadata: {
                     type: 'client_subscription',
@@ -1988,8 +1988,8 @@ async stripeWebhook12(req, res, next) {
                 items: [{ price: price_id }], // <-- Asegúrate de que aquí vaya price_id, en tu código original decía stripe_price_id pero arriba desestructuraste price_id
                 transfer_data: { destination: company.stripeAccountId },
 
-                // 🔥 LA MAGIA: Retenemos el 4.5% para cubrir comisiones 🔥
-                application_fee_percent: 4.5,
+                // 🔥 LA MAGIA: Retenemos el 11% (subido de 4.5%, pedido urgente) para cubrir comisiones 🔥
+                application_fee_percent: 11,
 
                 payment_behavior: 'default_incomplete',
                 expand: ['latest_invoice.payment_intent'],
@@ -2078,8 +2078,8 @@ async stripeWebhook12(req, res, next) {
             // 3. Conversión del precio único a centavos (Ejemplo: $500.00 MXN -> 50000)
             const amountInCents = Math.round(parseFloat(pkg.price) * 100);
 
-            // Retención del 9.5% (Cubre la comisión de Stripe + tu 5% de plataforma)
-            const applicationFeeInCents = Math.round(amountInCents * 0.095);
+            // Retención del 11% (subido de 9.5%, pedido urgente — cubre la comisión real de Stripe + margen de plataforma)
+            const applicationFeeInCents = Math.round(amountInCents * 0.11);
 
             // 4. Crear cobro único
             const paymentIntent = await stripe.paymentIntents.create({

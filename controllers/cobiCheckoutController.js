@@ -13,17 +13,17 @@ const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
 // Misma comisión ya usada en el resto de la plataforma para cobros a
 // cuentas conectadas de Stripe (ver el comentario de
-// clientSubscriptionsController.js -> createPackagePaymentIntent,
-// "9.5% cubre la comisión de Stripe + tu 5% de plataforma"): 4.5% para
-// cubrir el costo de procesamiento de Stripe + 5% de comisión propia. Se
-// retiene con application_fee_amount/application_fee_percent, que Stripe
-// deposita automáticamente en la MISMA cuenta de plataforma que ya recibe
-// esa comisión en el resto de la app — al entrenador le llega el resto,
-// directo a su cuenta conectada (cobro "Direct charge": el Precio del
-// plan ya vive en su cuenta — ver createConnect en
+// clientSubscriptionsController.js -> createPackagePaymentIntent) —
+// subida de 9.5% a 11% (pedido urgente explícito: el costo real que
+// Stripe cobra por los cargos vía Connect no dejaba margen suficiente
+// con 9.5%). Se retiene con application_fee_amount/application_fee_percent,
+// que Stripe deposita automáticamente en la MISMA cuenta de plataforma
+// que ya recibe esa comisión en el resto de la app — al entrenador le
+// llega el resto, directo a su cuenta conectada (cobro "Direct charge":
+// el Precio del plan ya vive en su cuenta — ver createConnect en
 // subscriptionPlansController.js — así que el cobro también se hace ahí,
 // en vez de mover el dinero después con transfer_data).
-const PLATFORM_FEE_PERCENT = 9.5;
+const PLATFORM_FEE_PERCENT = 11;
 
 module.exports = {
 

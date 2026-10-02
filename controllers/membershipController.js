@@ -8,9 +8,12 @@
 // nombre de cada entrenador con su propia cuenta conectada, aquí el
 // dinero es ingreso nuestro, no del entrenador. Por eso no hay
 // application_fee real (ese campo es exclusivo de cargos vía Connect) —
-// se deja igual el mismo criterio de 9.5% (4.5% procesamiento Stripe +
-// 5% comisión) ya usado en el resto de la plataforma, como metadata para
-// que la contabilidad sea consistente en todos lados.
+// se deja igual el mismo criterio de 11% (cubre procesamiento real de
+// Stripe + comisión de plataforma — subido de 9.5% a 11%, pedido urgente
+// explícito: el 9.5% no dejaba margen suficiente una vez que se descontó
+// lo que Stripe de verdad cobra por los cargos vía Connect) ya usado en
+// el resto de la plataforma, como metadata para que la contabilidad sea
+// consistente en todos lados.
 const keys = require('../config/keys.js');
 const db = require('../config/config.js');
 const MembershipPlan = require('../models/membershipPlan.js');
@@ -20,7 +23,7 @@ const { isUnrestricted: isUnrestrictedUser, FLEX_ADDON_ID } = require('../utils/
 const storage = require('../utils/cloud_storage.js');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
-const PLATFORM_FEE_PERCENT = '9.5';
+const PLATFORM_FEE_PERCENT = '11';
 // Días de gracia reales de los PLANES BASE (fundador/monthly/quarterly/
 // plan_50) — se cobra hasta el día 6. Flex Ilimitado NO tiene periodo de
 // gracia (ver activateAddon) — se cobra de inmediato al activarlo.
