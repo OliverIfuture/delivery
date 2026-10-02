@@ -274,10 +274,17 @@ module.exports = {
             // =========================================================
             let id_company = '1'; // Comunidad por defecto
 
-            if (req.user && req.user.id_entrenador) {
-                const idStr = String(req.user.id_entrenador); // Blindaje contra enteros
-                if (idStr !== '0' && idStr !== 'null' && idStr !== '') {
-                    id_company = idStr;
+            // Fix real (mismo patrón que resolveCommunityIdForUser en
+            // usersController.js / hasRealCompanyId en communityController.js):
+            // antes esto solo miraba id_entrenador, así que un entrenador
+            // (que no tiene id_entrenador propio, solo mi_store) nunca veía
+            // ni su propio feed — mi_store manda si es un id real.
+            if (req.user) {
+                const miStoreStr = req.user.mi_store != null ? String(req.user.mi_store) : '';
+                const hasRealCompanyId = miStoreStr !== '' && miStoreStr !== '0' && miStoreStr !== 'null';
+                const resolved = hasRealCompanyId ? miStoreStr : (req.user.id_entrenador != null ? String(req.user.id_entrenador) : '');
+                if (resolved !== '' && resolved !== '0' && resolved !== 'null') {
+                    id_company = resolved;
                 }
             }
 

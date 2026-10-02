@@ -1095,10 +1095,16 @@ User.createWithImageUserAndCompany = (user, company) => {
                 .then(companyData => {
                     const newCompanyId = companyData.id;
 
-                    // 4. Actualizar mi_store en el usuario (sin cambios)
+                    // 4. Actualizar mi_store Y id_entrenador en el usuario —
+                    // un entrenador ahora también puede publicar/ver su
+                    // propia comunidad (ver tab_social.dart), y ese feed
+                    // (Product.getPostAllV2 en productsControllers.js) resuelve
+                    // la comunidad leyendo id_entrenador, no mi_store. Sin
+                    // esto, un entrenador recién registrado nunca ve su
+                    // propia comunidad (cae al fallback '1').
                     const sqlUpdateUser = `
                 UPDATE users
-                SET mi_store = $1
+                SET mi_store = $1, id_entrenador = $1
                 WHERE id = $2
             `;
 
