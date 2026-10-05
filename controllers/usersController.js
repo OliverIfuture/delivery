@@ -8,6 +8,7 @@ const { use } = require('passport');
 const { findUserById } = require('../models/user');
 const nodemailer = require('nodemailer'); // <--- IMPORTANTE
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
+const ReferralsController = require('./referralsController.js');
 
 async function logPaymentHistory(db, subscription) {
     try {
@@ -1622,6 +1623,16 @@ module.exports = {
 
             // 5. Crear usuario y compañía en la base de datos
             const data = await User.createWithImageUserAndCompany(user, company);
+
+            // Programa de referidos: si llegó con ?ref=, queda atribuido. Nunca
+            // debe tumbar el registro, por eso va en su propio try/catch.
+            if (req.body.referral_code) {
+                try {
+                    await ReferralsController.attachFromRegistration({ referredUserId: data.id, code: req.body.referral_code });
+                } catch (e) {
+                    console.log(`Error atribuyendo referido: ${e}`);
+                }
+            }
 
             // 6. Asignación de Roles
             if (company.wantsappointments === true) {

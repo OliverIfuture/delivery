@@ -3,6 +3,7 @@ const ClientSubscription = require('../models/clientSubscription.js');
 const User = require('../models/user.js');
 // controllers/emoonPaymentsController.js
 const db = require('../config/config');
+const ReferralsController = require('./referralsController.js');
 const Wallet = require('../models/wallet.js');
 const Affiliate = require('../models/affiliate.js');
 const keys = require('../config/keys.js');
@@ -565,6 +566,15 @@ module.exports = {
             case 'invoice.payment_succeeded':
             case 'invoice.paid':
                 const invoice = event.data.object;
+
+                // Membresía de plataforma de un entrenador: si es un cobro real,
+                // paga la recompensa de referidos (idempotente).
+                if (invoice.subscription && invoice.amount_paid > 0) {
+                    const trainerCompany = await db.oneOrNone(`SELECT id FROM company WHERE membership_stripe_subscription_id = $1`, [invoice.subscription]);
+                    if (trainerCompany) {
+                        try { await ReferralsController.rewardIfPaid(trainerCompany.id); } catch (e) { console.log(`Error recompensando referido (webhook): ${e}`); }
+                    }
+                }
                 let subMeta = invoice.metadata || {};
 
                 // Rescate de metadata: Si no viene directo en la factura, la buscamos en la suscripción

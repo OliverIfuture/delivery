@@ -22,6 +22,31 @@ const User = require('../models/user.js');
 const { isUnrestricted: isUnrestrictedUser, FLEX_ADDON_ID } = require('../utils/membershipGate.js');
 const storage = require('../utils/cloud_storage.js');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
+const ReferralsController = require('./referralsController.js');
+
+// Webhook de LA CUENTA DE PLATAFORMA (destino "Tu cuenta" en Stripe, no
+// cuentas conectadas): al cobrarse una factura de membresía de un
+// entrenador paga la recompensa de referidos. Firma con su propio secreto
+// STRIPE_PLATFORM_WEBHOOK_SECRET.
+async function platformStripeWebhook(req, res) {
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], process.env.STRIPE_PLATFORM_WEBHOOK_SECRET);
+    } catch (err) {
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    if (event.type === 'invoice.payment_succeeded' || event.type === 'invoice.paid') {
+        const invoice = event.data.object;
+        if (invoice.subscription && invoice.amount_paid > 0) {
+            const company = await db.oneOrNone(`SELECT id FROM company WHERE membership_stripe_subscription_id = $1`, [invoice.subscription]);
+            if (company) {
+                try { await ReferralsController.rewardIfPaid(company.id); } catch (e) { console.log(`Error recompensando referido (platform webhook): ${e}`); }
+            }
+        }
+    }
+    return res.status(200).json({ received: true });
+}
+
 
 const PLATFORM_FEE_PERCENT = '11';
 // Días de gracia reales de los PLANES BASE (fundador/monthly/quarterly/
@@ -45,6 +70,8 @@ const MEMBERSHIP_TRANSFER_DATA = {
 };
 
 module.exports = {
+
+    platformStripeWebhook,
 
     // PÚBLICO — se usa durante el registro, antes de que exista la cuenta.
     async getPublicPlans(req, res) {
@@ -192,6 +219,10 @@ module.exports = {
                 SET membership_plan = $2, membership_status = 'active', membership_expires_at = $3
                 WHERE id = $1
             `, [id_company, plan.id, expiresAt]);
+
+            if (paymentIntentStatus === 'succeeded' || subscription.latest_invoice?.status === 'paid') {
+                try { await ReferralsController.rewardIfPaid(id_company); } catch (e) { console.log(`Error recompensando referido: ${e}`); }
+            }
 
             return res.status(200).json({ success: true, message: 'Membresía activada.' });
         } catch (error) {

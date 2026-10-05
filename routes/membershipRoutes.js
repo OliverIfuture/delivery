@@ -8,6 +8,7 @@ module.exports = (app, upload) => {
 
     // Público — se muestra durante el registro, antes de tener cuenta.
     app.get('/api/membership/plans', membershipController.getPublicPlans);
+    app.post('/api/membership/platform-webhook', membershipController.platformStripeWebhook);
 
     // Requieren sesión — se llaman justo después de crear la cuenta
     // (ver RegisterTrainerFlow.vue), ya logueado.
