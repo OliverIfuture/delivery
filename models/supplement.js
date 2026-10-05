@@ -29,6 +29,14 @@ Supplement.findByCompany = (id_company) => {
     `, [id_company]);
 };
 
+// Catálogo compartido de solo lectura (escrituras siguen acotadas por empresa).
+Supplement.findAllShared = () => {
+    return db.manyOrNone(`
+        SELECT ${COLUMNS} FROM supplements_v2
+        ORDER BY name ASC
+    `);
+};
+
 Supplement.findById = (id) => {
     return db.oneOrNone(`SELECT ${COLUMNS} FROM supplements_v2 WHERE id = $1`, [id]);
 };

@@ -33,9 +33,7 @@ module.exports = {
     // ===================== Ingredientes =====================
     async getMyIngredients(req, res) {
         try {
-            const id_company = req.user.mi_store;
-            if (!id_company) return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
-            const rows = await MasterIngredient.findByCompany(id_company);
+            const rows = await MasterIngredient.findAllShared();
             return res.status(200).json({ success: true, data: rows });
         } catch (error) {
             console.log(`Error en nutritionCatalogController.getMyIngredients: ${error}`);
@@ -135,9 +133,7 @@ module.exports = {
     // ===================== Recetas =====================
     async getMyRecipes(req, res) {
         try {
-            const id_company = req.user.mi_store;
-            if (!id_company) return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
-            const rows = await Diet.findRecipesByCompanyV2(id_company);
+            const rows = await Diet.findAllRecipesV2Shared();
             return res.status(200).json({ success: true, data: rows });
         } catch (error) {
             console.log(`Error en nutritionCatalogController.getMyRecipes: ${error}`);
@@ -248,9 +244,7 @@ module.exports = {
     // ===================== Suplementos =====================
     async getMySupplements(req, res) {
         try {
-            const id_company = req.user.mi_store;
-            if (!id_company) return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
-            const rows = await Supplement.findByCompany(id_company);
+            const rows = await Supplement.findAllShared();
             return res.status(200).json({ success: true, data: rows });
         } catch (error) {
             console.log(`Error en nutritionCatalogController.getMySupplements: ${error}`);

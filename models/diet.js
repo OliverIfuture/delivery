@@ -540,6 +540,39 @@ Diet.findRecipesByCompanyV2 = (id_company) => {
     return db.manyOrNone(sql, [id_company]);
 };
 
+// Catálogo compartido de solo lectura de recetas (escrituras siguen acotadas por empresa).
+Diet.findAllRecipesV2Shared = () => {
+    const sql = `
+        SELECT
+            r.id, r.id_company, r.default_meal_category, r.title, r.image_url,
+            r.prep_time_minutes, r.preparation_steps,
+            r.total_calories, r.total_protein, r.total_carbs, r.total_fats,
+            r.created_at,
+            (
+                SELECT COALESCE(json_agg(
+                    json_build_object(
+                        'id', m.id,
+                        'id_recipe', m.id_recipe,
+                        'id_ingredient', i.id,
+                        'default_qty', m.default_qty,
+                        'ingredient', json_build_object(
+                            'id', i.id, 'id_company', i.id_company, 'name', i.name, 'unit', i.unit,
+                            'base_qty', i.base_qty, 'calories', i.calories, 'protein', i.protein,
+                            'carbs', i.carbs, 'fats', i.fats, 'category', i.category, 'image_url', i.image_url
+                        )
+                    )
+                ), '[]'::json)
+                FROM recipe_ingredients_map m
+                INNER JOIN master_ingredients i ON m.id_ingredient = i.id
+                WHERE m.id_recipe = r.id
+            ) AS ingredients
+        FROM diet_recipes_v2 r
+        WHERE r.is_deleted = false
+        ORDER BY r.id DESC
+    `;
+    return db.manyOrNone(sql);
+};
+
 Diet.findRecipeByIdV2 = (id) => {
     const sql = `
         SELECT r.id, r.id_company, r.default_meal_category, r.title, r.image_url,

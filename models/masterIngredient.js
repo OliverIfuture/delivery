@@ -31,6 +31,16 @@ MasterIngredient.findByCompany = (id_company) => {
     `, [id_company]);
 };
 
+// Catálogo compartido de solo lectura: cualquier cuenta lo ve (escrituras
+// siguen acotadas a la empresa dueña con ownsIngredient).
+MasterIngredient.findAllShared = () => {
+    return db.manyOrNone(`
+        SELECT id, id_company, name, unit, base_qty, calories, protein, carbs, fats, category, image_url, brand, created_at
+        FROM master_ingredients
+        ORDER BY name ASC
+    `);
+};
+
 MasterIngredient.findById = (id) => {
     return db.oneOrNone(`
         SELECT id, id_company, name, unit, base_qty, calories, protein, carbs, fats, category, image_url, brand, created_at
