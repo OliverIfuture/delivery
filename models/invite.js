@@ -51,13 +51,45 @@ Invite.createPendingEmailInvite = (id_company, email, name) => {
     return db.none(`
         INSERT INTO invitations (store_id, email, name, status, created_at)
         VALUES ($1, $2, $3, 'pending', NOW())
-    `, [id_company, email, name || null]);
+    `, [id_company, String(email).trim().toLowerCase(), name || null]);
 };
 
 Invite.findPendingByEmailAndCompany = (email, id_company) => {
     return db.oneOrNone(`
-        SELECT id FROM invitations WHERE email = $1 AND store_id = $2 AND status = 'pending'
+        SELECT id FROM invitations WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) AND store_id = $2 AND status = 'pending'
     `, [email, id_company]);
+};
+
+
+// Invitaciones pendientes de un correo (cliente ya registrado) con los datos
+// del entrenador que lo invita.
+Invite.findPendingForEmail = (email) => {
+    return db.manyOrNone(`
+        SELECT
+            i.id,
+            i.store_id AS id_company,
+            c.name AS company_name,
+            c.logo AS company_logo,
+            c.brand_color,
+            u.name AS trainer_name,
+            u.lastname AS trainer_lastname
+        FROM invitations i
+        INNER JOIN company c ON c.id = i.store_id
+        LEFT JOIN users u ON u.mi_store = c.id AND u.is_trainer = 'true'
+        WHERE LOWER(TRIM(i.email)) = LOWER(TRIM($1)) AND i.status = 'pending'
+        ORDER BY i.created_at DESC
+    `, [email]);
+};
+
+Invite.findPendingByIdForEmail = (inviteId, email) => {
+    return db.oneOrNone(`
+        SELECT id, store_id AS id_company FROM invitations
+        WHERE id = $1 AND LOWER(TRIM(email)) = LOWER(TRIM($2)) AND status = 'pending'
+    `, [inviteId, email]);
+};
+
+Invite.markRegistered = (inviteId, clientId) => {
+    return db.none(`UPDATE invitations SET status = 'registered', client_id = $2, updated_at = NOW() WHERE id = $1`, [inviteId, clientId]);
 };
 
 module.exports = Invite;

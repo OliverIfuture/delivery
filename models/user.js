@@ -366,7 +366,7 @@ LEFT JOIN -- Unir la tabla company de forma opcional
 ON
     C.user_id = U.id
 WHERE
-    U.email = $1
+    LOWER(TRIM(U.email)) = LOWER(TRIM($1))
 GROUP BY
     U.id
 
@@ -2128,7 +2128,7 @@ User.checkAndClaimInvitation = async (email, newUserId) => {
     const findSql = `
         SELECT id, store_id 
         FROM invitations 
-        WHERE email = $1 AND status = 'pending'
+        WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) AND status = 'pending'
         LIMIT 1
     `;
     const invitation = await db.oneOrNone(findSql, [email]);

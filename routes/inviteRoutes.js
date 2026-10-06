@@ -10,6 +10,8 @@ module.exports = (app) => {
     app.get('/api/invite/link', passport.authenticate('jwt', { session: false }), InviteController.getMyInviteLink);
     app.post('/api/invite/send', passport.authenticate('jwt', { session: false }), InviteController.sendClientInvite);
     app.get('/api/invite/resolve/:token', InviteController.resolveInvite);
+    app.get('/api/invite/pending-mine', passport.authenticate('jwt', { session: false }), InviteController.getPendingForMe);
+    app.post('/api/invite/accept-mine', passport.authenticate('jwt', { session: false }), InviteController.acceptPendingForMe);
     app.post('/api/invite/accept', InviteController.acceptInvite);
 
     // NUEVO — mismas rutas pero con el límite de clientes del plan

@@ -19,6 +19,7 @@
 const User = require('../models/user.js');
 const Rol = require('../models/rol.js');
 const Invite = require('../models/invite.js');
+const db = require('../config/config.js');
 const ClientSubscription = require('../models/clientSubscription.js');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
@@ -41,6 +42,13 @@ const DEFAULT_BRAND_COLOR = '#4F46E5';
 function generatePassword() {
     // 10 caracteres alfanuméricos, fáciles de leer/transcribir desde un correo.
     return crypto.randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+}
+
+// El id 1 (y 0/null) es el entrenador por defecto de la plataforma: un cliente
+// que llegó sin invitación queda ahí, y una invitación real de un entrenador
+// sí debe poder reemplazarlo.
+function isRealTrainer(id) {
+    return !!id && !['0', '1', 'null', ''].includes(String(id));
 }
 
 function brandColorOf(row) {
@@ -188,7 +196,7 @@ module.exports = {
             }
 
             const existingUser = await User.findByEmail(email);
-            if (existingUser && existingUser.id_entrenador) {
+            if (existingUser && isRealTrainer(existingUser.id_entrenador)) {
                 return res.status(409).json({ success: false, message: 'Este usuario ya está asignado a un entrenador.' });
             }
 
@@ -242,7 +250,7 @@ module.exports = {
             const existingUser = await User.findByEmail(email);
 
             if (existingUser) {
-                if (existingUser.id_entrenador) {
+                if (isRealTrainer(existingUser.id_entrenador) && String(existingUser.id_entrenador) !== String(id_company)) {
                     return res.status(409).json({
                         success: false,
                         message: 'Este correo ya tiene una cuenta con un entrenador asignado. Si crees que es un error, contacta a soporte.'
@@ -326,6 +334,65 @@ module.exports = {
     // delegar en sendClientInvite (existente, sin tocar) — ver
     // utils/membershipGate.js. sendClientInvite nunca validaba ningún
     // límite; este es el primer punto de contacto (invitación por correo).
+    // Cliente ya registrado: invitaciones pendientes de su correo (para el popup de la app).
+    async getPendingForMe(req, res) {
+        try {
+            const rows = await Invite.findPendingForEmail(req.user.email);
+            const data = rows.map((row) => ({
+                id: row.id,
+                trainerName: trainerDisplayName(row),
+                companyLogo: row.company_logo || null,
+                brandColor: brandColorOf(row)
+            }));
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('Error en inviteController.getPendingForMe:', error);
+            return res.status(501).json({ success: false, message: 'Error al consultar tus invitaciones.' });
+        }
+    },
+
+    // Cliente ya registrado acepta una invitación: cambia su entrenador.
+    async acceptPendingForMe(req, res) {
+        try {
+            const { inviteId } = req.body;
+            const user = req.user;
+            const invite = await Invite.findPendingByIdForEmail(inviteId, user.email);
+            if (!invite) {
+                return res.status(404).json({ success: false, message: 'Esta invitación ya no está disponible.' });
+            }
+            if (isRealTrainer(user.id_entrenador) && String(user.id_entrenador) !== String(invite.id_company)) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Ya tienes un entrenador asignado. Si quieres cambiar, contacta a soporte.'
+                });
+            }
+
+            await User.updateTrainer(user.id, invite.id_company);
+            await Invite.markRegistered(invite.id, user.id);
+
+            const company = await db.oneOrNone('SELECT name FROM company WHERE id = $1', [invite.id_company]);
+            TrainerNotification.resolveTrainerUserId(invite.id_company).then((trainerUserId) => {
+                if (!trainerUserId) return;
+                TrainerNotification.create({
+                    id_user: trainerUserId,
+                    type: 'client',
+                    title: 'Cliente aceptó tu invitación',
+                    body: `${user.name || ''} ${user.lastname || ''}`.trim() || user.email,
+                    link: '/dashboard/clients'
+                });
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: `Ahora entrenas con ${company?.name || 'tu entrenador'}`,
+                data: { id_entrenador: String(invite.id_company) }
+            });
+        } catch (error) {
+            console.error('Error en inviteController.acceptPendingForMe:', error);
+            return res.status(501).json({ success: false, message: 'Error al aceptar la invitación.' });
+        }
+    },
+
     async sendClientInviteChecked(req, res) {
         try {
             const id_company = req.user.mi_store;
