@@ -22,12 +22,29 @@ const MOOD_LABELS = {
     exhausted: 'Exhausto'
 };
 
+const MAX_EXERCISE_FEEDBACK = 60;
+
+// Solo se guarda lo que el cliente escribió: nombre, comentario y, si la
+// URL es http(s), la imagen del ejercicio. Límites para no guardar basura.
+function sanitizeExerciseFeedback(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw
+        .slice(0, MAX_EXERCISE_FEEDBACK)
+        .map((item) => ({
+            exerciseName: String(item?.exerciseName || '').trim().slice(0, 120),
+            imageUrl: typeof item?.imageUrl === 'string' && /^https?:\/\//.test(item.imageUrl) ? item.imageUrl.slice(0, 500) : null,
+            comment: String(item?.comment || '').trim().slice(0, 500)
+        }))
+        .filter((item) => item.exerciseName && item.comment);
+}
+
 module.exports = {
     async create(req, res) {
         try {
             const id_client = req.user.id;
             const id_company = req.user.id_entrenador || null;
             const { routineName, durationSeconds, totalReps, totalVolume, exercisesCount, difficulty, mood, comments } = req.body;
+            const exerciseFeedback = sanitizeExerciseFeedback(req.body.exerciseFeedback);
 
             const row = await WorkoutSessionLog.create({
                 id_client,
@@ -39,10 +56,12 @@ module.exports = {
                 exercises_count: exercisesCount || null,
                 difficulty: difficulty || null,
                 mood: mood || null,
-                comments: comments || null
+                comments: comments || null,
+                exerciseFeedback
             });
 
-            // --- Notificación real para la campana del panel ---
+            // --- Notificación para la campana del panel: al abrirla se ve el
+            // feedback de la rutina (ver /dashboard/feedback en el panel) ---
             try {
                 const trainerUserId = await TrainerNotification.resolveTrainerUserId(id_company);
                 if (trainerUserId) {
@@ -51,12 +70,13 @@ module.exports = {
                     const bodyParts = [];
                     if (difficultyLabel) bodyParts.push(`Dificultad: ${difficultyLabel}`);
                     if (moodLabel) bodyParts.push(`Ánimo: ${moodLabel}`);
+                    if (exerciseFeedback.length) bodyParts.push(`${exerciseFeedback.length} comentario${exerciseFeedback.length === 1 ? '' : 's'} por ejercicio`);
                     await TrainerNotification.create({
                         id_user: trainerUserId,
-                        type: 'achievement',
-                        title: `${req.user.name || 'Tu cliente'} terminó su sesión`,
+                        type: 'workout_feedback',
+                        title: `${req.user.name || 'Tu cliente'} terminó ${routineName ? `"${routineName}"` : 'su rutina'}`,
                         body: bodyParts.length ? bodyParts.join(' · ') : (routineName || 'Entrenamiento completado'),
-                        link: `/dashboard/clients/${id_client}`
+                        link: `/dashboard/feedback?session=${row.id}`
                     });
                 }
             } catch (notifErr) {
@@ -84,6 +104,7 @@ module.exports = {
                 success: true,
                 data: rows.map((r) => ({
                     id: r.id,
+                    exerciseFeedback: Array.isArray(r.exercise_feedback) ? r.exercise_feedback : [],
                     clientId: r.id_client,
                     clientName: r.client_name,
                     routineName: r.routine_name,

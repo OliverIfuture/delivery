@@ -27,6 +27,11 @@ WorkoutSessionLog.ensureTable = async () => {
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
     `);
+    // Comentarios por ejercicio ([{ exerciseName, imageUrl, comment }]) — ver
+    // database/workout_session_logs_exercise_feedback.sql para la migración.
+    await db.none(`
+        ALTER TABLE workout_session_logs ADD COLUMN IF NOT EXISTS exercise_feedback JSONB
+    `);
     await db.none(`
         CREATE INDEX IF NOT EXISTS idx_workout_session_logs_company
         ON workout_session_logs (id_company, created_at DESC)
@@ -37,13 +42,16 @@ WorkoutSessionLog.ensureTable = async () => {
     `);
 };
 
-WorkoutSessionLog.create = ({ id_client, id_company, routine_name, duration_seconds, total_reps, total_volume, exercises_count, difficulty, mood, comments }) => {
+// exerciseFeedback: array ya saneado (ver controller). Se serializa a mano
+// porque pg convertiría un array de JS en un array de PostgreSQL.
+WorkoutSessionLog.create = ({ id_client, id_company, routine_name, duration_seconds, total_reps, total_volume, exercises_count, difficulty, mood, comments, exerciseFeedback }) => {
+    const exercise_feedback = exerciseFeedback && exerciseFeedback.length ? JSON.stringify(exerciseFeedback) : null;
     return db.one(`
         INSERT INTO workout_session_logs
-            (id_client, id_company, routine_name, duration_seconds, total_reps, total_volume, exercises_count, difficulty, mood, comments)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            (id_client, id_company, routine_name, duration_seconds, total_reps, total_volume, exercises_count, difficulty, mood, comments, exercise_feedback)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
         RETURNING id, created_at
-    `, [id_client, id_company, routine_name, duration_seconds, total_reps, total_volume, exercises_count, difficulty, mood, comments]);
+    `, [id_client, id_company, routine_name, duration_seconds, total_reps, total_volume, exercises_count, difficulty, mood, comments, exercise_feedback]);
 };
 
 // Últimos N registros de TODA la company (lo que ve el entrenador en el
@@ -51,7 +59,7 @@ WorkoutSessionLog.create = ({ id_client, id_company, routine_name, duration_seco
 WorkoutSessionLog.findRecentByCompany = (id_company, limit = 10) => {
     return db.manyOrNone(`
         SELECT l.id, l.id_client, u.name AS client_name, l.routine_name, l.duration_seconds,
-               l.total_reps, l.total_volume, l.exercises_count, l.difficulty, l.mood, l.comments, l.created_at
+               l.total_reps, l.total_volume, l.exercises_count, l.difficulty, l.mood, l.comments, l.exercise_feedback, l.created_at
         FROM workout_session_logs l
         LEFT JOIN users u ON u.id = l.id_client
         WHERE l.id_company = $1
