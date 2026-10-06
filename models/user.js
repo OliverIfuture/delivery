@@ -3013,3 +3013,31 @@ User.getCompanyMembershipInfo = (id_company) => {
 };
 
 module.exports = User;
+
+// Recuperación de contraseña: código de 6 dígitos que vence a los 15 minutos.
+User.setPasswordResetCode = (id, code) => {
+    return db.none(`
+        UPDATE users
+        SET password_reset_code = $2, password_reset_expires_at = NOW() + INTERVAL '15 minutes'
+        WHERE id = $1
+    `, [id, code]);
+};
+
+User.findByPasswordResetCode = (email, code) => {
+    return db.oneOrNone(`
+        SELECT id FROM users
+        WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))
+          AND password_reset_code = $2
+          AND password_reset_expires_at > NOW()
+    `, [email, code]);
+};
+
+User.resetPasswordById = (id, plainPassword) => {
+    const hashed = crypto.createHash('md5').update(plainPassword).digest('hex');
+    return db.none(`
+        UPDATE users
+        SET password = $2, password_reset_code = NULL, password_reset_expires_at = NULL
+        WHERE id = $1
+    `, [id, hashed]);
+};
+

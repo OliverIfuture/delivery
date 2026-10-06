@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 
 async function sendPasswordSetupCode({ id, email, name, trainerLabel }) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await User.updateOtp(id, otp);
+    await User.setPasswordResetCode(id, otp);
     await transporter.sendMail({
         from: `"Trainer Partners" <${process.env.EMAIL_USER}>`,
         to: email,

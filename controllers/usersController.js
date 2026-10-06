@@ -2710,7 +2710,7 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
 
     async sendOtp(req, res, next) {
         try {
-            const email = req.body.email;
+            const email = normalizeEmail(req.body.email);
             const user = await User.findByMail(email);
 
             if (!user) {
@@ -2723,8 +2723,8 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
             // Generar código de 6 dígitos
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-            // Guardamos el OTP en la BD
-            await User.updateOtp(user.id, otp);
+            // Código aparte de session_token, con vencimiento de 15 minutos
+            await User.setPasswordResetCode(user.id, otp);
 
             // --- ENVÍO DE CORREO REAL ---
             const mailOptions = {
@@ -2768,15 +2768,11 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
     // 2. VERIFICAR CÓDIGO OTP
     async verifyOtp(req, res, next) {
         try {
-            const { email, otp } = req.body;
-            const user = await User.findByMail(email);
+            const email = normalizeEmail(req.body.email);
+            const otp = String(req.body.otp || '');
+            const match = await User.findByPasswordResetCode(email, otp);
 
-            if (!user) {
-                return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
-            }
-
-            // Validamos si el código coincide con el guardado en session_token
-            if (user.session_token !== otp) {
+            if (!match) {
                 return res.status(401).json({
                     success: false,
                     message: 'El código es incorrecto.'
@@ -2801,11 +2797,24 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
     // 3. RESTABLECER CONTRASEÑA
     async resetPassword(req, res, next) {
         try {
-            const { email, password } = req.body;
+            const email = normalizeEmail(req.body.email);
+            const otp = String(req.body.otp || '');
+            const password = req.body.password || req.body.newPassword;
 
-            // AQUÍ ESTÁ EL CAMBIO: 
-            // Pasamos la contraseña PLANA ("123456"). El modelo se encargará de hacer el Hash MD5.
-            await User.updatePasswordByEmail(email, password);
+            if (!otp) {
+                return res.status(400).json({ success: false, message: 'Falta el código de confirmación.' });
+            }
+            if (!password || String(password).length < 6) {
+                return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres.' });
+            }
+
+            const match = await User.findByPasswordResetCode(email, otp);
+            if (!match) {
+                return res.status(401).json({ success: false, message: 'El código es inválido o ya venció. Solicita uno nuevo.' });
+            }
+
+            // Un solo uso: al cambiar la contraseña el código se borra.
+            await User.resetPasswordById(match.id, String(password));
 
             return res.status(200).json({
                 success: true,
