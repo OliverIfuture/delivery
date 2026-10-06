@@ -14,7 +14,7 @@ EmoonUser.findById = (id) => {
 
 // Buscar por Email
 EmoonUser.findByEmail = (email) => {
-    const sql = `SELECT * FROM emoon.emoon_users WHERE email = $1`;
+    const sql = `SELECT * FROM emoon.emoon_users WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))`;
     return db.oneOrNone(sql, email);
 };
 
