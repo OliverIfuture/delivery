@@ -68,4 +68,9 @@ WorkoutSessionLog.findRecentByCompany = (id_company, limit = 10) => {
     `, [id_company, limit]);
 };
 
+// Nombre y logo de la empresa del entrenador (para la foto de entrenamiento del cliente).
+WorkoutSessionLog.getTrainerBranding = (id_company) => {
+    return db.oneOrNone('SELECT name, logo FROM company WHERE id = $1', [id_company]);
+};
+
 module.exports = WorkoutSessionLog;

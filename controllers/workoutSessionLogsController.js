@@ -95,6 +95,21 @@ module.exports = {
         }
     },
 
+    // Marca del entrenador del cliente (nombre + logo) para la foto de entrenamiento.
+    async trainerBranding(req, res) {
+        try {
+            const id_company = req.user.id_entrenador || null;
+            const branding = id_company ? await WorkoutSessionLog.getTrainerBranding(id_company) : null;
+            return res.status(200).json({
+                success: true,
+                data: { companyName: branding?.name || null, companyLogo: branding?.logo || null }
+            });
+        } catch (error) {
+            console.log(`Error en workoutSessionLogsController.trainerBranding: ${error}`);
+            return res.status(500).json({ success: false, message: 'Error al obtener la marca del entrenador' });
+        }
+    },
+
     // El entrenador ve los últimos 10 de TODA su company (popup general,
     // ver 4ta imagen del pedido) — req.user.mi_store es su id_company.
     async listRecent(req, res) {
