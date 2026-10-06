@@ -1093,6 +1093,12 @@ module.exports = {
     },
 
     async forgotPass(req, res, next) {
+        // Desactivado: cambiaba la contraseña solo con el correo, sin código.
+        // La recuperación pasa por send-otp / verify-otp / reset-password.
+        return res.status(410).json({
+            success: false,
+            message: 'Esta forma de cambiar la contraseña ya no está disponible. Actualiza la app.'
+        });
         try {
 
             const email = req.params.email; // CLIENTE
