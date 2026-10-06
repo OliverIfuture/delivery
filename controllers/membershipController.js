@@ -137,8 +137,10 @@ module.exports = {
                 await db.none(`UPDATE company SET membership_stripe_customer_id = $2 WHERE id = $1`, [id_company, customerId]);
             }
 
+            const couponId = await ReferralsController.getFirstPaymentCouponId(id_company, plan);
             const subscription = await stripe.subscriptions.create({
                 customer: customerId,
+                ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
                 items: [{ price: stripePriceId }],
                 payment_behavior: 'default_incomplete',
                 payment_settings: { save_default_payment_method: 'on_subscription' },
@@ -295,9 +297,11 @@ module.exports = {
             }
 
             const baseUrl = 'https://deliveryserver.herokuapp.com';
+            const couponId = await ReferralsController.getFirstPaymentCouponId(id_company, plan);
             const session = await stripe.checkout.sessions.create({
                 mode: 'subscription',
                 customer: customerId,
+                ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
                 line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
                 success_url: `${baseUrl}/api/membership/confirmDomiciliation?session_id={CHECKOUT_SESSION_ID}&id_company=${id_company}&id_plan=${plan.id}`,
                 cancel_url: `${baseUrl}/api/membership/domiciliacionCancelada`,

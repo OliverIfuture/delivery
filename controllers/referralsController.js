@@ -12,6 +12,10 @@ const TrainerReferral = require('../models/trainerReferral.js');
 const { encodeReferralCode, decodeReferralCode } = require('../utils/referralCode.js');
 
 const REWARD_MXN = 250;
+const REFERRAL_COUPON_ID = 'TP_REFERIDO_20_UNA_VEZ';
+const REFERRAL_DISCOUNT_PERCENT = 20;
+// El descuento aplica solo a planes de más de 3 clientes (ver el modal de referidos).
+const MIN_CLIENT_LIMIT_FOR_DISCOUNT = 3;
 
 module.exports = {
 
@@ -36,6 +40,25 @@ module.exports = {
             console.log(`Error en referralsController.getMyReferrals: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al obtener tus referidos' });
         }
+    },
+
+    // Cupón de Stripe (20%, solo el primer cobro) para el entrenador referido
+    // que contrata un plan de más de 3 clientes. Devuelve su id o null.
+    async getFirstPaymentCouponId(referredCompanyId, plan) {
+        if (!plan || Number(plan.client_limit) <= MIN_CLIENT_LIMIT_FOR_DISCOUNT) return null;
+        const pending = await TrainerReferral.findByReferred(referredCompanyId);
+        if (!pending || pending.status !== 'pending') return null;
+        try {
+            await stripe.coupons.retrieve(REFERRAL_COUPON_ID);
+        } catch {
+            await stripe.coupons.create({
+                id: REFERRAL_COUPON_ID,
+                percent_off: REFERRAL_DISCOUNT_PERCENT,
+                duration: 'once',
+                name: 'Referido: 20% en tu primer pago'
+            });
+        }
+        return REFERRAL_COUPON_ID;
     },
 
     // Llamado desde el registro de entrenador. Nunca falla el registro: si el
