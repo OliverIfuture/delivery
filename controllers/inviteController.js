@@ -367,6 +367,15 @@ module.exports = {
                 });
             }
 
+            const limit = await checkClientLimit(invite.id_company);
+            if (!limit.allowed) {
+                return res.status(403).json({
+                    success: false,
+                    code: 'CLIENT_LIMIT_REACHED',
+                    message: 'Este entrenador ya llegó al límite de clientes de su plan actual.'
+                });
+            }
+
             await User.updateTrainer(user.id, invite.id_company);
             await Invite.markRegistered(invite.id, user.id);
 
