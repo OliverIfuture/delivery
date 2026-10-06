@@ -67,4 +67,10 @@ module.exports = (app) => {
         passport.authenticate('jwt', { session: false }),
         routinesController.substituteExercise
     );
+
+    app.post(
+        '/api/routines/update-set-values',
+        passport.authenticate('jwt', { session: false }),
+        routinesController.updateSetValues
+    );
 }

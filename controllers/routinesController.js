@@ -485,6 +485,77 @@ module.exports = {
         }
     },
 
+    // Reps/peso de UNA serie en el plan. Lo usa el player al registrar la serie:
+    // el valor que el cliente acaba de meter pasa a ser el objetivo de esa serie
+    // en la semana y día actuales (las demás semanas y series no se tocan).
+    async updateSetValues(req, res) {
+        try {
+            const { id_routine, week_number, day_key, id_exercise, exercise_name, set_index, reps, weight } = req.body;
+            const idx = parseInt(set_index, 10);
+            if (!id_routine || !week_number || !day_key || Number.isNaN(idx) || idx < 0) {
+                return res.status(400).json({ success: false, message: 'Datos incompletos para actualizar la serie' });
+            }
+
+            const routine = await Routine.findById(id_routine);
+            if (!routine) {
+                return res.status(404).json({ success: false, message: 'Rutina no encontrada' });
+            }
+            // Solo el cliente dueño de la rutina o su entrenador (misma empresa).
+            const isOwner = routine.id_client && Number(routine.id_client) === Number(req.user.id);
+            const isCompanyTrainer = req.user.mi_store && Number(routine.id_company) === Number(req.user.mi_store);
+            if (!isOwner && !isCompanyTrainer) {
+                return res.status(403).json({ success: false, message: 'No puedes editar esta rutina' });
+            }
+
+            const planData = typeof routine.plan_data === 'string' ? JSON.parse(routine.plan_data) : routine.plan_data;
+            const week = (planData?.weeks || []).find((w) => parseInt(w.week_number, 10) === parseInt(week_number, 10));
+            const dayKey = Object.keys(week?.days || {}).find((k) => k.toLowerCase() === String(day_key).toLowerCase());
+            if (!dayKey) {
+                return res.status(404).json({ success: false, message: 'Día no encontrado en el plan' });
+            }
+
+            let target = null;
+            for (const block of week.days[dayKey].blocks || []) {
+                for (const ex of block.exercises || []) {
+                    const match = id_exercise
+                        ? ex.id?.toString() === String(id_exercise)
+                        : (exercise_name && ex.name?.trim().toLowerCase() === String(exercise_name).trim().toLowerCase());
+                    if (match) { target = ex; break; }
+                }
+                if (target) break;
+            }
+            if (!target) {
+                return res.status(404).json({ success: false, message: 'Ejercicio no encontrado en el plan' });
+            }
+
+            // Formato nuevo (setsDetail). Si la rutina usa el formato viejo (sets como
+            // lista o número), se convierte a setsDetail conservando cada serie.
+            if (!Array.isArray(target.setsDetail) || target.setsDetail.length === 0) {
+                const oldSets = Array.isArray(target.sets) ? target.sets : null;
+                const count = oldSets ? oldSets.length : Math.max(parseInt(target.sets, 10) || 1, 1);
+                target.setsDetail = Array.from({ length: count }, (_, i) => ({
+                    reps: oldSets ? (oldSets[i]?.reps ?? target.reps ?? '') : (target.reps ?? ''),
+                    repsMode: 'fixed', repsMax: '', time: oldSets ? (oldSets[i]?.time ?? '') : '',
+                    weight: oldSets ? (oldSets[i]?.weight ?? target.weight ?? '') : (target.weight ?? ''),
+                    weightMode: 'fixed', weightMax: '', rest: '', restMode: 'fixed', restMax: '',
+                    rir: '', technique: 'normal', comment: ''
+                }));
+            }
+            while (target.setsDetail.length <= idx) {
+                target.setsDetail.push({ ...target.setsDetail[target.setsDetail.length - 1] });
+            }
+            const serie = target.setsDetail[idx];
+            if (reps !== undefined && reps !== null && reps !== '') serie.reps = String(reps);
+            if (weight !== undefined && weight !== null && weight !== '') serie.weight = String(weight);
+
+            await Routine.updatePlanData(id_routine, planData);
+            return res.status(200).json({ success: true, message: 'Serie actualizada en el plan' });
+        } catch (error) {
+            console.log(`Error en routinesController.updateSetValues: ${error}`);
+            return res.status(500).json({ success: false, message: 'Error al actualizar la serie', error: error.message });
+        }
+    },
+
     async substituteExercise(req, res, next) {
         try {
             console.log(`\n=================================================`);
