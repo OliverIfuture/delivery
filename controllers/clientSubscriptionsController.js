@@ -1553,7 +1553,7 @@ async stripeWebhook12(req, res, next) {
                 line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
                 customer_email: clientRow.email.toLowerCase(),
                 success_url: `${baseUrl}/api/subscriptions/confirmDomiciliation?session_id={CHECKOUT_SESSION_ID}&old_subscription_id=${sub.id}&id_company=${id_company}`,
-                cancel_url: `${baseUrl}/newdash/domiciliacion/cancelado`,
+                cancel_url: `${baseUrl}/domiciliacion/cancelado`,
                 subscription_data: {
                     transfer_data: { destination: company.stripeAccountId },
                     application_fee_percent: 11,
@@ -1584,7 +1584,7 @@ async stripeWebhook12(req, res, next) {
     async confirmDomiciliation(req, res) {
         try {
             const { session_id, old_subscription_id, id_company } = req.query;
-            const fallback = 'https://thetrainer-app.site/newdash/domiciliacion/error';
+            const fallback = 'https://thetrainer-app.site/domiciliacion/error';
             if (!session_id || !old_subscription_id || !id_company) return res.redirect(fallback);
 
             const company = await User.findCompanyById(id_company);
@@ -1595,10 +1595,10 @@ async stripeWebhook12(req, res, next) {
             if (session.payment_status !== 'paid' && session.status !== 'complete') return res.redirect(fallback);
 
             await ClientSubscription.setStatusById(old_subscription_id, 'canceled');
-            return res.redirect('https://thetrainer-app.site/newdash/domiciliacion/exito');
+            return res.redirect('https://thetrainer-app.site/domiciliacion/exito');
         } catch (error) {
             console.log(`Error en confirmDomiciliation: ${error}`);
-            return res.redirect('https://thetrainer-app.site/newdash/domiciliacion/error');
+            return res.redirect('https://thetrainer-app.site/domiciliacion/error');
         }
     },
 
