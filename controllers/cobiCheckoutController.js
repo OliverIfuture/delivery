@@ -9,6 +9,7 @@ const ClientSubscription = require('../models/clientSubscription.js');
 const Rol = require('../models/rol.js');
 const keys = require('../config/keys.js');
 const TrainerNotification = require('../models/trainerNotification.js');
+const normalizeEmail = require('../utils/normalizeEmail.js');
 const crypto = require('crypto');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
@@ -172,7 +173,8 @@ module.exports = {
     //    no hace falta duplicar nada de esa lógica aquí.
     async createCheckout(req, res) {
         try {
-            const { trainerId, planId, name, lastname, email, phone } = req.body;
+            const { trainerId, planId, name, lastname, phone } = req.body;
+            const email = normalizeEmail(req.body.email);
             if (!trainerId || !planId || !name || !email) {
                 return res.status(400).json({ success: false, message: 'Faltan datos obligatorios.' });
             }
