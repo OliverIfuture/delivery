@@ -10,6 +10,7 @@ const Rol = require('../models/rol.js');
 const keys = require('../config/keys.js');
 const TrainerNotification = require('../models/trainerNotification.js');
 const normalizeEmail = require('../utils/normalizeEmail.js');
+const { sendPasswordSetupCode } = require('../utils/passwordSetup.js');
 const crypto = require('crypto');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
@@ -215,6 +216,11 @@ module.exports = {
                     id_entrenador: id_company
                 });
                 await Rol.create(created.id, 1);
+                try {
+                    await sendPasswordSetupCode({ id: created.id, email, name, trainerLabel: 'Tu entrenador' });
+                } catch (mailErr) {
+                    console.log(`No se pudo enviar el código para crear contraseña a ${email}: ${mailErr.message}`);
+                }
                 user = { id: created.id, email };
             }
 
