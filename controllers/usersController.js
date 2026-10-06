@@ -1,3 +1,4 @@
+const normalizeEmail = require('../utils/normalizeEmail.js');
 const User = require('../models/user');
 const db = require('../config/config');
 const Rol = require('../models/rol');
@@ -310,6 +311,7 @@ module.exports = {
     async register(req, res, next) {
         try {
             const user = req.body;
+            if (user.email) user.email = normalizeEmail(user.email);
 
             // --- LÓGICA DE INVITACIÓN DE ENTRENADOR ---
             let id_entrenador = null;
@@ -374,6 +376,7 @@ module.exports = {
     async registerWithImage(req, res, next) {
         try {
             const user = JSON.parse(req.body.user);
+            if (user.email) user.email = normalizeEmail(user.email);
 
             // ---------------------------------------------------------
             // 1. DETECTAR ID DEL ENTRENADOR (LIMPIO)
@@ -471,6 +474,7 @@ module.exports = {
         try {
 
             const user = req.body;
+            if (user.email) user.email = normalizeEmail(user.email);
             //console.log(`Datos de usuario: ${user}`);
 
             const data = await User.create(user);
@@ -502,6 +506,7 @@ module.exports = {
         try {
 
             const user = req.body;
+            if (user.email) user.email = normalizeEmail(user.email);
             //console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
@@ -530,6 +535,7 @@ module.exports = {
         try {
 
             const user = JSON.parse(req.body.user);
+            if (user.email) user.email = normalizeEmail(user.email);
             //console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
@@ -568,6 +574,7 @@ module.exports = {
         try {
 
             const user = JSON.parse(req.body.user);
+            if (user.email) user.email = normalizeEmail(user.email);
             //console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
@@ -606,6 +613,7 @@ module.exports = {
         try {
 
             const user = JSON.parse(req.body.user);
+            if (user.email) user.email = normalizeEmail(user.email);
             // console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
             const files = req.files;
 
@@ -643,7 +651,7 @@ module.exports = {
 
     async login(req, res, next) {
         try {
-            const email = req.body.email;
+            const email = normalizeEmail(req.body.email);
             const password = req.body.password;
 
              console.log(`Email recibido: ${email}`);
@@ -1151,6 +1159,7 @@ module.exports = {
         try {
 
             let user = req.body;
+            if (user.email) user.email = normalizeEmail(user.email);
             user.state = 'AUTORIZADO';
             user.is_trainer = 'true'
             await User.updateState(user);
@@ -1175,6 +1184,7 @@ module.exports = {
         try {
 
             let user = req.body;
+            if (user.email) user.email = normalizeEmail(user.email);
             user.state = 'RECHAZADO';
             user.is_trainer = 'false'
             await User.updateState(user);
@@ -1460,6 +1470,7 @@ module.exports = {
         try {
 
             const user = req.body;
+            if (user.email) user.email = normalizeEmail(user.email);
             const data = await User.create_dealer(user);
             return res.status(201).json({
                 success: true,
@@ -1590,6 +1601,7 @@ module.exports = {
         try {
             // 1. Parsear los datos JSON
             const user = JSON.parse(req.body.user);
+            if (user.email) user.email = normalizeEmail(user.email);
             const company = JSON.parse(req.body.company);
 
             // console.log(`Datos enviados del usuario: ${JSON.stringify(user)}`);
@@ -1890,6 +1902,7 @@ module.exports = {
         try {
 
             const user = JSON.parse(req.body.user);
+            if (user.email) user.email = normalizeEmail(user.email);
             // console.log(`Datos de usuario: ${user}`);
             const files = req.files;
 
@@ -2324,6 +2337,7 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
         try {
 
             const user = req.body;
+            if (user.email) user.email = normalizeEmail(user.email);
             // console.log(`Datos de usuario: ${user}`);
 
             const data = await User.createWholesaleUser(user);

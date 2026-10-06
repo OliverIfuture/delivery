@@ -1,3 +1,4 @@
+const normalizeEmail = require('../utils/normalizeEmail.js');
 // controllers/emoonUsersController.js
 const EmoonUser = require('../models/emoonUser');
 const bcrypt = require('bcryptjs');
@@ -8,6 +9,7 @@ module.exports = {
     async register(req, res) {
         try {
             const user = req.body;
+            if (user.email) user.email = normalizeEmail(user.email);
             const existingUser = await EmoonUser.findByEmail(user.email);
             if (existingUser) {
                 return res.status(400).json({ success: false, message: 'El correo electrónico ya se encuentra registrado.' });
@@ -39,7 +41,7 @@ return res.status(201).json({
     // 2. Login
     async login(req, res) {
         try {
-            const email = req.body.email;
+            const email = normalizeEmail(req.body.email);
             const password = req.body.password;
             console.log('Login request body:', req.body.email);
 
