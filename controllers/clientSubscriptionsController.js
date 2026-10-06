@@ -1431,8 +1431,13 @@ async stripeWebhook12(req, res, next) {
     async approveRequest(req, res, next) {
         try {
             const { id_subscription } = req.body;
+            const id_company = req.user.mi_store;
+            if (!id_company || String(id_company) === '0') {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
             const db = require('../config/config');
 
+            // Solo se aprueban suscripciones de LA empresa del entrenador logueado.
             const sql = `
                 UPDATE client_subscriptions cs
                 SET 
@@ -1440,11 +1445,11 @@ async stripeWebhook12(req, res, next) {
                     current_period_end = NOW() + (sp."durationInDays" || ' days')::INTERVAL,
                     updated_at = NOW()
                 FROM subscription_plans sp
-                WHERE cs.id = $1 AND cs.id_plan = sp.id
+                WHERE cs.id = $1 AND cs.id_plan = sp.id AND cs.id_company = $2
                 RETURNING cs.id_client
             `;
 
-            const result = await db.oneOrNone(sql, [id_subscription]);
+            const result = await db.oneOrNone(sql, [id_subscription, id_company]);
 
             if (!result) {
                 return res.status(404).json({ success: false, message: 'Suscripción no encontrada o plan inválido.' });
