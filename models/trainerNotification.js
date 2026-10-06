@@ -87,4 +87,15 @@ TrainerNotification.resolveTrainerUserId = async (id_company) => {
     return row ? row.id : null;
 };
 
+TrainerNotification.notifyCompany = async (id_company, { type, title, body = null, link = null }) => {
+    try {
+        const id_user = await TrainerNotification.resolveTrainerUserId(id_company);
+        if (!id_user) return null;
+        return await TrainerNotification.create({ id_user, type, title, body, link });
+    } catch (error) {
+        console.log(`No se pudo notificar a la empresa ${id_company} (${type}): ${error.message}`);
+        return null;
+    }
+};
+
 module.exports = TrainerNotification;

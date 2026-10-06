@@ -573,6 +573,14 @@ module.exports = {
                     const trainerCompany = await db.oneOrNone(`SELECT id FROM company WHERE membership_stripe_subscription_id = $1`, [invoice.subscription]);
                     if (trainerCompany) {
                         try { await ReferralsController.rewardIfPaid(trainerCompany.id); } catch (e) { console.log(`Error recompensando referido (webhook): ${e}`); }
+                        if (invoice.amount_paid > 0) {
+                            await TrainerNotification.notifyCompany(trainerCompany.id, {
+                                type: 'membership_paid',
+                                title: 'Pago de membresía recibido',
+                                body: 'Tu membresía de la plataforma se cobró correctamente.',
+                                link: '/dashboard/subscription'
+                            });
+                        }
                     }
                 }
                 let subMeta = invoice.metadata || {};
@@ -844,6 +852,16 @@ module.exports = {
                     const failedSubId = event.data.object.subscription;
                     await ClientSubscription.updateStatus(failedSubId, 'past_due');
 
+                    const failedSub = await ClientSubscription.findByStripeId(failedSubId);
+                    if (failedSub) {
+                        await TrainerNotification.notifyCompany(failedSub.id_company, {
+                            type: 'payment_failed',
+                            title: 'Pago fallido',
+                            body: 'Un cliente no pudo completar el cobro de su suscripción.',
+                            link: '/dashboard/clients'
+                        });
+                    }
+
                     // 🔥 RETIRAR NIVEL VIP POR FALTA DE PAGO 🔥
                     try {
                         const db = require('../config/config');
@@ -861,6 +879,16 @@ module.exports = {
             case 'customer.subscription.deleted':
                 const deletedSubId = event.data.object.id;
                 await ClientSubscription.updateStatus(deletedSubId, 'canceled');
+
+                const deletedSub = await ClientSubscription.findByStripeId(deletedSubId);
+                if (deletedSub) {
+                    await TrainerNotification.notifyCompany(deletedSub.id_company, {
+                        type: 'subscription_canceled',
+                        title: 'Suscripción cancelada',
+                        body: 'Un cliente canceló su suscripción.',
+                        link: '/dashboard/clients'
+                    });
+                }
 
                 // 🔥 RETIRAR NIVEL VIP POR CANCELACIÓN 🔥
                 try {

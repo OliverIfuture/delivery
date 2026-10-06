@@ -9,6 +9,7 @@ const db = require('../config/config.js');
 const keys = require('../config/keys.js');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 const TrainerReferral = require('../models/trainerReferral.js');
+const TrainerNotification = require('../models/trainerNotification.js');
 const { encodeReferralCode, decodeReferralCode } = require('../utils/referralCode.js');
 
 const REWARD_MXN = 250;
@@ -98,6 +99,12 @@ module.exports = {
                 },
                 { idempotencyKey: `referral-reward-${claimed.id}` }
             );
+            await TrainerNotification.notifyCompany(claimed.referrer_company_id, {
+                type: 'referral_reward',
+                title: 'Ganaste $250 de crédito',
+                body: 'Un entrenador que invitaste ya pagó su primera suscripción.',
+                link: '/dashboard/subscription'
+            });
         } catch (error) {
             await TrainerReferral.releaseReward(claimed.id);
             throw error;

@@ -8,6 +8,7 @@ const SubscriptionPlan = require('../models/subscriptionPlan.js');
 const ClientSubscription = require('../models/clientSubscription.js');
 const Rol = require('../models/rol.js');
 const keys = require('../config/keys.js');
+const TrainerNotification = require('../models/trainerNotification.js');
 const crypto = require('crypto');
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
@@ -231,6 +232,12 @@ module.exports = {
                     id_plan: planId,
                     duration_days: plan.durationInDays,
                     status: 'PENDING'
+                });
+                await TrainerNotification.notifyCompany(id_company, {
+                    type: 'transfer_request',
+                    title: 'Nueva solicitud de transferencia',
+                    body: `${plan.name || 'Plan'} · ${email}`,
+                    link: '/dashboard/payments'
                 });
                 return res.status(200).json({
                     success: true,
