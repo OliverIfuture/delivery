@@ -2040,6 +2040,12 @@ User.updateStreak = (id_user) => {
     return db.one(sql, id_user);
 };
 
+// Solo lectura de la racha ya actualizada por updateStreak (al registrar series).
+User.getCurrentStreak = async (id_user) => {
+    const row = await db.oneOrNone('SELECT current_streak FROM users WHERE id = $1', id_user);
+    return row ? row.current_streak : 0;
+};
+
 User.getFree = (id_client) => {
     const sql = `
 

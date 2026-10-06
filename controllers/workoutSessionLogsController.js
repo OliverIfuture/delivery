@@ -7,6 +7,7 @@
 // panel (ver models/trainerNotification.js).
 const WorkoutSessionLog = require('../models/workoutSessionLog.js');
 const TrainerNotification = require('../models/trainerNotification.js');
+const User = require('../models/user.js');
 
 const DIFFICULTY_LABELS = {
     very_easy: 'Muy fácil',
@@ -83,7 +84,11 @@ module.exports = {
                 console.log(`No se pudo crear la notificación de sesión terminada: ${notifErr.message}`);
             }
 
-            return res.status(201).json({ success: true, data: row });
+            // Racha ya actualizada por las series registradas (User.updateStreak),
+            // para que el summary de la app la muestre sin otra llamada.
+            const currentStreak = await User.getCurrentStreak(id_client).catch(() => null);
+
+            return res.status(201).json({ success: true, data: { ...row, currentStreak } });
         } catch (error) {
             console.log(`Error en workoutSessionLogsController.create: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al guardar el registro de la sesión', error: error.message });
