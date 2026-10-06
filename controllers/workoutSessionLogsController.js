@@ -96,9 +96,13 @@ module.exports = {
     },
 
     // Marca del entrenador del cliente (nombre + logo) para la foto de entrenamiento.
+    // La empresa 1 es la propia app (TRAINER PRO+): un cliente sin entrenador
+    // real no debe ver el logo de la app en su foto, así que no cuenta.
     async trainerBranding(req, res) {
         try {
-            const id_company = req.user.id_entrenador || null;
+            const APP_OWN_COMPANY_ID = 1;
+            const trainerCompany = req.user.id_entrenador ? Number(req.user.id_entrenador) : null;
+            const id_company = trainerCompany && trainerCompany !== APP_OWN_COMPANY_ID ? trainerCompany : null;
             const branding = id_company ? await WorkoutSessionLog.getTrainerBranding(id_company) : null;
             return res.status(200).json({
                 success: true,
