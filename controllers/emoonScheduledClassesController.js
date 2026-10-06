@@ -1,5 +1,6 @@
 // controllers/emoonScheduledClassesController.js
 const EmoonScheduledClass = require('../models/emoonScheduledClass');
+const EmoonReservation = require('../models/emoonReservation');
 
 module.exports = {
     async create(req, res) {
@@ -39,7 +40,7 @@ module.exports = {
     async cancel(req, res) {
         try {
             const { id } = req.params;
-            const data = await EmoonScheduledClass.cancel(id);
+            const data = await EmoonReservation.cancelClassWithRefunds(id);
 
             if (!data) {
                 return res.status(404).json({ success: false, message: 'Clase no encontrada.' });
@@ -47,8 +48,8 @@ module.exports = {
 
             return res.status(200).json({
                 success: true,
-                message: 'Clase cancelada exitosamente.',
-                data: data
+                message: `Clase cancelada. ${data.cancelledReservations} reserva(s) cancelada(s), ${data.refundedCount} crédito(s) devuelto(s).`,
+                data: data.class
             });
         } catch (error) {
             console.error('Error cancelScheduledClass:', error);

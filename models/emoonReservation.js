@@ -78,8 +78,8 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
         if (paymentInfo && paymentInfo.type === 'direct') {
             console.log('[DEBUG 7] Procesando Cobro Directo...');
             const reservation = await t.one(
-                `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at)
-                 VALUES($1, $2, 'active', CURRENT_TIMESTAMP)
+                `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at, user_package_id, charged_credit)
+                 VALUES($1, $2, 'active', CURRENT_TIMESTAMP, NULL, false)
                  RETURNING *`,
                 [userId, scheduledClassId]
             );
@@ -129,12 +129,13 @@ EmoonReservation.create = async (userId, scheduledClassId, paymentInfo = null) =
             throw new Error('El cliente no tiene créditos ni membresía activa disponible. Selecciona "Cobro en Sucursal" para cobrar la clase individual.');
         }
 
-        // Insertar la reserva
+        // Insertar la reserva (recuerda el paquete y si descontó crédito, para devolverlo bien)
+        const chargedCredit = activePackage.type_id !== 'membership' && activePackage.remaining_classes !== null;
         const reservation = await t.one(
-            `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at)
-             VALUES($1, $2, 'active', CURRENT_TIMESTAMP)
+            `INSERT INTO emoon.emoon_reservations(user_id, scheduled_class_id, status, reserved_at, user_package_id, charged_credit)
+             VALUES($1, $2, 'active', CURRENT_TIMESTAMP, $3, $4)
              RETURNING *`,
-            [userId, scheduledClassId]
+            [userId, scheduledClassId, activePackage.id, chargedCredit]
         );
         console.log('[DEBUG 9] Reserva realizada exitosamente:', reservation);
 
@@ -230,6 +231,48 @@ EmoonReservation.updateStatus = (reservationId, status) => {
 };
 
 
+// Devuelve 1 crédito al paquete exacto. Solo reactiva si estaba agotado
+// (no revive un paquete vencido/cancelado).
+async function refundPackageCredit(t, userPackageId) {
+    const res = await t.result(
+        `UPDATE emoon.emoon_user_packages
+         SET remaining_classes = remaining_classes + 1,
+             status = CASE WHEN status = 'depleted' THEN 'active' ELSE status END
+         WHERE id = $1 AND remaining_classes IS NOT NULL`,
+        [userPackageId]
+    );
+    return res.rowCount > 0;
+}
+
+// Cancelación de una clase completa desde admin: cancela sus reservas y
+// devuelve el crédito de las que sí lo descontaron (sin ventana de tiempo,
+// porque la cancela el gimnasio).
+EmoonReservation.cancelClassWithRefunds = (scheduledClassId) => {
+    return db.tx(async (t) => {
+        const cls = await t.oneOrNone(
+            `UPDATE emoon.emoon_scheduled_classes SET status = 'cancelled' WHERE id = $1 RETURNING *`,
+            [scheduledClassId]
+        );
+        if (!cls) return null;
+
+        const cancelled = await t.manyOrNone(
+            `UPDATE emoon.emoon_reservations
+             SET status = 'cancelled', cancelled_at = NOW()
+             WHERE scheduled_class_id = $1 AND status != 'cancelled'
+             RETURNING id, user_package_id, charged_credit`,
+            [scheduledClassId]
+        );
+
+        let refundedCount = 0;
+        for (const r of cancelled) {
+            if (r.charged_credit === true && r.user_package_id) {
+                if (await refundPackageCredit(t, r.user_package_id)) refundedCount++;
+            }
+        }
+        return { class: cls, cancelledReservations: cancelled.length, refundedCount };
+    });
+};
+
 EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
     return db.tx(async (t) => {
         const reservation = await t.oneOrNone(
@@ -269,28 +312,21 @@ EmoonReservation.cancelWithCredit = async (reservationId, userId) => {
             [reservationId]
         );
 
+        let refunded = false;
         if (eligibleForRefund) {
-            const userPkg = await t.oneOrNone(
-                `SELECT id, remaining_classes 
-                 FROM emoon.emoon_user_packages 
-                 WHERE user_id = $1 
-                 ORDER BY created_at DESC 
-                 LIMIT 1`,
-                [userId]
-            );
-
-            if (userPkg && userPkg.remaining_classes !== null) {
-                await t.none(
-                    `UPDATE emoon.emoon_user_packages
-                     SET remaining_classes = remaining_classes + 1,
-                         status = 'active'
-                     WHERE id = $1`,
-                    [userPkg.id]
+            if (reservation.charged_credit === true && reservation.user_package_id) {
+                refunded = await refundPackageCredit(t, reservation.user_package_id);
+            } else if (reservation.charged_credit === null) {
+                // Reserva anterior a user_package_id: no sabemos qué paquete se usó.
+                const userPkg = await t.oneOrNone(
+                    `SELECT id FROM emoon.emoon_user_packages WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+                    [userId]
                 );
+                if (userPkg) refunded = await refundPackageCredit(t, userPkg.id);
             }
         }
 
-        return { refunded: eligibleForRefund, cancellationHours };
+        return { refunded, cancellationHours };
     });
 };
 

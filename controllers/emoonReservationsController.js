@@ -53,7 +53,8 @@ module.exports = {
 
     async cancel(req, res) {
         try {
-            const { reservationId, userId } = req.body;
+            const { reservationId } = req.body;
+            const userId = req.user.id;
             const result = await EmoonReservation.cancelWithCredit(reservationId, userId);
             const msg = result.refunded
                 ? 'Reserva cancelada y crédito reembolsado.'
