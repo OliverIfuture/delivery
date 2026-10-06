@@ -41,6 +41,7 @@ return res.status(201).json({
         try {
             const email = req.body.email;
             const password = req.body.password;
+            console.log('Login request body:', req.body.email);
 
             const user = await EmoonUser.findByEmail(email);
             if (!user) {
