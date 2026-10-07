@@ -205,7 +205,7 @@ module.exports = {
                 items: [{ price: stripePriceId }],
                 payment_behavior: 'default_incomplete',
                 payment_settings: { save_default_payment_method: 'on_subscription' },
-                expand: ['latest_invoice.payment_intent'],
+                expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
                 transfer_data: MEMBERSHIP_TRANSFER_DATA,
                 // Explícito aquí: si el Price ya existía de antes con otro trial
                 // "horneado" en su recurring, esto manda sobre ese valor.
@@ -219,7 +219,15 @@ module.exports = {
                 }
             });
 
-            const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
+            // Con trial_period_days > 0 la primera factura es de $0 — Stripe no genera
+            // un payment_intent en ella (no hay nada que cobrar hoy), sino un
+            // pending_setup_intent para guardar el método de pago y cobrarlo solo
+            // hasta que termine la prueba. El front confirma uno u otro según
+            // `intentType` (ver submitPayment en RegisterTrainerFlow.vue).
+            const paymentIntentSecret = subscription.latest_invoice?.payment_intent?.client_secret;
+            const setupIntentSecret = subscription.pending_setup_intent?.client_secret;
+            const clientSecret = paymentIntentSecret || setupIntentSecret;
+            const intentType = paymentIntentSecret ? 'payment' : 'setup';
             if (!clientSecret) {
                 throw new Error('Stripe no devolvió un client_secret válido para la suscripción.');
             }
@@ -230,6 +238,7 @@ module.exports = {
                 success: true,
                 data: {
                     clientSecret,
+                    intentType,
                     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || ''
                 }
             });
