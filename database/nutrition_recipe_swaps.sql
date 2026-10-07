@@ -28,3 +28,7 @@ CREATE TABLE IF NOT EXISTS client_recipe_swaps (
 ALTER TABLE client_recipe_swaps DROP CONSTRAINT IF EXISTS client_recipe_swaps_id_client_id_recipe_ingredient_index_key;
 ALTER TABLE client_recipe_swaps ADD CONSTRAINT client_recipe_swaps_client_recipe_original_key UNIQUE (id_client, id_recipe, original_ingredient_id);
 ALTER TABLE diet_recipes DROP COLUMN IF EXISTS ingredients_structured;
+
+-- Macros del plan: cada cambio guarda cuánto modificó la receta (reemplazo - original).
+-- Al guardar o quitar, se aplica el delta a client_diets_v2.final_* (reversible).
+ALTER TABLE client_recipe_swaps ADD COLUMN IF NOT EXISTS macro_delta JSONB;

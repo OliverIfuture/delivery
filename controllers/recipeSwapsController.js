@@ -17,6 +17,10 @@ const MAX_OPTIONS = 15;
 // Desviación máxima de energía aceptada. Por encima, el reemplazo no es equivalente.
 const MAX_ENERGY_DEVIATION = 0.25;
 
+function round2(n) {
+    return Math.round(n * 100) / 100;
+}
+
 function parseJsonArray(v) {
     if (Array.isArray(v)) return v;
     if (typeof v === 'string') { try { return JSON.parse(v); } catch (e) { return []; } }
@@ -66,7 +70,7 @@ async function resolve(req, recipeId, ingredientIndex) {
         if (isSameProduct(original, cand)) continue;
         evaluated.push({ cand, swap });
     }
-    return { recipe, item, qty, original, evaluated };
+    return { recipe, item, qty, original, evaluated, assignmentId: assignment.id };
 }
 
 function summarize(e) {
@@ -125,7 +129,13 @@ module.exports = {
             const row = r.evaluated.find((e) => Number(e.cand.id) === replacementId);
             if (!row) return res.status(400).json({ success: false, message: 'Ese ingrediente no es una opción válida para este cambio' });
 
-            const saved = await RecipeSwap.upsert({
+            const macroDelta = {
+                calories: round2(row.swap.result.kcal - row.swap.target.kcal),
+                protein: round2(row.swap.result.protein - row.swap.target.protein),
+                carbs: round2(row.swap.result.carbs - row.swap.target.carbs),
+                fats: round2(row.swap.result.fats - row.swap.target.fats)
+            };
+            const saved = await RecipeSwap.saveWithDelta({
                 id_client: Number(req.user.id),
                 id_recipe: recipeId,
                 ingredient_index: idx,
@@ -133,8 +143,9 @@ module.exports = {
                 replacement_ingredient_id: row.cand.id,
                 replacement_qty: row.swap.grams,
                 replacement_unit: 'g',
-                macros_snapshot: row.swap.result
-            });
+                macros_snapshot: row.swap.result,
+                macro_delta: macroDelta
+            }, r.assignmentId);
             return res.status(200).json({ success: true, data: { ingredientIndex: idx, ...summarize(row), saved: saved.id } });
         } catch (error) {
             console.log(`Error en recipeSwapsController.save: ${error}`);
@@ -151,7 +162,7 @@ module.exports = {
             const assignment = await RecipeSwap.getAssignedIngredients(Number(req.user.id), recipeId);
             const item = assignment && parseJsonArray(assignment.custom_ingredients)[idx];
             if (!item || !item.id_ingredient) return res.status(400).json({ success: false, message: 'Ingrediente no válido' });
-            await RecipeSwap.remove(Number(req.user.id), recipeId, item.id_ingredient);
+            await RecipeSwap.removeWithDelta(Number(req.user.id), recipeId, item.id_ingredient, assignment.id);
             return res.status(200).json({ success: true });
         } catch (error) {
             console.log(`Error en recipeSwapsController.remove: ${error}`);
