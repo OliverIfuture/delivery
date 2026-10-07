@@ -96,6 +96,49 @@ const MEMBERSHIP_TRANSFER_DATA = {
     amount_percent: (100 - Number(PLATFORM_FEE_PERCENT)) / 2
 };
 
+// Crea el Product de Stripe del plan la primera vez que se necesita (mensual o
+// anual comparten el mismo Product; solo cambia el Price).
+async function getOrCreateProductId(plan) {
+    if (plan.stripe_product_id) return plan.stripe_product_id;
+    const product = await stripe.products.create({
+        name: plan.name,
+        description: `Membresía Trainer Partners — ${plan.name}`,
+        type: 'service'
+    });
+    await MembershipPlan.saveProductId(plan.id, product.id);
+    plan.stripe_product_id = product.id;
+    return product.id;
+}
+
+// Price de Stripe para el ciclo pedido ('monthly' por defecto, o 'yearly'). Se crea
+// una sola vez y se guarda — mismo patrón que ya existía solo para mensual.
+async function getOrCreatePriceId(plan, billingCycle) {
+    if (billingCycle === 'yearly') {
+        if (plan.stripe_price_id_yearly) return plan.stripe_price_id_yearly;
+        if (!plan.price_yearly) throw new Error('Este plan todavía no tiene precio anual configurado.');
+        const productId = await getOrCreateProductId(plan);
+        const price = await stripe.prices.create({
+            product: productId,
+            unit_amount: Math.round(Number(plan.price_yearly) * 100),
+            currency: 'mxn',
+            recurring: { interval: 'year', trial_period_days: MEMBERSHIP_TRIAL_DAYS },
+            nickname: `${plan.name} - anual`
+        });
+        await MembershipPlan.saveYearlyPriceId(plan.id, price.id);
+        return price.id;
+    }
+    if (plan.stripe_price_id) return plan.stripe_price_id;
+    const productId = await getOrCreateProductId(plan);
+    const price = await stripe.prices.create({
+        product: productId,
+        unit_amount: Math.round(Number(plan.price) * 100),
+        currency: 'mxn',
+        recurring: { interval: 'month', interval_count: plan.duration_in_months, trial_period_days: MEMBERSHIP_TRIAL_DAYS }
+    });
+    await MembershipPlan.saveStripeIds(plan.id, productId, price.id);
+    return price.id;
+}
+
 module.exports = {
 
     platformStripeWebhook,
@@ -120,7 +163,8 @@ module.exports = {
     async createCheckout(req, res) {
         try {
             const id_company = req.user.mi_store;
-            const { id_plan } = req.body;
+            const { id_plan, billing_cycle } = req.body;
+            const billingCycle = billing_cycle === 'yearly' ? 'yearly' : 'monthly';
             if (!id_company) {
                 return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
             }
@@ -132,21 +176,11 @@ module.exports = {
                 return res.status(404).json({ success: false, message: 'Plan no encontrado.' });
             }
 
-            let stripePriceId = plan.stripe_price_id;
-            if (!stripePriceId) {
-                const product = await stripe.products.create({
-                    name: plan.name,
-                    description: `Membresía Trainer Partners — ${plan.name}`,
-                    type: 'service'
-                });
-                const price = await stripe.prices.create({
-                    product: product.id,
-                    unit_amount: Math.round(Number(plan.price) * 100),
-                    currency: 'mxn',
-                    recurring: { interval: 'month', interval_count: plan.duration_in_months, trial_period_days: MEMBERSHIP_TRIAL_DAYS }
-                });
-                await MembershipPlan.saveStripeIds(plan.id, product.id, price.id);
-                stripePriceId = price.id;
+            let stripePriceId;
+            try {
+                stripePriceId = await getOrCreatePriceId(plan, billingCycle);
+            } catch (priceError) {
+                return res.status(400).json({ success: false, message: priceError.message });
             }
 
             // Cliente real de Stripe para esta compañía — se reutiliza si
@@ -173,10 +207,14 @@ module.exports = {
                 payment_settings: { save_default_payment_method: 'on_subscription' },
                 expand: ['latest_invoice.payment_intent'],
                 transfer_data: MEMBERSHIP_TRANSFER_DATA,
+                // Explícito aquí: si el Price ya existía de antes con otro trial
+                // "horneado" en su recurring, esto manda sobre ese valor.
+                trial_period_days: MEMBERSHIP_TRIAL_DAYS,
                 metadata: {
                     type: 'membership_payment',
                     id_company: String(id_company),
                     id_plan: plan.id,
+                    billing_cycle: billingCycle,
                     platform_fee_percent: PLATFORM_FEE_PERCENT
                 }
             });
@@ -276,7 +314,8 @@ module.exports = {
     async createDomiciliationCheckout(req, res) {
         try {
             const id_company = req.user.mi_store;
-            const { id_plan, start_billing_at } = req.body;
+            const { id_plan, start_billing_at, billing_cycle } = req.body;
+            const billingCycle = billing_cycle === 'yearly' ? 'yearly' : 'monthly';
             if (!id_company) {
                 return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
             }
@@ -287,8 +326,11 @@ module.exports = {
             if (!plan) {
                 return res.status(404).json({ success: false, message: 'Plan no encontrado.' });
             }
-            if (!plan.stripe_price_id) {
-                return res.status(400).json({ success: false, message: 'Este plan todavía no tiene un precio real de Stripe.' });
+            let stripePriceId;
+            try {
+                stripePriceId = await getOrCreatePriceId(plan, billingCycle);
+            } catch (priceError) {
+                return res.status(400).json({ success: false, message: priceError.message });
             }
 
             const existing = await db.oneOrNone(`SELECT membership_stripe_customer_id FROM company WHERE id = $1`, [id_company]);
@@ -309,6 +351,7 @@ module.exports = {
                     type: 'membership_payment',
                     id_company: String(id_company),
                     id_plan: plan.id,
+                    billing_cycle: billingCycle,
                     platform_fee_percent: PLATFORM_FEE_PERCENT
                 }
             };
@@ -329,7 +372,7 @@ module.exports = {
                 mode: 'subscription',
                 customer: customerId,
                 ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
-                line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+                line_items: [{ price: stripePriceId, quantity: 1 }],
                 success_url: `${baseUrl}/api/membership/confirmDomiciliation?session_id={CHECKOUT_SESSION_ID}&id_company=${id_company}&id_plan=${plan.id}`,
                 cancel_url: `${baseUrl}/api/membership/domiciliacionCancelada`,
                 subscription_data: subscriptionData
@@ -708,7 +751,8 @@ module.exports = {
     async changeMyPlan(req, res) {
         try {
             const id_company = req.user.mi_store;
-            const { id_plan } = req.body;
+            const { id_plan, billing_cycle } = req.body;
+            const billingCycle = billing_cycle === 'yearly' ? 'yearly' : 'monthly';
             if (!id_plan) {
                 return res.status(400).json({ success: false, message: 'Falta id_plan.' });
             }
@@ -721,15 +765,11 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Todavía no tienes una suscripción activa — usa /checkout primero.' });
             }
 
-            let stripePriceId = newPlan.stripe_price_id;
-            if (!stripePriceId) {
-                const product = await stripe.products.create({ name: newPlan.name, description: `Membresía Trainer Partners — ${newPlan.name}`, type: 'service' });
-                const price = await stripe.prices.create({
-                    product: product.id, unit_amount: Math.round(Number(newPlan.price) * 100), currency: 'mxn',
-                    recurring: { interval: 'month', interval_count: newPlan.duration_in_months, trial_period_days: MEMBERSHIP_TRIAL_DAYS }
-                });
-                await MembershipPlan.saveStripeIds(newPlan.id, product.id, price.id);
-                stripePriceId = price.id;
+            let stripePriceId;
+            try {
+                stripePriceId = await getOrCreatePriceId(newPlan, billingCycle);
+            } catch (priceError) {
+                return res.status(400).json({ success: false, message: priceError.message });
             }
 
             const subscription = await stripe.subscriptions.retrieve(company.membership_stripe_subscription_id);

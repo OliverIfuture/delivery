@@ -13,9 +13,14 @@ const db = require('../config/config.js');
 
 const MembershipPlan = {};
 
+// price_yearly/stripe_price_id_yearly: precio anual (migración aditiva, ver
+// database/membership_plans_yearly.sql). stripe_price_id_yearly se llena solo la
+// primera vez que alguien paga ese plan en anual, mismo patrón que stripe_price_id.
+const PLAN_COLUMNS = 'id, name, duration_in_months, price, price_yearly, ispromo, client_limit, stripe_product_id, stripe_price_id, stripe_price_id_yearly';
+
 MembershipPlan.findAll = () => {
     return db.manyOrNone(`
-        SELECT id, name, duration_in_months, price, ispromo, client_limit, stripe_product_id, stripe_price_id
+        SELECT ${PLAN_COLUMNS}
         FROM membership_plans
         ORDER BY price ASC
     `);
@@ -23,7 +28,7 @@ MembershipPlan.findAll = () => {
 
 MembershipPlan.findById = (id) => {
     return db.oneOrNone(`
-        SELECT id, name, duration_in_months, price, ispromo, client_limit, stripe_product_id, stripe_price_id
+        SELECT ${PLAN_COLUMNS}
         FROM membership_plans
         WHERE id = $1
     `, [id]);
@@ -35,6 +40,14 @@ MembershipPlan.saveStripeIds = (id, stripeProductId, stripePriceId) => {
         SET stripe_product_id = $2, stripe_price_id = $3
         WHERE id = $1
     `, [id, stripeProductId, stripePriceId]);
+};
+
+MembershipPlan.saveProductId = (id, stripeProductId) => {
+    return db.none(`UPDATE membership_plans SET stripe_product_id = $2 WHERE id = $1`, [id, stripeProductId]);
+};
+
+MembershipPlan.saveYearlyPriceId = (id, stripePriceId) => {
+    return db.none(`UPDATE membership_plans SET stripe_price_id_yearly = $2 WHERE id = $1`, [id, stripePriceId]);
 };
 
 module.exports = MembershipPlan;
