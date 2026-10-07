@@ -72,9 +72,9 @@ async function platformStripeWebhook(req, res) {
 
 const PLATFORM_FEE_PERCENT = '11';
 // Días de gracia reales de los PLANES BASE (fundador/monthly/quarterly/
-// plan_50) — se cobra hasta el día 6. Flex Ilimitado NO tiene periodo de
+// plan_50) — se cobra hasta el día 15. Flex Ilimitado NO tiene periodo de
 // gracia (ver activateAddon) — se cobra de inmediato al activarlo.
-const MEMBERSHIP_TRIAL_DAYS = 5;
+const MEMBERSHIP_TRIAL_DAYS = 14;
 
 // Antes PLATFORM_FEE_PERCENT solo viajaba como metadata informativa (ver
 // nota arriba de createCheckout) — el dinero completo se quedaba en la
