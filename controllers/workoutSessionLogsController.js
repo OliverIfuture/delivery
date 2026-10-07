@@ -106,7 +106,7 @@ module.exports = {
             const branding = id_company ? await WorkoutSessionLog.getTrainerBranding(id_company) : null;
             return res.status(200).json({
                 success: true,
-                data: { companyName: branding?.name || null, companyLogo: branding?.logo || null }
+                data: { companyName: branding?.name || null, companyLogo: branding?.logo || null, brandColor: branding?.brand_color || null }
             });
         } catch (error) {
             console.log(`Error en workoutSessionLogsController.trainerBranding: ${error}`);
