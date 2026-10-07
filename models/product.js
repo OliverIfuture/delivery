@@ -435,6 +435,7 @@ SELECT
     P.is_trainer, 
     U.name,
     U.image AS photo,
+    U.total_points AS author_points,
     
     -- 1. Total de votos
     (SELECT COUNT(*) FROM poll_votes WHERE id_post = P.id) AS total_votes,
@@ -462,6 +463,7 @@ SELECT
             'id_user', lp.id_user,
             'username', u3.name,
             'userImage', u3.image,
+            'points', u3.total_points,
             'useremail', lp.useremail
         )), '[]')
         FROM likes_publish lp
@@ -483,7 +485,7 @@ WHERE P.id_company::varchar = $2
   AND P.id_user NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = $1)
   AND P.id_user NOT IN (SELECT blocker_id FROM blocked_users WHERE blocked_id = $1)
 
-GROUP BY P.id, U.name, U.image, P.poll_options
+GROUP BY P.id, U.name, U.image, U.total_points, P.poll_options
 ORDER BY P.is_pinned DESC, P.id DESC;
     `;
 
