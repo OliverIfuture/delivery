@@ -86,9 +86,14 @@ const MEMBERSHIP_TRIAL_DAYS = 5;
 // Hardcodeado a propósito por ahora (pedido explícito) — si en el futuro
 // hay que hacerlo configurable, sacarlo a keys.js o a una tabla real.
 const MEMBERSHIP_PAYOUT_DESTINATION_ACCOUNT_ID = 'acct_1ShJ6XFREGUwQ83V';
+// Reparto de cada cobro de membresía de entrenador: se descuenta primero la comisión
+// de COBI (PLATFORM_FEE_PERCENT, 11%) y el resto (89%) se divide 50/50. La mitad
+// (44.5% del cobro) va a la cuenta conectada; la otra mitad se queda en la cuenta
+// admin de la plataforma (no se transfiere). Solo aplica a suscripciones nuevas:
+// cada suscripción conserva el transfer_data con el que se creó.
 const MEMBERSHIP_TRANSFER_DATA = {
     destination: MEMBERSHIP_PAYOUT_DESTINATION_ACCOUNT_ID,
-    amount_percent: 100 - Number(PLATFORM_FEE_PERCENT)
+    amount_percent: (100 - Number(PLATFORM_FEE_PERCENT)) / 2
 };
 
 module.exports = {
