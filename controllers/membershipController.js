@@ -38,6 +38,28 @@ async function platformStripeWebhook(req, res) {
     if (event.type === 'invoice.payment_succeeded' || event.type === 'invoice.paid') {
         const invoice = event.data.object;
         if (invoice.subscription && invoice.amount_paid > 0) {
+            // Reactivación sin depender del navegador: si el cobro es de una membresía
+            // (metadata type 'membership_payment', ver createDomiciliationCheckout), la
+            // empresa vuelve a 'active' con su suscripción y su nuevo vencimiento.
+            try {
+                const sub = await stripe.subscriptions.retrieve(invoice.subscription);
+                const meta = sub.metadata || {};
+                if (meta.type === 'membership_payment' && meta.id_company) {
+                    const expiresAt = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+                    const planId = meta.id_plan || null;
+                    await db.none(`
+                        UPDATE company
+                        SET membership_stripe_subscription_id = $2,
+                            membership_status = 'active',
+                            membership_expires_at = $3
+                            ${planId ? ', membership_plan = $4' : ''}
+                        WHERE id = $1
+                    `, planId ? [meta.id_company, sub.id, expiresAt, planId] : [meta.id_company, sub.id, expiresAt]);
+                    console.log(`Membresía reactivada por webhook: empresa ${meta.id_company}, plan ${planId}`);
+                }
+            } catch (e) {
+                console.log(`Error reactivando membresía (platform webhook): ${e}`);
+            }
             const company = await db.oneOrNone(`SELECT id FROM company WHERE membership_stripe_subscription_id = $1`, [invoice.subscription]);
             if (company) {
                 try { await ReferralsController.rewardIfPaid(company.id); } catch (e) { console.log(`Error recompensando referido (platform webhook): ${e}`); }
