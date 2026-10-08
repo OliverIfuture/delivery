@@ -211,8 +211,11 @@ Product.createClassroomLesson = (lesson) => {
 };
 
 // --- OBTENER MÓDULOS (Filtrado por Nivel) ---
-// 🔥 Ahora recibe user_level y id_company
-Product.getClassroom = (user_level, id_company) => {
+// 🔥 Ahora recibe user_level, id_company e id_user (progreso real por
+// lección — ver database/classroom_lesson_progress.sql; antes no existía,
+// Flutter lo calculaba 100% local por dispositivo). id_user puede venir
+// null (el LEFT JOIN simplemente no empata nada y completed sale false).
+Product.getClassroom = (user_level, id_company, id_user) => {
     const sql = `
 SELECT
             m.id,
@@ -237,11 +240,13 @@ SELECT
                             'thumbnail_url', l.thumbnail_url,
                             'order_index', l.order_index,
                             'is_free', l.is_free,
+                            'completed', COALESCE(p.completed, false),
                             'created_at', l.created_at,
                             'updated_at', l.updated_at
                         ) ORDER BY l.order_index ASC
                     )
                     FROM classroom_lessons l
+                    LEFT JOIN classroom_lesson_progress p ON p.id_lesson = l.id AND p.id_user = $3
                     WHERE l.module_id = m.id
                 ),
                 '[]'::json
@@ -251,14 +256,26 @@ SELECT
         WHERE
             m.is_active = true
             -- 🔥 NUEVO FILTRO: Solo trae los módulos de ese entrenador específico
-            AND m.id_company = $2 
+            AND m.id_company = $2
         ORDER BY
             m.required_level ASC, m.id DESC;
     `;
 
-    // Pasamos el array con ambos valores
-    return db.manyOrNone(sql, [user_level, id_company]);
+    // Pasamos el array con los 3 valores
+    return db.manyOrNone(sql, [user_level, id_company, id_user || null]);
 };
+
+// Marca (o confirma) una lección como completada para este usuario — upsert
+// real, idempotente: verla de nuevo no rompe nada ni duplica filas.
+Product.markLessonComplete = (id_user, id_lesson) => {
+    return db.none(`
+        INSERT INTO classroom_lesson_progress (id_user, id_lesson, completed, completed_at, updated_at)
+        VALUES ($1, $2, true, NOW(), NOW())
+        ON CONFLICT (id_user, id_lesson)
+        DO UPDATE SET completed = true, completed_at = COALESCE(classroom_lesson_progress.completed_at, NOW()), updated_at = NOW()
+    `, [id_user, id_lesson]);
+};
+
 // --- MODERACIÓN: REPORTAR POST ---
 Product.reportPost = (post_id, user_id) => {
     const sql = `

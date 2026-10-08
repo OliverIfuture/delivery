@@ -209,8 +209,7 @@ module.exports = {
                 console.log(`[Classroom] Sin entrenador asignado. Sirviendo módulos globales (ID 1)`);
             }
 
-            // Pasamos AMBOS parámetros al modelo
-            const data = await Product.getClassroom(access_level, id_company);
+            const data = await Product.getClassroom(access_level, id_company, req.user?.id);
 
             return res.status(200).json(data);
         } catch (error) {
@@ -219,6 +218,22 @@ module.exports = {
                 success: false,
                 message: 'Error al obtener el classroom'
             });
+        }
+    },
+
+    // Progreso real de lecciones (ver database/classroom_lesson_progress.sql)
+    // — usado por la pestaña "Cursos" de Coach Community en el panel.
+    async markLessonComplete(req, res, next) {
+        try {
+            const id_lesson = req.body.id_lesson;
+            if (!id_lesson) {
+                return res.status(400).json({ success: false, message: 'Falta id_lesson.' });
+            }
+            await Product.markLessonComplete(req.user.id, id_lesson);
+            return res.status(200).json({ success: true });
+        } catch (error) {
+            console.log(`Error en productsControllers.markLessonComplete: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al guardar el progreso' });
         }
     },
 
