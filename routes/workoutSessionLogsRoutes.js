@@ -7,6 +7,7 @@ module.exports = (app) => {
     // sesión (dificultad/ánimo/comentarios), ver models/workoutSessionLog.js.
     app.post('/api/workout-logs', passport.authenticate('jwt', { session: false }), workoutSessionLogsController.create);
     app.get('/api/workout-logs/recent', passport.authenticate('jwt', { session: false }), workoutSessionLogsController.listRecent);
+    app.get('/api/workout-logs/by-client/:id_client', passport.authenticate('jwt', { session: false }), workoutSessionLogsController.listByClient);
     app.get('/api/workout-logs/trainer-branding', passport.authenticate('jwt', { session: false }), workoutSessionLogsController.trainerBranding);
 
 };

@@ -68,6 +68,22 @@ WorkoutSessionLog.findRecentByCompany = (id_company, limit = 10) => {
     `, [id_company, limit]);
 };
 
+// Historial completo de UN cliente (tarjeta de feedback en su ficha, ver
+// ClientDetailView.vue) — a diferencia de findRecentByCompany, que es el
+// popup general de toda la company con tope de 50, aquí sí tiene sentido
+// un límite más alto porque ya está acotado a un solo cliente.
+WorkoutSessionLog.findByClient = (id_client, id_company, limit = 100) => {
+    return db.manyOrNone(`
+        SELECT l.id, l.id_client, u.name AS client_name, l.routine_name, l.duration_seconds,
+               l.total_reps, l.total_volume, l.exercises_count, l.difficulty, l.mood, l.comments, l.exercise_feedback, l.created_at
+        FROM workout_session_logs l
+        LEFT JOIN users u ON u.id = l.id_client
+        WHERE l.id_client = $1 AND l.id_company = $2
+        ORDER BY l.created_at DESC
+        LIMIT $3
+    `, [id_client, id_company, limit]);
+};
+
 // Nombre y logo de la empresa del entrenador (para la foto de entrenamiento del cliente).
 WorkoutSessionLog.getTrainerBranding = (id_company) => {
     return db.oneOrNone('SELECT name, logo, brand_color FROM company WHERE id = $1', [id_company]);

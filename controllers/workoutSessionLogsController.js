@@ -148,5 +148,47 @@ module.exports = {
             console.log(`Error en workoutSessionLogsController.listRecent: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al obtener los registros de sesiones', error: error.message });
         }
+    },
+
+    // Historial completo de UN cliente — tarjeta "Feedback" en su ficha
+    // (ClientDetailView.vue), mismo mapeo de campos que listRecent. Acotado
+    // a id_company además de id_client: un entrenador nunca puede pedir el
+    // historial de un cliente que no es suyo con solo cambiar el id en la URL.
+    async listByClient(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            const id_client = req.params.id_client;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            if (!id_client) {
+                return res.status(400).json({ success: false, message: 'Falta id_client.' });
+            }
+            const limit = Math.min(parseInt(req.query.limit) || 100, 200);
+            const rows = await WorkoutSessionLog.findByClient(id_client, id_company, limit);
+            return res.status(200).json({
+                success: true,
+                data: rows.map((r) => ({
+                    id: r.id,
+                    exerciseFeedback: Array.isArray(r.exercise_feedback) ? r.exercise_feedback : [],
+                    clientId: r.id_client,
+                    clientName: r.client_name,
+                    routineName: r.routine_name,
+                    durationSeconds: r.duration_seconds,
+                    totalReps: r.total_reps,
+                    totalVolume: r.total_volume ? Number(r.total_volume) : null,
+                    exercisesCount: r.exercises_count,
+                    difficulty: r.difficulty,
+                    difficultyLabel: DIFFICULTY_LABELS[r.difficulty] || null,
+                    mood: r.mood,
+                    moodLabel: MOOD_LABELS[r.mood] || null,
+                    comments: r.comments,
+                    createdAt: r.created_at
+                }))
+            });
+        } catch (error) {
+            console.log(`Error en workoutSessionLogsController.listByClient: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener el historial del cliente', error: error.message });
+        }
     }
 };
