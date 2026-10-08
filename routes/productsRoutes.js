@@ -20,6 +20,7 @@ module.exports = (app, upload) => {
   app.get('/api/products/diet/client-diet/:id_client', passport.authenticate('jwt', { session: false }), productsControllers.getDietByClient);
   // Obtener todos los módulos según el nivel del usuario
   app.get('/api/products/getClassroom/:access_level', passport.authenticate('jwt', { session: false }), productsControllers.getClassroom);
+  app.get('/api/products/coach-community-classroom/:access_level', passport.authenticate('jwt', { session: false }), productsControllers.getCoachCommunityClassroom);
   app.post('/api/products/lesson-progress', passport.authenticate('jwt', { session: false }), productsControllers.markLessonComplete);
   // --- RUTAS DE MODERACIÓN (Apple Guidelines) ---
   app.post('/api/products/reportPost', passport.authenticate('jwt', { session: false }), productsControllers.reportPost);

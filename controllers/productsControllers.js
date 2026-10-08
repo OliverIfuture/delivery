@@ -221,6 +221,24 @@ module.exports = {
         }
     },
 
+    // Classroom de Coach Community — id_company fijo (1389, la cuenta de
+    // Coach Community), NO el de getClassroom de arriba (que sirve el
+    // classroom del entrenador real del usuario, o el global id=1 como
+    // fallback). Esto es a propósito un endpoint aparte: los cursos para
+    // que CUALQUIER entrenador de la plataforma tome son los de esa cuenta
+    // fija, sin importar a qué id_entrenador esté ligado el usuario.
+    async getCoachCommunityClassroom(req, res, next) {
+        try {
+            const access_level = req.params.access_level;
+            const COACH_COMMUNITY_COMPANY_ID = '1389';
+            const data = await Product.getClassroom(access_level, COACH_COMMUNITY_COMPANY_ID, req.user?.id);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en productsControllers.getCoachCommunityClassroom: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener los cursos de Coach Community' });
+        }
+    },
+
     // Progreso real de lecciones (ver database/classroom_lesson_progress.sql)
     // — usado por la pestaña "Cursos" de Coach Community en el panel.
     async markLessonComplete(req, res, next) {
