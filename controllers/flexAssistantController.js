@@ -666,7 +666,9 @@ ${JSON.stringify(catalogForPrompt)}`;
                         .map(ex => {
                             const catEx = catalogById.get(Number(ex.exercise_id));
                             if (!catEx) return null;
-                            const byTime = catEx.muscle_group === 'Cardio';
+                            // Mismo criterio que usePlantillasStore.js (panel, BY_TIME_GROUPS):
+                            // Estiramiento también se mide en tiempo, no en reps.
+                            const byTime = catEx.muscle_group === 'Cardio' || catEx.muscle_group === 'Estiramiento';
                             const setCount = Math.min(6, Math.max(1, parseInt(ex.sets, 10) || 3));
                             return {
                                 id: String(catEx.id),
