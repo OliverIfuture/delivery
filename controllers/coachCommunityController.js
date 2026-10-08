@@ -22,6 +22,10 @@ const User = require('../models/user.js');
 const storage = require('../utils/cloud_storage.js');
 
 const COACH_COMMUNITY_ID = '1389';
+// Cuenta admin de Coach Community — puede borrar CUALQUIER publicación,
+// no solo las suyas (pedido explícito). El resto de entrenadores solo
+// borra lo propio, igual que antes.
+const COACH_COMMUNITY_ADMIN_EMAIL = 'coach.community@thetrainer-app.com';
 
 module.exports = {
 
@@ -70,10 +74,11 @@ module.exports = {
         }
     },
 
-    // Solo el propio autor puede borrar su post aquí — a diferencia de la
-    // comunidad normal, ningún entrenador individual "es dueño" de Coach
-    // Community, así que no aplica el permiso extra de "entrenador de la
-    // comunidad" que sí tiene communityController.deletePost.
+    // El propio autor puede borrar su post; la cuenta admin de Coach
+    // Community (COACH_COMMUNITY_ADMIN_EMAIL) puede borrar CUALQUIERA —
+    // a diferencia de la comunidad normal, ningún entrenador individual
+    // "es dueño" de Coach Community, así que no aplica el permiso extra de
+    // "entrenador de la comunidad" que sí tiene communityController.deletePost.
     async deletePost(req, res) {
         try {
             const id_post = req.params.id_post;
@@ -81,7 +86,9 @@ module.exports = {
             if (!post) {
                 return res.status(404).json({ success: false, message: 'Publicación no encontrada.' });
             }
-            if (String(post.id_user) !== String(req.user.id)) {
+            const isOwner = String(post.id_user) === String(req.user.id);
+            const isAdmin = (req.user.email || '').trim().toLowerCase() === COACH_COMMUNITY_ADMIN_EMAIL;
+            if (!isOwner && !isAdmin) {
                 return res.status(403).json({ success: false, message: 'No puedes eliminar esta publicación.' });
             }
             await Product.deletePost(id_post);
