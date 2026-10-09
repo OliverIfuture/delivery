@@ -82,11 +82,19 @@ ClientProgress.getMetrics = (id_client) => {
  * Obtiene todas las fotos de progreso de un cliente
  */
 ClientProgress.getPhotosApp = (id_client) => {
+    // OJO: antes no seleccionaba `angle` — la app (ClientProgressPhoto.fromJson)
+    // sí lo espera para poder agrupar las 4 fotos de un mismo día por ángulo
+    // (Frontal/Espalda/Izquierda/Derecha) en la pantalla de "Comparar". Sin
+    // esta columna, cada foto le llegaba a la app con angle = null y ninguna
+    // coincidía al armar la cuadrícula — se veían "rotas" aunque el archivo
+    // existiera.
     const sql = `
         SELECT
             id,
             image_url,
-            date_taken
+            angle,
+            date_taken,
+            created_at
         FROM
             client_progress_photos
         WHERE
