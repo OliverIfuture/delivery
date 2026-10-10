@@ -50,6 +50,17 @@ module.exports = (app) => {
         stripeConnectController.cobiGetAccountStatus
     );
 
+    // NUEVO — enlace de un solo uso al Dashboard Express de Stripe, para
+    // que el entrenador pueda volver a entrar a SU cuenta ya conectada
+    // (ver stripe.accounts.createLoginLink). No es onboarding — eso ya
+    // existe como /onboard-account; esto es solo para revisar pagos,
+    // payouts, etc. dentro del dashboard real de Stripe.
+    app.get(
+        '/api/stripe/connect/dashboard-link',
+        passport.authenticate('jwt', { session: false }),
+        stripeConnectController.getDashboardLink
+    );
+
     /**
      * GET: /api/stripe/connect/charges/:id_account
      * * Obtiene la lista de transacciones de una cuenta conectada

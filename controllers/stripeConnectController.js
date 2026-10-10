@@ -148,6 +148,33 @@ module.exports = {
         }
     },
 
+    // NUEVO — enlace de UN SOLO USO al Dashboard Express real de Stripe
+    // (balance, payouts, estado de cuenta, etc.), para el botón "Ir a mi
+    // cuenta de Stripe" del panel. Distinto del onboarding (accountLinks,
+    // arriba): createLoginLink requiere que la cuenta YA exista y solo
+    // sirve para volver a entrar — por eso aquí no se crea cuenta nueva.
+    async getDashboardLink(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            const company = await User.findCompanyById(id_company);
+
+            if (!company || !company.stripeAccountId) {
+                return res.status(400).json({ success: false, message: 'Todavía no tienes una cuenta de Stripe conectada.' });
+            }
+
+            const loginLink = await stripe.accounts.createLoginLink(company.stripeAccountId);
+
+            return res.status(200).json({ success: true, url: loginLink.url });
+        } catch (error) {
+            console.log(`Error en getDashboardLink: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al generar el enlace a tu cuenta de Stripe',
+                error: error.message
+            });
+        }
+    },
+
     /**
      * GET: Obtiene el historial de pagos de una Cuenta Conectada
      * Params: :id_account (El ID de Stripe del entrenador, ej. acct_12345...)
