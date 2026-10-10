@@ -47,6 +47,19 @@ CalendarEvent.getByCompany = (id_company) => {
     return db.manyOrNone(sql, [id_company]);
 };
 
+// NUEVO — para que el propio cliente lea SU calendario desde la app
+// (filtrado por id_client, no por id_company — el cliente no tiene
+// mi_store). Devuelve lo mismo que ve el entrenador de él en el panel,
+// nunca lo de otros clientes.
+CalendarEvent.getByClient = (id_client) => {
+    const sql = `
+        SELECT * FROM calendar_events
+        WHERE id_client = $1
+        ORDER BY start_at ASC
+    `;
+    return db.manyOrNone(sql, [id_client]);
+};
+
 // Filtrado también por id_company para que un entrenador no pueda editar
 // un evento de otro adivinando el id (mismo patrón que client_private_notes).
 CalendarEvent.update = (id, id_company, data) => {

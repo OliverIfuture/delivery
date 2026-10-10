@@ -23,6 +23,23 @@ module.exports = {
         }
     },
 
+    // NUEVO — el propio cliente leyendo su calendario desde la app
+    // (req.user.id, nunca un id que venga del cliente en la URL).
+    async listMine(req, res) {
+        try {
+            const id_client = req.user.id;
+            const events = await CalendarEvent.getByClient(id_client);
+            return res.status(200).json({ success: true, data: events });
+        } catch (error) {
+            console.log(`Error en calendarEventsController.listMine: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al obtener tu calendario',
+                error: error.message
+            });
+        }
+    },
+
     async create(req, res) {
         try {
             const id_company = req.user.mi_store;
