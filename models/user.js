@@ -1309,7 +1309,7 @@ SELECT id, name, lastname, image, mi_store
 };
 User.getAllCompanies = () => {
     const sql = `
-    SELECT 
+    SELECT
         *
     FROM
         company
@@ -1317,6 +1317,22 @@ User.getAllCompanies = () => {
 
     return db.manyOrNone(sql);
 }
+
+// NUEVO — para la Auditoría de la cuenta Coach Community (ver
+// auditController.js): un entrenador real = quien aparece como dueño
+// (user_id) de una company real. Se deja fuera a la company 4 (cuenta por
+// defecto de la plataforma, no es un entrenador real) y a filas sin
+// email (cuentas corruptas/incompletas que no se pueden usar para entrar).
+User.findAllTrainersForAudit = () => {
+    const sql = `
+        SELECT u.id, u.name, u.lastname, u.email, u.image, c.id AS company_id, c.name AS company_name
+        FROM company c
+        JOIN users u ON u.id = c.user_id
+        WHERE u.email IS NOT NULL AND c.id != 4
+        ORDER BY c.name ASC NULLS LAST, u.name ASC
+    `;
+    return db.manyOrNone(sql);
+};
 
 User.getMembershipPlan = () => {
     const sql = `

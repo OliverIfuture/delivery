@@ -1,6 +1,25 @@
 const Exercise = require('../models/exercise');
 const storage = require('../utils/cloud_storage'); // Asumiendo que usas cloud_storage.js
 const asyncForEach = require('../utils/async_foreach');
+const { trimAndCompressVideo } = require('../utils/video_trim');
+
+// Si el panel mandó trim_start/trim_end (línea de tiempo del creador de
+// ejercicios), recorta y comprime el video ANTES de subirlo — si no vienen,
+// igual se compone un shim con el buffer original sin tocar. Devuelve un
+// objeto con la misma forma que el `file` de multer (buffer/mimetype/
+// originalname) para que storage() lo reciba exactamente igual que antes.
+async function prepareVideoFile(videoFile, exercise) {
+  const hasTrim = exercise && Number.isFinite(exercise.trim_start) && Number.isFinite(exercise.trim_end) && exercise.trim_end > exercise.trim_start;
+  if (!hasTrim) return videoFile;
+
+  const trimmedBuffer = await trimAndCompressVideo(videoFile.buffer, { start: exercise.trim_start, end: exercise.trim_end });
+  return {
+    ...videoFile,
+    buffer: trimmedBuffer,
+    mimetype: 'video/mp4',
+    originalname: videoFile.originalname.replace(/\.[^.]+$/, '') + '.mp4'
+  };
+}
 
 module.exports = {
 
@@ -86,10 +105,12 @@ module.exports = {
 
             // 4. --- SUBIDA A FIREBASE (STORAGE) ---
 
-            // A) Subir Video (Si existe)
+            // A) Subir Video (Si existe) — primero se recorta/comprime si
+            // vino trim_start/trim_end desde el panel (ver prepareVideoFile).
             if (videoFile) {
+                const preparedVideo = await prepareVideoFile(videoFile, exercise);
                 const pathVideo = `exercises/videos/${Date.now()}`;
-                const videoUrl = await storage(videoFile, pathVideo); // Asegúrate de tener importada tu función storage
+                const videoUrl = await storage(preparedVideo, pathVideo); // Asegúrate de tener importada tu función storage
 
                 if (videoUrl) {
                     exercise.media_url = videoUrl;
@@ -205,10 +226,11 @@ module.exports = {
 
             // 4. --- SUBIDA A FIREBASE (STORAGE) SI HAY ARCHIVOS NUEVOS ---
 
-            // A) Subir Video Nuevo
+            // A) Subir Video Nuevo — recortado/comprimido si vino trim_start/trim_end
             if (videoFile) {
+                const preparedVideo = await prepareVideoFile(videoFile, exercise);
                 const pathVideo = `exercises/videos/${Date.now()}`;
-                const videoUrl = await storage(videoFile, pathVideo); // Asegúrate de tener importado storage
+                const videoUrl = await storage(preparedVideo, pathVideo); // Asegúrate de tener importado storage
 
                 if (videoUrl) {
                     exercise.mediaUrl = videoUrl; // Actualizamos la URL en el objeto

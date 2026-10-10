@@ -2612,7 +2612,7 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
 
             // Enlaces a las tiendas
             const linkPlayStore = "https://play.google.com/store/apps/details?id=com.premiumsupplementsversion2023.app";
-            const linkAppStore = "https://testflight.apple.com/join/1TYBARXK";
+            const linkAppStore = "https://apps.apple.com/mx/app/trainer/id6756944923?l=en-GB";
 
             const imgAppStore = "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ad_banners%2Ftestpasos.png?alt=media&token=ce3cefab-9f11-497e-9a1a-8af5b54ef48c";
             const imgPlayStore = "https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/ad_banners%2FWhatsApp%20Image%202026-07-08%20at%2018.29.25.jpeg?alt=media&token=1e91af6f-db19-4c33-bb02-806bc8cd88e5";

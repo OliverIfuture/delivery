@@ -35,7 +35,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const CLIENT_BASE_URL = process.env.CLIENT_INVITE_BASE_URL || 'https://thetrainer-app.site/unirme';
-const APP_STORE_URL = 'https://testflight.apple.com/join/1TYBARXK';
+const APP_STORE_URL = 'https://apps.apple.com/mx/app/trainer/id6756944923?l=en-GB';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.premiumsupplementsversion2023.app';
 const DEFAULT_BRAND_COLOR = '#4F46E5';
 
