@@ -422,6 +422,40 @@ module.exports = {
         }
     },
 
+    // NUEVO — ganancias reales agrupadas por mes (tarjeta vs transferencia),
+    // para la gráfica de "Tus ganancias" en PagosView.vue. Misma tabla
+    // payment_history que getPaymentHistory de arriba (cobros reales,
+    // Stripe + manuales), solo que agregada por mes en vez de fila por fila.
+    async getEarningsSummary(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) return res.status(403).json({ success: false, message: 'Acceso denegado.' });
+
+            const monthsBack = Math.min(Math.max(parseInt(req.query.months) || 12, 1), 24);
+
+            const sql = `
+                SELECT
+                    TO_CHAR(date_trunc('month', payment_date), 'YYYY-MM') as month,
+                    SUM(CASE WHEN is_manual = true THEN amount ELSE 0 END) as transfer_total,
+                    SUM(CASE WHEN is_manual IS NOT TRUE THEN amount ELSE 0 END) as card_total,
+                    SUM(amount) as total,
+                    COUNT(*) as count
+                FROM payment_history
+                WHERE id_company = $1
+                  AND payment_date >= (date_trunc('month', CURRENT_DATE) - ($2 || ' months')::interval)
+                GROUP BY date_trunc('month', payment_date)
+                ORDER BY date_trunc('month', payment_date) ASC
+            `;
+
+            const rows = await db.manyOrNone(sql, [id_company, monthsBack - 1]);
+            return res.status(200).json({ success: true, data: rows });
+
+        } catch (error) {
+            console.log(`Error en getEarningsSummary: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener tus ganancias' });
+        }
+    },
+
     async createExpense(req, res, next) {
         try {
             const expense = req.body;

@@ -53,4 +53,9 @@ module.exports = (app) => {
         subscriptionPlansController.getPaymentHistory
     );
 
+    app.get('/api/subscriptionPlans/earningsSummary',
+        passport.authenticate('jwt', { session: false }),
+        subscriptionPlansController.getEarningsSummary
+    );
+
 }
