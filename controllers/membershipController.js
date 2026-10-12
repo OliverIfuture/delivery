@@ -920,6 +920,26 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'No encontramos una factura pendiente de pago para tu cuenta.' });
             }
 
+            // Cuentas que llegaron al trial sin terminar de guardar una
+            // tarjeta (ver conversación: el formulario fallaba antes del
+            // fix de billing_details) no tienen NADA que cobrar — avisa
+            // esto específico (código aparte) para que el frontend pueda
+            // guiar directo a "Actualizar método de pago" en vez de un
+            // error genérico de cobro fallido.
+            if (company.membership_stripe_customer_id) {
+                const [cardMethods, linkMethods] = await Promise.all([
+                    stripe.paymentMethods.list({ customer: company.membership_stripe_customer_id, type: 'card' }),
+                    stripe.paymentMethods.list({ customer: company.membership_stripe_customer_id, type: 'link' })
+                ]);
+                if (!cardMethods.data.length && !linkMethods.data.length) {
+                    return res.status(400).json({
+                        success: false,
+                        code: 'NO_PAYMENT_METHOD',
+                        message: 'Todavía no tienes una tarjeta guardada — agrégala primero para poder pagar tu factura vencida.'
+                    });
+                }
+            }
+
             try {
                 await stripe.invoices.pay(invoice.id);
             } catch (stripeErr) {
