@@ -29,7 +29,7 @@ const MEMBERSHIP_TRANSFER_DATA = {
 };
 
 const ID_COMPANY = 1288;
-const STRIPE_PRICE_ID = 'price_1UJ0UnFI81PpmIv2zaO2AqqY'; // "Hasta 10 clientes" ($299 MXN/mes)
+const STRIPE_PRODUCT_ID = 'prod_VJdm1m9eLwAgPl'; // Producto real de "Hasta 10 clientes"
 const PLAN_ID = 'monthly'; // id real del plan en membership_plans
 
 (async () => {
@@ -39,27 +39,31 @@ const PLAN_ID = 'monthly'; // id real del plan en membership_plans
             throw new Error('Esta empresa no tiene membership_stripe_customer_id — revisar antes de continuar.');
         }
 
+        // Stripe exige que trial_end sea al menos 2 días en el futuro si
+        // se manda explícito — no existe forma de "saltarlo a cero" por
+        // ese parámetro. El trial de 14 días está grabado en el Price
+        // original (price_1UJ0UnFI81PpmIv2zaO2AqqY), así que la única
+        // forma real de que no haya ningún día de gracia es crear un
+        // Price NUEVO del mismo producto, mismo monto, SIN
+        // trial_period_days — sin eso, Stripe no tiene ningún trial que
+        // saltar.
+        const noTrialPrice = await stripe.prices.create({
+            product: STRIPE_PRODUCT_ID,
+            unit_amount: 29900, // $299.00 MXN
+            currency: 'mxn',
+            recurring: { interval: 'month' },
+            nickname: 'Hasta 10 clientes - sin periodo de gracia (Emmanuel Marquez)'
+        });
+
         const baseUrl = 'https://deliveryserver.herokuapp.com';
-        // Checkout Sessions (a diferencia de la API directa de
-        // Suscripciones) NO acepta el literal 'now' en trial_end — exige
-        // una marca de tiempo real. Se le da un margen de 60s para no
-        // arriesgar "trial_end must be in the future" por la latencia
-        // misma de esta petición.
-        const trialEndNow = Math.floor(Date.now() / 1000) + 60;
         const session = await stripe.checkout.sessions.create({
             mode: 'subscription',
             customer: company.membership_stripe_customer_id,
-            line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
+            line_items: [{ price: noTrialPrice.id, quantity: 1 }],
             success_url: `${baseUrl}/api/membership/confirmDomiciliation?session_id={CHECKOUT_SESSION_ID}&id_company=${ID_COMPANY}&id_plan=${PLAN_ID}`,
             cancel_url: `${baseUrl}/api/membership/domiciliacionCancelada`,
             subscription_data: {
                 transfer_data: MEMBERSHIP_TRANSFER_DATA,
-                // SIN días de gracia — cobra de inmediato en vez de abrir
-                // un trial de 14 días (eso es lo que creaba una
-                // suscripción "trialing" nueva cada intento, sin tarjeta
-                // real confirmada, y la base de datos la mostraba como
-                // "activa" por el webhook del $0 del trial).
-                trial_end: trialEndNow,
                 metadata: {
                     type: 'membership_payment',
                     id_company: String(ID_COMPANY),
@@ -70,6 +74,7 @@ const PLAN_ID = 'monthly'; // id real del plan en membership_plans
             }
         });
 
+        console.log('Price nuevo (sin trial) creado:', noTrialPrice.id);
         console.log('ENLACE PARA EMMANUEL:');
         console.log(session.url);
     } catch (err) {
