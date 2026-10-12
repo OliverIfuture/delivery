@@ -40,6 +40,12 @@ const PLAN_ID = 'monthly'; // id real del plan en membership_plans
         }
 
         const baseUrl = 'https://deliveryserver.herokuapp.com';
+        // Checkout Sessions (a diferencia de la API directa de
+        // Suscripciones) NO acepta el literal 'now' en trial_end — exige
+        // una marca de tiempo real. Se le da un margen de 60s para no
+        // arriesgar "trial_end must be in the future" por la latencia
+        // misma de esta petición.
+        const trialEndNow = Math.floor(Date.now() / 1000) + 60;
         const session = await stripe.checkout.sessions.create({
             mode: 'subscription',
             customer: company.membership_stripe_customer_id,
@@ -53,7 +59,7 @@ const PLAN_ID = 'monthly'; // id real del plan en membership_plans
                 // suscripción "trialing" nueva cada intento, sin tarjeta
                 // real confirmada, y la base de datos la mostraba como
                 // "activa" por el webhook del $0 del trial).
-                trial_end: 'now',
+                trial_end: trialEndNow,
                 metadata: {
                     type: 'membership_payment',
                     id_company: String(ID_COMPANY),
