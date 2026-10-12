@@ -123,10 +123,17 @@ module.exports = {
             }
 
             const created = await Product.createLesson(lessonData);
-            const files = req.files;
-            if (files && files.length) {
-                const url = await storage(files[0], `classroom_videos/lesson_${created.id}_${Date.now()}`);
+            // upload.fields (no upload.array) -> req.files es un objeto
+            // { video: [...], cover: [...] }, no un arreglo plano.
+            const videoFile = req.files?.video?.[0];
+            const coverFile = req.files?.cover?.[0];
+            if (videoFile) {
+                const url = await storage(videoFile, `classroom_videos/lesson_${created.id}_${Date.now()}`);
                 if (url) await Product.updateLessonVideo(created.id, url);
+            }
+            if (coverFile) {
+                const coverUrl = await storage(coverFile, `classroom_covers/lesson_${created.id}_${Date.now()}`);
+                if (coverUrl) await Product.updateLessonThumbnail(created.id, coverUrl);
             }
             return res.status(201).json({ success: true, data: { id: created.id } });
         } catch (error) {
@@ -144,12 +151,17 @@ module.exports = {
                 return res.status(403).json({ success: false, message: 'Esa lección no es tuya.' });
             }
 
-            const files = req.files;
-            if (files && files.length) {
-                const url = await storage(files[0], `classroom_videos/lesson_${lessonData.id}_${Date.now()}`);
+            const videoFile = req.files?.video?.[0];
+            const coverFile = req.files?.cover?.[0];
+            if (videoFile) {
+                const url = await storage(videoFile, `classroom_videos/lesson_${lessonData.id}_${Date.now()}`);
                 await Product.updateLessonFull(lessonData, url);
             } else {
                 await Product.updateLessonText(lessonData);
+            }
+            if (coverFile) {
+                const coverUrl = await storage(coverFile, `classroom_covers/lesson_${lessonData.id}_${Date.now()}`);
+                if (coverUrl) await Product.updateLessonThumbnail(lessonData.id, coverUrl);
             }
             return res.status(200).json({ success: true, message: 'Lección actualizada' });
         } catch (error) {

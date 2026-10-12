@@ -2539,6 +2539,18 @@ Product.updateLessonVideo = (idLesson, videoUrl) => {
     return db.none(sql, [videoUrl, new Date(), idLesson]);
 }
 
+// NUEVO — portada de la lección (frame capturado del video, ver
+// trainerModulesController.js). Columna ya existía (thumbnail_url) pero
+// nunca se escribía desde ningún lado.
+Product.updateLessonThumbnail = (idLesson, thumbnailUrl) => {
+    const sql = `
+    UPDATE classroom_lessons
+    SET thumbnail_url = $1, updated_at = $2
+    WHERE id = $3
+    `;
+    return db.none(sql, [thumbnailUrl, new Date(), idLesson]);
+}
+
 // Actualiza solo textos (cuando no cambian el video)
 Product.updateLessonText = (lessonData) => {
     const sql = `
