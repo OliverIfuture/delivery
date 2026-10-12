@@ -17,7 +17,11 @@ const MembershipAddon = require('../models/membershipAddon.js');
 // este mismo set) — cuentas internas/de cortesía, no algo que dependa del
 // plan que tengan asignado en la tabla compartida membership_plans (eso
 // afectaría a TODAS las demás empresas con ese mismo plan).
-const UNRESTRICTED_COMPANY_IDS = new Set([1]);
+// TEMPORAL — company 1 (trainer+@gmail.com) sacada de la lista a propósito
+// para poder probar en vivo el banner de "membresía vencida" y el botón
+// de pagar (pedido explícito, 2026-10-12). Volver a poner `new Set([1])`
+// en cuanto termine esa prueba.
+const UNRESTRICTED_COMPANY_IDS = new Set([]);
 
 // Mismo trato, pero por CORREO en vez de id de company — para una cuenta
 // de pruebas real que anda cambiando a mano a qué company apunta su
