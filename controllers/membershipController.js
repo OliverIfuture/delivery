@@ -554,7 +554,13 @@ module.exports = {
                     // "Actualizar plan" (falla al no haber nada que
                     // actualizar de verdad) en vez de ofrecer un checkout
                     // nuevo otra vez.
-                    if (sub.status === 'incomplete' || sub.status === 'incomplete_expired') {
+                    // 'canceled' se suma aquí (antes se quedaba en true):
+                    // una suscripción cancelada no tiene nada que
+                    // "actualizar" — igual que un checkout a medias,
+                    // necesita una suscripción NUEVA (ver /checkout), no
+                    // /change-plan. El frontend ya decide "Actualizar
+                    // plan" vs "Elegir plan y pagar" mirando este campo.
+                    if (sub.status === 'incomplete' || sub.status === 'incomplete_expired' || sub.status === 'canceled') {
                         hasStripeSubscription = false;
                     }
                     const BLOCKING_STATUSES = ['past_due', 'unpaid', 'canceled', 'incomplete_expired'];
@@ -782,20 +788,118 @@ module.exports = {
             }
 
             const subscription = await stripe.subscriptions.retrieve(company.membership_stripe_subscription_id);
+
+            // Si la suscripción ya no está sana, cambiar de plan NO es la
+            // salida correcta — antes esto ni se revisaba, así que una
+            // cuenta vencida podía seguir "cambiando de plan" (o Stripe
+            // tiraba un error crudo al intentar actualizar una
+            // suscripción cancelada). 'past_due'/'unpaid' = hay una
+            // factura real sin cobrar (ver payOverdueInvoice, abajo).
+            // 'canceled'/'incomplete'/'incomplete_expired' = no hay nada
+            // que actualizar, hace falta una suscripción nueva (/checkout).
+            if (['past_due', 'unpaid'].includes(subscription.status)) {
+                return res.status(402).json({
+                    success: false,
+                    code: 'MEMBERSHIP_OVERDUE',
+                    message: 'Tu membresía tiene un pago pendiente. Paga tu factura vencida antes de cambiar de plan.'
+                });
+            }
+            if (['canceled', 'incomplete', 'incomplete_expired'].includes(subscription.status)) {
+                return res.status(400).json({
+                    success: false,
+                    code: 'MEMBERSHIP_NEEDS_CHECKOUT',
+                    message: 'Tu suscripción ya no está activa — elige un plan para reactivarla.'
+                });
+            }
+
             const currentItemId = subscription.items.data[0].id;
 
-            await stripe.subscriptions.update(company.membership_stripe_subscription_id, {
-                items: [{ id: currentItemId, price: stripePriceId }],
-                proration_behavior: 'create_prorations',
-                metadata: { ...subscription.metadata, id_plan: newPlan.id }
-            });
+            // ANTES: 'create_prorations' solo agregaba el cargo de la
+            // diferencia a la SIGUIENTE factura normal — un entrenador
+            // podía subir de plan, aprovechar el cupo más grande todo el
+            // mes, y bajarse de nuevo justo antes de que llegara esa
+            // factura, sin pagar nunca la diferencia (ver pedido
+            // explícito: "cierra esa brecha"). 'always_invoice' +
+            // 'error_if_incomplete' cobra la diferencia prorrateada DE
+            // INMEDIATO a la tarjeta guardada, y si el cobro falla,
+            // Stripe rechaza el cambio completo — nunca se aplica el
+            // plan nuevo sin haberse cobrado.
+            try {
+                await stripe.subscriptions.update(company.membership_stripe_subscription_id, {
+                    items: [{ id: currentItemId, price: stripePriceId }],
+                    proration_behavior: 'always_invoice',
+                    payment_behavior: 'error_if_incomplete',
+                    metadata: { ...subscription.metadata, id_plan: newPlan.id }
+                });
+            } catch (stripeErr) {
+                console.log(`Cambio de plan rechazado por Stripe (probable fallo de cobro de la diferencia): ${stripeErr.message}`);
+                return res.status(402).json({
+                    success: false,
+                    code: 'PAYMENT_FAILED',
+                    message: 'No se pudo cobrar la diferencia a tu tarjeta guardada. Actualiza tu método de pago e intenta de nuevo.'
+                });
+            }
 
             await db.none(`UPDATE company SET membership_plan = $2 WHERE id = $1`, [id_company, newPlan.id]);
 
-            return res.status(200).json({ success: true, message: 'Plan actualizado.' });
+            return res.status(200).json({ success: true, message: 'Plan actualizado — se cobró la diferencia prorrateada a tu tarjeta.' });
         } catch (error) {
             console.log(`Error en membershipController.changeMyPlan: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al cambiar de plan', error: error.message });
+        }
+    },
+
+    // ===================== Pagar factura vencida (reintento inmediato) =====================
+    // Para 'past_due'/'unpaid': ya existe una suscripción real con una
+    // factura que Stripe no pudo cobrar sola (tarjeta rechazada, fondos
+    // insuficientes, etc.). Esto intenta cobrarla YA con el método de
+    // pago guardado. Si funciona, Stripe reactiva la suscripción sola y
+    // dispara el mismo webhook invoice.payment_succeeded que ya
+    // reactiva membership_status/membership_expires_at (ver
+    // platformStripeWebhook arriba) — aquí además se sincroniza la BD de
+    // inmediato para que el panel no tenga que esperar al webhook.
+    async payOverdueInvoice(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            const company = await User.getCompanyMembershipInfo(id_company);
+            if (!company?.membership_stripe_subscription_id) {
+                return res.status(400).json({ success: false, message: 'No tienes una suscripción con una factura pendiente.' });
+            }
+
+            const openInvoices = await stripe.invoices.list({
+                subscription: company.membership_stripe_subscription_id,
+                status: 'open',
+                limit: 1
+            });
+            const invoice = openInvoices.data[0];
+            if (!invoice) {
+                return res.status(400).json({ success: false, message: 'No encontramos una factura pendiente de pago para tu cuenta.' });
+            }
+
+            try {
+                await stripe.invoices.pay(invoice.id);
+            } catch (stripeErr) {
+                console.log(`No se pudo cobrar la factura vencida ${invoice.id}: ${stripeErr.message}`);
+                return res.status(402).json({
+                    success: false,
+                    code: 'PAYMENT_FAILED',
+                    message: 'No se pudo cobrar tu tarjeta guardada. Actualiza tu método de pago e intenta de nuevo.'
+                });
+            }
+
+            // Sincroniza la BD de inmediato (no esperar al webhook) —
+            // mismo criterio que getMyMembershipStatus cuando detecta
+            // una suscripción 'active' con Stripe.
+            const sub = await stripe.subscriptions.retrieve(company.membership_stripe_subscription_id);
+            if (sub.status === 'active' || sub.status === 'trialing') {
+                const expiresAt = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+                await db.none(`UPDATE company SET membership_status = 'active', membership_expires_at = $2 WHERE id = $1`, [id_company, expiresAt]);
+            }
+
+            return res.status(200).json({ success: true, message: '¡Listo! Tu membresía quedó al día.' });
+        } catch (error) {
+            console.log(`Error en membershipController.payOverdueInvoice: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al pagar tu factura vencida', error: error.message });
         }
     },
 

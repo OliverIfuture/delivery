@@ -39,6 +39,7 @@ module.exports = (app, upload) => {
     app.post('/api/membership/payment-method/confirm', passport.authenticate('jwt', { session: false }), membershipController.confirmCardUpdate);
     app.get('/api/membership/invoices', passport.authenticate('jwt', { session: false }), membershipController.getMyInvoices);
     app.post('/api/membership/change-plan', passport.authenticate('jwt', { session: false }), membershipController.changeMyPlan);
+    app.post('/api/membership/payOverdueInvoice', passport.authenticate('jwt', { session: false }), membershipController.payOverdueInvoice);
     app.get('/api/membership/addons', passport.authenticate('jwt', { session: false }), membershipController.getAddons);
     app.post('/api/membership/addons/activate', passport.authenticate('jwt', { session: false }), membershipController.activateAddon);
     app.post('/api/membership/addons/deactivate', passport.authenticate('jwt', { session: false }), membershipController.deactivateAddon);
