@@ -65,6 +65,50 @@ async function platformStripeWebhook(req, res) {
                 try { await ReferralsController.rewardIfPaid(company.id); } catch (e) { console.log(`Error recompensando referido (platform webhook): ${e}`); }
             }
         }
+    } else if (event.type === 'customer.subscription.deleted' || event.type === 'customer.subscription.updated') {
+        // NUEVO — antes, cancelar (o que fallara) una suscripción desde el
+        // propio Dashboard de Stripe dejaba la BD viendo el estado viejo
+        // indefinidamente: la única reconciliación real pasaba cuando
+        // alguien volvía a cargar la pantalla de Suscripción de ESE
+        // entrenador (getMyMembershipStatus). Si nadie la abría después de
+        // cancelar, el panel seguía mostrando "activa" con una fecha de
+        // corte que ya no existía de verdad. Esto sincroniza la BD en el
+        // momento real en que Stripe cambia el estado, sin depender de que
+        // nadie abra esa pantalla.
+        const sub = event.data.object;
+        const meta = sub.metadata || {};
+        if (meta.type === 'membership_payment' && meta.id_company) {
+            try {
+                // El filtro `AND membership_stripe_subscription_id = $N` en
+                // cada UPDATE es a propósito: si alguien ya limpió esta
+                // empresa a mano (ej. apuntando a una suscripción nueva o
+                // reseteándola por completo), un evento tardío de ESTA
+                // suscripción vieja no debe pisar ese estado más reciente.
+                if (sub.status === 'active' || sub.status === 'trialing') {
+                    const expiresAt = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+                    await db.none(
+                        `UPDATE company SET membership_status = 'active', membership_expires_at = $2
+                         WHERE id = $1 AND membership_stripe_subscription_id = $3`,
+                        [meta.id_company, expiresAt, sub.id]
+                    );
+                } else if (sub.status === 'canceled') {
+                    await db.none(
+                        `UPDATE company SET membership_status = 'canceled', membership_stripe_subscription_id = NULL, membership_plan = NULL
+                         WHERE id = $1 AND membership_stripe_subscription_id = $2`,
+                        [meta.id_company, sub.id]
+                    );
+                } else if (['past_due', 'unpaid', 'incomplete_expired'].includes(sub.status)) {
+                    await db.none(
+                        `UPDATE company SET membership_status = $2
+                         WHERE id = $1 AND membership_stripe_subscription_id = $3`,
+                        [meta.id_company, sub.status, sub.id]
+                    );
+                }
+                console.log(`Membresía sincronizada por webhook (${event.type}): empresa ${meta.id_company}, status ${sub.status}`);
+            } catch (e) {
+                console.log(`Error sincronizando membresía (platform webhook ${event.type}): ${e}`);
+            }
+        }
     }
     return res.status(200).json({ received: true });
 }
