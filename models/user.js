@@ -2962,12 +2962,17 @@ User.getCoachClientLeaderboard = (period, limit = 5) => {
             COUNT(cl.id) AS client_count
         FROM company c
         INNER JOIN users t ON t.id = c.user_id
-        INNER JOIN users cl ON cl.id_entrenador::text = c.id::text ${dateFilter}
+        -- is_self_client IS NOT TRUE: la fila "Tú" (ver models/selfClient.js)
+        -- cuenta como id_entrenador = la empresa para que rutinas/nutrición
+        -- funcionen, pero no es un cliente real — sin este filtro, CADA
+        -- entrenador del leaderboard traía un cliente de más (el suyo propio).
+        INNER JOIN users cl ON cl.id_entrenador::text = c.id::text AND cl.is_self_client IS NOT TRUE ${dateFilter}
         -- Excluye cuentas internas, no son entrenadores reales de Coach
         -- Community: company 1 (TRAINER PRO+, cuenta de pruebas propia del
-        -- equipo) y company 4 (PREMIUM SUPPLEMENTS TECATE, la empresa por
-        -- defecto de la plataforma — ya se excluye igual en Auditoría).
-        WHERE c.id NOT IN (1, 4)
+        -- equipo), company 4 (PREMIUM SUPPLEMENTS TECATE, empresa por
+        -- defecto de la plataforma) y company 1389 (Trainer+ / Coach
+        -- Community misma — es quien organiza el ranking, no compite en él).
+        WHERE c.id NOT IN (1, 4, 1389)
         GROUP BY t.id, t.name, t.lastname, t.image, c.name
         HAVING COUNT(cl.id) > 0
         ORDER BY client_count DESC
