@@ -2963,6 +2963,11 @@ User.getCoachClientLeaderboard = (period, limit = 5) => {
         FROM company c
         INNER JOIN users t ON t.id = c.user_id
         INNER JOIN users cl ON cl.id_entrenador::text = c.id::text ${dateFilter}
+        -- Excluye cuentas internas, no son entrenadores reales de Coach
+        -- Community: company 1 (TRAINER PRO+, cuenta de pruebas propia del
+        -- equipo) y company 4 (PREMIUM SUPPLEMENTS TECATE, la empresa por
+        -- defecto de la plataforma — ya se excluye igual en Auditoría).
+        WHERE c.id NOT IN (1, 4)
         GROUP BY t.id, t.name, t.lastname, t.image, c.name
         HAVING COUNT(cl.id) > 0
         ORDER BY client_count DESC
