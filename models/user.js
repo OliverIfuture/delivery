@@ -1323,11 +1323,50 @@ User.getAllCompanies = () => {
 // (user_id) de una company real. Se deja fuera a la company 4 (cuenta por
 // defecto de la plataforma, no es un entrenador real) y a filas sin
 // email (cuentas corruptas/incompletas que no se pueden usar para entrar).
+//
+// Ampliado (pedido explícito): además del dato básico, trae el plan de
+// PLATAFORMA del entrenador (el que paga por usar Trainer Partners, no
+// confundir con los planes que él le vende a SUS clientes) y un conteo
+// real de sus propios clientes en 3 grupos, calculado una sola vez aquí
+// (no N+1 por entrenador):
+//   - activos: su última suscripción con ESE entrenador está 'active'/
+//     'past_due' (mismo criterio que ya usa getMyMembershipStatus para
+//     el límite de clientes del plan).
+//   - prospectos: nunca tuvieron ninguna suscripción con él (nunca se
+//     activaron).
+//   - desactivados: sí tuvieron una suscripción, pero ya no está activa
+//     (venció o se canceló).
 User.findAllTrainersForAudit = () => {
     const sql = `
-        SELECT u.id, u.name, u.lastname, u.email, u.image, c.id AS company_id, c.name AS company_name
+        WITH latest_sub AS (
+            SELECT DISTINCT ON (cs.id_client)
+                cs.id_client, cs.status
+            FROM client_subscriptions cs
+            ORDER BY cs.id_client, cs.current_period_end DESC NULLS LAST
+        ),
+        client_counts AS (
+            SELECT
+                u.id_entrenador AS company_id,
+                COUNT(*) FILTER (WHERE ls.status IN ('active', 'past_due')) AS active_count,
+                COUNT(*) FILTER (WHERE ls.status IS NULL) AS prospect_count,
+                COUNT(*) FILTER (WHERE ls.status IS NOT NULL AND ls.status NOT IN ('active', 'past_due')) AS disabled_count
+            FROM users u
+            LEFT JOIN latest_sub ls ON ls.id_client = u.id
+            WHERE u.id_entrenador IS NOT NULL AND u.is_self_client IS NOT TRUE
+            GROUP BY u.id_entrenador
+        )
+        SELECT
+            u.id, u.name, u.lastname, u.email, u.image,
+            c.id AS company_id, c.name AS company_name,
+            mp.name AS membership_plan_name,
+            c.membership_status, c.membership_expires_at,
+            COALESCE(cc.active_count, 0) AS active_clients,
+            COALESCE(cc.prospect_count, 0) AS prospect_clients,
+            COALESCE(cc.disabled_count, 0) AS disabled_clients
         FROM company c
         JOIN users u ON u.id = c.user_id
+        LEFT JOIN membership_plans mp ON mp.id = c.membership_plan
+        LEFT JOIN client_counts cc ON cc.company_id = c.id
         WHERE u.email IS NOT NULL AND c.id != 4
         ORDER BY c.name ASC NULLS LAST, u.name ASC
     `;
