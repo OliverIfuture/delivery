@@ -12,6 +12,7 @@ module.exports = (app, upload) => {
     app.post('/api/community/post/:id_post/toggle-like', passport.authenticate('jwt', { session: false }), communityController.toggleLike);
     app.get('/api/community/post/:id_post/comments', passport.authenticate('jwt', { session: false }), communityController.getComments);
     app.post('/api/community/comment', passport.authenticate('jwt', { session: false }), communityController.addComment);
+    app.post('/api/community/comment/:id_comment/toggle-like', passport.authenticate('jwt', { session: false }), communityController.toggleCommentLike);
     app.post('/api/community/vote', passport.authenticate('jwt', { session: false }), communityController.castVote);
     app.post('/api/community/report', passport.authenticate('jwt', { session: false }), communityController.reportPost);
 

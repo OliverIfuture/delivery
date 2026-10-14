@@ -581,12 +581,13 @@ Product.findLast5 = () => {
 
 Product.findPostComent = (id) => {
     const sql = `
-select 
+select
 		R.id,
 		U.name as username,
 		U.image,
 		R.coment,
   		R.id_user,
+		R.parent_comment_id,
         COALESCE(json_agg(
            DISTINCT jsonb_build_object(
                 'id', C.id,
@@ -594,15 +595,15 @@ select
                 'useremail', C.useremail,
 				'id_user',C.id_user
 		)
-		) FILTER (WHERE C.useremail != '0'), '[]') as likes 
+		) FILTER (WHERE C.useremail != '0'), '[]') as likes
 		from coments_post  as R
-		
+
 		inner join post as P on P.id = R.id_post
 	    inner join commentsLikes_post as C on R.id = C.id_post
-		inner join users as U on U.id  = R.id_user  
-		
+		inner join users as U on U.id  = R.id_user
+
 		where P.id = $1
-		group by R.id, U.name, R.coment, U.image
+		group by R.id, U.name, R.coment, U.image, R.parent_comment_id
 		order by id desc
 
 
@@ -1126,11 +1127,12 @@ Product.createComent = (comments) => {
     const sql = `
 with rows as (
     INSERT INTO coments_post(
-		id_post, 
+		id_post,
 		id_user,
-		coment 
+		coment,
+		parent_comment_id
 		)
-    VALUES($1,$2,$3 )
+    VALUES($1,$2,$3,$5 )
 	RETURNING id, id_user)
 INSERT INTO commentslikes_post(
 	id_post,
@@ -1140,13 +1142,30 @@ INSERT INTO commentslikes_post(
  )
 SELECT id, id_user,$4, $4
 FROM rows
+RETURNING id_post AS id
     `;
     return db.oneOrNone(sql, [
         comments.id_plate,
         comments.id_user,
         comments.review,
-        '0'
+        '0',
+        comments.parent_comment_id || null
     ]);
+}
+
+// NUEVO — like a un comentario puntual (ver Community.findUserLikeOnComment
+// / getCommentMeta, usados por communityController.toggleCommentLike).
+// Mismo patrón exacto que createLikePost/deleteLikePost, aplicado a
+// commentslikes_post en vez de likes_publish.
+Product.createCommentLike = (id_comment, username, useremail, id_user) => {
+    const sql = `
+    INSERT INTO commentslikes_post(id_post, username, useremail, id_user)
+    VALUES($1, $2, $3, $4) RETURNING id
+    `;
+    return db.manyOrNone(sql, [id_comment, username, useremail, id_user]);
+}
+Product.deleteCommentLike = (id) => {
+    return db.none(`DELETE FROM commentslikes_post WHERE id = $1`, id);
 }
 Product.likePublish = (id_publish, username, useremail, id_user) => {
     const sql = `

@@ -14,5 +14,7 @@ module.exports = (app, upload) => {
     app.delete('/api/coach-community/post/:id_post', passport.authenticate('jwt', { session: false }), coachCommunityController.deletePost);
     // NUEVO — ranking de entrenadores por número de clientes (semana/mes/siempre).
     app.get('/api/coach-community/leaderboard/:period', passport.authenticate('jwt', { session: false }), coachCommunityController.getLeaderboard);
+    // NUEVO — ranking de entrenadores por puntos de interacción (niveles tipo "Inspirador"/"Leyenda").
+    app.get('/api/coach-community/points-leaderboard/:period', passport.authenticate('jwt', { session: false }), coachCommunityController.getPointsLeaderboard);
 
 };

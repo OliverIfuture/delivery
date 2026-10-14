@@ -111,6 +111,24 @@ module.exports = {
             console.log(`Error en coachCommunityController.getLeaderboard: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al obtener el leaderboard', error: error.message });
         }
+    },
+
+    // NUEVO — ranking por PUNTOS de interacción en Coach Community (1 like
+    // recibido = 1 punto, ver database/coach_community_points.sql). Distinto
+    // del leaderboard de arriba (ese es por número de clientes). limit alto
+    // (req.query.limit) permite reusar este mismo endpoint como "mapa de
+    // puntos" completo para pintar insignias de nivel en el feed.
+    async getPointsLeaderboard(req, res) {
+        try {
+            const period = ['7d', '30d', 'alltime'].includes(req.params.period) ? req.params.period : 'alltime';
+            const limit = Math.min(Number(req.query.limit) || 10, 500);
+            const rows = await Community.getPointsLeaderboard(period, limit);
+            const data = rows.map((r) => ({ ...r, ...Community.levelForPoints(r.points) }));
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.log(`Error en coachCommunityController.getPointsLeaderboard: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener el ranking de puntos', error: error.message });
+        }
     }
 
 };

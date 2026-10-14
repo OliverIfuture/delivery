@@ -122,16 +122,50 @@ module.exports = {
         try {
             const id_post = req.params.id_post;
             const id_user = req.user.id;
+            const post = await Community.getPostById(id_post);
             const existing = await Community.findUserLikeOnPost(id_post, id_user);
+            // Puntos de Coach Community: 1 like recibido = 1 punto para el
+            // autor del post (ver database/coach_community_points.sql). Solo
+            // aplica dentro de Coach Community (id_company=1389) y nunca por
+            // dar like a tu propio post.
+            const awardsPoints = post && String(post.id_company) === '1389' && String(post.id_user) !== String(id_user);
             if (existing) {
                 await Product.deleteLikePost(existing.id);
+                if (awardsPoints) await Community.addPoints(post.id_user, -1);
                 return res.status(200).json({ success: true, liked: false });
             }
             await Product.createLikePost(id_post, req.user.name || '', req.user.email || '', id_user);
+            if (awardsPoints) await Community.addPoints(post.id_user, 1);
             return res.status(200).json({ success: true, liked: true });
         } catch (error) {
             console.log(`Error en communityController.toggleLike: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al dar like', error: error.message });
+        }
+    },
+
+    // NUEVO — like a un comentario puntual. Mismos puntos de Coach Community
+    // que un like a un post (ver toggleLike arriba).
+    async toggleCommentLike(req, res) {
+        try {
+            const id_comment = req.params.id_comment;
+            const id_user = req.user.id;
+            const meta = await Community.getCommentMeta(id_comment);
+            if (!meta) {
+                return res.status(404).json({ success: false, message: 'Comentario no encontrado.' });
+            }
+            const existing = await Community.findUserLikeOnComment(id_comment, id_user);
+            const awardsPoints = String(meta.id_company) === '1389' && String(meta.id_user) !== String(id_user);
+            if (existing) {
+                await Product.deleteCommentLike(existing.id);
+                if (awardsPoints) await Community.addPoints(meta.id_user, -1);
+                return res.status(200).json({ success: true, liked: false });
+            }
+            await Product.createCommentLike(id_comment, req.user.name || '', req.user.email || '', id_user);
+            if (awardsPoints) await Community.addPoints(meta.id_user, 1);
+            return res.status(200).json({ success: true, liked: true });
+        } catch (error) {
+            console.log(`Error en communityController.toggleCommentLike: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al dar like al comentario', error: error.message });
         }
     },
 
@@ -148,11 +182,11 @@ module.exports = {
 
     async addComment(req, res) {
         try {
-            const { id_post, comment } = req.body;
+            const { id_post, comment, parent_comment_id } = req.body;
             if (!id_post || !comment || !comment.trim()) {
                 return res.status(400).json({ success: false, message: 'Falta id_post o comment.' });
             }
-            await Product.createComent({ id_plate: id_post, id_user: req.user.id, review: comment.trim() });
+            await Product.createComent({ id_plate: id_post, id_user: req.user.id, review: comment.trim(), parent_comment_id: parent_comment_id || null });
             return res.status(201).json({ success: true, message: 'Comentario publicado.' });
         } catch (error) {
             console.log(`Error en communityController.addComment: ${error}`);

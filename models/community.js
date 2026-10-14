@@ -100,6 +100,94 @@ Community.findUserLikeOnPost = (id_post, id_user) => {
 };
 
 // =========================================================================
+// NUEVO — Comentar con hilo (1 nivel) y dar like a un comentario. Reutiliza
+// TAL CUAL la tabla commentslikes_post (ya existía, ya se leía en
+// Product.findPostComent — ahí "id_post" en realidad guarda el ID DEL
+// COMENTARIO, nombre heredado del copy-paste de likes_publish) y agrega
+// solo la columna nueva coments_post.parent_comment_id (ver database/
+// comments_reply_and_likes.sql) para saber a qué comentario responde una
+// respuesta.
+// =========================================================================
+Community.getCommentMeta = (id_comment) => {
+    return db.oneOrNone(
+        `SELECT C.id_user, C.id_post AS id_post, P.id_company FROM coments_post C INNER JOIN post P ON P.id = C.id_post WHERE C.id = $1`,
+        [id_comment]
+    );
+};
+
+Community.findUserLikeOnComment = (id_comment, id_user) => {
+    return db.oneOrNone(
+        `SELECT id FROM commentslikes_post WHERE id_post = $1 AND id_user = $2 AND useremail != '0' LIMIT 1`,
+        [id_comment, id_user]
+    );
+};
+
+// =========================================================================
+// NUEVO — Puntos/niveles de Coach Community (gamificación por interacción,
+// ver database/coach_community_points.sql). Economía separada de los
+// puntos de CLIENTES (users.total_points/current_level, User.addPoints) —
+// a propósito no se tocan esas columnas/funciones.
+// =========================================================================
+const COMMUNITY_LEVELS = [
+    { name: 'Bienvenido', min: 0 },
+    { name: 'Primer paso', min: 5 },
+    { name: 'Constante', min: 20 },
+    { name: 'Activo', min: 65 },
+    { name: 'Comunidad', min: 155 },
+    { name: 'Inspirador', min: 500 },
+    { name: 'Role Model', min: 1500 },
+    { name: 'Leyenda', min: 5000 },
+    { name: 'Premio Élite', min: 15000 }
+];
+
+function levelForPoints(points) {
+    const p = Number(points) || 0;
+    let index = 0;
+    for (let i = 0; i < COMMUNITY_LEVELS.length; i++) {
+        if (p >= COMMUNITY_LEVELS[i].min) index = i;
+    }
+    const current = COMMUNITY_LEVELS[index];
+    const next = COMMUNITY_LEVELS[index + 1] || null;
+    const progress = next ? (p - current.min) / (next.min - current.min) : 1;
+    return {
+        levelIndex: index + 1,
+        levelName: current.name,
+        points: p,
+        nextLevelName: next ? next.name : null,
+        nextLevelMin: next ? next.min : null,
+        progress: Math.max(0, Math.min(1, progress))
+    };
+}
+Community.levelForPoints = levelForPoints;
+Community.COMMUNITY_LEVELS = COMMUNITY_LEVELS;
+
+// Autor no puede ganar puntos por su propio like (ver llamada en
+// communityController.toggleLike/toggleCommentLike) — ese filtro se hace
+// en el controlador, aquí solo se escribe el delta.
+Community.addPoints = (id_user, delta) => {
+    return db.none(
+        `INSERT INTO coach_community_points_log (id_user, delta) VALUES ($1, $2)`,
+        [id_user, delta]
+    );
+};
+
+Community.getPointsLeaderboard = (period, limit = 100) => {
+    let dateFilter = '';
+    if (period === '7d') dateFilter = "AND L.created_at >= NOW() - INTERVAL '7 days'";
+    else if (period === '30d') dateFilter = "AND L.created_at >= NOW() - INTERVAL '30 days'";
+    const sql = `
+        SELECT U.id AS id_user, U.name, U.image AS photo, COALESCE(SUM(L.delta), 0)::int AS points
+        FROM users U
+        INNER JOIN coach_community_points_log L ON L.id_user = U.id ${dateFilter}
+        GROUP BY U.id, U.name, U.image
+        HAVING COALESCE(SUM(L.delta), 0) > 0
+        ORDER BY points DESC
+        LIMIT $1
+    `;
+    return db.manyOrNone(sql, [limit]);
+};
+
+// =========================================================================
 // NUEVO — Feed de "Actividad" del entrenador (panel Vue): qué pasó hoy en
 // su comunidad. likes_publish/coments_post no tenían columna de fecha —
 // se agregó `created_at` por migración aditiva (antes era imposible saber
