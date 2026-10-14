@@ -22,6 +22,9 @@ module.exports = (app) => {
 
     app.post('/api/workoutlogs/create', passport.authenticate('jwt', { session: false }), workoutLogsController.create);
 
+    // NUEVO — el entrenador registra un set en vivo durante una sesión presencial (ver createForTrainerSession).
+    app.post('/api/workoutlogs/create-trainer-session', passport.authenticate('jwt', { session: false }), workoutLogsController.createForTrainerSession);
+
     // **NUEVA RUTA: Obtener el feed para el dashboard del entrenador**
     app.get('/api/workoutlogs/feed/:id_company', passport.authenticate('jwt', { session: false }), workoutLogsController.getTrainerFeed);
 

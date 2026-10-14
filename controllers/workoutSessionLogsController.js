@@ -8,6 +8,14 @@
 const WorkoutSessionLog = require('../models/workoutSessionLog.js');
 const TrainerNotification = require('../models/trainerNotification.js');
 const User = require('../models/user.js');
+const db = require('../config/config.js');
+
+// Mismo criterio de "ownsClient" que myRoutinesController.js (duplicado a
+// propósito, no compartido — estilo ya establecido en este backend).
+async function ownsClient(id_client, id_company) {
+    const row = await db.oneOrNone('SELECT id_entrenador FROM users WHERE id = $1', [id_client]);
+    return !!row && Number(row.id_entrenador) === Number(id_company);
+}
 
 const DIFFICULTY_LABELS = {
     very_easy: 'Muy fácil',
@@ -91,6 +99,43 @@ module.exports = {
             return res.status(201).json({ success: true, data: { ...row, currentStreak } });
         } catch (error) {
             console.log(`Error en workoutSessionLogsController.create: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al guardar el registro de la sesión', error: error.message });
+        }
+    },
+
+    // NUEVO — el ENTRENADOR registra el feedback de una sesión presencial
+    // que acaba de correr él mismo con el cliente (ver trainerapp "Entrenamiento
+    // presencial"). A diferencia de create() de arriba (que usa req.user.id
+    // como id_client porque lo llama el propio cliente desde su app), aquí
+    // el id_client viene explícito en el body y se valida contra la empresa
+    // del entrenador que llama — nunca se toca create() ni su contrato.
+    async createForTrainerSession(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            const { idClient, routineName, durationSeconds, totalReps, totalVolume, exercisesCount, difficulty, mood, comments } = req.body;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            if (!idClient || !(await ownsClient(idClient, id_company))) {
+                return res.status(403).json({ success: false, message: 'Ese cliente no es tuyo.' });
+            }
+            const exerciseFeedback = sanitizeExerciseFeedback(req.body.exerciseFeedback);
+            const row = await WorkoutSessionLog.create({
+                id_client: idClient,
+                id_company,
+                routine_name: routineName || null,
+                duration_seconds: durationSeconds || null,
+                total_reps: totalReps || null,
+                total_volume: totalVolume || null,
+                exercises_count: exercisesCount || null,
+                difficulty: difficulty || null,
+                mood: mood || null,
+                comments: comments || null,
+                exerciseFeedback
+            });
+            return res.status(201).json({ success: true, data: row });
+        } catch (error) {
+            console.log(`Error en workoutSessionLogsController.createForTrainerSession: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al guardar el registro de la sesión', error: error.message });
         }
     },

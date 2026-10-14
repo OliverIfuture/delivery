@@ -1,7 +1,55 @@
 const WorkoutLog = require('../models/workoutLog.js');
 const User = require('../models/user.js');
+const db = require('../config/config.js');
+
+// Mismo criterio de "ownsClient" que myRoutinesController.js (duplicado a
+// propósito, estilo ya establecido en este backend).
+async function ownsClient(id_client, id_company) {
+    const row = await db.oneOrNone('SELECT id_entrenador FROM users WHERE id = $1', [id_client]);
+    return !!row && Number(row.id_entrenador) === Number(id_company);
+}
 
 module.exports = {
+
+    // NUEVO — el ENTRENADOR registra un set en vivo durante una sesión
+    // presencial (ver trainerapp "Entrenamiento presencial"). create() de
+    // abajo NO sirve para esto: fuerza log.id_client = req.user.id (el
+    // propio cliente autenticado) y log.id_company = req.user.id_entrenador
+    // (campo de CLIENTE) — si el entrenador la llamara, el set quedaría
+    // atribuido a sí mismo, no al cliente. Aquí el id_client viene explícito
+    // y se valida contra la empresa del entrenador que llama; el resto
+    // reutiliza TAL CUAL WorkoutLog.create (mismo doble-escritura real:
+    // tabla workout_logs + plan_data de la rutina).
+    async createForTrainerSession(req, res, next) {
+        try {
+            const id_company = req.user?.mi_store;
+            const log = req.body;
+            const idClient = log.id_client;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            if (!idClient || !(await ownsClient(idClient, id_company))) {
+                return res.status(403).json({ success: false, message: 'Ese cliente no es tuyo.' });
+            }
+            log.id_company = id_company;
+            if (log.completed_weight === null || log.completed_weight === undefined || log.completed_weight === "") {
+                log.completed_weight = 0.0;
+            }
+            if (log.completed_reps === null || log.completed_reps === undefined || log.completed_reps === "") {
+                log.completed_reps = 0;
+            }
+            log.day_name_key = req.body.day_name_key || "";
+            log.week_number = parseInt(req.body.week_number) || 1;
+
+            const data = await WorkoutLog.create(log);
+            await User.updateStreak(idClient);
+
+            return res.status(201).json({ success: true, message: 'Set registrado.', data: { id: data.id } });
+        } catch (error) {
+            console.log(`Error en workoutLogsController.createForTrainerSession: ${error}`);
+            return res.status(501).json({ success: false, error: error.message });
+        }
+    },
 
     async create(req, res, next) {
         try {
