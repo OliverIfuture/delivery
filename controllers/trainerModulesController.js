@@ -130,10 +130,21 @@ module.exports = {
             if (videoFile) {
                 const url = await storage(videoFile, `classroom_videos/lesson_${created.id}_${Date.now()}`);
                 if (url) await Product.updateLessonVideo(created.id, url);
+            } else if (lessonData.video_url) {
+                // Enlace externo (ej. YouTube, Coach Community) — nada que
+                // subir, se guarda el link tal cual. Ver nota en
+                // ModulosWidget.vue: solo Coach Community ofrece esta
+                // opción en la UI — el reproductor de la app de Flutter
+                // (para lecciones de un entrenador normal a SUS clientes)
+                // no sabe leer esto, por eso ahí se sigue forzando video
+                // real.
+                await Product.updateLessonVideo(created.id, lessonData.video_url);
             }
             if (coverFile) {
                 const coverUrl = await storage(coverFile, `classroom_covers/lesson_${created.id}_${Date.now()}`);
                 if (coverUrl) await Product.updateLessonThumbnail(created.id, coverUrl);
+            } else if (lessonData.thumbnail_url) {
+                await Product.updateLessonThumbnail(created.id, lessonData.thumbnail_url);
             }
             return res.status(201).json({ success: true, data: { id: created.id } });
         } catch (error) {
@@ -156,12 +167,17 @@ module.exports = {
             if (videoFile) {
                 const url = await storage(videoFile, `classroom_videos/lesson_${lessonData.id}_${Date.now()}`);
                 await Product.updateLessonFull(lessonData, url);
+            } else if (lessonData.video_url) {
+                // Mismo caso de enlace externo que en createMyLesson.
+                await Product.updateLessonFull(lessonData, lessonData.video_url);
             } else {
                 await Product.updateLessonText(lessonData);
             }
             if (coverFile) {
                 const coverUrl = await storage(coverFile, `classroom_covers/lesson_${lessonData.id}_${Date.now()}`);
                 if (coverUrl) await Product.updateLessonThumbnail(lessonData.id, coverUrl);
+            } else if (lessonData.thumbnail_url) {
+                await Product.updateLessonThumbnail(lessonData.id, lessonData.thumbnail_url);
             }
             return res.status(200).json({ success: true, message: 'Lección actualizada' });
         } catch (error) {
