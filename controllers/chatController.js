@@ -82,7 +82,7 @@ module.exports = {
     async sendMessage(req, res, next) {
         try {
             // 1. Obtener datos de la solicitud
-            const { recipientId, messageContent, chatRoomId } = req.body;
+            const { recipientId, messageContent, chatRoomId, replyTo } = req.body;
 
             // Datos del remitente (vienen del token JWT)
             const senderId = req.user.id;
@@ -105,6 +105,9 @@ module.exports = {
                 timestamp: admin.firestore.Timestamp.now(), // Usar el timestamp del servidor
                 senderRole: senderRole,
                 isRead: false,
+                // NUEVO — responder a un mensaje puntual (banner de cita en
+                // la UI); null si no es una respuesta.
+                replyTo: replyTo || null,
             };
 
             // 3. Guardar el mensaje en Firestore (Usando la NUEVA instancia de DB)
@@ -298,6 +301,67 @@ module.exports = {
                 message: 'Error al eliminar mensaje',
                 error: error.message
             });
+        }
+    },
+
+    // NUEVO — 4 reacciones por mensaje (like/love/laugh/sad), una por
+    // persona por mensaje (elegir otra quita la anterior). El documento
+    // guarda `reactions: { like: [ids], love: [ids], laugh: [ids], sad: [ids] }`.
+    async toggleReaction(req, res, next) {
+        try {
+            const { chatRoomId, messageId, reactionKey } = req.body;
+            const validKeys = ['like', 'love', 'laugh', 'sad'];
+            if (!chatRoomId || !messageId || !validKeys.includes(reactionKey)) {
+                return res.status(400).json({ success: false, message: 'Faltan datos o la reacción no es válida.' });
+            }
+            const userId = req.user.id.toString();
+            const messageRef = firestoreDb.collection('chats').doc(chatRoomId).collection('messages').doc(messageId);
+            const doc = await messageRef.get();
+            if (!doc.exists) {
+                return res.status(404).json({ success: false, message: 'El mensaje no existe.' });
+            }
+            const current = doc.data().reactions || {};
+            const next = {};
+            let hadThisReaction = false;
+            for (const key of validKeys) {
+                const list = Array.isArray(current[key]) ? current[key].filter((id) => id.toString() !== userId) : [];
+                if (key === reactionKey && Array.isArray(current[key]) && current[key].map(String).includes(userId)) {
+                    hadThisReaction = true;
+                }
+                next[key] = list;
+            }
+            if (!hadThisReaction) {
+                next[reactionKey] = [...next[reactionKey], userId];
+            }
+            await messageRef.update({ reactions: next });
+            return res.status(200).json({ success: true, reactions: next });
+        } catch (error) {
+            console.log(`Error en chatController.toggleReaction: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al reaccionar al mensaje', error: error.message });
+        }
+    },
+
+    // NUEVO — editar un mensaje propio (marca editedAt, la UI muestra
+    // "Editado · {hora}").
+    async editMessage(req, res, next) {
+        try {
+            const { chatRoomId, messageId, content } = req.body;
+            if (!chatRoomId || !messageId || !content || !content.trim()) {
+                return res.status(400).json({ success: false, message: 'Falta contenido.' });
+            }
+            const messageRef = firestoreDb.collection('chats').doc(chatRoomId).collection('messages').doc(messageId);
+            const doc = await messageRef.get();
+            if (!doc.exists) {
+                return res.status(404).json({ success: false, message: 'El mensaje no existe.' });
+            }
+            if (doc.data().senderId.toString() !== req.user.id.toString()) {
+                return res.status(403).json({ success: false, message: 'No puedes editar este mensaje.' });
+            }
+            await messageRef.update({ content: content.trim(), editedAt: admin.firestore.Timestamp.now() });
+            return res.status(200).json({ success: true });
+        } catch (error) {
+            console.log(`Error en chatController.editMessage: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al editar el mensaje', error: error.message });
         }
     },
 };

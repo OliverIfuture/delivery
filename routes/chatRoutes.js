@@ -39,4 +39,16 @@ module.exports = (app, upload) => {
         chatController.deleteMessage
     );
 
+    // NUEVO — 4 reacciones (like/love/laugh/sad) y editar mensaje propio.
+    app.post(
+        '/api/chat/toggleReaction',
+        passport.authenticate('jwt', { session: false }),
+        chatController.toggleReaction
+    );
+    app.post(
+        '/api/chat/editMessage',
+        passport.authenticate('jwt', { session: false }),
+        chatController.editMessage
+    );
+
 }
