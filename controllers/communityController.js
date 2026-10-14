@@ -11,6 +11,7 @@
 const Community = require('../models/community.js');
 const Product = require('../models/product.js');
 const storage = require('../utils/cloud_storage.js');
+const TrainerNotification = require('../models/trainerNotification.js');
 
 // Reportado en vivo: una cuenta con AMBOS campos (mi_store propio Y un
 // id_entrenador viejo de cuando fue cliente de otra company) traía la
@@ -136,6 +137,16 @@ module.exports = {
             }
             await Product.createLikePost(id_post, req.user.name || '', req.user.email || '', id_user);
             if (awardsPoints) await Community.addPoints(post.id_user, 1);
+            // NUEVO — campana del panel: te avisa cuando alguien le da like
+            // a tu post (nunca si te das like a ti mismo).
+            if (post && String(post.id_user) !== String(id_user)) {
+                TrainerNotification.create({
+                    id_user: post.id_user,
+                    type: 'community_like',
+                    title: `${req.user.name || 'Alguien'} le dio like a tu publicación`,
+                    link: `/dashboard/comunidad?post=${id_post}`
+                }).catch(() => {});
+            }
             return res.status(200).json({ success: true, liked: true });
         } catch (error) {
             console.log(`Error en communityController.toggleLike: ${error}`);
@@ -187,6 +198,20 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Falta id_post o comment.' });
             }
             await Product.createComent({ id_plate: id_post, id_user: req.user.id, review: comment.trim(), parent_comment_id: parent_comment_id || null });
+            // NUEVO — campana del panel: te avisa cuando alguien comenta tu
+            // post (nunca si te comentas a ti mismo).
+            try {
+                const post = await Community.getPostById(id_post);
+                if (post && String(post.id_user) !== String(req.user.id)) {
+                    TrainerNotification.create({
+                        id_user: post.id_user,
+                        type: 'community_comment',
+                        title: `${req.user.name || 'Alguien'} comentó tu publicación`,
+                        body: comment.trim().slice(0, 140),
+                        link: `/dashboard/comunidad?post=${id_post}`
+                    }).catch(() => {});
+                }
+            } catch (_) {}
             return res.status(201).json({ success: true, message: 'Comentario publicado.' });
         } catch (error) {
             console.log(`Error en communityController.addComment: ${error}`);
