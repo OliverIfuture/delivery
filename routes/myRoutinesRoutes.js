@@ -13,6 +13,7 @@ module.exports = (app) => {
     app.put('/api/my-routines/update', auth, myRoutinesController.updateMyRoutine);
     app.delete('/api/my-routines/delete/:id', auth, myRoutinesController.deleteMyRoutine);
     app.post('/api/my-routines/apply-template', auth, myRoutinesController.applyTemplateToClient);
+    app.put('/api/my-routines/unassign/:id_client', auth, myRoutinesController.unassignRoutine);
 
     app.get('/api/my-routines/folders', auth, myRoutinesController.getMyFolders);
     app.post('/api/my-routines/folders/create', auth, myRoutinesController.createMyFolder);

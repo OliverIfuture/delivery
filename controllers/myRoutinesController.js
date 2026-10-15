@@ -284,6 +284,25 @@ module.exports = {
         }
     },
 
+    // Quitar el plan de entrenamiento activo de un cliente (lo deja "sin
+    // plan asignado") — apaga is_active en vez de borrar la rutina, para
+    // no perder el historial de series ya registradas (ver nota en
+    // models/routine.js -> Routine.deactivateAllForClient).
+    async unassignRoutine(req, res) {
+        try {
+            const id_company = req.user.mi_store;
+            const id_client = req.params.id_client;
+            if (!(await ownsClient(id_client, id_company))) {
+                return res.status(403).json({ success: false, message: 'Ese cliente no es tuyo.' });
+            }
+            await Routine.deactivateAllForClient(id_client);
+            return res.status(200).json({ success: true, message: 'Plan de entrenamiento desasignado.' });
+        } catch (error) {
+            console.log(`Error en myRoutinesController.unassignRoutine: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al desasignar el plan' });
+        }
+    },
+
     // Borra la carpeta — sus plantillas NO se pierden, quedan sueltas en la
     // raíz (folder_id -> NULL vía ON DELETE SET NULL); sus subcarpetas sí
     // se borran en cascada (ON DELETE CASCADE en routine_folders.parent_id).

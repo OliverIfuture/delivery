@@ -87,6 +87,21 @@ Routine.delete = (id_routine) => {
     return db.none(sql, [id_routine]);
 };
 
+// Desasigna el plan de entrenamiento de un cliente SIN borrar la rutina —
+// deliberadamente no se usa Routine.delete aquí: routines tiene
+// workout_logs.id_routine con ON DELETE CASCADE, así que borrar la rutina
+// activa de un cliente borraría también todo su historial de series ya
+// registradas (Entrenamiento presencial). Esto solo apaga is_active; la
+// rutina y su historial quedan intactos, solo deja de mostrarse como "plan
+// activo".
+Routine.deactivateAllForClient = (id_client) => {
+    return db.none(`
+        UPDATE routines
+        SET is_active = false, updated_at = $1
+        WHERE id_client = $2
+    `, [new Date(), id_client]);
+};
+
 Routine.setActive = (id_routine, id_client) => {
     return db.tx(async t => {
         // 1. Desactivar todas las rutinas de este cliente
