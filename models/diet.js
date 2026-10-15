@@ -243,11 +243,17 @@ Diet.getCompanyRecipes = (id_company) => {
  * y con ese email busca en user_questionnaires.
  */
 Diet.getClientQuestionnaire = (id_client) => {
+    // Un cliente puede tener varias filas históricas en user_questionnaires
+    // (una por cada vez que llenó/actualizó su cuestionario) — sin el
+    // ORDER BY/LIMIT, db.oneOrNone truena ("multiple rows") en cuanto
+    // alguien lo llena más de una vez. Se trae siempre la más reciente.
     const sql = `
-        SELECT uq.questionnaire_data 
+        SELECT uq.questionnaire_data
         FROM user_questionnaires uq
         INNER JOIN users u ON u.email = uq.user_email
         WHERE u.id = $1
+        ORDER BY uq.created_at DESC, uq.id DESC
+        LIMIT 1
     `;
     return db.oneOrNone(sql, id_client);
 };
