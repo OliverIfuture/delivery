@@ -1000,6 +1000,15 @@ User.updateNotificationToken_dealer = (id, token) => {
 }
 
 
+// Las 3 escrituras (usuario, empresa, mi_store/id_entrenador del usuario)
+// van en UNA sola transacción — antes eran 3 queries encadenadas sueltas,
+// así que si la tercera (el UPDATE de mi_store/id_entrenador) fallaba o el
+// proceso se interrumpía a la mitad (red, timeout, reinicio del dyno), el
+// usuario y la empresa ya habían quedado creados pero el entrenador se
+// quedaba con id_entrenador en null para siempre — exactamente el patrón
+// que se encontró en cuentas reales (creadas incluso después de que esta
+// lógica ya existía). Con la transacción, o se completan las 3 juntas o no
+// se completa ninguna: nunca vuelve a quedar un registro a medias.
 User.createWithImageUserAndCompany = (user, company) => {
     // 1. Hash de la contraseña
     const myPasswordHashed = crypto.createHash('md5').update(user.password).digest('hex');
@@ -1014,41 +1023,41 @@ User.createWithImageUserAndCompany = (user, company) => {
     company.state = 'ACTIVE'; // Se asume que el estado de la compañía debe ser activo para el trial.
     // ---------------------------------
 
-    // Consulta para insertar el usuario (sin cambios)
-    const sqlUser = `
-        INSERT INTO
-            users(
-                email, name, lastname, phone, image, password, created_at, updated_at, is_trainer
-            )
-        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-        RETURNING id
-    `;
+    return db.tx(async t => {
+        // 2. Consulta para insertar el usuario
+        const sqlUser = `
+            INSERT INTO
+                users(
+                    email, name, lastname, phone, image, password, created_at, updated_at, is_trainer
+                )
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id
+        `;
 
-    return db.one(sqlUser, [
-        user.email,
-        user.name,
-        user.lastname,
-        user.phone,
-        user.image,
-        user.password,
-        new Date(),
-        new Date(),
-        'true'
-    ])
-        .then(userData => {
-            const newUserId = userData.id;
+        const userData = await t.one(sqlUser, [
+            user.email,
+            user.name,
+            user.lastname,
+            user.phone,
+            user.image,
+            user.password,
+            new Date(),
+            new Date(),
+            'true'
+        ]);
+        const newUserId = userData.id;
 
-            // 2. Asignar el ID del usuario a la compañía
-            company.user_id = newUserId;
+        // 3. Asignar el ID del usuario a la compañía
+        company.user_id = newUserId;
 
-            // 3. Consulta para insertar la compañía (¡ACTUALIZADA CON TRIAL!)
-            const sqlCompany = `
+        // 4. Consulta para insertar la compañía (con trial)
+        const sqlCompany = `
             INSERT INTO public.company(
-                name, addres, telephone, user_id, logo, 
-                state, available, type, lat, lng, wantsappointments, 
-                cashaccept, creditcardaccepted, code, points, 
+                name, addres, telephone, user_id, logo,
+                state, available, type, lat, lng, wantsappointments,
+                cashaccept, creditcardaccepted, code, points,
                 image_card, description, -- Nuevos campos de imagen y descripción
-                
+
                 -- COLUMNAS DEL TRIAL
                 membership_plan,
                 membership_status,
@@ -1057,8 +1066,8 @@ User.createWithImageUserAndCompany = (user, company) => {
 				country
             )
             VALUES(
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
-                
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+
                 -- VALORES DEL TRIAL
                 'fundador', -- Valor de membership_plan (Free Trial)
                 'active',   -- Valor de membership_status
@@ -1069,54 +1078,45 @@ User.createWithImageUserAndCompany = (user, company) => {
             RETURNING id
         `;
 
-            // Contamos los 17 parámetros estándar + el nuevo parámetro de fecha ($18)
-            return db.one(sqlCompany, [
-                company.name, // 1
-                company.addres, // 2
-                company.telephone, // 3
-                company.user_id, // 4
-                company.logo, // 5
-                company.state, // 6 (Será 'ACTIVE' desde la lógica de Trial)
-                company.available, // 7
-                company.type, // 8
-                company.lat, // 9
-                company.lng, // 10
-                company.wantsappointments, // 11
-                company.cashaccept, // 12
-                company.creditcardaccepted, // 13
-                company.code, // 14
-                company.points, // 15
-                company.image_card, // 16
-                company.description, // 17
-                sevenDaysFromNow, // 18: La fecha de expiración calculada
-                company.deliveryCost,
-                company.country
-            ])
-                .then(companyData => {
-                    const newCompanyId = companyData.id;
+        const companyData = await t.one(sqlCompany, [
+            company.name, // 1
+            company.addres, // 2
+            company.telephone, // 3
+            company.user_id, // 4
+            company.logo, // 5
+            company.state, // 6 (Será 'ACTIVE' desde la lógica de Trial)
+            company.available, // 7
+            company.type, // 8
+            company.lat, // 9
+            company.lng, // 10
+            company.wantsappointments, // 11
+            company.cashaccept, // 12
+            company.creditcardaccepted, // 13
+            company.code, // 14
+            company.points, // 15
+            company.image_card, // 16
+            company.description, // 17
+            sevenDaysFromNow, // 18: La fecha de expiración calculada
+            company.deliveryCost,
+            company.country
+        ]);
+        const newCompanyId = companyData.id;
 
-                    // 4. Actualizar mi_store Y id_entrenador en el usuario —
-                    // un entrenador ahora también puede publicar/ver su
-                    // propia comunidad (ver tab_social.dart), y ese feed
-                    // (Product.getPostAllV2 en productsControllers.js) resuelve
-                    // la comunidad leyendo id_entrenador, no mi_store. Sin
-                    // esto, un entrenador recién registrado nunca ve su
-                    // propia comunidad (cae al fallback '1').
-                    const sqlUpdateUser = `
-                UPDATE users
-                SET mi_store = $1, id_entrenador = $1
-                WHERE id = $2
-            `;
+        // 5. Actualizar mi_store Y id_entrenador en el usuario — un
+        // entrenador ahora también puede publicar/ver su propia comunidad
+        // (ver tab_social.dart), y ese feed (Product.getPostAllV2 en
+        // productsControllers.js) resuelve la comunidad leyendo
+        // id_entrenador, no mi_store. Sin esto, un entrenador recién
+        // registrado nunca ve su propia comunidad (cae al fallback '1').
+        const sqlUpdateUser = `
+            UPDATE users
+            SET mi_store = $1, id_entrenador = $1
+            WHERE id = $2
+        `;
+        await t.none(sqlUpdateUser, [newCompanyId, newUserId]);
 
-                    return db.none(sqlUpdateUser, [
-                        newCompanyId,
-                        newUserId
-                    ])
-                        .then(() => {
-                            return { id: newUserId };
-                        });
-                });
-        });
+        return { id: newUserId };
+    });
 };
 
 
