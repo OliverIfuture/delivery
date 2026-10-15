@@ -2914,6 +2914,24 @@ User.getLatestQuestionnaire = (email) => {
 // los campos nuevos sin pisar el resto de lo que el cliente ya haya
 // contestado); si no existe ninguna, crea una fila nueva.
 // =============================================================================
+// NUEVO — modalidad de entrenamiento de cada cliente (dónde entrena:
+// Gimnasio/Casa/Híbrida/Online, lo que haya contestado en su cuestionario
+// real) para pintar el filtro de "Mis clientes" en trainerapp. Lee el
+// mismo dato que ya guarda/lee upsertClientProfile (user_questionnaires.
+// questionnaire_data.training_preferences.location), solo que en bulk
+// para toda la empresa en una sola consulta en vez de una por cliente.
+User.getClientsModality = (id_company) => {
+    const sql = `
+        SELECT u.id,
+            (SELECT q.questionnaire_data->'training_preferences'->>'location'
+             FROM user_questionnaires q WHERE q.user_email = u.email
+             ORDER BY q.created_at DESC, q.id DESC LIMIT 1) AS modality
+        FROM users u
+        WHERE u.id_entrenador::text = $1
+    `;
+    return db.manyOrNone(sql, [id_company]);
+};
+
 User.upsertClientProfile = async (email, {
     sex, birth_date, height_cm, modality,
     allergies, special_conditions, excluded_ingredients, diet_additional_info

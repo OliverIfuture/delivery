@@ -3637,6 +3637,23 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
         }
     },
 
+    // NUEVO — modalidad de entrenamiento (Gimnasio/Casa/Híbrida/Online) de
+    // todos los clientes de esta empresa en una sola consulta, para el
+    // filtro de "Mis clientes" en trainerapp. Ver User.getClientsModality.
+    async getClientsModality(req, res, next) {
+        try {
+            const id_company = req.user.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            const rows = await User.getClientsModality(id_company.toString());
+            return res.status(200).json({ success: true, data: rows });
+        } catch (error) {
+            console.log(`Error en usersController.getClientsModality: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener la modalidad de tus clientes' });
+        }
+    },
+
     // =========================================================================
     // NUEVO — Datos de cuenta de un cliente para la pestaña "Configuración"
     // de su ficha (panel del entrenador, Vue). Ver User.getClientAccountInfo.

@@ -186,6 +186,10 @@ module.exports = (app, upload) => {
     // estatura/modalidad) desde el panel del entrenador.
     app.put('/api/users/clientProfile', passport.authenticate('jwt', { session: false }), UsersController.upsertClientProfile);
 
+    // NUEVO — modalidad de entrenamiento de todos tus clientes en una sola
+    // consulta (trainerapp "Mis clientes").
+    app.get('/api/users/clientsModality', passport.authenticate('jwt', { session: false }), UsersController.getClientsModality);
+
     // NUEVO — datos de cuenta (nombre/email/teléfono/fecha de alta) de un
     // cliente, para la pestaña "Configuración" de su ficha.
     app.get('/api/users/getClientAccountInfo/:id_client', passport.authenticate('jwt', { session: false }), UsersController.getClientAccountInfo);
