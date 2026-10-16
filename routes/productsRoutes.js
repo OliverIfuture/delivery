@@ -21,6 +21,11 @@ module.exports = (app, upload) => {
   // Obtener todos los módulos según el nivel del usuario
   app.get('/api/products/getClassroom/:access_level', passport.authenticate('jwt', { session: false }), productsControllers.getClassroom);
   app.get('/api/products/coach-community-classroom/:access_level', passport.authenticate('jwt', { session: false }), productsControllers.getCoachCommunityClassroom);
+  // NUEVO — mismo Product.getClassroom, pero con el id_company del propio
+  // entrenador (mi_store) en vez del fijo de Coach Community: para el modo
+  // "Mi comunidad" del switch en trainerapp, donde el Classroom debe
+  // mostrar los cursos que ESE entrenador subió para sus propios clientes.
+  app.get('/api/products/my-coach-classroom/:access_level', passport.authenticate('jwt', { session: false }), productsControllers.getMyCoachClassroom);
   app.post('/api/products/lesson-progress', passport.authenticate('jwt', { session: false }), productsControllers.markLessonComplete);
   // --- RUTAS DE MODERACIÓN (Apple Guidelines) ---
   app.post('/api/products/reportPost', passport.authenticate('jwt', { session: false }), productsControllers.reportPost);

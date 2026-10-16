@@ -239,6 +239,27 @@ module.exports = {
         }
     },
 
+    // NUEVO — mismo Product.getClassroom de arriba, pero con el id_company
+    // del propio entrenador (mi_store) en vez del fijo de Coach Community.
+    // Usado por el modo "Mi comunidad" del switch en trainerapp: ahí el
+    // Classroom debe mostrar los cursos que ESE entrenador subió para sus
+    // propios clientes (los mismos que ya administra en /api/trainer-modules),
+    // no el catálogo de Coach Community.
+    async getMyCoachClassroom(req, res, next) {
+        try {
+            const access_level = req.params.access_level;
+            const id_company = req.user?.mi_store;
+            if (!id_company) {
+                return res.status(403).json({ success: false, message: 'Tu cuenta no tiene una empresa asignada.' });
+            }
+            const data = await Product.getClassroom(access_level, id_company, req.user?.id);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en productsControllers.getMyCoachClassroom: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener tus cursos' });
+        }
+    },
+
     // Progreso real de lecciones (ver database/classroom_lesson_progress.sql)
     // — usado por la pestaña "Cursos" de Coach Community en el panel.
     async markLessonComplete(req, res, next) {
