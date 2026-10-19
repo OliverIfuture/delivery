@@ -108,43 +108,54 @@ ClientProgress.getPhotosApp = (id_client) => {
 ClientProgress.getPhotos = (id_client) => {
     const sql = `
 SELECT * FROM (
-    -- 1. FOTOS DEL CUESTIONARIO INICIAL
-    SELECT 
+    -- 1. FOTOS DEL CUESTIONARIO INICIAL (no editables/borrables desde acá —
+    -- no viven en client_progress_photos, por eso sus *_id van NULL)
+    SELECT
         uq.id,
         uq.questionnaire_data,
         uq.photo_frontal,
         uq.photo_espalda,
         uq.photo_lateral_izq,
         uq.photo_lateral_der,
+        NULL::int AS photo_frontal_id,
+        NULL::int AS photo_espalda_id,
+        NULL::int AS photo_lateral_izq_id,
+        NULL::int AS photo_lateral_der_id,
         uq.created_at AS date_taken,
-        'questionnaire' AS source 
-    FROM 
+        'questionnaire' AS source
+    FROM
         user_questionnaires uq
-    INNER JOIN 
+    INNER JOIN
         users u ON u.email = uq.user_email
-    WHERE 
+    WHERE
         u.id = $1
 
     UNION ALL
 
-    -- 2. FOTOS LOGEADAS POSTERIORMENTE (Agrupadas por día)
-    SELECT 
+    -- 2. FOTOS LOGEADAS POSTERIORMENTE (Agrupadas por día) — se incluye el
+    -- id real de cada foto por ángulo para poder editarla/borrarla una por
+    -- una (ver deletePhoto más abajo).
+    SELECT
         MIN(cpp.id) AS id,
-        NULL::jsonb AS questionnaire_data, 
+        NULL::jsonb AS questionnaire_data,
         MAX(CASE WHEN cpp.angle ILIKE '%frontal%' THEN cpp.image_url END) AS photo_frontal,
         MAX(CASE WHEN cpp.angle ILIKE '%espalda%' THEN cpp.image_url END) AS photo_espalda,
         MAX(CASE WHEN cpp.angle ILIKE '%izq%' THEN cpp.image_url END) AS photo_lateral_izq,
         MAX(CASE WHEN cpp.angle ILIKE '%der%' THEN cpp.image_url END) AS photo_lateral_der,
+        MAX(CASE WHEN cpp.angle ILIKE '%frontal%' THEN cpp.id END) AS photo_frontal_id,
+        MAX(CASE WHEN cpp.angle ILIKE '%espalda%' THEN cpp.id END) AS photo_espalda_id,
+        MAX(CASE WHEN cpp.angle ILIKE '%izq%' THEN cpp.id END) AS photo_lateral_izq_id,
+        MAX(CASE WHEN cpp.angle ILIKE '%der%' THEN cpp.id END) AS photo_lateral_der_id,
         MAX(cpp.created_at)::timestamp without time zone AS date_taken,
         'progress_log' AS source
-    FROM 
+    FROM
         client_progress_photos cpp
-    WHERE 
+    WHERE
         cpp.id_client = $1 -- ✅ CORREGIDO: Ahora usa la variable dinámica
-    GROUP BY 
-        cpp.date_taken 
+    GROUP BY
+        cpp.date_taken
 ) AS combined_photos
-ORDER BY 
+ORDER BY
     date_taken DESC;
     `;
     return db.manyOrNone(sql, id_client);
@@ -199,6 +210,15 @@ ClientProgress.logPhotoUserApp = (log) => {
         log.date_taken || new Date(),
         new Date()
     ]);
+};
+
+/**
+ * Borra una foto de progreso individual (una fila = un ángulo de una fecha).
+ * Las fotos del cuestionario inicial NO viven aquí — no se pueden borrar
+ * por esta vía (ver getPhotos: su *_id siempre llega NULL).
+ */
+ClientProgress.deletePhoto = (id) => {
+    return db.oneOrNone(`DELETE FROM client_progress_photos WHERE id = $1 RETURNING id`, [id]);
 };
 
 // =============================================================================

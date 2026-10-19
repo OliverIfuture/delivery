@@ -228,6 +228,28 @@ module.exports = {
         }
     },
 
+    /**
+     * Borra una foto de progreso individual por su propio id.
+     */
+    async deletePhoto(req, res, next) {
+        try {
+            const { id } = req.params;
+            const deleted = await ClientProgress.deletePhoto(id);
+            if (!deleted) {
+                return res.status(404).json({ success: false, message: 'Esa foto ya no existe.' });
+            }
+            return res.status(200).json({ success: true, message: 'Foto eliminada correctamente.' });
+        }
+        catch (error) {
+            console.log(`Error en clientProgressController.deletePhoto: ${error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al eliminar la foto de progreso',
+                error: error.message
+            });
+        }
+    },
+
     async analyzeProgressAI(req, res, next) {
         try {
             // 1. VALIDACIÓN
