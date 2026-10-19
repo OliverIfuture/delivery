@@ -177,12 +177,23 @@ module.exports = {
      */
     async logPhotoUserApp(req, res, next) {
         try {
-            // Debe contener { image_url, date_taken, angle }
+            // Debe contener { image_url, date_taken, angle }, y opcionalmente
+            // id_client (cuando quien sube la foto es el ENTRENADOR a nombre
+            // de un cliente — ver panel: AddProgressPhotosModal.vue — en vez
+            // del cliente subiendo la suya propia desde la app).
             const photoLog = req.body;
+            const onBehalfOfClient = !!photoLog.id_client;
 
-            // Asignar IDs desde el token
-            photoLog.id_client = req.user.id;
-            photoLog.id_company = req.user.id_entrenador;
+            // Asignar IDs desde el token — mismo patrón que upsertFullMetric:
+            // si viene id_client en el body, el que llama es el entrenador
+            // (su propio id_company sale de mi_store); si no, es el cliente
+            // subiendo la suya (comportamiento original, sin tocar).
+            if (!onBehalfOfClient) {
+                photoLog.id_client = req.user.id;
+                photoLog.id_company = req.user.id_entrenador;
+            } else {
+                photoLog.id_company = req.user.mi_store;
+            }
 
             // 💡 VERIFICACIÓN ROBUSTA: Si es falsy (null, undefined, '') O la cadena "null"
             if (!photoLog.id_company || photoLog.id_company === 'null') {
