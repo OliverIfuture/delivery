@@ -25,6 +25,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const { checkClientLimit } = require('../utils/membershipGate.js');
 const TrainerNotification = require('../models/trainerNotification.js'); // <-- Notificación real al entrenador cuando un prospecto acepta su invitación
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -263,13 +264,16 @@ module.exports = {
                 // --- NUEVO: notificación real para la campana del panel ---
                 TrainerNotification.resolveTrainerUserId(id_company).then((trainerUserId) => {
                     if (!trainerUserId) return;
+                    const title = 'Nuevo prospecto registrado';
+                    const body = `${existingUser.name || email} se registró desde tu enlace de invitación`;
                     TrainerNotification.create({
                         id_user: trainerUserId,
                         type: 'client',
-                        title: 'Nuevo prospecto registrado',
-                        body: `${existingUser.name || email} se registró desde tu enlace de invitación`,
+                        title,
+                        body,
                         link: `/dashboard/clients/${existingUser.id}`
                     });
+                    sendPushToUser(trainerUserId, { title, body, data: { type: 'new_client', clientId: existingUser.id } }).catch(() => {});
                 }).catch((notifErr) => console.log(`No se pudo crear la notificación de invitación: ${notifErr.message}`));
 
                 return res.status(200).json({
@@ -310,13 +314,16 @@ module.exports = {
             // --- NUEVO: notificación real para la campana del panel ---
             TrainerNotification.resolveTrainerUserId(id_company).then((trainerUserId) => {
                 if (!trainerUserId) return;
+                const title = 'Nuevo prospecto registrado';
+                const body = `${name} se registró desde tu enlace de invitación`;
                 TrainerNotification.create({
                     id_user: trainerUserId,
                     type: 'client',
-                    title: 'Nuevo prospecto registrado',
-                    body: `${name} se registró desde tu enlace de invitación`,
+                    title,
+                    body,
                     link: `/dashboard/clients/${data.id}`
                 });
+                sendPushToUser(trainerUserId, { title, body, data: { type: 'new_client', clientId: data.id } }).catch(() => {});
             }).catch((notifErr) => console.log(`No se pudo crear la notificación de invitación: ${notifErr.message}`));
 
             return res.status(201).json({
@@ -382,13 +389,16 @@ module.exports = {
             const company = await db.oneOrNone('SELECT name FROM company WHERE id = $1', [invite.id_company]);
             TrainerNotification.resolveTrainerUserId(invite.id_company).then((trainerUserId) => {
                 if (!trainerUserId) return;
+                const title = 'Cliente aceptó tu invitación';
+                const body = `${user.name || ''} ${user.lastname || ''}`.trim() || user.email;
                 TrainerNotification.create({
                     id_user: trainerUserId,
                     type: 'client',
-                    title: 'Cliente aceptó tu invitación',
-                    body: `${user.name || ''} ${user.lastname || ''}`.trim() || user.email,
+                    title,
+                    body,
                     link: '/dashboard/clients'
                 });
+                sendPushToUser(trainerUserId, { title, body, data: { type: 'new_client', clientId: user.id } }).catch(() => {});
             });
 
             return res.status(200).json({

@@ -9,6 +9,7 @@ const WorkoutSessionLog = require('../models/workoutSessionLog.js');
 const TrainerNotification = require('../models/trainerNotification.js');
 const User = require('../models/user.js');
 const db = require('../config/config.js');
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 // Mismo criterio de "ownsClient" que myRoutinesController.js (duplicado a
 // propósito, no compartido — estilo ya establecido en este backend).
@@ -80,13 +81,20 @@ module.exports = {
                     if (difficultyLabel) bodyParts.push(`Dificultad: ${difficultyLabel}`);
                     if (moodLabel) bodyParts.push(`Ánimo: ${moodLabel}`);
                     if (exerciseFeedback.length) bodyParts.push(`${exerciseFeedback.length} comentario${exerciseFeedback.length === 1 ? '' : 's'} por ejercicio`);
+                    const title = `${req.user.name || 'Tu cliente'} terminó ${routineName ? `"${routineName}"` : 'su rutina'}`;
+                    const body = bodyParts.length ? bodyParts.join(' · ') : (routineName || 'Entrenamiento completado');
                     await TrainerNotification.create({
                         id_user: trainerUserId,
                         type: 'workout_feedback',
-                        title: `${req.user.name || 'Tu cliente'} terminó ${routineName ? `"${routineName}"` : 'su rutina'}`,
-                        body: bodyParts.length ? bodyParts.join(' · ') : (routineName || 'Entrenamiento completado'),
+                        title,
+                        body,
                         link: `/dashboard/feedback?session=${row.id}`
                     });
+                    sendPushToUser(trainerUserId, {
+                        title,
+                        body,
+                        data: { type: 'workout_finished', clientId: id_client, sessionId: row.id }
+                    }).catch(() => {});
                 }
             } catch (notifErr) {
                 console.log(`No se pudo crear la notificación de sesión terminada: ${notifErr.message}`);

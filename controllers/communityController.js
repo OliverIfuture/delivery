@@ -12,6 +12,7 @@ const Community = require('../models/community.js');
 const Product = require('../models/product.js');
 const storage = require('../utils/cloud_storage.js');
 const TrainerNotification = require('../models/trainerNotification.js');
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 // Reportado en vivo: una cuenta con AMBOS campos (mi_store propio Y un
 // id_entrenador viejo de cuando fue cliente de otra company) traía la
@@ -146,6 +147,10 @@ module.exports = {
                     title: `${req.user.name || 'Alguien'} le dio like a tu publicación`,
                     link: `/dashboard/comunidad?post=${id_post}`
                 }).catch(() => {});
+                sendPushToUser(post.id_user, {
+                    title: `${req.user.name || 'Alguien'} le dio like a tu publicación`,
+                    data: { type: 'community_like', postId: id_post }
+                }).catch(() => {});
             }
             return res.status(200).json({ success: true, liked: true });
         } catch (error) {
@@ -209,6 +214,11 @@ module.exports = {
                         title: `${req.user.name || 'Alguien'} comentó tu publicación`,
                         body: comment.trim().slice(0, 140),
                         link: `/dashboard/comunidad?post=${id_post}`
+                    }).catch(() => {});
+                    sendPushToUser(post.id_user, {
+                        title: `${req.user.name || 'Alguien'} comentó tu publicación`,
+                        body: comment.trim().slice(0, 140),
+                        data: { type: 'community_comment', postId: id_post }
                     }).catch(() => {});
                 }
             } catch (_) {}

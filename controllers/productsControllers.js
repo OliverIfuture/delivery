@@ -1,6 +1,8 @@
 const Product = require('../models/product');
+const Community = require('../models/community.js');
 const storage = require('../utils/cloud_storage.js');
 const asyncForEach = require('../utils/async_foreach');
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 module.exports = {
 
@@ -2531,6 +2533,17 @@ module.exports = {
             const data = await Product.createLikeComent(id_coment, username, useremail, id_user);
             console.log(`Status: ${JSON.stringify(data)}`);
 
+            // Push real al dueño del comentario (nunca si te das like a ti mismo).
+            try {
+                const meta = await Community.getCommentMeta(id_coment);
+                if (meta && String(meta.id_user) !== String(id_user)) {
+                    sendPushToUser(meta.id_user, {
+                        title: `${username || 'Alguien'} le dio like a tu comentario`,
+                        data: { type: 'community_like', postId: meta.id_post }
+                    }).catch(() => {});
+                }
+            } catch (_) {}
+
 
             return res.status(201).json({
 
@@ -2560,6 +2573,18 @@ module.exports = {
             const data = await Product.createLikePost(id_publish, username, useremail, id_user);
             console.log(`Status: ${JSON.stringify(data)}`);
 
+            // Push real al dueño del post (nunca si te das like a ti mismo) —
+            // reemplaza el envío inseguro que hacía el cliente con una llave
+            // de service account incrustada en la app.
+            try {
+                const post = await Community.getPostById(id_publish);
+                if (post && String(post.id_user) !== String(id_user)) {
+                    sendPushToUser(post.id_user, {
+                        title: `${username || 'Alguien'} le dio like a tu publicación`,
+                        data: { type: 'community_like', postId: id_publish }
+                    }).catch(() => {});
+                }
+            } catch (_) {}
 
             return res.status(201).json({
 
@@ -2771,6 +2796,18 @@ module.exports = {
 
             const data = await Product.createComent(comments);
             console.log(`Status: ${JSON.stringify(comments)}`);
+
+            // Push real al dueño del post comentado (nunca si te comentas a ti mismo).
+            try {
+                const post = await Community.getPostById(comments.id_plate);
+                if (post && String(post.id_user) !== String(comments.id_user)) {
+                    sendPushToUser(post.id_user, {
+                        title: 'Comentaron tu publicación',
+                        body: (comments.review || '').slice(0, 140),
+                        data: { type: 'community_comment', postId: comments.id_plate }
+                    }).catch(() => {});
+                }
+            } catch (_) {}
 
             return res.status(201).json({
 

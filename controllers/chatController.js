@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 const storage = require('../utils/cloud_storage.js');
 const db = require('../config/config.js');
 const TrainerNotification = require('../models/trainerNotification.js');
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 // Mismo mapa de "kind" que el panel web (ver trainer-partners/src/
 // controllers/chatController.js: KNOWN_KINDS) — para que el cuerpo de la
@@ -135,35 +136,16 @@ module.exports = {
                 console.log(`No se pudo crear la notificación de chat: ${notifErr.message}`);
             }
 
-            // --- **PRUEBA DE DEPURACIÓN: NOTIFICACIONES DESACTIVADAS TEMPORALMENTE** ---
-
-            // 4. Obtener el Token de Notificación del destinatario
-            // const recipientToken = await User.findNotificationToken(recipientId);
-
-            // if (recipientToken) {
-            //     // 5. Enviar la notificación push (Usando la NUEVA instancia de Messaging)
-            //     const payload = {
-            //         notification: {
-            //             title: `Nuevo mensaje de ${senderName}`,
-            //             body: messageContent,
-            //         },
-            //         data: {
-            //             'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-            //             'screen': '/chat',
-            //             'chatRoomId': chatRoomId,
-            //             'senderId': senderId,
-            //             'recipientId': recipientId
-            //         }
-            //     };
-
-            //     await messaging.sendToDevice(recipientToken, payload);
-            //     console.log(`Notificación enviada a ${recipientId}`);
-            // } else {
-            //     console.log(`No se encontró token de notificación para el usuario ${recipientId}. Mensaje guardado pero no enviado.`);
-            // }
-
-            console.log('Mensaje guardado en Firestore. Notificaciones omitidas para depuración.');
-            // --- **FIN DE LA PRUEBA DE DEPURACIÓN** ---
+            // Push real al destinatario (trainer o client, da igual — el
+            // helper resuelve su notification_token sea quien sea). `peerId`
+            // es con quién debe abrir el chat quien recibe el push (el que
+            // mandó este mensaje), mismo contrato `type` que el resto de
+            // notificaciones nuevas (ver utils/pushNotifications.js).
+            sendPushToUser(recipientId, {
+                title: `Nuevo mensaje de ${senderName}`,
+                body: friendlyNotificationBody(messageContent),
+                data: { type: 'message', peerId: senderId, chatRoomId }
+            }).catch(() => {});
 
 
             // 6. Devolver éxito

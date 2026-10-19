@@ -10,6 +10,8 @@ const { findUserById } = require('../models/user');
 const nodemailer = require('nodemailer'); // <--- IMPORTANTE
 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 const ReferralsController = require('./referralsController.js');
+const TrainerNotification = require('../models/trainerNotification.js');
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 async function logPaymentHistory(db, subscription) {
     try {
@@ -413,6 +415,8 @@ module.exports = {
             // 5. LÓGICA DE INVITACIONES / REFERIDOS
             // ---------------------------------------------------------
 
+            let resolvedTrainerId = trainerIdFromLink;
+
             if (!trainerIdFromLink) {
                 // CASO A: Registro sin enlace. Buscamos invitación por email.
                 const trainerIdFromEmail = await User.checkAndClaimInvitation(user.email, data.id);
@@ -422,9 +426,10 @@ module.exports = {
                     console.log(`🔗 Usuario ${user.email} vinculado por EMAIL al Entrenador ${trainerIdFromEmail}`);
 
                     // Actualizamos data para el response
-                    // Nota: Si tu DB usa la columna 'mi_store' internamente para guardar el ID, 
+                    // Nota: Si tu DB usa la columna 'mi_store' internamente para guardar el ID,
                     // aquí se actualiza solo para visualización, pero la lógica sigue siendo de entrenador.
                     data.mi_store = trainerIdFromEmail;
+                    resolvedTrainerId = trainerIdFromEmail;
                 }
             } else {
                 // CASO B: Registro por Enlace Mágico.
@@ -437,6 +442,26 @@ module.exports = {
                     data.id,
                     `${user.name} ${user.lastname}`
                 );
+            }
+
+            // --- NUEVO: notificación + push reales para el entrenador cuando
+            // un cliente nuevo se registra solo desde la app (antes esto solo
+            // existía para los flujos de invitación de inviteController.js,
+            // no para el registro directo que de verdad usan las apps) ---
+            if (resolvedTrainerId) {
+                TrainerNotification.resolveTrainerUserId(resolvedTrainerId).then((trainerUserId) => {
+                    if (!trainerUserId) return;
+                    const title = 'Nuevo cliente registrado';
+                    const body = `${user.name || ''} ${user.lastname || ''}`.trim() || user.email;
+                    TrainerNotification.create({
+                        id_user: trainerUserId,
+                        type: 'client',
+                        title,
+                        body,
+                        link: `/dashboard/clients/${data.id}`
+                    });
+                    sendPushToUser(trainerUserId, { title, body, data: { type: 'new_client', clientId: data.id } }).catch(() => {});
+                }).catch((notifErr) => console.log(`No se pudo crear la notificación de registro: ${notifErr.message}`));
             }
 
             // 6. GENERAR TOKEN
