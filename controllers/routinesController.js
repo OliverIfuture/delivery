@@ -3,6 +3,7 @@ const EvaluationControl = require('../models/evaluationControl.js'); // El model
 const Routine = require('../models/routine.js');
 const db = require('../config/config'); // <--- TU CONEXIÓN A POSTGRES
 const Exercise = require('../models/exercise.js');
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 const aiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -306,6 +307,17 @@ module.exports = {
             const id_client = idCompany ? req.body.id_client : req.user.id;
 
             await Routine.setActive(id_routine, id_client);
+
+            // Push solo cuando quien activa es el ENTRENADOR a nombre de un
+            // cliente — si el cliente activa su propia rutina (idCompany
+            // null) no tiene sentido notificarlo de algo que él mismo hizo.
+            if (idCompany) {
+                sendPushToUser(id_client, {
+                    title: 'Tienes una nueva rutina activa',
+                    body: 'Tu entrenador activó una rutina de entrenamiento para ti.',
+                    data: { type: 'routine_assigned', routineId: id_routine }
+                }).catch(() => {});
+            }
 
             return res.status(200).json({
                 success: true,

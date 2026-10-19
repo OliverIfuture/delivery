@@ -9,6 +9,7 @@
 const db = require('../config/config.js');
 const NutritionPlan = require('../models/nutritionPlan.js');
 const Diet = require('../models/diet.js');
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 async function ownsClient(id_client, id_company) {
     const row = await db.oneOrNone('SELECT id_entrenador FROM users WHERE id = $1', [id_client]);
@@ -171,6 +172,13 @@ module.exports = {
             }
             const created = await NutritionPlan.create({ ...body, id_company });
             await applyPlanEffects(created);
+            if (created.active) {
+                sendPushToUser(created.id_client, {
+                    title: 'Tienes un nuevo plan de nutrición',
+                    body: created.name || 'Tu entrenador te asignó un plan de nutrición.',
+                    data: { type: 'diet_assigned', planId: created.id }
+                }).catch(() => {});
+            }
             return res.status(201).json({ success: true, message: 'Plan de nutrición creado.', data: created });
         } catch (error) {
             console.log(`Error en nutritionPlanController.createPlan: ${error}`);
@@ -187,6 +195,13 @@ module.exports = {
             }
             const updated = await NutritionPlan.update(body.id, body);
             await applyPlanEffects(updated);
+            if (updated.active) {
+                sendPushToUser(updated.id_client, {
+                    title: 'Tu plan de nutrición se actualizó',
+                    body: updated.name || 'Tu entrenador actualizó tu plan de nutrición.',
+                    data: { type: 'diet_assigned', planId: updated.id }
+                }).catch(() => {});
+            }
             return res.status(200).json({ success: true, message: 'Plan de nutrición actualizado.', data: updated });
         } catch (error) {
             console.log(`Error en nutritionPlanController.updatePlan: ${error}`);

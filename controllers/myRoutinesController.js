@@ -18,6 +18,7 @@
 const db = require('../config/config.js');
 const Routine = require('../models/routine.js');
 const RoutineFolder = require('../models/routineFolder.js');
+const { sendPushToUser } = require('../utils/pushNotifications.js');
 
 async function ownsClient(id_client, id_company) {
     const row = await db.oneOrNone('SELECT id_entrenador FROM users WHERE id = $1', [id_client]);
@@ -197,6 +198,13 @@ module.exports = {
                 current_week: 1,
                 is_active: !!make_active
             });
+            if (make_active) {
+                sendPushToUser(id_client, {
+                    title: 'Tienes una nueva rutina',
+                    body: template.name || 'Tu entrenador te asignó una rutina de entrenamiento.',
+                    data: { type: 'routine_assigned', routineId: created.id }
+                }).catch(() => {});
+            }
             return res.status(201).json({ success: true, data: { id: created.id } });
         } catch (error) {
             console.log(`Error en myRoutinesController.applyTemplateToClient: ${error}`);
