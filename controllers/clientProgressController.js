@@ -61,7 +61,7 @@ module.exports = {
             photoLog.id_company = req.user.id_entrenador;
 
             // 💡 VERIFICACIÓN ROBUSTA: Si es falsy (null, undefined, '') O la cadena "null"
-            if (!photoLog.id_company || metricLog.id_company === 'null') {
+            if (!photoLog.id_company || photoLog.id_company === 'null') {
                 photoLog.id_company = null; // Asignar el valor JavaScript/SQL NULL
             }
             if (!photoLog.image_url) {
