@@ -14,18 +14,20 @@
 // Al aceptar: si el correo YA tiene cuenta y no tiene entrenador asignado,
 // solo se actualiza su id_entrenador (sin crear nada nuevo). Si no tiene
 // cuenta, se crea con User.create (mismo camino real que ya usa
-// registerWithImage para clientes "no-company"), con una contraseña
-// generada que se le manda por correo para que no se le olvide.
+// registerWithImage para clientes "no-company"). La contraseña YA NO se
+// genera aquí — la elige el cliente en el formulario (AcceptInvite.vue,
+// con su propio campo + confirmación); el correo de bienvenida solo
+// confirma esa misma contraseña para que no se le olvide.
 const User = require('../models/user.js');
 const Rol = require('../models/rol.js');
 const Invite = require('../models/invite.js');
 const db = require('../config/config.js');
 const ClientSubscription = require('../models/clientSubscription.js');
 const nodemailer = require('nodemailer');
-const crypto = require('crypto');
 const { checkClientLimit } = require('../utils/membershipGate.js');
 const TrainerNotification = require('../models/trainerNotification.js'); // <-- Notificación real al entrenador cuando un prospecto acepta su invitación
 const { sendPushToUser } = require('../utils/pushNotifications.js');
+const normalizeEmail = require('../utils/normalizeEmail.js');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -39,11 +41,6 @@ const CLIENT_BASE_URL = process.env.CLIENT_INVITE_BASE_URL || 'https://thetraine
 const APP_STORE_URL = 'https://apps.apple.com/mx/app/trainer/id6756944923?l=en-GB';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.premiumsupplementsversion2023.app';
 const DEFAULT_BRAND_COLOR = '#4F46E5';
-
-function generatePassword() {
-    // 10 caracteres alfanuméricos, fáciles de leer/transcribir desde un correo.
-    return crypto.randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
-}
 
 // El id 1 (y 0/null) es el entrenador por defecto de la plataforma: un cliente
 // que llegó sin invitación queda ahí, y una invitación real de un entrenador
@@ -235,7 +232,8 @@ module.exports = {
 
     async acceptInvite(req, res) {
         try {
-            const { token, email, name, lastname } = req.body;
+            const { token, name, lastname, password } = req.body;
+            const email = normalizeEmail(req.body.email);
             if (!token || !email) {
                 return res.status(400).json({ success: false, message: 'Faltan datos para aceptar la invitación.' });
             }
@@ -286,8 +284,15 @@ module.exports = {
             if (!name) {
                 return res.status(400).json({ success: false, message: 'Tu nombre es requerido.' });
             }
+            // La contraseña ya no se genera aquí — la elige el cliente en el
+            // formulario (ver AcceptInvite.vue). Así el correo de bienvenida
+            // confirma la contraseña real que ya usó, en vez de una generada
+            // que nunca llegó a escribir y es fácil que se le olvide.
+            if (!password || password.length < 6) {
+                return res.status(400).json({ success: false, message: 'Tu contraseña debe tener al menos 6 caracteres.' });
+            }
 
-            const plainPassword = generatePassword();
+            const plainPassword = password;
             const newUser = {
                 email,
                 name,
