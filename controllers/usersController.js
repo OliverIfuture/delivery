@@ -380,6 +380,36 @@ module.exports = {
             const user = JSON.parse(req.body.user);
             if (user.email) user.email = normalizeEmail(user.email);
 
+            // GUARD — antes no existía ningún chequeo aquí, así que el mismo
+            // correo (incluso con mayúsculas/minúsculas distintas) podía
+            // registrarse dos veces y crear dos cuentas duplicadas. Eso
+            // rompe el login para siempre: findByEmail compara sin importar
+            // mayúsculas y al encontrar 2 filas revienta con "Multiple rows
+            // were not expected" (caso real: Camposvm63@gmail.com /
+            // camposvm63@gmail.com, 2026-10-20).
+            if (user.email) {
+                // Si findByEmail truena (p. ej. porque ya hay un duplicado
+                // de otro bug suelto por ahí), NO seguimos como si no
+                // existiera nadie — mejor bloquear con un mensaje claro que
+                // crear una tercera cuenta a ciegas.
+                let existing;
+                try {
+                    existing = await User.findByEmail(user.email);
+                } catch (lookupErr) {
+                    console.log(`[REGISTER_EMAIL_CHECK_FAILED] email=${user.email} error=${lookupErr.message}`);
+                    return res.status(409).json({
+                        success: false,
+                        message: 'Ya existe una cuenta con este correo. Si no puedes iniciar sesión, contacta a soporte.'
+                    });
+                }
+                if (existing) {
+                    return res.status(409).json({
+                        success: false,
+                        message: 'Ya existe una cuenta con este correo. Inicia sesión en vez de registrarte de nuevo.'
+                    });
+                }
+            }
+
             // ---------------------------------------------------------
             // 1. DETECTAR ID DEL ENTRENADOR (LIMPIO)
             // ---------------------------------------------------------
@@ -675,6 +705,7 @@ module.exports = {
 
 
     async login(req, res, next) {
+        const _loginEmailForLog = normalizeEmail(req.body.email);
         try {
             const email = normalizeEmail(req.body.email);
             const password = req.body.password;
@@ -747,17 +778,18 @@ module.exports = {
 
         }
         catch (error) {
-            console.log(`Error: ${error}`);
+            console.log(`[LOGIN_ERROR:login] email=${_loginEmailForLog || '-'} name=${error.name || '-'} message=${error.message || error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error al momento de hacer login',
-                error: error
+                error: error.message || String(error)
             });
         }
     },
 
 
     async loginQr(req, res, next) {
+        const _loginQrIdForLog = req.body.id;
         try {
             const id = req.body.id;
             const password = req.body.password;
@@ -822,11 +854,11 @@ module.exports = {
 
         }
         catch (error) {
-            console.log(`Error: ${error}`);
+            console.log(`[LOGIN_ERROR:loginQr] id=${_loginQrIdForLog || '-'} name=${error.name || '-'} message=${error.message || error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error al momento de hacer login',
-                error: error
+                error: error.message || String(error)
             });
         }
     },
@@ -1312,6 +1344,7 @@ module.exports = {
     },
 
     async findByCode(req, res, next) {
+        const _findByCodeParamsForLog = JSON.stringify(req.params || {});
         try {
             const code = req.params.code;
             const id = req.params.id;
@@ -1335,11 +1368,11 @@ module.exports = {
 
         }
         catch (error) {
-            console.log(`Error: ${error}`);
+            console.log(`[LOGIN_ERROR:findByCode] params=${_findByCodeParamsForLog} name=${error.name || '-'} message=${error.message || error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error al momento de hacer login',
-                error: error
+                error: error.message || String(error)
             });
         }
     },
@@ -1350,6 +1383,7 @@ module.exports = {
 
 
     async login_dealer(req, res, next) {
+        const _loginDealerPhoneForLog = req.body.phone;
         try {
             const phone = req.body.phone;
             const password = req.body.password;
@@ -1397,11 +1431,11 @@ module.exports = {
 
         }
         catch (error) {
-            console.log(`Error: ${error}`);
+            console.log(`[LOGIN_ERROR:login_dealer] phone=${_loginDealerPhoneForLog || '-'} name=${error.name || '-'} message=${error.message || error}`);
             return res.status(501).json({
                 success: false,
                 message: 'Error al momento de hacer login',
-                error: error
+                error: error.message || String(error)
             });
         }
     },
