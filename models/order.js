@@ -2013,6 +2013,13 @@ Order.findById = (id) => {
     return db.oneOrNone(sql, id);
 }
 
+// NUEVO — usado por el flujo real de pagos con Clip, para pasar una orden
+// de 'PENDIENTE DE PAGO' a 'PAGADO' solo cuando Clip confirma el cobro.
+Order.updateStatus = (id, status) => {
+    const sql = `UPDATE orders SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING *`;
+    return db.oneOrNone(sql, [id, status]);
+}
+
 
 
 // 1. Crear un nuevo gasto

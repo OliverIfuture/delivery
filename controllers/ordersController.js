@@ -335,7 +335,13 @@ module.exports = {
 
         try {
             let order = req.body;
-            order.status = 'PAGADO';
+            // Premium Supplements (id_order_company = 4) con pago por
+            // TARJETA pasa por el flujo real de Clip — la orden arranca
+            // pendiente y solo pasa a PAGADO cuando Clip confirma el cobro
+            // (ver clipController.webhook). El resto de tiendas/métodos
+            // sigue exactamente igual que antes (instantáneo).
+            const usesRealCardPayment = String(order.id_order_company) === '4' && order.paymethod === 'TARJETA';
+            order.status = usesRealCardPayment ? 'PENDIENTE DE PAGO' : 'PAGADO';
             console.log(`orden creada: ${JSON.stringify(order)}`);
 
             // --- LIMPIEZA: ELIMINADO CÁLCULO MANUAL DE TOTAL ---

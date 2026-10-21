@@ -19,5 +19,13 @@ module.exports = {
     // El Client ID de OAuth es público (no es secreto, va también en el
     // frontend) — se necesita aquí solo para validar que el token que
     // Google firmó de verdad fue emitido para nuestra app (el "audience").
-    googleClientId: process.env.GOOGLE_CLIENT_ID
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+
+    // NUEVO — Pagos reales con Clip (ver controllers/clipController.js).
+    // Clave de API + clave secreta de la cuenta de Clip del comercio (hoy
+    // solo Premium Supplements, id_company = 4). Ambas se combinan en
+    // Basic Auth (base64 "API_KEY:SECRET_KEY") para llamar a la API de
+    // Clip — nunca se exponen al frontend.
+    clipApiKey: process.env.CLIP_API_KEY,
+    clipSecretKey: process.env.CLIP_SECRET_KEY
 }
