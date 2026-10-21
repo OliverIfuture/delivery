@@ -788,6 +788,89 @@ module.exports = {
     },
 
 
+    // Login por teléfono, para tiendas cuyo flujo de cliente usa teléfono en
+    // vez de correo (ej. app Premium Supplements). Mismo token/JWT y mismo
+    // shape de respuesta que login() normal, así que addresses/orders
+    // funcionan igual sin cambios.
+    async loginPhone(req, res, next) {
+        const _loginPhoneForLog = req.body.phone;
+        try {
+            const phone = req.body.phone;
+            const password = req.body.password;
+            const id_entrenador = req.body.id_entrenador;
+
+            if (!phone || !id_entrenador) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Falta el teléfono o la tienda.'
+                });
+            }
+
+            const myUser = await User.findByPhoneAndCompany(phone, id_entrenador);
+
+            if (!myUser) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'El teléfono no fue encontrado'
+                });
+            }
+
+            if (User.isPasswordMatched(password, myUser.password)) {
+                const token = jwt.sign(
+                    {
+                        id: myUser.id,
+                        email: myUser.email,
+                        id_entrenador: myUser.id_entrenador
+                    }, keys.secretOrKey, {
+                });
+                const data = {
+                    id: myUser.id,
+                    name: myUser.name,
+                    lastname: myUser.lastname,
+                    email: myUser.email,
+                    phone: myUser.phone,
+                    image: myUser.image,
+                    session_token: `JWT ${token}`,
+                    autenticated: myUser.autenticated,
+                    is_trainer: myUser.is_trainer,
+                    document: myUser.document,
+                    id_entrenador: myUser.id_entrenador,
+                    roles: myUser.roles,
+                    gym: myUser.gym,
+                    state: myUser.state,
+                    credential: myUser.credential,
+                    keystore: myUser.keystore,
+                    balance: myUser.balance,
+                    mi_store: myUser.mi_store,
+                    company: myUser.company
+                }
+
+                await User.updateToken(myUser.id, `JWT ${token}`);
+
+                return res.status(201).json({
+                    success: true,
+                    data: data,
+                    message: '! BIENVENIDO !'
+                });
+            }
+            else {
+                return res.status(401).json({
+                    success: false,
+                    message: 'La contraseña es incorrecta'
+                });
+            }
+
+        }
+        catch (error) {
+            console.log(`[LOGIN_ERROR:loginPhone] phone=${_loginPhoneForLog || '-'} name=${error.name || '-'} message=${error.message || error}`);
+            return res.status(501).json({
+                success: false,
+                message: 'Error al momento de hacer login',
+                error: error.message || String(error)
+            });
+        }
+    },
+
     async loginQr(req, res, next) {
         const _loginQrIdForLog = req.body.id;
         try {

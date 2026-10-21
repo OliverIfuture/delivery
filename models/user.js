@@ -374,6 +374,82 @@ GROUP BY
     return db.oneOrNone(sql, email);
 }
 
+// Login por teléfono para clientes de una tienda específica (ej. Premium
+// Supplements, id_entrenador = id_company del dueño). Mismo shape que
+// findByEmail para que el resto del flujo (token, company, roles) funcione
+// igual sin importar con qué credencial haya entrado el cliente.
+User.findByPhoneAndCompany = (phone, id_entrenador) => {
+    const sql = `
+SELECT
+    U.id,
+    U.email,
+    U.name,
+    U.lastname,
+    U.image,
+    U.phone,
+    U.password,
+    U.session_token,
+    U.notification_token,
+    U.autenticated,
+    U.is_trainer,
+    U.document,
+    U.gym,
+    U.state,
+    U.credential,
+    U.keystore,
+    U.balance,
+    U.mi_store,
+	U.id_entrenador,
+    COALESCE(
+        (
+            jsonb_agg(
+                jsonb_build_object(
+                    'id', C.id,
+                    'name', C.name,
+                    'addres', C.addres,
+                    'telephone', C.telephone,
+                    'logo', C.logo,
+                    'state', C.state,
+                    'available', C.available,
+                    'type', C.type,
+                    'lat', C.lat,
+                    'lng', C.lng,
+					'description', C.description
+                )
+            ) FILTER (WHERE C.id IS NOT NULL)
+        ) -> 0,
+        '{}'::jsonb
+    ) AS company,
+    json_agg(
+        json_build_object(
+            'id', R.id,
+            'name', R.name,
+            'image', R.image,
+            'route', R.route
+        )
+    ) AS roles
+FROM
+    users AS U
+INNER JOIN
+    user_has_roles AS UHR
+ON
+    UHR.id_user = U.id
+INNER JOIN
+    roles AS R
+ON
+    R.id = UHR.id_rol
+LEFT JOIN
+    company AS C
+ON
+    C.user_id = U.id
+WHERE
+    U.phone = $1 AND U.id_entrenador = $2
+GROUP BY
+    U.id
+    `
+    return db.oneOrNone(sql, [phone, id_entrenador]);
+}
+
 User.updateCompanyPromo = (idCompany, status) => {
     const sql = `
     UPDATE

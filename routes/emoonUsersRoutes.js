@@ -22,6 +22,11 @@ module.exports = (app, upload) => {
     );
 
     app.put(
+        '/api/emoon/users/update',
+        passport.authenticate('emoon-jwt', { session: false }),
+        emoonUsersController.update
+    );
+    app.put(
         '/api/emoon/users/updateRole',
         passport.authenticate('emoon-jwt', { session: false }),
         emoonUsersController.updateRole

@@ -28,6 +28,7 @@ module.exports = (app, upload) => {
 
     app.post('/api/users/createticket/:name/:active/:amount/:userId', UsersController.createticket);
     app.post('/api/users/login', UsersController.login);
+    app.post('/api/users/loginPhone', UsersController.loginPhone);
     app.post('/api/users/loginQr', UsersController.loginQr);
 
     app.post('/api/users/logout', UsersController.logout);

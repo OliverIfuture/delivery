@@ -93,6 +93,45 @@ return res.status(201).json({
         }
     },
 
+    // 4b. Actualizar perfil (nombre, apellido, teléfono, correo)
+    async update(req, res) {
+        try {
+            const { id, first_name, last_name, phone } = req.body;
+            let email = req.body.email;
+
+            if (!id) {
+                return res.status(400).json({ success: false, message: 'Falta el id del usuario.' });
+            }
+
+            if (email) {
+                email = normalizeEmail(email);
+                const existingUser = await EmoonUser.findByEmail(email);
+                if (existingUser && String(existingUser.id) !== String(id)) {
+                    return res.status(400).json({ success: false, message: 'Ese correo electrónico ya está en uso por otra cuenta.' });
+                }
+            }
+
+            const updatedUser = await EmoonUser.update(id, { first_name, last_name, phone, email });
+
+            if (!updatedUser) {
+                return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Perfil actualizado correctamente.',
+                data: updatedUser
+            });
+        } catch (error) {
+            console.log('Error en emoonUsersController.update:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al actualizar el perfil.',
+                error: error.message
+            });
+        }
+    },
+
     // 4. NUEVO: Actualizar el rol de un usuario
     async updateRole(req, res) {
         try {

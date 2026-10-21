@@ -31,6 +31,29 @@ EmoonUser.getAll = () => {
     return db.manyOrNone(sql);
 };
 
+// Actualizar datos de perfil (nombre, apellido, teléfono, correo)
+EmoonUser.update = (id, fields) => {
+    const sql = `
+        UPDATE emoon.emoon_users
+        SET
+            first_name = $2,
+            last_name = $3,
+            phone = $4,
+            email = $5,
+            updated_at = $6
+        WHERE id = $1 AND is_deleted = false
+        RETURNING id, first_name, last_name, email, phone, avatar_url, role, birth_date
+    `;
+    return db.oneOrNone(sql, [
+        id,
+        fields.first_name,
+        fields.last_name,
+        fields.phone,
+        fields.email,
+        new Date()
+    ]);
+};
+
 // NUEVA FUNCIÓN: Actualizar el rol del usuario
 EmoonUser.updateRole = (id, role) => {
     const sql = `
