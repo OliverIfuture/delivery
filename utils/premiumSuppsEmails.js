@@ -19,6 +19,10 @@ const transporter = nodemailer.createTransport({
 
 const STORE_NAME = 'Premium Supplements BC';
 const FROM_ADDRESS = `"${STORE_NAME}" <${process.env.EMAIL_USER}>`;
+// Logo real de la tienda (company.logo, id=4) — ya viene con fondo
+// transparente pensado para ir sobre fondo oscuro, igual que el header
+// del correo.
+const COMPANY_LOGO_URL = 'https://firebasestorage.googleapis.com/v0/b/premium-delivery-app.appspot.com/o/FONDO%20TRANSPARENTE%201%20%2Blema.png?alt=media&token=8f0fb66f-bca0-40ef-b6d0-796ea0776b68';
 
 // Paleta real de la app (src/assets/base.css de premium-supps-store).
 const COLOR_BG = '#0a0e1c';
@@ -36,14 +40,11 @@ function money(value) {
 
 function emailShell({ title, subtitle, bodyHtml }) {
     return `
-    <div style="background-color:${COLOR_BG};padding:32px 16px;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <div style="background-color:${COLOR_BG};padding:32px 16px;font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
       <div style="max-width:480px;margin:0 auto;background:${COLOR_SURFACE};border-radius:20px;overflow:hidden;border:1px solid ${COLOR_BORDER};">
 
         <div style="background:${GRADIENT_BRAND};padding:28px 32px;text-align:center;">
-          <table role="presentation" style="margin:0 auto 12px;">
-            <tr><td style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.2);color:#fff;text-align:center;vertical-align:middle;font-weight:800;font-size:18px;">P</td></tr>
-          </table>
-          <p style="margin:0;color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">${STORE_NAME}</p>
+          <img src="${COMPANY_LOGO_URL}" alt="${STORE_NAME}" width="140" style="max-width:140px;width:140px;height:auto;display:block;margin:0 auto 14px;" />
           <h1 style="margin:6px 0 0;color:#fff;font-size:21px;font-weight:800;line-height:1.3;">${title}</h1>
           ${subtitle ? `<p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:13px;">${subtitle}</p>` : ''}
         </div>
