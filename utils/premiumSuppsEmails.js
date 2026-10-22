@@ -38,6 +38,30 @@ function money(value) {
     return `$${Math.round(Number(value)).toLocaleString('es-MX')} MXN`;
 }
 
+// Gmail (iOS/Android) "ayuda" auto-invirtiendo colores de correos que no
+// declaran explícitamente soporte de modo oscuro: convierte fondos
+// oscuros en claros y texto claro en oscuro, color por color, SALVO que
+// detecte un bloque @media (prefers-color-scheme: dark) real en el
+// <head> — eso es lo único que le dice "este correo ya está diseñado a
+// propósito, no lo toques". Por eso cada color va DOS veces: como
+// estilo inline/bgcolor normal (para Outlook/clientes viejos) y otra vez
+// aquí con las mismas clases repetidas en claro y oscuro con !important
+// (para que Gmail nunca tenga motivo para re-colorear nada).
+function darkModeProofStyles() {
+    return `
+    <style>
+      .pss-bg, .pss-surface, .pss-surface-soft, .pss-ink, .pss-ink-muted, .pss-white { }
+      @media (prefers-color-scheme: light), (prefers-color-scheme: dark) {
+        .pss-bg { background-color: ${COLOR_BG} !important; }
+        .pss-surface { background-color: ${COLOR_SURFACE} !important; }
+        .pss-surface-soft { background-color: ${COLOR_SURFACE_SOFT} !important; }
+        .pss-ink { color: ${COLOR_INK} !important; }
+        .pss-ink-muted { color: ${COLOR_INK_MUTED} !important; }
+        .pss-white { color: #ffffff !important; }
+      }
+    </style>`;
+}
+
 // Nota: si solo se manda un <div> suelto como html del correo, Gmail (y
 // la mayoría de clientes) lo envuelven en SU PROPIO <body> blanco por
 // defecto, y ese blanco se asoma alrededor de la tarjeta sin importar
@@ -53,27 +77,29 @@ function emailShell({ title, subtitle, bodyHtml }) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
+    ${darkModeProofStyles()}
   </head>
-  <body bgcolor="${COLOR_BG}" style="margin:0;padding:0;background-color:${COLOR_BG};font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLOR_BG}" style="background-color:${COLOR_BG};">
+  <body bgcolor="${COLOR_BG}" class="pss-bg" style="margin:0;padding:0;background-color:${COLOR_BG};font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLOR_BG}" class="pss-bg" style="background-color:${COLOR_BG};">
       <tr>
         <td align="center" style="padding:32px 16px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLOR_SURFACE}" style="max-width:480px;background-color:${COLOR_SURFACE};border-radius:20px;border:1px solid ${COLOR_BORDER};overflow:hidden;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLOR_SURFACE}" class="pss-surface" style="max-width:480px;background-color:${COLOR_SURFACE};border-radius:20px;border:1px solid ${COLOR_BORDER};overflow:hidden;">
             <tr>
               <td bgcolor="${COLOR_RED}" style="background:${GRADIENT_BRAND};background-color:${COLOR_RED};padding:28px 32px;text-align:center;">
                 <img src="${COMPANY_LOGO_URL}" alt="${STORE_NAME}" width="140" style="max-width:140px;width:140px;height:auto;display:block;margin:0 auto 14px;" />
-                <h1 style="margin:6px 0 0;color:#ffffff;font-size:21px;font-weight:800;line-height:1.3;">${title}</h1>
-                ${subtitle ? `<p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:13px;">${subtitle}</p>` : ''}
+                <h1 class="pss-white" style="margin:6px 0 0;color:#ffffff;font-size:21px;font-weight:800;line-height:1.3;">${title}</h1>
+                ${subtitle ? `<p class="pss-white" style="margin:8px 0 0;color:#ffffff;font-size:13px;">${subtitle}</p>` : ''}
               </td>
             </tr>
             <tr>
-              <td bgcolor="${COLOR_SURFACE}" style="background-color:${COLOR_SURFACE};padding:28px 28px 8px;color:${COLOR_INK};font-size:14px;line-height:1.6;">
+              <td bgcolor="${COLOR_SURFACE}" class="pss-surface pss-ink" style="background-color:${COLOR_SURFACE};padding:28px 28px 8px;color:${COLOR_INK};font-size:14px;line-height:1.6;">
                 ${bodyHtml}
               </td>
             </tr>
             <tr>
-              <td bgcolor="${COLOR_SURFACE}" style="background-color:${COLOR_SURFACE};padding:20px 28px;text-align:center;border-top:1px solid ${COLOR_BORDER};">
-                <p style="margin:0;font-size:11px;color:${COLOR_INK_MUTED};">Powered by <span style="color:${COLOR_INK};font-weight:700;">COBI</span></p>
+              <td bgcolor="${COLOR_SURFACE}" class="pss-surface" style="background-color:${COLOR_SURFACE};padding:20px 28px;text-align:center;border-top:1px solid ${COLOR_BORDER};">
+                <p class="pss-ink-muted" style="margin:0;font-size:11px;color:${COLOR_INK_MUTED};">Powered by <span class="pss-ink" style="color:${COLOR_INK};font-weight:700;">COBI</span></p>
               </td>
             </tr>
           </table>
@@ -94,10 +120,10 @@ function productsTableHtml(products) {
         <tr>
           <td style="padding:10px 0;border-bottom:1px solid ${COLOR_BORDER};width:48px;">${img}</td>
           <td style="padding:10px 0 10px 12px;border-bottom:1px solid ${COLOR_BORDER};">
-            <p style="margin:0;font-size:13px;font-weight:700;color:${COLOR_INK};">${p.name}</p>
-            <p style="margin:2px 0 0;font-size:12px;color:${COLOR_INK_MUTED};">x${p.quantity}</p>
+            <p class="pss-ink" style="margin:0;font-size:13px;font-weight:700;color:${COLOR_INK};">${p.name}</p>
+            <p class="pss-ink-muted" style="margin:2px 0 0;font-size:12px;color:${COLOR_INK_MUTED};">x${p.quantity}</p>
           </td>
-          <td style="padding:10px 0;border-bottom:1px solid ${COLOR_BORDER};text-align:right;font-size:13px;font-weight:700;color:${COLOR_INK};white-space:nowrap;">
+          <td class="pss-ink" style="padding:10px 0;border-bottom:1px solid ${COLOR_BORDER};text-align:right;font-size:13px;font-weight:700;color:${COLOR_INK};white-space:nowrap;">
             ${money(Number(unitPrice) * p.quantity)}
           </td>
         </tr>`;
@@ -113,26 +139,26 @@ async function sendOrderConfirmationEmail(order) {
     const greetName = order.client.name ? order.client.name.split(' ')[0] : 'cliente';
 
     const bodyHtml = `
-        <p style="margin:0 0 4px;">¡Hola ${greetName}! Tu pago se confirmó correctamente y ya estamos preparando tu pedido.</p>
-        <table role="presentation" width="100%" bgcolor="${COLOR_SURFACE_SOFT}" style="width:100%;background-color:${COLOR_SURFACE_SOFT};border-radius:12px;margin:18px 0;">
-          <tr><td bgcolor="${COLOR_SURFACE_SOFT}" style="background-color:${COLOR_SURFACE_SOFT};padding:14px 18px;">
-            <p style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Folio</p>
-            <p style="margin:0 0 10px;font-size:15px;font-weight:800;color:${COLOR_INK};">PSS-${order.id}</p>
-            <p style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Entrega programada</p>
-            <p style="margin:0 0 10px;font-size:14px;font-weight:600;color:${COLOR_INK};">${order.hour_program || 'Por confirmar'}</p>
-            <p style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Dirección</p>
-            <p style="margin:0;font-size:14px;font-weight:600;color:${COLOR_INK};">${order.address?.address || ''}, ${order.address?.neighborhood || ''}</p>
+        <p class="pss-ink" style="margin:0 0 4px;color:${COLOR_INK};">¡Hola ${greetName}! Tu pago se confirmó correctamente y ya estamos preparando tu pedido.</p>
+        <table role="presentation" width="100%" bgcolor="${COLOR_SURFACE_SOFT}" class="pss-surface-soft" style="width:100%;background-color:${COLOR_SURFACE_SOFT};border-radius:12px;margin:18px 0;">
+          <tr><td bgcolor="${COLOR_SURFACE_SOFT}" class="pss-surface-soft" style="background-color:${COLOR_SURFACE_SOFT};padding:14px 18px;">
+            <p class="pss-ink-muted" style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Folio</p>
+            <p class="pss-ink" style="margin:0 0 10px;font-size:15px;font-weight:800;color:${COLOR_INK};">PSS-${order.id}</p>
+            <p class="pss-ink-muted" style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Entrega programada</p>
+            <p class="pss-ink" style="margin:0 0 10px;font-size:14px;font-weight:600;color:${COLOR_INK};">${order.hour_program || 'Por confirmar'}</p>
+            <p class="pss-ink-muted" style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Dirección</p>
+            <p class="pss-ink" style="margin:0;font-size:14px;font-weight:600;color:${COLOR_INK};">${order.address?.address || ''}, ${order.address?.neighborhood || ''}</p>
           </td></tr>
         </table>
-        <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:${COLOR_INK_MUTED};text-transform:uppercase;letter-spacing:0.04em;">Tu ticket</p>
+        <p class="pss-ink-muted" style="margin:0 0 4px;font-size:12px;font-weight:700;color:${COLOR_INK_MUTED};text-transform:uppercase;letter-spacing:0.04em;">Tu ticket</p>
         ${productsTableHtml(order.products)}
         <table role="presentation" style="width:100%;margin-top:4px;">
           <tr>
-            <td style="font-size:15px;font-weight:800;color:${COLOR_INK};padding-top:10px;">Total</td>
-            <td style="font-size:17px;font-weight:800;color:${COLOR_INK};text-align:right;padding-top:10px;">${money(order.total)}</td>
+            <td class="pss-ink" style="font-size:15px;font-weight:800;color:${COLOR_INK};padding-top:10px;">Total</td>
+            <td class="pss-ink" style="font-size:17px;font-weight:800;color:${COLOR_INK};text-align:right;padding-top:10px;">${money(order.total)}</td>
           </tr>
         </table>
-        <p style="margin:22px 0 0;font-size:12px;color:${COLOR_INK_MUTED};">Te avisaremos por aquí cuando tu pedido esté en camino.</p>`;
+        <p class="pss-ink-muted" style="margin:22px 0 0;font-size:12px;color:${COLOR_INK_MUTED};">Te avisaremos por aquí cuando tu pedido esté en camino.</p>`;
 
     await transporter.sendMail({
         from: FROM_ADDRESS,
@@ -149,18 +175,18 @@ async function sendOrderDeliveredEmail(order) {
     const greetName = order.client.name ? order.client.name.split(' ')[0] : 'cliente';
 
     const bodyHtml = `
-        <p style="margin:0 0 4px;">¡Gracias, ${greetName}! Tu pedido <strong>PSS-${order.id}</strong> ya fue entregado. Esperamos que disfrutes tus productos y que te ayuden a llegar a tu siguiente meta 💪</p>
+        <p class="pss-ink" style="margin:0 0 4px;color:${COLOR_INK};">¡Gracias, ${greetName}! Tu pedido <strong>PSS-${order.id}</strong> ya fue entregado. Esperamos que disfrutes tus productos y que te ayuden a llegar a tu siguiente meta 💪</p>
         ${productsTableHtml(order.products)}
         <table role="presentation" style="width:100%;margin-top:4px;">
           <tr>
-            <td style="font-size:15px;font-weight:800;color:${COLOR_INK};padding-top:10px;">Total</td>
-            <td style="font-size:17px;font-weight:800;color:${COLOR_INK};text-align:right;padding-top:10px;">${money(order.total)}</td>
+            <td class="pss-ink" style="font-size:15px;font-weight:800;color:${COLOR_INK};padding-top:10px;">Total</td>
+            <td class="pss-ink" style="font-size:17px;font-weight:800;color:${COLOR_INK};text-align:right;padding-top:10px;">${money(order.total)}</td>
           </tr>
         </table>
         <p style="margin:24px 0 0;text-align:center;">
-          <a href="https://deliveryserver.herokuapp.com" style="display:inline-block;background:${COLOR_RED};color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 30px;border-radius:999px;">Seguir comprando</a>
+          <a href="https://deliveryserver.herokuapp.com" class="pss-white" style="display:inline-block;background:${COLOR_RED};color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 30px;border-radius:999px;">Seguir comprando</a>
         </p>
-        <p style="margin:20px 0 0;font-size:12px;color:${COLOR_INK_MUTED};text-align:center;">Gracias por confiar en ${STORE_NAME}.</p>`;
+        <p class="pss-ink-muted" style="margin:20px 0 0;font-size:12px;color:${COLOR_INK_MUTED};text-align:center;">Gracias por confiar en ${STORE_NAME}.</p>`;
 
     await transporter.sendMail({
         from: FROM_ADDRESS,
