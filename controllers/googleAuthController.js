@@ -28,10 +28,37 @@ const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const keys = require('../config/keys.js');
+const db = require('../config/config.js');
 const User = require('../models/user.js');
-const Rol = require('../models/rol.js');
 
 const client = new OAuth2Client(keys.googleClientId);
+
+// Crea el usuario + su rol CLIENTE + su ticket de bienvenida como UNA sola
+// transacción. Antes se hacían como 3 escrituras sueltas (igual que
+// usersController.registerWithOutImage) — si la 2a o 3a fallaba, el
+// usuario quedaba creado pero SIN rol, invisible para cualquier búsqueda
+// futura (que siempre hace INNER JOIN con user_has_roles) pero bloqueando
+// ese correo para siempre por el UNIQUE(email). Esto pasó de verdad en
+// producción (fila huérfana encontrada y limpiada el 22-oct-2026).
+async function createScopedClient({ email, name, lastname, image, password, id_entrenador }) {
+    const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+    return db.tx(async (t) => {
+        const user = await t.one(
+            `INSERT INTO users(email, name, lastname, phone, image, password, created_at, updated_at, id_entrenador)
+             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+            [email, name, lastname, null, image, hashedPassword, new Date(), new Date(), id_entrenador]
+        );
+        await t.none(
+            `INSERT INTO user_has_roles(id_user, id_rol, created_at, updated_at) VALUES($1, 1, $2, $3)`,
+            [user.id, new Date(), new Date()]
+        );
+        await t.none(
+            `INSERT INTO tickets(ticket_name, active, amount, user_id) VALUES('BIENVENIDO', 'ACTIVE', 50, $1)`,
+            [user.id]
+        );
+        return user;
+    });
+}
 
 function buildSessionData(myUser, token) {
     return {
@@ -115,17 +142,28 @@ module.exports = {
                 // Correo realmente nuevo — se registra de una vez, sin pedir
                 // contraseña: Google ya verificó identidad.
                 const randomPassword = crypto.randomBytes(24).toString('hex');
-                const created = await User.create({
-                    email: payload.email,
-                    name: payload.given_name || payload.name || '',
-                    lastname: payload.family_name || '',
-                    phone: null,
-                    image: payload.picture || null,
-                    password: randomPassword,
-                    id_entrenador
-                });
-                await Rol.create(created.id, 1); // CLIENTE
-                await User.createticket(created.id); // mismo ticket de bienvenida que registerWithOutImage
+                try {
+                    await createScopedClient({
+                        email: payload.email,
+                        name: payload.given_name || payload.name || '',
+                        lastname: payload.family_name || '',
+                        image: payload.picture || null,
+                        password: randomPassword,
+                        id_entrenador
+                    });
+                } catch (createError) {
+                    // Red de seguridad por si dos clics casi simultáneos
+                    // pasan ambos el chequeo de arriba (carrera real) — con
+                    // la transacción esto ya no deja filas rotas, solo hay
+                    // que responder claro en vez de tronar con el error crudo.
+                    if (createError.code === '23505') {
+                        return res.status(409).json({
+                            success: false,
+                            message: 'Ese correo ya tiene una cuenta. Intenta iniciar sesión de nuevo.'
+                        });
+                    }
+                    throw createError;
+                }
 
                 const freshUser = await User.findByEmailAndCompany(payload.email, id_entrenador);
                 const data = await signInExistingUser(freshUser);
