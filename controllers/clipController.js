@@ -137,9 +137,19 @@ module.exports = {
         }
     },
 
-    // POST /api/clip/refund/:orderId — reembolso total (por ahora), para
-    // que el cliente/admin pueda cancelar un pedido ya pagado con Clip.
+    // POST /api/clip/refund/:orderId — reembolso total. Deshabilitado a
+    // propósito para clientes: una vez pagado, el cliente ya no puede
+    // cancelar/reembolsar su propio pedido desde la app (decisión de
+    // negocio). La lógica completa se deja intacta abajo para cuando haya
+    // un panel de soporte/admin real que la vuelva a habilitar con su
+    // propio control de acceso — por ahora simplemente no es alcanzable.
     async refund(req, res) {
+        return res.status(403).json({
+            success: false,
+            message: 'Los pedidos pagados no se pueden cancelar desde la app. Contacta a soporte.'
+        });
+
+        // eslint-disable-next-line no-unreachable
         try {
             const orderId = req.params.orderId;
             const { reason } = req.body;
