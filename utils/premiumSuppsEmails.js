@@ -38,26 +38,50 @@ function money(value) {
     return `$${Math.round(Number(value)).toLocaleString('es-MX')} MXN`;
 }
 
+// Nota: si solo se manda un <div> suelto como html del correo, Gmail (y
+// la mayoría de clientes) lo envuelven en SU PROPIO <body> blanco por
+// defecto, y ese blanco se asoma alrededor de la tarjeta sin importar
+// qué background-color le pongamos al div. La única forma confiable de
+// que el fondo oscuro cubra TODO el correo es mandar un documento html
+// completo, con el fondo puesto tanto por CSS inline como por el
+// atributo bgcolor (clientes viejos ignoran CSS pero sí respetan
+// bgcolor) en <body> y en la tabla que envuelve todo.
 function emailShell({ title, subtitle, bodyHtml }) {
-    return `
-    <div style="background-color:${COLOR_BG};padding:32px 16px;font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-      <div style="max-width:480px;margin:0 auto;background:${COLOR_SURFACE};border-radius:20px;overflow:hidden;border:1px solid ${COLOR_BORDER};">
-
-        <div style="background:${GRADIENT_BRAND};padding:28px 32px;text-align:center;">
-          <img src="${COMPANY_LOGO_URL}" alt="${STORE_NAME}" width="140" style="max-width:140px;width:140px;height:auto;display:block;margin:0 auto 14px;" />
-          <h1 style="margin:6px 0 0;color:#fff;font-size:21px;font-weight:800;line-height:1.3;">${title}</h1>
-          ${subtitle ? `<p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:13px;">${subtitle}</p>` : ''}
-        </div>
-
-        <div style="padding:28px 28px 8px;color:${COLOR_INK};font-size:14px;line-height:1.6;">
-          ${bodyHtml}
-        </div>
-
-        <div style="padding:20px 28px;text-align:center;border-top:1px solid ${COLOR_BORDER};margin-top:12px;">
-          <p style="margin:0;font-size:11px;color:${COLOR_INK_MUTED};">Powered by <span style="color:${COLOR_INK};font-weight:700;">COBI</span></p>
-        </div>
-      </div>
-    </div>`;
+    return `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+  </head>
+  <body bgcolor="${COLOR_BG}" style="margin:0;padding:0;background-color:${COLOR_BG};font-family:'Inter',-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLOR_BG}" style="background-color:${COLOR_BG};">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLOR_SURFACE}" style="max-width:480px;background-color:${COLOR_SURFACE};border-radius:20px;border:1px solid ${COLOR_BORDER};overflow:hidden;">
+            <tr>
+              <td bgcolor="${COLOR_RED}" style="background:${GRADIENT_BRAND};background-color:${COLOR_RED};padding:28px 32px;text-align:center;">
+                <img src="${COMPANY_LOGO_URL}" alt="${STORE_NAME}" width="140" style="max-width:140px;width:140px;height:auto;display:block;margin:0 auto 14px;" />
+                <h1 style="margin:6px 0 0;color:#ffffff;font-size:21px;font-weight:800;line-height:1.3;">${title}</h1>
+                ${subtitle ? `<p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:13px;">${subtitle}</p>` : ''}
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="${COLOR_SURFACE}" style="background-color:${COLOR_SURFACE};padding:28px 28px 8px;color:${COLOR_INK};font-size:14px;line-height:1.6;">
+                ${bodyHtml}
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="${COLOR_SURFACE}" style="background-color:${COLOR_SURFACE};padding:20px 28px;text-align:center;border-top:1px solid ${COLOR_BORDER};">
+                <p style="margin:0;font-size:11px;color:${COLOR_INK_MUTED};">Powered by <span style="color:${COLOR_INK};font-weight:700;">COBI</span></p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 }
 
 function productsTableHtml(products) {
@@ -90,8 +114,8 @@ async function sendOrderConfirmationEmail(order) {
 
     const bodyHtml = `
         <p style="margin:0 0 4px;">¡Hola ${greetName}! Tu pago se confirmó correctamente y ya estamos preparando tu pedido.</p>
-        <table role="presentation" style="width:100%;background:${COLOR_SURFACE_SOFT};border-radius:12px;margin:18px 0;">
-          <tr><td style="padding:14px 18px;">
+        <table role="presentation" width="100%" bgcolor="${COLOR_SURFACE_SOFT}" style="width:100%;background-color:${COLOR_SURFACE_SOFT};border-radius:12px;margin:18px 0;">
+          <tr><td bgcolor="${COLOR_SURFACE_SOFT}" style="background-color:${COLOR_SURFACE_SOFT};padding:14px 18px;">
             <p style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Folio</p>
             <p style="margin:0 0 10px;font-size:15px;font-weight:800;color:${COLOR_INK};">PSS-${order.id}</p>
             <p style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Entrega programada</p>
