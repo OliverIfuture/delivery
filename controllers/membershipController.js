@@ -471,84 +471,75 @@ module.exports = {
         return res.send('<h2>Domiciliación cancelada.</h2><p>No se guardó ningún cambio. Puedes cerrar esta ventana.</p>');
     },
 
-    // ===================== Recuperación manual (admin) =====================
-    // TEMPORAL mientras se investiga el bug de billing_details en el
-    // Payment Element propio: genera un Checkout Session hospedado por
-    // Stripe (fuera de nuestro frontend, así que el bug no lo puede
-    // afectar) para que una cuenta sin tarjeta guardada pueda agregar una
-    // y ponerse al día de inmediato. Solo yo puedo generarlo.
-    async createRecoveryPaymentLink(req, res) {
+    // ===================== Enlace de emergencia (Auditoría) =====================
+    // Botón "Enlace de emergencia" en AuditoriaView.vue — solo visible en
+    // filas con membresía vencida. Mismo admin que ya puede entrar como
+    // cualquier entrenador (ver AUDIT_ADMIN_EMAIL en auditController.js):
+    // genera un Checkout Session de Stripe (mode:'subscription', 100%
+    // hospedado por Stripe, nunca toca nuestro Payment Element) para el
+    // plan que el admin elija, a nombre de CUALQUIER id_company — a
+    // diferencia de createDomiciliationCheckout, que solo deja al propio
+    // entrenador pagarse a sí mismo. Reusa confirmDomiciliation tal cual
+    // como success_url porque ya es genérico (lee id_company del query,
+    // no de la sesión).
+    async createEmergencyPaymentLink(req, res) {
         try {
-            if (req.user.email !== 'oliverjdm2@gmail.com') {
-                return res.status(403).json({ success: false, message: 'No autorizado.' });
+            if ((req.user?.email || '').trim().toLowerCase() !== 'coach.community@thetrainer-app.com') {
+                return res.status(403).json({ success: false, message: 'No tienes permisos de auditoría.' });
             }
-            const { id_company } = req.body;
-            if (!id_company) return res.status(400).json({ success: false, message: 'Falta id_company.' });
+            const { id_company, id_plan, billing_cycle } = req.body;
+            if (!id_company || !id_plan) {
+                return res.status(400).json({ success: false, message: 'Falta id_company o id_plan.' });
+            }
+
+            const plan = await MembershipPlan.findById(id_plan);
+            if (!plan) return res.status(404).json({ success: false, message: 'Plan no encontrado.' });
 
             const company = await db.oneOrNone(`SELECT id, name, membership_stripe_customer_id FROM company WHERE id = $1`, [id_company]);
-            if (!company?.membership_stripe_customer_id) {
-                return res.status(404).json({ success: false, message: 'Esa empresa no tiene un cliente de Stripe todavía.' });
+            if (!company) return res.status(404).json({ success: false, message: 'Empresa no encontrada.' });
+
+            const billingCycle = billing_cycle === 'yearly' ? 'yearly' : 'monthly';
+            let stripePriceId;
+            try {
+                stripePriceId = await getOrCreatePriceId(plan, billingCycle);
+            } catch (priceError) {
+                return res.status(400).json({ success: false, message: priceError.message });
+            }
+
+            let customerId = company.membership_stripe_customer_id;
+            if (!customerId) {
+                const customer = await stripe.customers.create({
+                    name: company.name,
+                    metadata: { id_company: String(id_company) }
+                });
+                customerId = customer.id;
+                await db.none(`UPDATE company SET membership_stripe_customer_id = $2 WHERE id = $1`, [id_company, customerId]);
             }
 
             const baseUrl = 'https://deliveryserver.herokuapp.com';
             const session = await stripe.checkout.sessions.create({
-                mode: 'setup',
-                customer: company.membership_stripe_customer_id,
-                success_url: `${baseUrl}/api/membership/confirmRecoveryPaymentMethod?session_id={CHECKOUT_SESSION_ID}&id_company=${id_company}`,
-                cancel_url: `${baseUrl}/api/membership/domiciliacionCancelada`
-            });
-
-            return res.status(200).json({ success: true, data: { url: session.url, company: company.name } });
-        } catch (error) {
-            console.log(`Error en membershipController.createRecoveryPaymentLink: ${error}`);
-            return res.status(501).json({ success: false, message: error.message });
-        }
-    },
-
-    // PÚBLICO — a donde Stripe redirige al terminar el Checkout Session de
-    // arriba. Pone la tarjeta nueva como predeterminada (cliente +
-    // suscripción) y de una vez cobra cualquier factura abierta.
-    async confirmRecoveryPaymentMethod(req, res) {
-        try {
-            const { session_id, id_company } = req.query;
-            if (!session_id || !id_company) return res.status(400).send('Faltan datos para confirmar.');
-
-            const session = await stripe.checkout.sessions.retrieve(session_id, { expand: ['setup_intent'] });
-            if (session.status !== 'complete' || !session.setup_intent?.payment_method) {
-                return res.status(400).send('El pago todavía no se completó.');
-            }
-            const paymentMethodId = session.setup_intent.payment_method;
-            const company = await db.oneOrNone(`SELECT membership_stripe_customer_id, membership_stripe_subscription_id FROM company WHERE id = $1`, [id_company]);
-
-            await stripe.customers.update(company.membership_stripe_customer_id, {
-                invoice_settings: { default_payment_method: paymentMethodId }
-            });
-            if (company.membership_stripe_subscription_id) {
-                await stripe.subscriptions.update(company.membership_stripe_subscription_id, { default_payment_method: paymentMethodId });
-            }
-
-            let cobrada = false;
-            if (company.membership_stripe_subscription_id) {
-                const openInvoices = await stripe.invoices.list({ subscription: company.membership_stripe_subscription_id, status: 'open', limit: 1 });
-                if (openInvoices.data[0]) {
-                    try {
-                        await stripe.invoices.pay(openInvoices.data[0].id);
-                        cobrada = true;
-                    } catch (payError) {
-                        console.log(`Recovery: no se pudo cobrar la factura abierta: ${payError.message}`);
+                mode: 'subscription',
+                customer: customerId,
+                line_items: [{ price: stripePriceId, quantity: 1 }],
+                success_url: `${baseUrl}/api/membership/confirmDomiciliation?session_id={CHECKOUT_SESSION_ID}&id_company=${id_company}&id_plan=${plan.id}`,
+                cancel_url: `${baseUrl}/api/membership/domiciliacionCancelada`,
+                subscription_data: {
+                    transfer_data: MEMBERSHIP_TRANSFER_DATA,
+                    metadata: {
+                        type: 'membership_payment',
+                        id_company: String(id_company),
+                        id_plan: plan.id,
+                        billing_cycle: billingCycle,
+                        platform_fee_percent: PLATFORM_FEE_PERCENT,
+                        source: 'emergency_link'
                     }
                 }
-                const sub = await stripe.subscriptions.retrieve(company.membership_stripe_subscription_id);
-                if (sub.status === 'active' || sub.status === 'trialing') {
-                    const expiresAt = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
-                    await db.none(`UPDATE company SET membership_status = 'active', membership_expires_at = $2 WHERE id = $1`, [id_company, expiresAt]);
-                }
-            }
+            });
 
-            return res.send(`<h2>¡Listo! Tu tarjeta quedó guardada${cobrada ? ' y tu membresía ya está al día' : ''}.</h2><p>Puedes cerrar esta ventana.</p>`);
+            return res.status(200).json({ success: true, data: { url: session.url, company: company.name, plan: plan.name } });
         } catch (error) {
-            console.log(`Error en membershipController.confirmRecoveryPaymentMethod: ${error}`);
-            return res.status(501).send('No se pudo confirmar el método de pago. Contacta a soporte.');
+            console.log(`Error en membershipController.createEmergencyPaymentLink: ${error}`);
+            return res.status(501).json({ success: false, message: error.message });
         }
     },
 
