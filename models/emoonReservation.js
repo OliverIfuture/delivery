@@ -219,7 +219,46 @@ EmoonReservation.getByUserId = async (userId) => {
 };
 
 
+// Usado por el panel admin (CalendarWidget.vue -> toggleAttendance) tanto
+// para marcar asistencia ('attended'/'active') como para cancelar a un
+// alumno ('cancelled'). Antes 'cancelled' aquí era un simple cambio de
+// status, SIN devolver el crédito — a diferencia de cancelWithCredit
+// (cuando el cliente cancela desde su app), que sí lo hace. Auditoría en
+// vivo (10/10 casos) confirmó que eso dejaba créditos sin devolver cada
+// vez que el staff cancelaba a nombre de un cliente. Ahora, cuando
+// status==='cancelled', se devuelve el crédito SIEMPRE (sin ventana de
+// horas, igual que cancelClassWithRefunds) — si cancela el gimnasio, no
+// es justo cobrarle al cliente como si hubiera cancelado tarde por su
+// cuenta. Cualquier otro status (asistencia) sigue igual que antes.
 EmoonReservation.updateStatus = (reservationId, status) => {
+    if (status === 'cancelled') {
+        return db.tx(async (t) => {
+            const reservation = await t.oneOrNone(
+                `UPDATE emoon.emoon_reservations
+                 SET status = 'cancelled', cancelled_at = NOW()
+                 WHERE id = $1
+                 RETURNING *`,
+                [reservationId]
+            );
+            if (!reservation) return null;
+
+            if (reservation.charged_credit === true && reservation.user_package_id) {
+                await refundPackageCredit(t, reservation.user_package_id);
+            } else if (reservation.charged_credit === null) {
+                // Reserva anterior a user_package_id (mismo caso que ya
+                // maneja cancelWithCredit): no sabemos qué paquete se usó,
+                // se asume el más reciente del cliente.
+                const userPkg = await t.oneOrNone(
+                    `SELECT id FROM emoon.emoon_user_packages WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+                    [reservation.user_id]
+                );
+                if (userPkg) await refundPackageCredit(t, userPkg.id);
+            }
+
+            return reservation;
+        });
+    }
+
     const sql = `
         UPDATE emoon.emoon_reservations
         SET status = $1,
