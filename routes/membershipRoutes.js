@@ -24,6 +24,11 @@ module.exports = (app, upload) => {
     app.get('/api/membership/confirmDomiciliation', membershipController.confirmDomiciliation);
     app.get('/api/membership/domiciliacionCancelada', membershipController.domiciliacionCancelada);
 
+    // TEMPORAL — ver nota en el controller. Enlace de recuperación manual
+    // mientras se investiga el bug del Payment Element propio.
+    app.post('/api/membership/_admin/recovery-link', passport.authenticate('jwt', { session: false }), membershipController.createRecoveryPaymentLink);
+    app.get('/api/membership/confirmRecoveryPaymentMethod', membershipController.confirmRecoveryPaymentMethod);
+
     // NUEVO — panel de Configuración (Perfil/Apariencia/Suscripción real).
     app.get('/api/membership/profile', passport.authenticate('jwt', { session: false }), membershipController.getMyProfile);
     app.post(
