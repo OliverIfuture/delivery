@@ -2020,6 +2020,20 @@ Order.updateStatus = (id, status) => {
     return db.oneOrNone(sql, [id, status]);
 }
 
+// Variante atómica para el flujo de Clip: solo transiciona si TODAVÍA no
+// estaba en ese estado, y regresa la fila si de verdad la cambió (null si
+// alguien más ya la había cambiado un instante antes). Evita que el
+// webhook y el poll de la pantalla de éxito, si llegan casi al mismo
+// tiempo, otorguen puntos dos veces por el mismo pago.
+Order.markPaidOnce = (id) => {
+    const sql = `
+        UPDATE orders SET status = 'PAGADO', updated_at = NOW()
+        WHERE id = $1 AND status != 'PAGADO'
+        RETURNING *
+    `;
+    return db.oneOrNone(sql, [id]);
+}
+
 
 
 // 1. Crear un nuevo gasto

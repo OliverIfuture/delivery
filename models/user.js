@@ -880,6 +880,17 @@ User.updateNotificationToken = (id, token) => {
     ]);
 }
 
+// Suma puntos al campo `balance` (no sobrescribe) — usado por el programa
+// de puntos real de Premium Supplements al confirmar un pago con Clip.
+// OJO: no confundir con User.addPoints(id_user, action_type, points) más
+// abajo — ese es el sistema de gamificación (total_points/current_level),
+// un campo y una lógica totalmente distintos. COALESCE por si algún
+// usuario viejo tiene balance NULL en vez de 0.
+User.addBalancePoints = (id, amount) => {
+    const sql = `UPDATE users SET balance = COALESCE(balance, 0) + $2 WHERE id = $1 RETURNING balance`;
+    return db.oneOrNone(sql, [id, amount]);
+}
+
 User.updatePoints = (id, puntos) => {
     const sql = `
     UPDATE

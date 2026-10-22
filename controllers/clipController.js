@@ -8,7 +8,21 @@
 // aviso de "ve a revisar".
 const Order = require('../models/order');
 const ClipPayment = require('../models/clipPayment');
+const User = require('../models/user');
 const clip = require('../utils/clipClient');
+
+// Programa de puntos real: 1 punto por cada $10 MXN pagados, sumado al
+// mismo `balance` que ya existe en `users` (el mismo campo que otros
+// flujos del sistema ya usan como puntos/saldo). Solo se otorgan la
+// PRIMERA vez que una orden pasa a PAGADO — el caller debe checar el
+// status ANTERIOR antes de llamar esto, para no duplicar puntos si
+// webhook y getStatus confirman el mismo pago casi al mismo tiempo.
+async function awardPointsForOrder(order) {
+    const points = Math.floor(Number(order.total) / 10);
+    if (points > 0) {
+        await User.addBalancePoints(order.id_client, points);
+    }
+}
 
 module.exports = {
 
@@ -89,7 +103,10 @@ module.exports = {
             await ClipPayment.updateStatus(id, realStatus.status, realStatus.receipt_no);
 
             if (realStatus.status === 'CHECKOUT_COMPLETED') {
-                await Order.updateStatus(payment.id_order, 'PAGADO');
+                const justPaid = await Order.markPaidOnce(payment.id_order);
+                if (justPaid) {
+                    await awardPointsForOrder(justPaid);
+                }
             }
 
             return res.status(200).json({ success: true });
@@ -124,8 +141,11 @@ module.exports = {
                 const fresh = await clip.getCheckoutStatus(payment.payment_request_id);
                 await ClipPayment.updateStatus(payment.payment_request_id, fresh.status, fresh.receipt_no);
                 clipStatus = fresh.status;
-                if (fresh.status === 'CHECKOUT_COMPLETED' && order.status !== 'PAGADO') {
-                    await Order.updateStatus(orderId, 'PAGADO');
+                if (fresh.status === 'CHECKOUT_COMPLETED') {
+                    const justPaid = await Order.markPaidOnce(orderId);
+                    if (justPaid) {
+                        await awardPointsForOrder(justPaid);
+                    }
                 }
             }
 
