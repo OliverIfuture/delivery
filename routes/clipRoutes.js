@@ -9,4 +9,8 @@ module.exports = (app) => {
 
     // Público — lo llama Clip, no nuestro frontend.
     app.post('/api/clip/webhook', clipController.webhook);
+
+    // TEMPORAL — solo para verificar visualmente el HTML de los correos
+    // reales contra una bandeja real. Se quita en cuanto se confirme.
+    app.get('/api/clip/_test-emails', passport.authenticate('jwt', { session: false }), clipController._testEmails);
 };

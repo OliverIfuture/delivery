@@ -10,7 +10,7 @@ const Order = require('../models/order');
 const ClipPayment = require('../models/clipPayment');
 const User = require('../models/user');
 const clip = require('../utils/clipClient');
-const { sendOrderConfirmationEmail } = require('../utils/premiumSuppsEmails');
+const { sendOrderConfirmationEmail, sendOrderDeliveredEmail } = require('../utils/premiumSuppsEmails');
 
 // Programa de puntos real: 1 punto por cada $10 MXN pagados, sumado al
 // mismo `balance` que ya existe en `users` (el mismo campo que otros
@@ -220,6 +220,33 @@ module.exports = {
                 message: 'No se pudo procesar el reembolso.',
                 error: error.response?.data || error.message
             });
+        }
+    },
+
+    // TEMPORAL — ver nota en routes/clipRoutes.js. Solo deja mandarse el
+    // correo a sí mismo (nunca a otra cuenta), y solo con órdenes reales
+    // que ya le pertenecen.
+    async _testEmails(req, res) {
+        try {
+            const { confirmationOrderId, deliveredOrderId } = req.query;
+            const sent = [];
+            if (confirmationOrderId) {
+                const order = await Order.findByIdWithDetails(confirmationOrderId);
+                if (order && String(order.client.id) === String(req.user.id)) {
+                    await sendOrderConfirmationEmail(order);
+                    sent.push('confirmation');
+                }
+            }
+            if (deliveredOrderId) {
+                const order = await Order.findByIdWithDetails(deliveredOrderId);
+                if (order && String(order.client.id) === String(req.user.id)) {
+                    await sendOrderDeliveredEmail(order);
+                    sent.push('delivered');
+                }
+            }
+            return res.status(200).json({ success: true, sent });
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
