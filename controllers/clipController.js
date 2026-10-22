@@ -10,6 +10,7 @@ const Order = require('../models/order');
 const ClipPayment = require('../models/clipPayment');
 const User = require('../models/user');
 const clip = require('../utils/clipClient');
+const { sendOrderConfirmationEmail } = require('../utils/premiumSuppsEmails');
 
 // Programa de puntos real: 1 punto por cada $10 MXN pagados, sumado al
 // mismo `balance` que ya existe en `users` (el mismo campo que otros
@@ -21,6 +22,19 @@ async function awardPointsForOrder(order) {
     const points = Math.floor(Number(order.total) / 10);
     if (points > 0) {
         await User.addBalancePoints(order.id_client, points);
+    }
+}
+
+// Igual que awardPointsForOrder: solo se llama cuando markPaidOnce de
+// verdad ganó la carrera, así que el ticket por correo también se manda
+// una sola vez por pago real. Un fallo al mandar el correo (SMTP caído,
+// etc.) no debe tumbar la confirmación del pago en sí — se registra y ya.
+async function sendTicketEmail(orderId) {
+    try {
+        const fullOrder = await Order.findByIdWithDetails(orderId);
+        if (fullOrder) await sendOrderConfirmationEmail(fullOrder);
+    } catch (error) {
+        console.log(`[Clip] No se pudo enviar el ticket por correo (orden ${orderId}): ${error.message}`);
     }
 }
 
@@ -106,6 +120,7 @@ module.exports = {
                 const justPaid = await Order.markPaidOnce(payment.id_order);
                 if (justPaid) {
                     await awardPointsForOrder(justPaid);
+                    await sendTicketEmail(justPaid.id);
                 }
             }
 
@@ -145,6 +160,7 @@ module.exports = {
                     const justPaid = await Order.markPaidOnce(orderId);
                     if (justPaid) {
                         await awardPointsForOrder(justPaid);
+                        await sendTicketEmail(justPaid.id);
                     }
                 }
             }

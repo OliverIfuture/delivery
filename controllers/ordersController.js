@@ -7,6 +7,9 @@ const Order = require('../models/order');
 const User = require('../models/user');
 const Affiliate = require('../models/affiliate');
 const OrderHasProducts = require('../models/order_has_products');
+const { sendOrderDeliveredEmail } = require('../utils/premiumSuppsEmails');
+
+const PREMIUM_SUPPLEMENTS_COMPANY_ID = '4';
 
 module.exports = {
 
@@ -294,6 +297,18 @@ module.exports = {
             catch (e) {
                 console.log(`[Afiliado] Error comisión: ${e.message}`);
             }
+
+            // --- CORREO DE AGRADECIMIENTO (solo Premium Supplements) ---
+            try {
+                const order = await Order.findById(orderUpdateData.id);
+                if (order && String(order.id_order_company) === PREMIUM_SUPPLEMENTS_COMPANY_ID) {
+                    const fullOrder = await Order.findByIdWithDetails(orderUpdateData.id);
+                    if (fullOrder) await sendOrderDeliveredEmail(fullOrder);
+                }
+            } catch (e) {
+                console.log(`[Correo] No se pudo enviar el correo de entrega: ${e.message}`);
+            }
+
             return res.status(201).json({
                 success: true,
                 message: 'La orden se entrego correctamente',

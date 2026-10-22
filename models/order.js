@@ -394,6 +394,57 @@ Order.getByClientAndStatusWeb = (id_client) => {
     return db.manyOrNone(sql, [id_client]);
 
 }
+
+// NUEVO — una sola orden con cliente (incluye correo), dirección y
+// productos ya armados. La usan los correos reales de Premium Supplements
+// (confirmación de pago / agradecimiento al entregar) para no tener que
+// hacer 3 consultas sueltas cada vez que hay que mandar un correo.
+Order.findByIdWithDetails = (id) => {
+    const sql = `
+    SELECT
+        O.id,
+        O.status,
+        O.total,
+        O.hour_program,
+        O.id_order_company,
+        COALESCE( JSON_AGG(
+            DISTINCT jsonb_build_object(
+                'id', P.id,
+                'name', P.name,
+                'price', P.price,
+                'price_special', P.price_special,
+                'image1', P.image1,
+                'quantity', OHP.quantity
+            )
+        ) FILTER (where P.name != ''), '[]') AS products,
+        JSON_BUILD_OBJECT(
+            'id', U.id,
+            'name', U.name,
+            'lastname', U.lastname,
+            'email', U.email
+        ) AS client,
+        JSON_BUILD_OBJECT(
+            'address', A.address,
+            'neighborhood', A.neighborhood
+        ) AS address
+    FROM
+        orders AS O
+    INNER JOIN
+        users AS U ON O.id_client = U.id
+    INNER JOIN
+        address AS A ON A.id = O.id_address
+    INNER JOIN
+        order_has_products AS OHP ON OHP.id_order = O.id
+    LEFT JOIN
+        products AS P ON P.id = OHP.id_product
+    WHERE
+        O.id = $1
+    GROUP BY
+        O.id, U.id, A.id
+    `;
+    return db.oneOrNone(sql, [id]);
+}
+
 Order.findByClientAndStatus = (id_client, status) => {
 
     const sql = `
