@@ -1832,7 +1832,7 @@ User.findActiveDiscountCode = (idCompany, code) => {
 // stripeSecretKey y otros campos sensibles, nunca deben exponerse así.
 User.findPublicCompanyInfo = (id) => {
     const sql = `
-        SELECT id, name, logo, ispromo, brand_color
+        SELECT id, name, logo, ispromo, brand_color, "deliveryCost"
         FROM public.company
         WHERE id = $1
     `;
