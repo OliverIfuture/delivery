@@ -10,7 +10,7 @@ const Order = require('../models/order');
 const ClipPayment = require('../models/clipPayment');
 const User = require('../models/user');
 const clip = require('../utils/clipClient');
-const { sendOrderConfirmationEmail, sendOrderDeliveredEmail } = require('../utils/premiumSuppsEmails');
+const { sendOrderConfirmationEmail, sendOrderDeliveredEmail, sendNewOrderOwnerNotification } = require('../utils/premiumSuppsEmails');
 
 // Programa de puntos real: 1 punto por cada $10 MXN pagados, sumado al
 // mismo `balance` que ya existe en `users` (el mismo campo que otros
@@ -228,7 +228,7 @@ module.exports = {
     // que ya le pertenecen.
     async _testEmails(req, res) {
         try {
-            const { confirmationOrderId, deliveredOrderId } = req.query;
+            const { confirmationOrderId, deliveredOrderId, ownerNotificationOrderId } = req.query;
             const sent = [];
             if (confirmationOrderId) {
                 const order = await Order.findByIdWithDetails(confirmationOrderId);
@@ -242,6 +242,13 @@ module.exports = {
                 if (order && String(order.client.id) === String(req.user.id)) {
                     await sendOrderDeliveredEmail(order);
                     sent.push('delivered');
+                }
+            }
+            if (ownerNotificationOrderId) {
+                const order = await Order.findByIdWithDetails(ownerNotificationOrderId);
+                if (order && String(order.client.id) === String(req.user.id)) {
+                    await sendNewOrderOwnerNotification(order);
+                    sent.push('ownerNotification');
                 }
             }
             return res.status(200).json({ success: true, sent });
