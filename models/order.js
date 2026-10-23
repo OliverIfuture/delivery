@@ -446,6 +446,9 @@ Order.findByIdWithDetails = (id) => {
         O.total,
         O.hour_program,
         O.id_order_company,
+        O.payMethod,
+        O.comments,
+        O.timestamp,
         COALESCE( JSON_AGG(
             DISTINCT jsonb_build_object(
                 'id', P.id,
@@ -460,7 +463,8 @@ Order.findByIdWithDetails = (id) => {
             'id', U.id,
             'name', U.name,
             'lastname', U.lastname,
-            'email', U.email
+            'email', U.email,
+            'phone', U.phone
         ) AS client,
         JSON_BUILD_OBJECT(
             'address', A.address,

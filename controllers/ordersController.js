@@ -7,7 +7,7 @@ const Order = require('../models/order');
 const User = require('../models/user');
 const Affiliate = require('../models/affiliate');
 const OrderHasProducts = require('../models/order_has_products');
-const { sendOrderDeliveredEmail } = require('../utils/premiumSuppsEmails');
+const { sendOrderDeliveredEmail, sendNewOrderOwnerNotification } = require('../utils/premiumSuppsEmails');
 
 const PREMIUM_SUPPLEMENTS_COMPANY_ID = '4';
 
@@ -388,6 +388,19 @@ module.exports = {
             for (const product of products) {
                 if (product.id < 10000) { await OrderHasProducts.create(data.id, product.id, product.quantity); }
                 if (product.id > 10000) { await OrderHasProducts.create(data.id, product.id, product.quantity); }
+            }
+
+            // --- CORREO AL DUEÑO (solo Premium Supplements) ---
+            // Se manda apenas se genera el pedido, sin esperar confirmación
+            // de pago — es para que puedan despacharlo de inmediato, no una
+            // confirmación de cobro (esa ya existe aparte, ver clipController).
+            try {
+                if (String(order.id_order_company) === PREMIUM_SUPPLEMENTS_COMPANY_ID) {
+                    const fullOrder = await Order.findByIdWithDetails(data.id);
+                    if (fullOrder) await sendNewOrderOwnerNotification(fullOrder);
+                }
+            } catch (e) {
+                console.log(`[Correo] No se pudo avisar al dueño del pedido nuevo: ${e.message}`);
             }
 
             // --- LÓGICA DE COMISIÓN (TARJETA) ---

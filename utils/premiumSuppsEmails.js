@@ -196,4 +196,49 @@ async function sendOrderDeliveredEmail(order) {
     });
 }
 
-module.exports = { sendOrderConfirmationEmail, sendOrderDeliveredEmail };
+// Correo 3: avisa al DUEÑO (no al cliente) apenas se genera un pedido
+// nuevo, para que pueda despacharlo de inmediato — ver
+// controllers/ordersController.create. Se manda al crearse la orden, sin
+// esperar confirmación de pago (TARJETA puede tardar en confirmar vía
+// Clip, pero el dueño igual quiere enterarse ya de que entró un pedido).
+const STORE_OWNER_NOTIFICATION_EMAIL = 'oliverjdm22@gmail.com';
+
+const PAYMETHOD_LABELS = { TARJETA: 'Tarjeta (Clip)', EFECTIVO: 'Efectivo', REPS: 'Reps/puntos' };
+
+async function sendNewOrderOwnerNotification(order) {
+    const clientName = [order.client?.name, order.client?.lastname].filter(Boolean).join(' ') || 'Cliente';
+    const paymentLabel = PAYMETHOD_LABELS[order.paymethod] || order.paymethod || 'N/D';
+
+    const bodyHtml = `
+        <p class="pss-ink" style="margin:0 0 4px;color:${COLOR_INK};">Entró un pedido nuevo — folio <strong>PSS-${order.id}</strong>.</p>
+        <table role="presentation" width="100%" bgcolor="${COLOR_SURFACE_SOFT}" class="pss-surface-soft" style="width:100%;background-color:${COLOR_SURFACE_SOFT};border-radius:12px;margin:18px 0;">
+          <tr><td bgcolor="${COLOR_SURFACE_SOFT}" class="pss-surface-soft" style="background-color:${COLOR_SURFACE_SOFT};padding:14px 18px;">
+            <p class="pss-ink-muted" style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Cliente</p>
+            <p class="pss-ink" style="margin:0 0 10px;font-size:15px;font-weight:800;color:${COLOR_INK};">${clientName}${order.client?.phone ? ` · ${order.client.phone}` : ''}</p>
+            <p class="pss-ink-muted" style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Estado / Pago</p>
+            <p class="pss-ink" style="margin:0 0 10px;font-size:14px;font-weight:600;color:${COLOR_INK};">${order.status} · ${paymentLabel}</p>
+            <p class="pss-ink-muted" style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Entrega programada</p>
+            <p class="pss-ink" style="margin:0 0 10px;font-size:14px;font-weight:600;color:${COLOR_INK};">${order.hour_program || 'Por confirmar'}</p>
+            <p class="pss-ink-muted" style="margin:0 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Dirección</p>
+            <p class="pss-ink" style="margin:0;font-size:14px;font-weight:600;color:${COLOR_INK};">${order.address?.address || ''}, ${order.address?.neighborhood || ''}</p>
+            ${order.comments ? `<p class="pss-ink-muted" style="margin:10px 0 3px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:${COLOR_INK_MUTED};font-weight:700;">Notas / sabores</p><p class="pss-ink" style="margin:0;font-size:13px;color:${COLOR_INK};">${order.comments}</p>` : ''}
+          </td></tr>
+        </table>
+        <p class="pss-ink-muted" style="margin:0 0 4px;font-size:12px;font-weight:700;color:${COLOR_INK_MUTED};text-transform:uppercase;letter-spacing:0.04em;">Productos</p>
+        ${productsTableHtml(order.products)}
+        <table role="presentation" style="width:100%;margin-top:4px;">
+          <tr>
+            <td class="pss-ink" style="font-size:15px;font-weight:800;color:${COLOR_INK};padding-top:10px;">Total</td>
+            <td class="pss-ink" style="font-size:17px;font-weight:800;color:${COLOR_INK};text-align:right;padding-top:10px;">${money(order.total)}</td>
+          </tr>
+        </table>`;
+
+    await transporter.sendMail({
+        from: FROM_ADDRESS,
+        to: STORE_OWNER_NOTIFICATION_EMAIL,
+        subject: `🔔 Nuevo pedido PSS-${order.id} — ${paymentLabel}`,
+        html: emailShell({ title: '¡Nuevo pedido!', subtitle: `Folio PSS-${order.id}`, bodyHtml })
+    });
+}
+
+module.exports = { sendOrderConfirmationEmail, sendOrderDeliveredEmail, sendNewOrderOwnerNotification };
