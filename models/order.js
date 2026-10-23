@@ -298,6 +298,45 @@ Order.findByClient = (id_client) => {
     return db.manyOrNone(sql, [id_client]);
 
 }
+// Compras EN TIENDA (POS físico) — tablas sales/order_sales, totalmente
+// aparte de orders/order_has_products (e-commerce/a domicilio). sales no
+// tiene id_company (solo name_store, texto libre compartido entre varios
+// negocios distintos que usan el mismo POS), pero client_id ya viene
+// scoped de forma segura: un usuario solo existe bajo UN id_entrenador,
+// así que filtrar por client_id ya es suficiente, no hace falta además
+// filtrar por name_store. El join con order_sales usa reference +
+// shift_ref juntos (no solo reference) para no arrastrar accidentalmente
+// líneas de otra venta si algún día se repite un reference entre tiendas.
+Order.getStoreSalesByClient = (id_client) => {
+    const sql = `
+        SELECT
+            S.id,
+            S.reference,
+            S.name_store,
+            S.employed,
+            S.cash,
+            S.credit_card,
+            S.points,
+            S.total,
+            S.date,
+            S.hour,
+            COALESCE( JSON_AGG(
+                jsonb_build_object(
+                    'name', OS.product_name,
+                    'price', OS.product_price,
+                    'quantity', OS.quantity,
+                    'image', OS.image_product
+                )
+            ) FILTER (WHERE OS.id IS NOT NULL), '[]') AS products
+        FROM sales AS S
+        LEFT JOIN order_sales AS OS ON OS.reference = S.reference AND OS.shift_ref = S.shift_ref
+        WHERE S.client_id = $1 AND S.status = 'SUCCES'
+        GROUP BY S.id
+        ORDER BY S.id DESC
+    `;
+    return db.manyOrNone(sql, [id_client]);
+}
+
 Order.getByClientAndStatusWeb = (id_client) => {
 
     const sql = `

@@ -128,6 +128,22 @@ module.exports = {
                 success: false
             })
         }
+    },
+
+    // Compras en tienda (POS físico) — ver Order.getStoreSalesByClient.
+    async getStoreSalesByClient(req, res, next) {
+        try {
+            const id_client = req.params.id_client;
+            const data = await Order.getStoreSalesByClient(id_client);
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(`Error en ordersController.getStoreSalesByClient: ${error}`);
+            return res.status(501).json({
+                message: 'Hubo un error al tratar de obtener las compras en tienda',
+                error: error,
+                success: false
+            });
+        }
 
     },
 
