@@ -1807,10 +1807,36 @@ User.getDiscountCodesByCompany = (id) => {
     const sql = `
 SELECT * FROM public.codes
 where id_company = $1
-ORDER BY codes_id desc  
+ORDER BY codes_id desc
     `;
 
     return db.manyOrNone(sql, id);
+}
+
+// PÚBLICO a propósito — valida UN código puntual (lo que escribe un
+// cliente anónimo en el carrito, o el que viene en la URL /:codigo de
+// premium-supps-store). Nunca expone el resto de códigos de la empresa
+// como sí hace getDiscountCodesByCompany (ese es para el panel admin,
+// autenticado).
+User.findActiveDiscountCode = (idCompany, code) => {
+    const sql = `
+        SELECT codes_id, code, amount
+        FROM public.codes
+        WHERE id_company = $1 AND UPPER(code) = UPPER($2) AND active = 'true'
+    `;
+    return db.oneOrNone(sql, [idCompany, code]);
+}
+
+// PÚBLICO a propósito — solo los campos seguros de mostrar sin sesión
+// (vitrina de la tienda). findCompanyById/getCompanyById traen
+// stripeSecretKey y otros campos sensibles, nunca deben exponerse así.
+User.findPublicCompanyInfo = (id) => {
+    const sql = `
+        SELECT id, name, logo, ispromo, brand_color
+        FROM public.company
+        WHERE id = $1
+    `;
+    return db.oneOrNone(sql, id);
 }
 
 User.getByClientRealSubs = (id_client) => {

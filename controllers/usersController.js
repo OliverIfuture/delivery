@@ -2406,6 +2406,38 @@ console.log(`Datos enviados del usuario: ${JSON.stringify(subscription)}`);
         }
     },
 
+    // PÚBLICO — valida un código puntual (carrito de premium-supps-store o
+    // la URL /:codigo que captura el código antes del login). Nunca lista
+    // los demás códigos de la empresa.
+    async validateDiscountCode(req, res) {
+        try {
+            const { id_company, code } = req.params;
+            const found = await User.findActiveDiscountCode(id_company, code);
+            if (!found) {
+                return res.status(404).json({ success: false, message: 'Ese código no es válido o ya expiró.' });
+            }
+            return res.status(200).json({ success: true, data: { code: found.code, amount: Number(found.amount) } });
+        } catch (error) {
+            console.log(`Error en usersController.validateDiscountCode: ${error}`);
+            return res.status(500).json({ success: false, message: 'No se pudo validar el código.' });
+        }
+    },
+
+    // PÚBLICO — solo los campos seguros para la vitrina (ver findPublicCompanyInfo).
+    async getPublicCompanyInfo(req, res) {
+        try {
+            const id = req.params.id;
+            const company = await User.findPublicCompanyInfo(id);
+            if (!company) {
+                return res.status(404).json({ success: false, message: 'Empresa no encontrada.' });
+            }
+            return res.status(200).json({ success: true, data: company });
+        } catch (error) {
+            console.log(`Error en usersController.getPublicCompanyInfo: ${error}`);
+            return res.status(500).json({ success: false, message: 'No se pudo obtener la información de la empresa.' });
+        }
+    },
+
     async deleteDiscountCode(req, res, next) {
         try {
 
