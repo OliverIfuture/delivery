@@ -391,11 +391,15 @@ module.exports = {
             }
 
             // --- CORREO AL DUEÑO (solo Premium Supplements) ---
-            // Se manda apenas se genera el pedido, sin esperar confirmación
-            // de pago — es para que puedan despacharlo de inmediato, no una
-            // confirmación de cobro (esa ya existe aparte, ver clipController).
+            // Pago con tarjeta (Clip): la orden arranca PENDIENTE DE PAGO y
+            // el cliente aún puede abandonar el checkout de Clip sin pagar —
+            // avisar aquí le haría llegar al dueño "nuevo pedido" de compras
+            // que nunca se pagaron. Ese caso se avisa en clipController.js,
+            // solo cuando markPaidOnce confirma el cobro real. El resto de
+            // métodos (efectivo, etc.) ya nace PAGADO, así que sí se avisa
+            // de inmediato aquí, como siempre.
             try {
-                if (String(order.id_order_company) === PREMIUM_SUPPLEMENTS_COMPANY_ID) {
+                if (String(order.id_order_company) === PREMIUM_SUPPLEMENTS_COMPANY_ID && !usesRealCardPayment) {
                     const fullOrder = await Order.findByIdWithDetails(data.id);
                     if (fullOrder) await sendNewOrderOwnerNotification(fullOrder);
                 }

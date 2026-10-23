@@ -38,6 +38,21 @@ async function sendTicketEmail(orderId) {
     }
 }
 
+// Aviso al dueño de que hay un pedido nuevo — antes se mandaba apenas se
+// creaba la orden (ordersController.create), sin esperar a que Clip
+// confirmara el cobro, así que el dueño podía recibir "nuevo pedido" de
+// un cliente que nunca llegó a pagar (abandonó el checkout de Clip).
+// Ahora se manda en el mismo punto que el ticket del cliente: solo
+// cuando markPaidOnce de verdad confirma el pago.
+async function notifyOwnerOfPaidOrder(orderId) {
+    try {
+        const fullOrder = await Order.findByIdWithDetails(orderId);
+        if (fullOrder) await sendNewOrderOwnerNotification(fullOrder);
+    } catch (error) {
+        console.log(`[Clip] No se pudo avisar al dueño del pedido pagado (orden ${orderId}): ${error.message}`);
+    }
+}
+
 module.exports = {
 
     // POST /api/clip/checkout/:orderId — crea el link de pago de Clip para
@@ -121,6 +136,7 @@ module.exports = {
                 if (justPaid) {
                     await awardPointsForOrder(justPaid);
                     await sendTicketEmail(justPaid.id);
+                    await notifyOwnerOfPaidOrder(justPaid.id);
                 }
             }
 
@@ -161,6 +177,7 @@ module.exports = {
                     if (justPaid) {
                         await awardPointsForOrder(justPaid);
                         await sendTicketEmail(justPaid.id);
+                        await notifyOwnerOfPaidOrder(justPaid.id);
                     }
                 }
             }
