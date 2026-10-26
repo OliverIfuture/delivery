@@ -24,7 +24,19 @@ const UNRESTRICTED_COMPANY_IDS = new Set([1]);
 // mi_store (ver conversación: "estaré hardcodeando el id de las company").
 // Como el id cambia, la exención tiene que ir atada a quién es la persona,
 // no a qué company esté usando en ese momento.
-const UNRESTRICTED_EMAILS = new Set(['oliverjdm22@gmail.com']);
+//
+// coach.community@thetrainer-app.com (único correo con permisos de
+// Auditoría, ver AUDIT_ADMIN_EMAIL en el router del panel) también va
+// aquí: es la cuenta admin de la plataforma, no una clienta real pagando
+// Trainer+. Antes se intentaba "arreglar" esto a mano poniendo
+// membership_expires_at muy a futuro en company — no servía de nada
+// porque esta cuenta SÍ tiene un membership_stripe_subscription_id real
+// guardado (sub_1UPVvIFI81PpmIv2p4DC062L, en estado 'past_due' en
+// Stripe), y getMyMembershipStatus() siempre revisa el estado EN VIVO en
+// Stripe cuando hay un subscription id guardado — eso pisaba cualquier
+// fecha hardcodeada en la base y seguía marcando la cuenta como vencida.
+// La exención real tiene que ir aquí, no en la fecha.
+const UNRESTRICTED_EMAILS = new Set(['oliverjdm22@gmail.com', 'coach.community@thetrainer-app.com']);
 
 function isUnrestricted(id_company, email) {
     if (UNRESTRICTED_COMPANY_IDS.has(Number(id_company))) return true;
