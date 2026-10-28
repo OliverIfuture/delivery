@@ -179,6 +179,10 @@ module.exports = {
             if (!trainerId || !planId || !name || !email) {
                 return res.status(400).json({ success: false, message: 'Faltan datos obligatorios.' });
             }
+            // LOG DE RASTREO — para probar pagos reales sin ambigüedad: este
+            // es el primer punto del flujo completo (checkout público ->
+            // Stripe -> webhook). Ver también los logs en stripeWebhook().
+            console.log(`🛒 createCheckout: trainerId=${trainerId} planId=${planId} email=${email}`);
 
             const companyRow = await User.findTrainerCompanyId(trainerId);
             if (!companyRow || !companyRow.mi_store) {
@@ -222,6 +226,9 @@ module.exports = {
                     console.log(`No se pudo enviar el código para crear contraseña a ${email}: ${mailErr.message}`);
                 }
                 user = { id: created.id, email };
+                console.log(`🆕 createCheckout: usuario NUEVO creado id=${user.id} email=${email}`);
+            } else {
+                console.log(`👤 createCheckout: usuario YA registrado id=${user.id} email=${email} id_entrenador=${user.id_entrenador || 'ninguno'}`);
             }
 
             // ---- Transferencia: sin Stripe, solicitud pendiente real ----
@@ -241,6 +248,7 @@ module.exports = {
                     duration_days: plan.durationInDays,
                     status: 'PENDING'
                 });
+                console.log(`🏦 createCheckout: solicitud de transferencia PENDING creada (id_client=${user.id} id_company=${id_company} id_plan=${planId})`);
                 await TrainerNotification.notifyCompany(id_company, {
                     type: 'transfer_request',
                     title: 'Nueva solicitud de transferencia',
@@ -291,6 +299,7 @@ module.exports = {
                         duration_days: String(plan.durationInDays)
                     }
                 }, stripeOpts);
+                console.log(`💳 createCheckout: PaymentIntent ${paymentIntent.id} creado en cuenta ${company.stripeAccountId} por $${plan.price} ${plan.currency || 'mxn'} (id_client=${user.id} id_company=${id_company} id_plan=${planId})`);
 
                 return res.status(200).json({
                     success: true,
@@ -328,6 +337,7 @@ module.exports = {
             } else {
                 throw new Error('Stripe no devolvió un client_secret válido para la suscripción.');
             }
+            console.log(`🔁 createCheckout: Subscription ${subscription.id} creada en cuenta ${company.stripeAccountId} (temp_email=${email} id_company=${id_company} id_plan=${planId})`);
 
             return res.status(200).json({
                 success: true,

@@ -565,6 +565,7 @@ module.exports = {
         // intenta primero con el de "Tu cuenta" y, si no es válido, con el
         // de cuentas conectadas — así este mismo endpoint acepta eventos de
         // los dos sin duplicar ruta ni lógica.
+        let matchedScope = 'Tu cuenta';
         try {
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
         } catch (err) {
@@ -574,11 +575,21 @@ module.exports = {
             }
             try {
                 event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecretConnect);
+                matchedScope = 'Cuentas conectadas';
             } catch (errConnect) {
                 console.log(`❌ Error en Webhook (constructEvent, ambos secretos fallaron): ${errConnect.message}`);
                 return res.status(400).send(`Webhook Error: ${errConnect.message}`);
             }
         }
+
+        // LOG DE RASTREO — confirma que el evento SÍ llegó, con cuál de los
+        // dos secretos hizo match (Tu cuenta / Cuentas conectadas), y de qué
+        // cuenta viene (event.account trae el acct_... conectado, o viene
+        // vacío si es de la cuenta principal). Para probar pagos reales sin
+        // ambigüedad: si no ves esta línea en los logs de Heroku después de
+        // pagar, el evento nunca llegó del lado de Stripe (revisar
+        // "Entregas de eventos" del destino en el Dashboard).
+        console.log(`📩 Webhook recibido: ${event.type} (id=${event.id}, scope="${matchedScope}", cuenta=${event.account || 'principal'})`);
 
         switch (event.type) {
 
