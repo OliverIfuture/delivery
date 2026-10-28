@@ -21,6 +21,12 @@ try {
 const stripe = require('stripe')(stripeKey);
 
 const endpointSecret = keys.stripeWebhookSecret;
+// NUEVO — segundo destino en Stripe ("subscripciones-connect", Eventos de:
+// Cuentas conectadas) para los pagos de un cliente a su entrenador, que
+// pasan por la cuenta conectada del entrenador — Stripe firma esos eventos
+// con un secreto distinto al del destino original ("Tu cuenta"). Ver
+// stripeWebhook() más abajo, que prueba los dos.
+const endpointSecretConnect = keys.stripeWebhookConnectSecret;
 const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 
 // NUEVO — clasifica client_subscriptions.stripe_subscription_id en los 3
@@ -547,15 +553,31 @@ module.exports = {
         const sig = req.headers['stripe-signature'];
         let event;
 
+        if (!keys.stripeAdminSecretKey || !endpointSecret) {
+            console.log('❌ Error en Webhook: Faltan claves (stripeAdminSecretKey o stripeWebhookSecret).');
+            return res.status(500).send('Error de configuración.');
+        }
+
+        // Dos destinos en Stripe apuntan a esta misma URL: el original
+        // ("Tu cuenta", membresía de plataforma/referidos) y el nuevo
+        // "subscripciones-connect" ("Cuentas conectadas", pagos de cliente a
+        // entrenador). Cada uno firma con su propio secreto, así que se
+        // intenta primero con el de "Tu cuenta" y, si no es válido, con el
+        // de cuentas conectadas — así este mismo endpoint acepta eventos de
+        // los dos sin duplicar ruta ni lógica.
         try {
-            if (!keys.stripeAdminSecretKey || !endpointSecret) {
-                console.log('❌ Error en Webhook: Faltan claves (stripeAdminSecretKey o stripeWebhookSecret).');
-                return res.status(500).send('Error de configuración.');
-            }
             event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
         } catch (err) {
-            console.log(`❌ Error en Webhook (constructEvent): ${err.message}`);
-            return res.status(400).send(`Webhook Error: ${err.message}`);
+            if (!endpointSecretConnect) {
+                console.log(`❌ Error en Webhook (constructEvent): ${err.message}`);
+                return res.status(400).send(`Webhook Error: ${err.message}`);
+            }
+            try {
+                event = adminStripe.webhooks.constructEvent(req.rawBody, sig, endpointSecretConnect);
+            } catch (errConnect) {
+                console.log(`❌ Error en Webhook (constructEvent, ambos secretos fallaron): ${errConnect.message}`);
+                return res.status(400).send(`Webhook Error: ${errConnect.message}`);
+            }
         }
 
         switch (event.type) {
@@ -671,8 +693,16 @@ module.exports = {
                     // ------------------------------------------
 
                     if (user) {
-                        await User.updateTrainer(user.id, id_company);
-                        await User.transferClientData(user.id, id_company);
+                        // Si el cliente YA tiene un entrenador asignado (de antes, con
+                        // otra compañía), NUNCA lo reasignamos solo porque pagó el
+                        // enlace de un entrenador distinto — eso no debe arrebatarle el
+                        // cliente a su entrenador real. La suscripción/membresía de
+                        // arriba ya quedó creada bajo id_company de todos modos, así
+                        // que este entrenador sí ve el pago y la membresía activa.
+                        if (!user.id_entrenador) {
+                            await User.updateTrainer(user.id, id_company);
+                            await User.transferClientData(user.id, id_company);
+                        }
 
                         // 🔥 ACTUALIZACIÓN DE NIVEL VIP (RECURRENTE) 🔥
                         try {
@@ -727,11 +757,20 @@ module.exports = {
 
                         if (id_client && id_company) {
                             const User = require('../models/user.js');
-                            await User.updateTrainer(id_client, id_company);
-                            await User.transferClientData(id_client, id_company);
+                            const db = require('../config/config');
+
+                            // Si el cliente YA tiene un entrenador asignado (de antes,
+                            // con otra compañía), NUNCA lo reasignamos solo porque pagó
+                            // el enlace de un entrenador distinto — la suscripción de
+                            // arriba ya quedó creada bajo id_company de todos modos, así
+                            // que este entrenador sí ve el pago y la membresía activa.
+                            const clientRow = await db.oneOrNone(`SELECT id_entrenador FROM users WHERE id = $1`, [id_client]);
+                            if (!clientRow || !clientRow.id_entrenador) {
+                                await User.updateTrainer(id_client, id_company);
+                                await User.transferClientData(id_client, id_company);
+                            }
 
                             // 🔥 ACTUALIZACIÓN DE NIVEL VIP (PAGO ÚNICO) 🔥
-                            const db = require('../config/config');
                             await db.none(`UPDATE users SET access_level = 2, updated_at = NOW() WHERE id = $1`, [id_client]);
                         }
                         console.log(`✅ Pago único completado y nivel VIP (2) otorgado para ${id_client}`);

@@ -7,6 +7,14 @@ module.exports = {
     // Lee la variable de Heroku y la exporta como 'stripeWebhookSecret'
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
 
+    // NUEVO — segundo destino de eventos en Stripe, "subscripciones-connect",
+    // con "Eventos de: Cuentas conectadas" (ver clientSubscriptionsController.js
+    // stripeWebhook) — los pagos de un CLIENTE a un ENTRENADOR pasan por la
+    // cuenta conectada del entrenador, así que esos eventos nunca llegaban
+    // por el webhook original (ese solo escuchaba "Tu cuenta"). Firma con
+    // un secreto distinto al de arriba, por eso es una variable aparte.
+    stripeWebhookConnectSecret: process.env.STRIPE_WEBHOOK_CONNECT_SECRET,
+
     // NUEVO — asistente "Flex" (ver controllers/flexAssistantController.js).
     // Clave real de console.anthropic.com, se lee de Heroku Config Vars,
     // igual que el resto de llaves de este archivo.

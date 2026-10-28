@@ -149,8 +149,14 @@ module.exports = {
 
                 const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
+                // Stripe rechaza description: '' con parameter_invalid_empty
+                // ("cannot be unset") — a diferencia de otros campos, un
+                // string vacío no es lo mismo que omitirlo. Solo lo mandamos
+                // si de verdad hay texto.
+                const productData = { name: plan.name, type: 'service' };
+                if (plan.description) productData.description = plan.description;
                 const stripeProduct = await stripe.products.create(
-                    { name: plan.name, description: plan.description, type: 'service' },
+                    productData,
                     { stripeAccount: company.stripeAccountId }
                 );
 
@@ -289,8 +295,14 @@ module.exports = {
 
             const stripe = require('stripe')(keys.stripeAdminSecretKey);
 
+            // Stripe rechaza description: '' con parameter_invalid_empty
+            // ("cannot be unset") — planes viejos de transferencia suelen
+            // traer description null/'' en la BD, así que solo la mandamos
+            // si de verdad hay texto (en vez de normalizarla a '').
+            const productData = { name: plan.name, type: 'service' };
+            if (plan.description) productData.description = plan.description;
             const stripeProduct = await stripe.products.create(
-                { name: plan.name, description: plan.description || '', type: 'service' },
+                productData,
                 { stripeAccount: company.stripeAccountId }
             );
 

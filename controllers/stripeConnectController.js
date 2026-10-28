@@ -617,12 +617,14 @@ async function _migrateManualPlans(id_company, stripeAccountId) {
             try {
                 // 2. Crear Producto EN LA CUENTA CONECTADA
                 // El header { stripeAccount: ... } es la clave de Stripe Connect
+                // Stripe rechaza description: '' con parameter_invalid_empty
+                // ("cannot be unset") — planes manuales viejos suelen traer
+                // description null/'' en la BD, así que solo la mandamos si
+                // de verdad hay texto (en vez de normalizarla a '').
+                const productData = { name: plan.name, type: 'service' };
+                if (plan.description) productData.description = plan.description;
                 const product = await stripe.products.create(
-                    {
-                        name: plan.name,
-                        description: plan.description || '',
-                        type: 'service',
-                    },
+                    productData,
                     { stripeAccount: stripeAccountId } // <--- MAGIA DE CONNECT
                 );
 

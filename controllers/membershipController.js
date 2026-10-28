@@ -1089,7 +1089,11 @@ module.exports = {
 
             let stripePriceId = addon.stripe_price_id;
             if (!stripePriceId) {
-                const product = await stripe.products.create({ name: addon.name, description: addon.description || '', type: 'service' });
+                // Stripe rechaza description: '' con parameter_invalid_empty
+                // ("cannot be unset") — solo la mandamos si de verdad hay texto.
+                const addonProductData = { name: addon.name, type: 'service' };
+                if (addon.description) addonProductData.description = addon.description;
+                const product = await stripe.products.create(addonProductData);
                 const price = await stripe.prices.create({
                     product: product.id, unit_amount: Math.round(Number(addon.price) * 100), currency: 'mxn',
                     recurring: { interval: 'month' } // sin trial_period_days a propósito
