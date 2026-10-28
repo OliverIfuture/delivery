@@ -11,6 +11,11 @@ const TrainerNotification = require('../models/trainerNotification.js');
 module.exports = {
     async list(req, res) {
         try {
+            // LOG DE RASTREO — para comparar contra el id_user con el que se
+            // CREAN las notificaciones (ver resolveTrainerUserId en el
+            // webhook): si no coinciden, la campana nunca va a mostrar nada
+            // aunque el backend sí las haya creado bien.
+            console.log(`🔔 GET /api/notifications pedido por req.user.id=${req.user.id} (email=${req.user.email || '?'})`);
             const rows = await TrainerNotification.findByUser(req.user.id);
             return res.status(200).json({
                 success: true,
