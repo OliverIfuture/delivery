@@ -10,6 +10,8 @@ const keys = require('../config/keys.js');
 const Gym = require('../models/gym.js'); // <-- Modelo clave para Gimnasios
 const Pos = require('../models/pos.js'); // <-- Modelo clave para el Webhook
 const TrainerNotification = require('../models/trainerNotification.js'); // <-- Notificación real al entrenador cuando un cliente le paga
+const SubscriptionPlan = require('../models/subscriptionPlan.js'); // <-- Nombre del plan para el comprobante de pago
+const { sendPaymentReceipt } = require('../utils/paymentReceipt.js'); // <-- Comprobante de pago real al correo del cliente
 
 // Manejo seguro de llaves por si config/keys.js no está en este proyecto
 let stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -697,6 +699,29 @@ module.exports = {
                             } catch (notifErr) {
                                 console.log(`No se pudo crear la notificación de pago: ${notifErr.message}`);
                             }
+
+                            // --- NUEVO: comprobante de pago real al correo del cliente ---
+                            try {
+                                const recipientEmail = user ? user.email : temp_email;
+                                if (recipientEmail) {
+                                    const trainerUserIdForReceipt = await TrainerNotification.resolveTrainerUserId(id_company);
+                                    const planForReceipt = await SubscriptionPlan.findByIdPublic(id_plan);
+                                    await sendPaymentReceipt({
+                                        to: recipientEmail,
+                                        clientName: user ? user.name : null,
+                                        trainerUserId: trainerUserIdForReceipt,
+                                        planName: planForReceipt?.name,
+                                        amount: amountPaid,
+                                        currency: invoice.currency,
+                                        paymentMethod: 'Domiciliado',
+                                        paymentDate,
+                                        reference: invoice.id
+                                    });
+                                    console.log(`🧾 Comprobante de pago enviado a ${recipientEmail}`);
+                                }
+                            } catch (receiptErr) {
+                                console.log(`❌ No se pudo enviar el comprobante de pago (Recurrente): ${receiptErr.message}`);
+                            }
                         } catch (e) {
                             console.log(`❌ Error guardando historial de pago (Recurrente): ${e.message}`);
                         }
@@ -821,6 +846,29 @@ module.exports = {
                             }
                         } catch (notifErr) {
                             console.log(`No se pudo crear la notificación de pago único: ${notifErr.message}`);
+                        }
+
+                        // --- NUEVO: comprobante de pago real al correo del cliente ---
+                        try {
+                            const clientForReceipt = await db.oneOrNone(`SELECT name, email FROM users WHERE id = $1`, [id_client]);
+                            const trainerUserIdForReceipt = await TrainerNotification.resolveTrainerUserId(id_company);
+                            const planForReceipt = await SubscriptionPlan.findByIdPublic(id_plan);
+                            if (clientForReceipt?.email) {
+                                await sendPaymentReceipt({
+                                    to: clientForReceipt.email,
+                                    clientName: clientForReceipt.name,
+                                    trainerUserId: trainerUserIdForReceipt,
+                                    planName: planForReceipt?.name,
+                                    amount: paymentIntent.amount / 100,
+                                    currency: paymentIntent.currency,
+                                    paymentMethod: 'Tarjeta',
+                                    paymentDate: new Date(),
+                                    reference: paymentIntent.id
+                                });
+                                console.log(`🧾 Comprobante de pago enviado a ${clientForReceipt.email}`);
+                            }
+                        } catch (receiptErr) {
+                            console.log(`❌ No se pudo enviar el comprobante de pago (Único): ${receiptErr.message}`);
                         }
                     } catch (e) {
                         console.log(`❌ Error guardando pago único: ${e.message}`);
