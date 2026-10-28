@@ -786,19 +786,38 @@ module.exports = {
                         }
                         console.log(`✅ Pago único completado y nivel VIP (2) otorgado para ${id_client}`);
 
+                        // 🔥 NUEVO: REGISTRO HISTÓRICO DE PAGOS (faltaba aquí — por
+                        // eso un pago único nunca aparecía en "Actividad" del panel:
+                        // esa pantalla lee de payment_history, ver
+                        // SubscriptionPlan.getRecentPayments, y esta rama de pago
+                        // único nunca insertaba ahí, solo la de suscripción
+                        // recurrente lo hacía) 🔥
+                        try {
+                            const amountPaidHist = paymentIntent.amount / 100;
+                            await db.none(`
+                                INSERT INTO payment_history (id_company, id_client, id_plan, stripe_subscription_id, stripe_invoice_id, amount, payment_date)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                            `, [id_company, id_client, id_plan, paymentIntent.id, paymentIntent.id, amountPaidHist, new Date()]);
+                            console.log(`💰 Historial de pago (Único) registrado: $${amountPaidHist} para ${id_client}`);
+                        } catch (histErr) {
+                            console.log(`❌ Error guardando historial de pago (Único): ${histErr.message}`);
+                        }
+
                         // --- NUEVO: notificación real para la campana del panel ---
                         try {
                             const trainerUserId = await TrainerNotification.resolveTrainerUserId(id_company);
+                            console.log(`🔔 resolveTrainerUserId(${id_company}) -> ${trainerUserId || 'null (no se encontró entrenador para esa compañía)'}`);
                             if (trainerUserId && id_client) {
                                 const clientRow = await db.oneOrNone(`SELECT name FROM users WHERE id = $1`, [id_client]);
                                 const amountPaid = paymentIntent.amount / 100;
-                                await TrainerNotification.create({
+                                const notif = await TrainerNotification.create({
                                     id_user: trainerUserId,
                                     type: 'payment',
                                     title: `${clientRow?.name || 'Un cliente'} pagó su plan`,
                                     body: `$${amountPaid.toLocaleString('es-MX')} MXN`,
                                     link: `/dashboard/clients/${id_client}`
                                 });
+                                console.log(notif ? `🔔 Notificación #${notif.id} creada para el entrenador ${trainerUserId}` : `❌ TrainerNotification.create regresó null`);
                             }
                         } catch (notifErr) {
                             console.log(`No se pudo crear la notificación de pago único: ${notifErr.message}`);
