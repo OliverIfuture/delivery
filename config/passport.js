@@ -5,6 +5,8 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 const User = require('../models/user');
 // Modelo nuevo para Emoon
 const EmoonUser = require('../models/emoonUser');
+// Modelo nuevo para Casa Forma (schema aparte, ver database/casaforma_schema.sql)
+const CasaformaUser = require('../models/casaformaUser');
 const Keys = require('./keys');
 
 module.exports = function (passport) {
@@ -62,6 +64,31 @@ module.exports = function (passport) {
             }
         } catch (error) {
             console.log("Error en Passport strategy emoon:", error);
+            return done(error, false);
+        }
+    }));
+
+    // =========================================================
+    // ESTRATEGIA 4: PROYECTO CASA FORMA (Nueva)
+    // =========================================================
+    let optsCasaforma = {};
+    optsCasaforma.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
+    optsCasaforma.secretOrKey = Keys.secretOrKey;
+
+    passport.use('casaforma-jwt', new JwtStrategy(optsCasaforma, async (jwt_payload, done) => {
+        try {
+            // Buscamos en 'casaforma.casaforma_users' — tabla y schema
+            // aparte de emoon y de la tabla 'users' original, así un
+            // token de Casa Forma nunca autentica como usuario de otro
+            // proyecto (y viceversa).
+            const casaformaUser = await CasaformaUser.findById(jwt_payload.id);
+            if (casaformaUser) {
+                return done(null, casaformaUser);
+            } else {
+                return done(null, false);
+            }
+        } catch (error) {
+            console.log("Error en Passport strategy casaforma:", error);
             return done(error, false);
         }
     }));

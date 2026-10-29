@@ -103,6 +103,14 @@ const emoonAttendanceRoutes = require('./routes/emoonAttendanceRoutes.js');
 
 /**
  * =========================================================
+ * RUTAS NUEVAS - PROYECTO CASA FORMA (schema "casaforma" aparte del de
+ * Emoon, ver database/casaforma_schema.sql)
+ * =========================================================
+ */
+const casaformaUsersRoutes = require('./routes/casaformaUsersRoutes.js');
+
+/**
+ * =========================================================
  * RUTAS NUEVAS - PROYECTO EMOON
  * =========================================================
  */
@@ -227,6 +235,13 @@ emoonPaymentsRoutes(app);
 // Inyectamos la dependencia 'app' (express) y 'upload' (multer)
 emoonUsersRoutes(app, upload);
 emoonAttendanceRoutes(app);
+
+/**
+ * =========================================================
+ * LLAMANDO RUTAS NUEVAS - PROYECTO CASA FORMA
+ * =========================================================
+ */
+casaformaUsersRoutes(app);
 
 
 // IMPORTANTE: '0.0.0.0' hace que el servidor escuche conexiones externas
