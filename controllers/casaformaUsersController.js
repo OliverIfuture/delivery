@@ -10,6 +10,11 @@ module.exports = {
         try {
             const user = req.body;
             if (user.email) user.email = normalizeEmail(user.email);
+            // El registro público SIEMPRE es de cliente — el campo "role"
+            // nunca se toma del body (cualquiera podría registrarse como
+            // admin con una llamada directa a la API si se confiara en
+            // él). Las cuentas de admin/instructor se crean aparte.
+            user.role = 'client';
             const existingUser = await CasaformaUser.findByEmail(user.email);
             if (existingUser) {
                 return res.status(400).json({ success: false, message: 'El correo electrónico ya se encuentra registrado.' });
