@@ -23,6 +23,15 @@ module.exports = {
     // criterio que casaforma-jwt está aparte de emoon-jwt/jwt.
     stripeWebhookCasaformaSecret: process.env.STRIPE_WEBHOOK_CASAFORMA_SECRET,
 
+    // NUEVO — segundo destino de Casa Forma, pero "Eventos de: Tu cuenta"
+    // (no "Cuentas conectadas"): el cobro mensual de plataforma al ADMIN
+    // (createAdminBillingCheckout) es un PaymentIntent normal, SIN
+    // stripeAccount — pasa por la cuenta principal, así que el destino
+    // de "Cuentas conectadas" de arriba nunca lo recibiría. Mismo patrón
+    // que stripeWebhookSecret/stripeWebhookConnectSecret de Trainer
+    // Partners (dos destinos, misma URL, cada uno con su secreto).
+    stripeWebhookCasaformaMainSecret: process.env.STRIPE_WEBHOOK_CASAFORMA_MAIN_SECRET,
+
     // NUEVO — asistente "Flex" (ver controllers/flexAssistantController.js).
     // Clave real de console.anthropic.com, se lee de Heroku Config Vars,
     // igual que el resto de llaves de este archivo.

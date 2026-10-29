@@ -12,8 +12,21 @@ const stripe = require('stripe')(keys.stripeAdminSecretKey);
 const CasaformaPackage = require('../models/casaformaPackage');
 const CasaformaUser = require('../models/casaformaUser');
 const CasaformaStripeConnect = require('../models/casaformaStripeConnect');
+const CasaformaSettings = require('../models/casaformaSettings');
 
 const PLATFORM_FEE_PERCENT = 11;
+
+// Cuota mensual de plataforma (lo que el ADMIN del club le paga a
+// nosotros por usar/alojar el software, nada que ver con lo que pagan
+// sus clientes) — mismo concepto y mismo día de corte que Emoon
+// (ver emoonPaymentsController.js -> createAdminBillingIntent), pero
+// corregido: SIN transfer_data. Emoon manda el cobro con
+// transfer_data.destination a una cuenta conectada — eso lo saca de la
+// cuenta principal. Aquí es un PaymentIntent normal, sin
+// stripeAccount/transfer_data, así que se queda directo en la cuenta
+// principal (la misma que ya recibe el 11% de comisiones).
+const ADMIN_BILLING_AMOUNT_CENTS = 40500; // $330 servidor + $75 correo
+const ADMIN_BILLING_DUE_DAY = '20';
 
 // Crea (o reutiliza) el Product+Price real en la cuenta conectada para
 // un paquete domiciliado — hace falta para poder crear la Subscription.
@@ -141,6 +154,47 @@ module.exports = {
         } catch (error) {
             console.log('Error en casaforma createCheckout:', error);
             return res.status(500).json({ success: false, message: 'Error al procesar el pago.', error: error.message });
+        }
+    },
+
+    // Cobro mensual de plataforma al ADMIN del club ($330 servidor + $75
+    // correo = $405). El webhook (ver casaformaWebhookController.js,
+    // case 'payment_intent.succeeded', metadata.type ===
+    // 'casaforma_admin_billing_monthly') es quien marca 'paid' de
+    // verdad — aquí solo se crea el cobro y se marca 'pending', igual
+    // que createAdminBillingIntent de Emoon.
+    async createAdminBillingCheckout(req, res) {
+        try {
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: ADMIN_BILLING_AMOUNT_CENTS,
+                currency: 'mxn',
+                automatic_payment_methods: { enabled: true },
+                description: 'Casa Forma · Servicio mensual: Servidor ($330) + Correo ($75)',
+                metadata: {
+                    type: 'casaforma_admin_billing_monthly',
+                    concepto_servidor: '330',
+                    concepto_correo: '75',
+                    due_day: ADMIN_BILLING_DUE_DAY
+                }
+            });
+
+            const currentPeriod = new Date().toISOString().slice(0, 7);
+            await CasaformaSettings.updateBillingStatus('pending', currentPeriod);
+
+            console.log(`🧾 casaforma createAdminBillingCheckout: PaymentIntent ${paymentIntent.id} creado por $405 MXN (período=${currentPeriod})`);
+
+            return res.status(200).json({
+                success: true,
+                data: {
+                    mode: 'payment',
+                    clientSecret: paymentIntent.client_secret,
+                    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || ''
+                    // Sin stripeAccountId a propósito: es la cuenta principal, no una conectada.
+                }
+            });
+        } catch (error) {
+            console.log('Error en casaforma createAdminBillingCheckout:', error);
+            return res.status(500).json({ success: false, message: 'Error al crear el cobro mensual.', error: error.message });
         }
     }
 };
