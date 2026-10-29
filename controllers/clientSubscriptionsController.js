@@ -12,6 +12,7 @@ const Pos = require('../models/pos.js'); // <-- Modelo clave para el Webhook
 const TrainerNotification = require('../models/trainerNotification.js'); // <-- Notificación real al entrenador cuando un cliente le paga
 const SubscriptionPlan = require('../models/subscriptionPlan.js'); // <-- Nombre del plan para el comprobante de pago
 const { sendPaymentReceipt } = require('../utils/paymentReceipt.js'); // <-- Comprobante de pago real al correo del cliente
+const EmoonSettings = require('../models/emoonSettings.js'); // <-- Fix: marcar 'paid' el cobro mensual de plataforma de Emoon (ver case 'payment_intent.succeeded' más abajo)
 
 // Manejo seguro de llaves por si config/keys.js no está en este proyecto
 let stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -934,6 +935,26 @@ module.exports = {
                         console.log(`✅ Comisiones marcadas como 'paid' para afiliado ${id_affiliate}`);
                     } catch (e) {
                         console.log(`❌ Error al procesar Payout de Comisión: ${e.message}`);
+                    }
+                }
+
+                // FIX: cobro mensual de plataforma a Emoon
+                // (emoonPaymentsController.js -> createAdminBillingIntent)
+                // creaba el PaymentIntent y lo dejaba en 'pending', pero
+                // nada del lado del servidor lo marcaba 'paid' después —
+                // el evento SÍ llegaba hasta aquí (este webhook ya recibe
+                // payment_intent.succeeded de la cuenta principal), pero
+                // 'emoon_admin_monthly_service' no calzaba con ninguna
+                // de las ramas de arriba, así que no hacía nada. Por eso
+                // el aviso de "pago pendiente" nunca desaparecía aunque
+                // el cobro sí hubiera entrado.
+                else if (metadata.type === 'emoon_admin_monthly_service') {
+                    try {
+                        const period = new Date(paymentIntent.created * 1000).toISOString().slice(0, 7);
+                        await EmoonSettings.updateBillingStatus('paid', period);
+                        console.log(`✅ Cobro mensual de plataforma (Emoon) marcado 'paid' (payment_intent=${paymentIntent.id}, período=${period}).`);
+                    } catch (e) {
+                        console.log(`❌ Error marcando 'paid' el cobro mensual de Emoon: ${e.message}`);
                     }
                 }
                 break;
