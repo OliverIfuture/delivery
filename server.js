@@ -121,6 +121,7 @@ const casaformaAnalyticsRoutes = require('./routes/casaformaAnalyticsRoutes.js')
 const casaformaAttendanceRoutes = require('./routes/casaformaAttendanceRoutes.js');
 const casaformaDomiciliationRoutes = require('./routes/casaformaDomiciliationRoutes.js');
 const casaformaStripeConnectRoutes = require('./routes/casaformaStripeConnectRoutes.js');
+const casaformaWebhookRoutes = require('./routes/casaformaWebhookRoutes.js');
 
 /**
  * =========================================================
@@ -268,6 +269,7 @@ casaformaAnalyticsRoutes(app);
 casaformaAttendanceRoutes(app);
 casaformaDomiciliationRoutes(app);
 casaformaStripeConnectRoutes(app);
+casaformaWebhookRoutes(app);
 
 
 // IMPORTANTE: '0.0.0.0' hace que el servidor escuche conexiones externas

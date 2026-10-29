@@ -15,6 +15,14 @@ module.exports = {
     // un secreto distinto al de arriba, por eso es una variable aparte.
     stripeWebhookConnectSecret: process.env.STRIPE_WEBHOOK_CONNECT_SECRET,
 
+    // NUEVO — destino de eventos dedicado para Casa Forma ("Cuentas
+    // conectadas", apunta a /api/casaforma/webhook) — pagos únicos y
+    // domiciliados de los CLIENTES del club a la cuenta Express de Casa
+    // Forma. Aparte de stripeWebhookConnectSecret (que es el de Trainer
+    // Partners) para mantener cada proyecto con su propio secreto, mismo
+    // criterio que casaforma-jwt está aparte de emoon-jwt/jwt.
+    stripeWebhookCasaformaSecret: process.env.STRIPE_WEBHOOK_CASAFORMA_SECRET,
+
     // NUEVO — asistente "Flex" (ver controllers/flexAssistantController.js).
     // Clave real de console.anthropic.com, se lee de Heroku Config Vars,
     // igual que el resto de llaves de este archivo.

@@ -72,4 +72,21 @@ CasaformaDomiciliation.cancel = async (id) => {
     return result.rowCount > 0;
 };
 
+// Usados por casaformaWebhookController.js — eventos reales de Stripe
+// solo traen el stripe_subscription_id, nunca el id interno.
+CasaformaDomiciliation.findByStripeSubscriptionId = (stripeSubscriptionId) => {
+    return db.oneOrNone(
+        `SELECT * FROM casaforma.casaforma_domiciliation_subscriptions WHERE stripe_subscription_id = $1`,
+        [stripeSubscriptionId]
+    );
+};
+
+CasaformaDomiciliation.cancelByStripeSubscriptionId = async (stripeSubscriptionId) => {
+    const result = await db.result(
+        `UPDATE casaforma.casaforma_domiciliation_subscriptions SET status = 'cancelled', next_charge_date = NULL, updated_at = NOW() WHERE stripe_subscription_id = $1`,
+        [stripeSubscriptionId]
+    );
+    return result.rowCount > 0;
+};
+
 module.exports = CasaformaDomiciliation;
