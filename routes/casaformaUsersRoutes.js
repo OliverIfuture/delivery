@@ -22,6 +22,14 @@ module.exports = (app) => {
         casaformaUsersController.getAll
     );
 
+    // IMPORTANTE: va después de /all — si fuera antes, Express
+    // interpretaría "all" como un :id y nunca llegaría a la ruta de arriba.
+    app.get(
+        '/api/casaforma/users/:id',
+        passport.authenticate('casaforma-jwt', { session: false }),
+        casaformaUsersController.getById
+    );
+
     app.put(
         '/api/casaforma/users/update',
         passport.authenticate('casaforma-jwt', { session: false }),

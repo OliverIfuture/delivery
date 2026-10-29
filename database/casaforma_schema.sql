@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS casaforma.casaforma_class_types (
     description TEXT NULL,
     duration_minutes INT NOT NULL DEFAULT 45,
     max_capacity INT NOT NULL DEFAULT 10,
+    intensity VARCHAR(40) NOT NULL DEFAULT 'Todos los niveles',
     is_active BOOLEAN NOT NULL DEFAULT true,
     is_deleted BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -220,3 +221,14 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO casaforma.casaforma_stripe_connect (id, status)
 VALUES (1, 'not_connected')
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- AJUSTES POSTERIORES (el schema de arriba ya corrió en producción, así
+-- que las correcciones van en ALTER TABLE ... IF NOT EXISTS, no editando
+-- el CREATE TABLE original).
+-- ============================================================
+
+-- "intensity" — el formulario de ClassesWidget.vue (admin) ya manda este
+-- campo (igual que emoon_class_types.intensity), faltaba en la tabla.
+ALTER TABLE casaforma.casaforma_class_types
+    ADD COLUMN IF NOT EXISTS intensity VARCHAR(40) NOT NULL DEFAULT 'Todos los niveles';

@@ -86,6 +86,20 @@ module.exports = {
         }
     },
 
+    async getById(req, res) {
+        try {
+            const user = await CasaformaUser.findById(req.params.id);
+            if (!user) {
+                return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+            }
+            const { password, ...publicUser } = user;
+            return res.status(200).json({ success: true, message: 'OK', data: publicUser });
+        } catch (error) {
+            console.log('Error en casaformaUsersController.getById:', error);
+            return res.status(500).json({ success: false, message: 'Error al obtener el usuario.', error: error.message });
+        }
+    },
+
     async update(req, res) {
         try {
             const { id, first_name, last_name, phone } = req.body;

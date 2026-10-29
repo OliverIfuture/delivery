@@ -108,6 +108,19 @@ const emoonAttendanceRoutes = require('./routes/emoonAttendanceRoutes.js');
  * =========================================================
  */
 const casaformaUsersRoutes = require('./routes/casaformaUsersRoutes.js');
+const casaformaCategoriesRoutes = require('./routes/casaformaCategoriesRoutes.js');
+const casaformaClassesRoutes = require('./routes/casaformaClassesRoutes.js');
+const casaformaScheduledClassesRoutes = require('./routes/casaformaScheduledClassesRoutes.js');
+const casaformaPackagesRoutes = require('./routes/casaformaPackagesRoutes.js');
+const casaformaUserPackagesRoutes = require('./routes/casaformaUserPackagesRoutes.js');
+const casaformaReservationsRoutes = require('./routes/casaformaReservationsRoutes.js');
+const casaformaPurchasesRoutes = require('./routes/casaformaPurchasesRoutes.js');
+const casaformaSalesRoutes = require('./routes/casaformaSalesRoutes.js');
+const casaformaSettingsRoutes = require('./routes/casaformaSettingsRoutes.js');
+const casaformaAnalyticsRoutes = require('./routes/casaformaAnalyticsRoutes.js');
+const casaformaAttendanceRoutes = require('./routes/casaformaAttendanceRoutes.js');
+const casaformaDomiciliationRoutes = require('./routes/casaformaDomiciliationRoutes.js');
+const casaformaStripeConnectRoutes = require('./routes/casaformaStripeConnectRoutes.js');
 
 /**
  * =========================================================
@@ -242,6 +255,19 @@ emoonAttendanceRoutes(app);
  * =========================================================
  */
 casaformaUsersRoutes(app);
+casaformaCategoriesRoutes(app);
+casaformaClassesRoutes(app);
+casaformaScheduledClassesRoutes(app);
+casaformaPackagesRoutes(app);
+casaformaUserPackagesRoutes(app);
+casaformaReservationsRoutes(app);
+casaformaPurchasesRoutes(app);
+casaformaSalesRoutes(app);
+casaformaSettingsRoutes(app);
+casaformaAnalyticsRoutes(app);
+casaformaAttendanceRoutes(app);
+casaformaDomiciliationRoutes(app);
+casaformaStripeConnectRoutes(app);
 
 
 // IMPORTANTE: '0.0.0.0' hace que el servidor escuche conexiones externas
