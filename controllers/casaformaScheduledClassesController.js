@@ -1,5 +1,6 @@
 // controllers/casaformaScheduledClassesController.js
 const CasaformaScheduledClass = require('../models/casaformaScheduledClass');
+const CasaformaReservation = require('../models/casaformaReservation');
 
 module.exports = {
     async getAll(req, res) {
@@ -22,13 +23,21 @@ module.exports = {
         }
     },
 
+    // Cancela la clase Y todas sus reservaciones, regresando el crédito
+    // de las que sí lo descontaron (sin ventana de horas — la cancela el
+    // club, no el cliente). Ver CasaformaReservation.cancelClassWithRefunds.
     async cancel(req, res) {
         try {
-            const item = await CasaformaScheduledClass.cancel(req.params.id);
-            if (!item) {
+            const result = await CasaformaReservation.cancelClassWithRefunds(req.params.id);
+            if (!result) {
                 return res.status(404).json({ success: false, message: 'Clase no encontrada.' });
             }
-            return res.status(200).json({ success: true, message: 'Clase cancelada.', data: item });
+            const item = await CasaformaScheduledClass.getById(req.params.id);
+            return res.status(200).json({
+                success: true,
+                message: `Clase cancelada. ${result.cancelledReservations} reservación(es) cancelada(s), ${result.refundedCount} crédito(s) devuelto(s).`,
+                data: item
+            });
         } catch (error) {
             console.log('Error casaforma scheduled-classes.cancel:', error);
             return res.status(500).json({ success: false, message: 'Error al cancelar la clase.', error: error.message });

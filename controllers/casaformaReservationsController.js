@@ -47,17 +47,25 @@ module.exports = {
         }
     },
 
+    // Cancelación del propio cliente (MyReservationsWidget.vue) — usa
+    // req.user.id (del token), nunca un id del body, para que nadie
+    // pueda cancelar la reservación de otro cliente con solo adivinar su
+    // id. El crédito se regresa solo si cancela a tiempo (ver
+    // cancelWithCredit en el modelo).
     async cancel(req, res) {
         try {
             const { id } = req.body;
-            const cancelled = await CasaformaReservation.cancel(id);
-            if (!cancelled) {
-                return res.status(404).json({ success: false, message: 'Reservación no encontrada.' });
-            }
-            return res.status(200).json({ success: true, message: 'Reservación cancelada.' });
+            const result = await CasaformaReservation.cancelWithCredit(id, req.user.id);
+            return res.status(200).json({
+                success: true,
+                message: result.refunded
+                    ? 'Reservación cancelada. Tu crédito fue devuelto.'
+                    : 'Reservación cancelada.',
+                data: result
+            });
         } catch (error) {
             console.log('Error casaforma reservations.cancel:', error);
-            return res.status(500).json({ success: false, message: 'Error al cancelar la reservación.', error: error.message });
+            return res.status(400).json({ success: false, message: error.message || 'No se pudo cancelar la reservación.' });
         }
     }
 };
