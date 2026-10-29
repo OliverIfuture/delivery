@@ -123,7 +123,6 @@ const casaformaDomiciliationRoutes = require('./routes/casaformaDomiciliationRou
 const casaformaStripeConnectRoutes = require('./routes/casaformaStripeConnectRoutes.js');
 const casaformaWebhookRoutes = require('./routes/casaformaWebhookRoutes.js');
 const casaformaCheckoutRoutes = require('./routes/casaformaCheckoutRoutes.js');
-const casaformaMainWebhookTestRoutes = require('./routes/casaformaMainWebhookTestRoutes.js'); // TEMPORAL
 
 /**
  * =========================================================
@@ -273,7 +272,6 @@ casaformaDomiciliationRoutes(app);
 casaformaStripeConnectRoutes(app);
 casaformaWebhookRoutes(app);
 casaformaCheckoutRoutes(app);
-casaformaMainWebhookTestRoutes(app); // TEMPORAL
 
 
 // IMPORTANTE: '0.0.0.0' hace que el servidor escuche conexiones externas
