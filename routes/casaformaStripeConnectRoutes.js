@@ -22,4 +22,10 @@ module.exports = (app) => {
         requireEmoonAdmin,
         casaformaStripeConnectController.refreshStatus
     );
+    app.get(
+        '/api/casaforma/stripe-connect/dashboard-link',
+        passport.authenticate('casaforma-jwt', { session: false }),
+        requireEmoonAdmin,
+        casaformaStripeConnectController.getDashboardLink
+    );
 };

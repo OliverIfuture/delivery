@@ -1,7 +1,7 @@
 // models/casaformaStripeConnect.js — una sola cuenta Express para todo
-// el club (fila única, id = 1). El ciclo not_connected -> pending ->
-// active sigue simulado (no hay integración real con Stripe Connect
-// todavía) pero ahora vive en el servidor, no en el navegador.
+// el club (fila única, id = 1). Solo lecturas/escrituras de BD; las
+// llamadas reales a la API de Stripe viven en el controller, igual que
+// stripeConnectController.js (User solo guarda, nunca llama a Stripe).
 const db = require('../config/config');
 
 const CasaformaStripeConnect = {};
@@ -11,25 +11,22 @@ CasaformaStripeConnect.getStatus = () => {
     return db.one(sql);
 };
 
-CasaformaStripeConnect.startOnboarding = async () => {
-    const accountId = `acct_mock_${Date.now()}`;
-    await db.none(
-        `UPDATE casaforma.casaforma_stripe_connect SET status = 'pending', stripe_account_id = $1, updated_at = NOW() WHERE id = 1`,
+CasaformaStripeConnect.saveAccountId = (accountId) => {
+    return db.none(
+        `UPDATE casaforma.casaforma_stripe_connect SET stripe_account_id = $1, status = 'pending', updated_at = NOW() WHERE id = 1`,
         [accountId]
     );
-    return CasaformaStripeConnect.getStatus();
 };
 
-CasaformaStripeConnect.refreshStatus = async () => {
-    await db.none(
+CasaformaStripeConnect.updateChargesStatus = (chargesEnabled, detailsSubmitted) => {
+    return db.none(
         `UPDATE casaforma.casaforma_stripe_connect
-         SET status = CASE WHEN status = 'pending' THEN 'active' ELSE status END,
-             charges_enabled = CASE WHEN status = 'pending' THEN true ELSE charges_enabled END,
-             details_submitted = CASE WHEN status = 'pending' THEN true ELSE details_submitted END,
+         SET charges_enabled = $1, details_submitted = $2,
+             status = CASE WHEN $1 THEN 'active' ELSE status END,
              updated_at = NOW()
-         WHERE id = 1`
+         WHERE id = 1`,
+        [chargesEnabled, detailsSubmitted]
     );
-    return CasaformaStripeConnect.getStatus();
 };
 
 module.exports = CasaformaStripeConnect;
