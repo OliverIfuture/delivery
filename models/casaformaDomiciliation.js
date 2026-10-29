@@ -89,4 +89,63 @@ CasaformaDomiciliation.cancelByStripeSubscriptionId = async (stripeSubscriptionI
     return result.rowCount > 0;
 };
 
+// ------------------------------------------------------------
+// Automatización (ver jobs/casaformaDomiciliationJob.js) — avisar antes
+// del cobro y escalar tras varios días de cobro fallido.
+// ------------------------------------------------------------
+
+// invoice.payment_failed — arranca (o reinicia) el contador de "cuántos
+// días lleva fallando" para esta suscripción.
+CasaformaDomiciliation.markPaymentFailed = async (stripeSubscriptionId) => {
+    const row = await db.oneOrNone(
+        `UPDATE casaforma.casaforma_domiciliation_subscriptions SET last_failed_at = NOW(), updated_at = NOW() WHERE stripe_subscription_id = $1 RETURNING id`,
+        [stripeSubscriptionId]
+    );
+    if (!row) return null;
+    return CasaformaDomiciliation.getById(row.id);
+};
+
+// invoice.payment_succeeded / recordStripeRecurringCharge — un cobro
+// exitoso borra cualquier racha de fallas previa.
+CasaformaDomiciliation.clearPaymentFailed = (stripeSubscriptionId) => {
+    return db.none(
+        `UPDATE casaforma.casaforma_domiciliation_subscriptions SET last_failed_at = NULL, updated_at = NOW() WHERE stripe_subscription_id = $1`,
+        [stripeSubscriptionId]
+    );
+};
+
+// Activas cuyo próximo cobro cae dentro de la ventana de aviso
+// (domiciliation_rules.reminderDaysBefore) y a las que todavía no se
+// les mandó el aviso PARA ESE cobro en particular — comparar
+// last_reminder_sent_at contra (next_charge_date - reminderDays) es lo
+// que evita reenviarlo varias veces dentro del mismo ciclo: una vez
+// mandado, last_reminder_sent_at cae DENTRO de esa ventana y dejan de
+// calificar hasta que next_charge_date avance al siguiente ciclo.
+CasaformaDomiciliation.getSubscriptionsNeedingReminder = (reminderDaysBefore) => {
+    const sql = `
+        ${SELECT_JOINED}
+        WHERE s.status = 'active'
+          AND s.next_charge_date IS NOT NULL
+          AND s.next_charge_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + ($1 || ' days')::interval)
+          AND (s.last_reminder_sent_at IS NULL OR s.last_reminder_sent_at < (s.next_charge_date - ($1 || ' days')::interval))
+    `;
+    return db.manyOrNone(sql, [reminderDaysBefore]);
+};
+
+CasaformaDomiciliation.markReminderSent = (id) => {
+    return db.none(`UPDATE casaforma.casaforma_domiciliation_subscriptions SET last_reminder_sent_at = NOW() WHERE id = $1`, [id]);
+};
+
+// Llevan fallando >= retryDays días seguidos — se cancelan solas (igual
+// que si el admin le diera "Cancelar") y se avisa al cliente.
+CasaformaDomiciliation.getSubscriptionsToEscalate = (retryDays) => {
+    const sql = `
+        ${SELECT_JOINED}
+        WHERE s.status = 'active'
+          AND s.last_failed_at IS NOT NULL
+          AND s.last_failed_at <= (NOW() - ($1 || ' days')::interval)
+    `;
+    return db.manyOrNone(sql, [retryDays]);
+};
+
 module.exports = CasaformaDomiciliation;

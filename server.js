@@ -123,6 +123,7 @@ const casaformaDomiciliationRoutes = require('./routes/casaformaDomiciliationRou
 const casaformaStripeConnectRoutes = require('./routes/casaformaStripeConnectRoutes.js');
 const casaformaWebhookRoutes = require('./routes/casaformaWebhookRoutes.js');
 const casaformaCheckoutRoutes = require('./routes/casaformaCheckoutRoutes.js');
+const { runDomiciliationChecks } = require('./jobs/casaformaDomiciliationJob.js');
 
 /**
  * =========================================================
@@ -278,6 +279,15 @@ casaformaCheckoutRoutes(app);
 server.listen(PORT, '0.0.0.0', function () {
     console.log('🚀 Servidor escuchando en puerto: ' + PORT);
 });
+
+// Automatización de domiciliación de Casa Forma (avisos + cancelación
+// por fallas repetidas) — no hay worker dyno ni Heroku Scheduler en
+// este proyecto, así que corre dentro de este mismo proceso cada 6
+// horas (de sobra para una granularidad de días). Primera corrida 2
+// minutos después de arrancar, no al boot mismo, para no competir con
+// el resto de la inicialización.
+setTimeout(() => runDomiciliationChecks(), 2 * 60 * 1000);
+setInterval(() => runDomiciliationChecks(), 6 * 60 * 60 * 1000);
 
 //ERROR HANDLER
 app.use((err, req, res, next) => {

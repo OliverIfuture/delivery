@@ -240,3 +240,12 @@ ALTER TABLE casaforma.casaforma_class_types
 ALTER TABLE casaforma.casaforma_packages
     ADD COLUMN IF NOT EXISTS stripe_product_id VARCHAR(120) NULL,
     ADD COLUMN IF NOT EXISTS stripe_price_id VARCHAR(120) NULL;
+
+-- Automatización de domiciliación (avisos antes del cobro, reintentos
+-- tras un cobro fallido) — ver jobs/casaformaDomiciliationJob.js.
+-- last_failed_at se limpia solo (NULL) en cuanto un cobro vuelve a
+-- salir bien, así el contador de "reintentar tras X días" siempre mide
+-- desde la falla más reciente, no desde la primera de la historia.
+ALTER TABLE casaforma.casaforma_domiciliation_subscriptions
+    ADD COLUMN IF NOT EXISTS last_reminder_sent_at TIMESTAMP NULL,
+    ADD COLUMN IF NOT EXISTS last_failed_at TIMESTAMP NULL;

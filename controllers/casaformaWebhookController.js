@@ -33,6 +33,7 @@ const adminStripe = require('stripe')(keys.stripeAdminSecretKey);
 const CasaformaSale = require('../models/casaformaSale');
 const CasaformaDomiciliation = require('../models/casaformaDomiciliation');
 const CasaformaSettings = require('../models/casaformaSettings');
+const { sendDomiciliationFailedEmail } = require('../jobs/casaformaDomiciliationJob');
 
 module.exports = {
     async handleWebhook(req, res) {
@@ -137,13 +138,21 @@ module.exports = {
                         invoice.amount_paid / 100,
                         invoice.subscription
                     );
+                    // Un cobro exitoso borra cualquier racha de fallas
+                    // previa — si venía fallando y ahora sí pasó, el
+                    // contador de "reintentar tras X días" se reinicia.
+                    await CasaformaDomiciliation.clearPaymentFailed(invoice.subscription);
                     console.log(`✅ casaforma webhook: cobro domiciliado registrado (payment id=${payment.id}, cliente=${meta.user_id}, paquete=${meta.package_id}).`);
                     break;
                 }
 
                 case 'invoice.payment_failed': {
                     const invoice = event.data.object;
+                    const sub = await CasaformaDomiciliation.markPaymentFailed(invoice.subscription);
                     console.log(`⚠️ casaforma webhook: cobro domiciliado fallido (invoice=${invoice.id}, subscription=${invoice.subscription || 'N/A'}).`);
+                    if (sub) {
+                        sendDomiciliationFailedEmail(sub).catch((e) => console.log(`❌ No se pudo avisar al cliente del cobro fallido: ${e.message}`));
+                    }
                     break;
                 }
 
