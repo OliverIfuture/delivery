@@ -232,3 +232,11 @@ ON CONFLICT (id) DO NOTHING;
 -- campo (igual que emoon_class_types.intensity), faltaba en la tabla.
 ALTER TABLE casaforma.casaforma_class_types
     ADD COLUMN IF NOT EXISTS intensity VARCHAR(40) NOT NULL DEFAULT 'Todos los niveles';
+
+-- Checkout real de Stripe Connect (casaformaCheckoutController.js) — un
+-- paquete domiciliado necesita un Product+Price reales en Stripe para
+-- poder crear la Subscription; se crean la primera vez que alguien lo
+-- compra (lazy) y se cachean aquí para no duplicarlos en cada compra.
+ALTER TABLE casaforma.casaforma_packages
+    ADD COLUMN IF NOT EXISTS stripe_product_id VARCHAR(120) NULL,
+    ADD COLUMN IF NOT EXISTS stripe_price_id VARCHAR(120) NULL;

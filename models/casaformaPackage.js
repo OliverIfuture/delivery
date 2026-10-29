@@ -98,4 +98,18 @@ CasaformaPackage.deactivate = (id) => {
     return db.oneOrNone(sql, [id]);
 };
 
+// Usados por casaformaCheckoutController.js — el precio/producto de
+// Stripe de un paquete domiciliado se crea una sola vez (lazy, en la
+// primera compra) y se reutiliza después.
+CasaformaPackage.getRaw = (id) => {
+    return db.oneOrNone('SELECT * FROM casaforma.casaforma_packages WHERE id = $1 AND is_deleted = false', [id]);
+};
+
+CasaformaPackage.savePriceIds = (id, stripeProductId, stripePriceId) => {
+    return db.none(
+        `UPDATE casaforma.casaforma_packages SET stripe_product_id = $2, stripe_price_id = $3 WHERE id = $1`,
+        [id, stripeProductId, stripePriceId]
+    );
+};
+
 module.exports = CasaformaPackage;
