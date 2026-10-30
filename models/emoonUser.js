@@ -107,4 +107,36 @@ EmoonUser.delete = (id) => {
     return db.oneOrNone(sql, [id]);
 };
 
+// --- Reset de contraseña por OTP — puerto 1:1 de casaformaUser.js ---
+
+EmoonUser.setPasswordResetCode = (email, code, expiresAt) => {
+    const sql = `
+        UPDATE emoon.emoon_users
+        SET password_reset_code = $2, password_reset_expires_at = $3
+        WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) AND is_deleted = false
+        RETURNING id, email
+    `;
+    return db.oneOrNone(sql, [email, code, expiresAt]);
+};
+
+EmoonUser.clearPasswordResetCode = (email) => {
+    const sql = `
+        UPDATE emoon.emoon_users
+        SET password_reset_code = NULL, password_reset_expires_at = NULL
+        WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))
+    `;
+    return db.none(sql, [email]);
+};
+
+EmoonUser.updatePassword = async (email, newPassword) => {
+    const hash = await bcrypt.hash(newPassword, 10);
+    const sql = `
+        UPDATE emoon.emoon_users
+        SET password = $2, password_reset_code = NULL, password_reset_expires_at = NULL, updated_at = NOW()
+        WHERE LOWER(TRIM(email)) = LOWER(TRIM($1)) AND is_deleted = false
+        RETURNING id, email
+    `;
+    return db.oneOrNone(sql, [email, hash]);
+};
+
 module.exports = EmoonUser;

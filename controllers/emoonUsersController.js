@@ -189,5 +189,80 @@ return res.status(201).json({
             error: error.message
         });
     }
-}
+},
+
+    // --- Reset de contraseña por OTP — puerto 1:1 de casaformaUsersController.js ---
+
+    async sendPasswordResetOtp(req, res) {
+        try {
+            const email = normalizeEmail(req.body.email);
+            const user = await EmoonUser.findByEmail(email);
+            if (!user) {
+                return res.status(404).json({ success: false, message: 'No encontramos una cuenta con ese correo.' });
+            }
+
+            const code = String(Math.floor(100000 + Math.random() * 900000));
+            const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+            await EmoonUser.setPasswordResetCode(email, code, expiresAt);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Código generado.',
+                data: { code } // el frontend decide si lo manda por correo o lo muestra como otpPreview
+            });
+        } catch (error) {
+            console.log('Error emoon sendPasswordResetOtp:', error);
+            return res.status(500).json({ success: false, message: 'No se pudo generar el código.', error: error.message });
+        }
+    },
+
+    async verifyPasswordResetOtp(req, res) {
+        try {
+            const email = normalizeEmail(req.body.email);
+            const otp = String(req.body.otp || '').trim();
+
+            const user = await EmoonUser.findByEmail(email);
+            if (!user || !user.password_reset_code) {
+                return res.status(400).json({ success: false, message: 'Primero solicita un código.' });
+            }
+            if (new Date() > new Date(user.password_reset_expires_at)) {
+                await EmoonUser.clearPasswordResetCode(email);
+                return res.status(400).json({ success: false, message: 'Tu código venció. Solicita uno nuevo.' });
+            }
+            if (user.password_reset_code !== otp) {
+                return res.status(400).json({ success: false, message: 'Código incorrecto.' });
+            }
+
+            return res.status(200).json({ success: true, message: 'Código correcto.' });
+        } catch (error) {
+            console.log('Error emoon verifyPasswordResetOtp:', error);
+            return res.status(500).json({ success: false, message: 'No se pudo verificar el código.', error: error.message });
+        }
+    },
+
+    async resetPassword(req, res) {
+        try {
+            const email = normalizeEmail(req.body.email);
+            const otp = String(req.body.otp || '').trim();
+            const newPassword = req.body.newPassword;
+
+            const user = await EmoonUser.findByEmail(email);
+            if (!user || !user.password_reset_code || user.password_reset_code !== otp) {
+                return res.status(400).json({ success: false, message: 'No se pudo verificar el código. Vuelve a intentarlo.' });
+            }
+            if (new Date() > new Date(user.password_reset_expires_at)) {
+                await EmoonUser.clearPasswordResetCode(email);
+                return res.status(400).json({ success: false, message: 'Tu código venció. Solicita uno nuevo.' });
+            }
+            if (!newPassword || newPassword.length < 6) {
+                return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres.' });
+            }
+
+            await EmoonUser.updatePassword(email, newPassword);
+            return res.status(200).json({ success: true, message: 'Contraseña actualizada correctamente.' });
+        } catch (error) {
+            console.log('Error emoon resetPassword:', error);
+            return res.status(500).json({ success: false, message: 'No se pudo actualizar la contraseña.', error: error.message });
+        }
+    }
 };

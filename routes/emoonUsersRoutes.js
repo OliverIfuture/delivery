@@ -9,6 +9,9 @@ module.exports = (app, upload) => {
     // ==========================================================
     app.post('/api/emoon/users/create', emoonUsersController.register);
     app.post('/api/emoon/users/login', emoonUsersController.login);
+    app.post('/api/emoon/users/password-reset/send-otp', emoonUsersController.sendPasswordResetOtp);
+    app.post('/api/emoon/users/password-reset/verify-otp', emoonUsersController.verifyPasswordResetOtp);
+    app.post('/api/emoon/users/password-reset/reset', emoonUsersController.resetPassword);
 
     // ==========================================================
     // RUTAS PRIVADAS (Requieren el token 'emoon-jwt')
