@@ -13,6 +13,9 @@ const TrainerNotification = require('../models/trainerNotification.js'); // <-- 
 const SubscriptionPlan = require('../models/subscriptionPlan.js'); // <-- Nombre del plan para el comprobante de pago
 const { sendPaymentReceipt } = require('../utils/paymentReceipt.js'); // <-- Comprobante de pago real al correo del cliente
 const EmoonSettings = require('../models/emoonSettings.js'); // <-- Fix: marcar 'paid' el cobro mensual de plataforma de Emoon (ver case 'payment_intent.succeeded' más abajo)
+const EmoonSale = require('../models/emoonSale.js'); // <-- Domiciliación de paquetes Emoon (ver cases 'invoice.payment_succeeded'/'invoice.paid'/'invoice.payment_failed'/'customer.subscription.deleted' más abajo)
+const EmoonDomiciliation = require('../models/emoonDomiciliation.js');
+const { sendDomiciliationFailedEmail } = require('../jobs/emoonDomiciliationJob.js');
 
 // Manejo seguro de llaves por si config/keys.js no está en este proyecto
 let stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -753,6 +756,28 @@ module.exports = {
                         console.log(`⏳ Suscripción guardada para usuario no registrado aún: ${temp_email}`);
                     }
                 }
+                // Domiciliación de paquetes Emoon — a diferencia del resto de
+                // este webhook (Trainer Partners), Emoon no usa Stripe
+                // Connect, así que sus eventos siempre llegan con
+                // event.account vacío (cuenta principal), mismo scope que ya
+                // usa 'emoon_admin_monthly_service' más abajo. El webhook es
+                // la única fuente de verdad: asigna créditos y da de
+                // alta/actualiza la fila de la suscripción en una sola
+                // transacción (ver EmoonSale.recordRecurringCharge).
+                else if (subMeta.type === 'emoon_domiciliado_purchase' && invoice.amount_paid > 0) {
+                    try {
+                        const payment = await EmoonSale.recordRecurringCharge(
+                            subMeta.user_id,
+                            subMeta.package_id,
+                            invoice.amount_paid / 100,
+                            invoice.subscription
+                        );
+                        await EmoonDomiciliation.clearPaymentFailed(invoice.subscription);
+                        console.log(`✅ Webhook: cobro domiciliado de Emoon registrado (payment id=${payment.id}, cliente=${subMeta.user_id}, paquete=${subMeta.package_id}).`);
+                    } catch (e) {
+                        console.log(`❌ Error registrando cobro domiciliado de Emoon: ${e.message}`);
+                    }
+                }
                 break;
 
             // =================================================================
@@ -1011,6 +1036,19 @@ module.exports = {
                     } catch (e) {
                         console.log(`❌ Error retirando VIP en invoice.payment_failed: ${e.message}`);
                     }
+
+                    // Domiciliación Emoon — no-op silencioso si failedSubId no
+                    // corresponde a ninguna suscripción domiciliada de Emoon
+                    // (markPaymentFailed solo actualiza si hace match).
+                    try {
+                        const emoonSub = await EmoonDomiciliation.markPaymentFailed(failedSubId);
+                        if (emoonSub) {
+                            console.log(`⚠️ Webhook: cobro domiciliado de Emoon fallido (subscription=${failedSubId}).`);
+                            sendDomiciliationFailedEmail(emoonSub).catch((e) => console.log(`❌ No se pudo avisar al cliente de Emoon del cobro fallido: ${e.message}`));
+                        }
+                    } catch (e) {
+                        console.log(`❌ Error marcando fallo de domiciliación Emoon: ${e.message}`);
+                    }
                 }
                 break;
 
@@ -1038,6 +1076,17 @@ module.exports = {
                     console.log(`🚫 Nivel VIP retirado por cancelación de suscripción (Sub ID: ${deletedSubId})`);
                 } catch (e) {
                     console.log(`❌ Error retirando VIP en customer.subscription.deleted: ${e.message}`);
+                }
+
+                // Domiciliación Emoon — no-op silencioso si deletedSubId no
+                // corresponde a ninguna suscripción domiciliada de Emoon.
+                try {
+                    const emoonCancelled = await EmoonDomiciliation.cancelByStripeSubscriptionId(deletedSubId);
+                    if (emoonCancelled) {
+                        console.log(`✅ Webhook: domiciliación de Emoon cancelada en BD (stripe_subscription_id=${deletedSubId}).`);
+                    }
+                } catch (e) {
+                    console.log(`❌ Error cancelando domiciliación Emoon: ${e.message}`);
                 }
                 break;
 

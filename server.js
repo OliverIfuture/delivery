@@ -124,6 +124,7 @@ const casaformaStripeConnectRoutes = require('./routes/casaformaStripeConnectRou
 const casaformaWebhookRoutes = require('./routes/casaformaWebhookRoutes.js');
 const casaformaCheckoutRoutes = require('./routes/casaformaCheckoutRoutes.js');
 const { runDomiciliationChecks } = require('./jobs/casaformaDomiciliationJob.js');
+const { runDomiciliationChecks: runEmoonDomiciliationChecks } = require('./jobs/emoonDomiciliationJob.js');
 
 /**
  * =========================================================
@@ -143,6 +144,7 @@ const emoonAnalyticsRoutes = require('./routes/emoonAnalyticsRoutes');
 const emoonUserPackagesRoutes = require('./routes/emoonUserPackagesRoutes')
 const emoonCategoriesRoutes = require('./routes/emoonCategoriesRoutes.js');
 const emoonPaymentsRoutes = require('./routes/emoonPaymentsRoutes.js');
+const emoonDomiciliationRoutes = require('./routes/emoonDomiciliationRoutes.js');
 const PORT = process.env.PORT || 4000;
 
 app.use(logger('dev'));
@@ -243,6 +245,7 @@ emoonAnalyticsRoutes(app);
 emoonUserPackagesRoutes(app);
 emoonCategoriesRoutes(app);
 emoonPaymentsRoutes(app);
+emoonDomiciliationRoutes(app);
 /**
  * =========================================================
  * LLAMANDO RUTAS NUEVAS - PROYECTO EMOON
@@ -288,6 +291,10 @@ server.listen(PORT, '0.0.0.0', function () {
 // el resto de la inicialización.
 setTimeout(() => runDomiciliationChecks(), 2 * 60 * 1000);
 setInterval(() => runDomiciliationChecks(), 6 * 60 * 60 * 1000);
+
+// Mismo patrón para la domiciliación de Emoon (ver jobs/emoonDomiciliationJob.js).
+setTimeout(() => runEmoonDomiciliationChecks(), 3 * 60 * 1000);
+setInterval(() => runEmoonDomiciliationChecks(), 6 * 60 * 60 * 1000);
 
 //ERROR HANDLER
 app.use((err, req, res, next) => {

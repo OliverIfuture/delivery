@@ -15,4 +15,10 @@ module.exports = (app) => {
         requireEmoonAdmin,
         emoonPaymentsController.createAdminBillingIntent
     );
+
+    app.post(
+        '/api/emoon/payments/create-domiciliado-checkout',
+        passport.authenticate('emoon-jwt', { session: false }),
+        emoonPaymentsController.createDomiciliadoCheckout
+    );
 };
