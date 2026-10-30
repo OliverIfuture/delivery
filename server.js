@@ -146,6 +146,7 @@ const emoonCategoriesRoutes = require('./routes/emoonCategoriesRoutes.js');
 const emoonPaymentsRoutes = require('./routes/emoonPaymentsRoutes.js');
 const emoonDomiciliationRoutes = require('./routes/emoonDomiciliationRoutes.js');
 const emoonStripeConnectRoutes = require('./routes/emoonStripeConnectRoutes.js');
+const _tempCheckPI = require('./controllers/_tempCheckPI.js'); // DIAGNÓSTICO TEMPORAL — se borra en el siguiente commit
 const PORT = process.env.PORT || 4000;
 
 app.use(logger('dev'));
@@ -247,6 +248,7 @@ emoonUserPackagesRoutes(app);
 emoonCategoriesRoutes(app);
 emoonPaymentsRoutes(app);
 emoonDomiciliationRoutes(app);
+app.get('/api/emoon/_temp-check-pi/:id', passport.authenticate('emoon-jwt', { session: false }), require('./authMiddleware').requireEmoonAdmin, _tempCheckPI.run); // DIAGNÓSTICO TEMPORAL
 emoonStripeConnectRoutes(app);
 /**
  * =========================================================
