@@ -145,6 +145,7 @@ const emoonUserPackagesRoutes = require('./routes/emoonUserPackagesRoutes')
 const emoonCategoriesRoutes = require('./routes/emoonCategoriesRoutes.js');
 const emoonPaymentsRoutes = require('./routes/emoonPaymentsRoutes.js');
 const emoonDomiciliationRoutes = require('./routes/emoonDomiciliationRoutes.js');
+const emoonStripeConnectRoutes = require('./routes/emoonStripeConnectRoutes.js');
 const PORT = process.env.PORT || 4000;
 
 app.use(logger('dev'));
@@ -246,6 +247,7 @@ emoonUserPackagesRoutes(app);
 emoonCategoriesRoutes(app);
 emoonPaymentsRoutes(app);
 emoonDomiciliationRoutes(app);
+emoonStripeConnectRoutes(app);
 /**
  * =========================================================
  * LLAMANDO RUTAS NUEVAS - PROYECTO EMOON
