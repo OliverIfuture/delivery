@@ -2,15 +2,36 @@ const Stripe = require('stripe');
 const EmoonPackage = require('../models/emoonPackage');
 const EmoonSettings = require('../models/emoonSettings');
 const EmoonUser = require('../models/emoonUser');
+const EmoonStripeConnect = require('../models/emoonStripeConnect');
 const keys = require('../config/keys');
 
 // Misma key admin de Stripe que usa el resto de la plataforma (config/keys.js -> STRIPE_ADMIN_SECRET_KEY en Heroku).
 const stripeSecretKey = keys.stripeAdminSecretKey || process.env.STRIPE_SECRET_KEY || '';
 const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
 
-// Crea (o reutiliza) el Product+Price real para un paquete domiciliado.
-// A diferencia de Casa Forma (Connect, un acct_ por club), Emoon no usa
-// cuentas conectadas — todo en la cuenta principal, sin `stripeAccount`.
+// Comisión de plataforma — 11%, MISMA tasa que ya usa en producción el
+// pago único real de Emoon (controllers/clientSubscriptionsController.js
+// -> createPackagePaymentIntent, la función que de verdad gana la ruta
+// /api/emoon/payments/create-payment-intent; la de este archivo con el
+// mismo nombre es código muerto, nunca se ejecuta — ver nota en esa
+// función más abajo).
+const PLATFORM_FEE_PERCENT = 11;
+
+// Emoon SÍ usa Stripe Connect, pero con "destination charges": el
+// PaymentIntent (o aquí, la Subscription) se crea en la cuenta PRINCIPAL
+// con transfer_data apuntando a la cuenta conectada del estudio — NO con
+// {stripeAccount: ...} como Casa Forma (eso serían "direct charges",
+// donde el cargo vive directo en la cuenta conectada y el frontend
+// necesita pasarle stripeAccount a loadStripe). Confirmado leyendo la
+// PaymentIntent real de una compra reciente (pi_3UVguzFI81PpmIv20vegEYaS):
+// vive en la cuenta principal, con transfer_data.destination +
+// application_fee_amount del 11%. Esto mantiene el checkout 100%
+// transparente para el frontend (StripeCheckoutModal.vue no necesita
+// ningún cambio), igual que el pago único.
+
+// Crea (o reutiliza) el Product+Price real para un paquete domiciliado,
+// en la cuenta PRINCIPAL (sin stripeAccount) — la Subscription que los
+// usa es la que lleva transfer_data, no el Product/Price.
 async function ensureStripePrice(pkg) {
     if (pkg.stripe_price_id) return pkg.stripe_price_id;
 
@@ -26,6 +47,16 @@ async function ensureStripePrice(pkg) {
 }
 
 module.exports = {
+    // ⚠️ CÓDIGO MUERTO — routes/clientSubscriptionsRoutes.js registra
+    // POST /api/emoon/payments/create-payment-intent con
+    // clientSubscriptionsController.createPackagePaymentIntent ANTES
+    // (server.js monta clientSubscriptions(app) en la línea ~197, este
+    // archivo hasta la ~249), así que Express siempre usa esa función
+    // real y esta de aquí nunca se ejecuta. Esa es la que de verdad ya
+    // tiene transfer_data + 11% de comisión a la cuenta Connect del
+    // estudio. Se deja sin borrar por si algo más la referenciara, pero
+    // no se debe tocar para "arreglar" el pago único — ya funciona bien,
+    // solo que no es ESTA función.
     async createPackagePaymentIntent(req, res) {
         try {
             if (!stripe) {
@@ -143,13 +174,13 @@ module.exports = {
         }
     },
 
-    // Checkout de un paquete DOMICILIADO (cargo recurrente) — separado de
-    // createPackagePaymentIntent a propósito: ese flujo de pago único ya
-    // está probado en producción y no se toca para nada. Este es código
-    // 100% nuevo; el webhook (controllers/clientSubscriptionsController.js,
-    // branch 'emoon_domiciliado_purchase') es la única fuente de verdad
-    // para asignar créditos — el frontend NO debe llamar a /sales/manual
-    // tras confirmar este pago.
+    // Checkout de un paquete DOMICILIADO (cargo recurrente) — mismo
+    // destino y misma comisión que el pago único real (Connect,
+    // transfer_data + 11%, ver PLATFORM_FEE_PERCENT arriba). El webhook
+    // (controllers/clientSubscriptionsController.js, branch
+    // 'emoon_domiciliado_purchase') es la única fuente de verdad para
+    // asignar créditos — el frontend NO debe llamar a /sales/manual tras
+    // confirmar este pago.
     async createDomiciliadoCheckout(req, res) {
         try {
             if (!stripe) {
@@ -170,11 +201,19 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Este paquete no es domiciliado.' });
             }
 
+            const connect = await EmoonStripeConnect.getStatus();
+            if (!connect.account_id || !connect.charges_enabled) {
+                return res.status(400).json({ success: false, message: 'El estudio todavía no puede recibir pagos con tarjeta. Intenta de nuevo más tarde.' });
+            }
+
             const user = await EmoonUser.findById(userId);
             if (!user) {
                 return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
             }
 
+            // Cliente, Producto y Precio viven en la cuenta PRINCIPAL (sin
+            // stripeAccount) — es la Subscription la que lleva
+            // transfer_data, no estos objetos de soporte.
             let customer;
             const existingCustomers = await stripe.customers.list({ email: user.email, limit: 1 });
             if (existingCustomers.data.length > 0) {
@@ -194,10 +233,13 @@ module.exports = {
                 payment_behavior: 'default_incomplete',
                 payment_settings: { save_default_payment_method: 'on_subscription' },
                 expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
+                transfer_data: { destination: connect.account_id },
+                application_fee_percent: PLATFORM_FEE_PERCENT,
                 metadata: {
                     type: 'emoon_domiciliado_purchase',
-                    user_id: String(userId),
-                    package_id: String(packageId)
+                    userId: String(userId),
+                    packageId: String(packageId),
+                    packageName: pkg.name || ''
                 }
             });
 
@@ -212,7 +254,7 @@ module.exports = {
                 throw new Error('Stripe no devolvió un client_secret válido para la suscripción.');
             }
 
-            console.log(`🔁 emoon createDomiciliadoCheckout: Subscription ${subscription.id} creada (user_id=${userId} package_id=${packageId}, secretType=${secretType})`);
+            console.log(`🔁 emoon createDomiciliadoCheckout: Subscription ${subscription.id} creada (destino=${connect.account_id}, 11% comisión) (user_id=${userId} package_id=${packageId}, secretType=${secretType})`);
 
             return res.status(200).json({
                 success: true,

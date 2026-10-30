@@ -756,24 +756,31 @@ module.exports = {
                         console.log(`⏳ Suscripción guardada para usuario no registrado aún: ${temp_email}`);
                     }
                 }
-                // Domiciliación de paquetes Emoon — a diferencia del resto de
-                // este webhook (Trainer Partners), Emoon no usa Stripe
-                // Connect, así que sus eventos siempre llegan con
-                // event.account vacío (cuenta principal), mismo scope que ya
-                // usa 'emoon_admin_monthly_service' más abajo. El webhook es
-                // la única fuente de verdad: asigna créditos y da de
-                // alta/actualiza la fila de la suscripción en una sola
-                // transacción (ver EmoonSale.recordRecurringCharge).
+                // Domiciliación de paquetes Emoon — Emoon SÍ usa Stripe
+                // Connect (acct_1UC7CZFbEbeuW30V, real y activa), pero vía
+                // "destination charges" (transfer_data + application_fee en
+                // la Subscription, creada en la cuenta PRINCIPAL — ver
+                // emoonPaymentsController.js -> createDomiciliadoCheckout,
+                // mismo patrón que ya usa el pago único real de Emoon en
+                // este mismo archivo, createPackagePaymentIntent). Por eso
+                // sus eventos llegan con event.account vacío (cuenta
+                // principal), igual que 'emoon_admin_monthly_service' más
+                // abajo — no necesita un destino de webhook aparte. Nombres
+                // de metadata en camelCase (userId/packageId) a propósito,
+                // igual que el pago único real. El webhook es la única
+                // fuente de verdad: asigna créditos y da de alta/actualiza
+                // la fila de la suscripción en una sola transacción (ver
+                // EmoonSale.recordRecurringCharge).
                 else if (subMeta.type === 'emoon_domiciliado_purchase' && invoice.amount_paid > 0) {
                     try {
                         const payment = await EmoonSale.recordRecurringCharge(
-                            subMeta.user_id,
-                            subMeta.package_id,
+                            subMeta.userId,
+                            subMeta.packageId,
                             invoice.amount_paid / 100,
                             invoice.subscription
                         );
                         await EmoonDomiciliation.clearPaymentFailed(invoice.subscription);
-                        console.log(`✅ Webhook: cobro domiciliado de Emoon registrado (payment id=${payment.id}, cliente=${subMeta.user_id}, paquete=${subMeta.package_id}).`);
+                        console.log(`✅ Webhook: cobro domiciliado de Emoon registrado (payment id=${payment.id}, cliente=${subMeta.userId}, paquete=${subMeta.packageId}).`);
                     } catch (e) {
                         console.log(`❌ Error registrando cobro domiciliado de Emoon: ${e.message}`);
                     }
