@@ -9,21 +9,27 @@
 // 2. Cancelar (y avisar) las suscripciones que llevan
 //    domiciliation_rules.retryDays días seguidos fallando.
 //
-// PENDIENTE: MAIL_BASE_URL es un placeholder — falta confirmar con el
-// usuario el dominio real de Emoon y si su hosting soporta PHP (igual
-// que casaforma.com.mx en Hostinger) para poder subir ahí los
-// send-domiciliation-*.php reales. Mientras tanto, estas llamadas van a
-// fallar con un error de red/404, lo cual se tolera sin romper nada
-// (mismo criterio que casaformaDomiciliationJob.js antes de que
-// existieran sus PHP: el aviso falla, pero la fila nunca queda en un
-// estado corrupto — ver runDomiciliationChecks más abajo).
+// PENDIENTE: todavía no hay un dominio de Emoon confirmado con hosting
+// PHP (como casaforma.com.mx en Hostinger) para subir ahí los
+// send-domiciliation-*.php reales. MAIL_BASE_URL queda en blanco a
+// propósito — en ningún caso se debe inventar/adivinar un dominio: eso
+// mandaría datos reales de clientes (correo, nombre, monto) a una URL no
+// confirmada. Mientras MAIL_BASE_URL esté vacío, estas funciones solo
+// registran el intento en el log y no hacen ninguna llamada de red; la
+// fila nunca queda en un estado corrupto (mismo criterio que
+// casaformaDomiciliationJob.js antes de que existieran sus PHP) — ver
+// runDomiciliationChecks más abajo.
 const axios = require('axios');
 const EmoonDomiciliation = require('../models/emoonDomiciliation');
 
-const MAIL_BASE_URL = 'https://emoon-wellness-studio.com/api'; // TODO: confirmar dominio real con el usuario
+const MAIL_BASE_URL = process.env.EMOON_MAIL_BASE_URL || '';
 
 async function sendDomiciliationReminderEmail(sub) {
     if (!sub.client_email) return;
+    if (!MAIL_BASE_URL) {
+        console.log(`↪️  emoon domiciliación: MAIL_BASE_URL sin configurar, se omite el envío real a ${sub.client_email} (recordatorio).`);
+        return;
+    }
     await axios.post(`${MAIL_BASE_URL}/send-domiciliation-reminder.php`, {
         email: sub.client_email,
         clientName: sub.client_name,
@@ -35,6 +41,10 @@ async function sendDomiciliationReminderEmail(sub) {
 
 async function sendDomiciliationFailedEmail(sub) {
     if (!sub.client_email) return;
+    if (!MAIL_BASE_URL) {
+        console.log(`↪️  emoon domiciliación: MAIL_BASE_URL sin configurar, se omite el envío real a ${sub.client_email} (cobro fallido).`);
+        return;
+    }
     await axios.post(`${MAIL_BASE_URL}/send-domiciliation-failed.php`, {
         email: sub.client_email,
         clientName: sub.client_name,
@@ -45,6 +55,10 @@ async function sendDomiciliationFailedEmail(sub) {
 
 async function sendDomiciliationCancelledEmail(sub) {
     if (!sub.client_email) return;
+    if (!MAIL_BASE_URL) {
+        console.log(`↪️  emoon domiciliación: MAIL_BASE_URL sin configurar, se omite el envío real a ${sub.client_email} (cancelación).`);
+        return;
+    }
     await axios.post(`${MAIL_BASE_URL}/send-domiciliation-cancelled.php`, {
         email: sub.client_email,
         clientName: sub.client_name,
