@@ -9,20 +9,17 @@
 // 2. Cancelar (y avisar) las suscripciones que llevan
 //    domiciliation_rules.retryDays días seguidos fallando.
 //
-// PENDIENTE: todavía no hay un dominio de Emoon confirmado con hosting
-// PHP (como casaforma.com.mx en Hostinger) para subir ahí los
-// send-domiciliation-*.php reales. MAIL_BASE_URL queda en blanco a
-// propósito — en ningún caso se debe inventar/adivinar un dominio: eso
-// mandaría datos reales de clientes (correo, nombre, monto) a una URL no
-// confirmada. Mientras MAIL_BASE_URL esté vacío, estas funciones solo
-// registran el intento en el log y no hacen ninguna llamada de red; la
-// fila nunca queda en un estado corrupto (mismo criterio que
-// casaformaDomiciliationJob.js antes de que existieran sus PHP) — ver
-// runDomiciliationChecks más abajo.
+// Dominio real confirmado por el usuario (https://emoonwellnesstudio.com,
+// Hostinger, mismo MX que el buzón emoon@emoonwellnesstudio.com — ver
+// public/api/mail-config.php en el repo del frontend). Los PHP
+// (send-domiciliation-*.php) ya están listos en ese repo, pero solo
+// funcionan de verdad una vez que el usuario suba dist/api/ a Hostinger
+// (mismo flujo que Casa Forma) — hasta entonces, estas llamadas fallan
+// con 404 y se toleran sin romper nada (ver runDomiciliationChecks).
 const axios = require('axios');
 const EmoonDomiciliation = require('../models/emoonDomiciliation');
 
-const MAIL_BASE_URL = process.env.EMOON_MAIL_BASE_URL || '';
+const MAIL_BASE_URL = process.env.EMOON_MAIL_BASE_URL || 'https://emoonwellnesstudio.com/api';
 
 async function sendDomiciliationReminderEmail(sub) {
     if (!sub.client_email) return;
