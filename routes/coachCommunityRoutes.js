@@ -16,5 +16,7 @@ module.exports = (app, upload) => {
     app.get('/api/coach-community/leaderboard/:period', passport.authenticate('jwt', { session: false }), coachCommunityController.getLeaderboard);
     // NUEVO — ranking de entrenadores por puntos de interacción (niveles tipo "Inspirador"/"Leyenda").
     app.get('/api/coach-community/points-leaderboard/:period', passport.authenticate('jwt', { session: false }), coachCommunityController.getPointsLeaderboard);
+    // NUEVO — directorio de entrenadores para "Mensajes a entrenadores" (solo admin, ver listTrainers).
+    app.get('/api/coach-community/trainers', passport.authenticate('jwt', { session: false }), coachCommunityController.listTrainers);
 
 };

@@ -129,6 +129,28 @@ module.exports = {
             console.log(`Error en coachCommunityController.getPointsLeaderboard: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al obtener el ranking de puntos', error: error.message });
         }
+    },
+
+    // NUEVO — directorio de entrenadores para "Mensajes a entrenadores":
+    // solo la cuenta admin de Coach Community puede verlo/usarlo (pedido
+    // explícito — es un canal del admin hacia cualquier entrenador, no
+    // algo que un entrenador cualquiera deba tener entre sí mismos). El
+    // envío/lectura de los mensajes en sí reutiliza TAL CUAL el chat 1:1
+    // ya existente (/api/chat/*, ver chatController.js) — createChatRoomId
+    // ya funciona para cualquier par de ids, admin incluido, así que no
+    // hace falta una sala ni un endpoint de envío nuevos.
+    async listTrainers(req, res) {
+        try {
+            const isAdmin = (req.user.email || '').trim().toLowerCase() === COACH_COMMUNITY_ADMIN_EMAIL;
+            if (!isAdmin) {
+                return res.status(403).json({ success: false, message: 'Solo la cuenta de Coach Community puede ver este directorio.' });
+            }
+            const data = await User.getCoachCommunityTrainerDirectory();
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.log(`Error en coachCommunityController.listTrainers: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener el directorio de entrenadores', error: error.message });
+        }
     }
 
 };

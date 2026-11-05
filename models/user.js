@@ -3226,6 +3226,23 @@ User.getCoachClientLeaderboard = (period, limit = 5) => {
     return db.manyOrNone(sql, [limit]);
 };
 
+// NUEVO — directorio completo de entrenadores reales para que la cuenta
+// admin de Coach Community (ver controllers/coachCommunityController.js,
+// listTrainers) les mande mensajes directos 1:1. A diferencia de
+// getCoachClientLeaderboard, acá SÍ se incluyen los que todavía no tienen
+// ningún cliente (un entrenador recién registrado igual debe poder
+// recibir un mensaje del admin) — mismas exclusiones de cuentas internas.
+User.getCoachCommunityTrainerDirectory = () => {
+    const sql = `
+        SELECT t.id AS trainer_id, t.name, t.lastname, t.image AS photo, c.name AS company_name
+        FROM company c
+        INNER JOIN users t ON t.id = c.user_id
+        WHERE c.id NOT IN (1, 4, 1389)
+        ORDER BY t.name ASC, t.lastname ASC
+    `;
+    return db.manyOrNone(sql);
+};
+
 // =========================================================================
 // NUEVO — Panel de "Configuración" del entrenador (Perfil/Apariencia/
 // Suscripción, ver controllers/membershipController.js). A propósito NO se
