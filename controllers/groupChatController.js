@@ -34,6 +34,14 @@ function readsRef() {
 function isAdmin(req) {
     return (req.user.email || '').trim().toLowerCase() === GROUP_CHAT_ADMIN_EMAIL;
 }
+// mi_store en 0 (no null) para quien nunca tuvo tienda es un caso real
+// (confirmado en producción con una cuenta de prueba) — pg-promise lo
+// regresa como el STRING "0" para algunas columnas numéricas, y "0" es
+// truthy en JS, así que un `if (!req.user.mi_store)` simple no bastaba.
+// Mismo chequeo que ya usa chatController.sendMessage para el mismo caso.
+function hasStore(req) {
+    return !!req.user.mi_store && String(req.user.mi_store) !== '0';
+}
 
 module.exports = {
 
@@ -44,7 +52,7 @@ module.exports = {
      */
     async sendMessage(req, res, next) {
         try {
-            if (!req.user.mi_store) {
+            if (!hasStore(req)) {
                 return res.status(403).json({ success: false, message: 'Solo entrenadores con tienda pueden escribir en el chat grupal.' });
             }
 
@@ -83,7 +91,7 @@ module.exports = {
     // otro prefijo de carpeta para no mezclar archivos.
     async uploadMedia(req, res, next) {
         try {
-            if (!req.user.mi_store) {
+            if (!hasStore(req)) {
                 return res.status(403).json({ success: false, message: 'Solo entrenadores con tienda pueden escribir en el chat grupal.' });
             }
 
