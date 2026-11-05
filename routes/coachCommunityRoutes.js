@@ -18,5 +18,8 @@ module.exports = (app, upload) => {
     app.get('/api/coach-community/points-leaderboard/:period', passport.authenticate('jwt', { session: false }), coachCommunityController.getPointsLeaderboard);
     // NUEVO — directorio de entrenadores para "Mensajes a entrenadores" (solo admin, ver listTrainers).
     app.get('/api/coach-community/trainers', passport.authenticate('jwt', { session: false }), coachCommunityController.listTrainers);
+    // NUEVO — id real de la cuenta "Coach Community", para que cualquier
+    // entrenador pueda ver en su bandeja los mensajes que el admin le mande.
+    app.get('/api/coach-community/admin', passport.authenticate('jwt', { session: false }), coachCommunityController.getAdminAccount);
 
 };

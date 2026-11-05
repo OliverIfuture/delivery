@@ -20,6 +20,7 @@ const Community = require('../models/community.js');
 const Product = require('../models/product.js');
 const User = require('../models/user.js');
 const storage = require('../utils/cloud_storage.js');
+const db = require('../config/config.js');
 
 const COACH_COMMUNITY_ID = '1389';
 // Cuenta admin de Coach Community — puede borrar CUALQUIER publicación,
@@ -150,6 +151,27 @@ module.exports = {
         } catch (error) {
             console.log(`Error en coachCommunityController.listTrainers: ${error}`);
             return res.status(501).json({ success: false, message: 'Error al obtener el directorio de entrenadores', error: error.message });
+        }
+    },
+
+    // NUEVO — id real del usuario detrás de la cuenta "Coach Community"
+    // (company.user_id de COACH_COMMUNITY_ID), para que CUALQUIER
+    // entrenador (no solo el admin) pueda armar la sala de chat 1:1 con
+    // él mismo truco que ya usa el resto del chat (createChatRoomId) —
+    // así los mensajes que el admin le manda desde "Mensajes a
+    // entrenadores" sí aparecen en la bandeja normal del entrenador (ver
+    // useRealConversations.js). Público para cualquier sesión válida, no
+    // hace falta ser admin para esto — solo es un id, no datos sensibles.
+    async getAdminAccount(req, res) {
+        try {
+            const row = await db.oneOrNone(`SELECT user_id FROM company WHERE id = $1`, [COACH_COMMUNITY_ID]);
+            if (!row) {
+                return res.status(404).json({ success: false, message: 'No se encontró la cuenta de Coach Community.' });
+            }
+            return res.status(200).json({ success: true, data: { id: row.user_id, name: 'Coach Community' } });
+        } catch (error) {
+            console.log(`Error en coachCommunityController.getAdminAccount: ${error}`);
+            return res.status(501).json({ success: false, message: 'Error al obtener la cuenta de Coach Community', error: error.message });
         }
     }
 
