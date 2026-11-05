@@ -4,6 +4,7 @@ const storage = require('../utils/cloud_storage.js');
 const db = require('../config/config.js');
 const TrainerNotification = require('../models/trainerNotification.js');
 const { sendPushToUser } = require('../utils/pushNotifications.js');
+const { firestoreDb } = require('../utils/chatFirebaseAdmin.js');
 
 // Mismo mapa de "kind" que el panel web (ver trainer-partners/src/
 // controllers/chatController.js: KNOWN_KINDS) — para que el cuerpo de la
@@ -32,48 +33,6 @@ function friendlyNotificationBody(messageContent) {
         return trimmed.length > 90 ? `${trimmed.slice(0, 90)}…` : trimmed;
     }
 }
-
-// --- ¡LÓGICA DE INICIALIZACIÓN (LA DEJAREMOS IGUAL)! ---
-let serviceAccountChat;
-let firestoreDb;
-let messaging;
-
-try {
-    // Leemos las 3 variables de Heroku
-    const projectId = process.env.FIREBASE_CHAT_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CHAT_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_CHAT_PRIVATE_KEY.replace(/\\n/g, '\n');
-
-    if (!projectId || !clientEmail || !privateKey) {
-        throw new Error('Faltan las variables de entorno de Firebase Chat (PROJECT_ID, CLIENT_EMAIL, o PRIVATE_KEY).');
-    }
-
-    serviceAccountChat = {
-        projectId: projectId,
-        clientEmail: clientEmail,
-        privateKey: privateKey
-    };
-
-    let chatApp;
-    if (admin.apps.some(app => app.name === 'chatApp')) {
-        chatApp = admin.app('chatApp');
-    } else {
-        chatApp = admin.initializeApp({
-            credential: admin.credential.cert(serviceAccountChat)
-        }, 'chatApp');
-    }
-
-    firestoreDb = chatApp.firestore();
-    messaging = chatApp.messaging();
-
-    console.log(`--- chatApp de Firebase inicializada con ÉXITO para el proyecto: ${projectId} ---`);
-
-} catch (e) {
-    console.error('!!!!!!!!!! ERROR FATAL AL INICIALIZAR FIREBASE CHAT !!!!!!!!!!');
-    console.error(e);
-}
-// --- FIN DE LA LÓGICA DE INICIALIZACIÓN ---
-
 
 module.exports = {
 
