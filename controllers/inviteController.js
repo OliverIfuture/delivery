@@ -28,6 +28,7 @@ const { checkClientLimit } = require('../utils/membershipGate.js');
 const TrainerNotification = require('../models/trainerNotification.js'); // <-- Notificación real al entrenador cuando un prospecto acepta su invitación
 const { sendPushToUser } = require('../utils/pushNotifications.js');
 const normalizeEmail = require('../utils/normalizeEmail.js');
+const storage = require('../utils/cloud_storage.js');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -232,7 +233,7 @@ module.exports = {
 
     async acceptInvite(req, res) {
         try {
-            const { token, name, lastname, password } = req.body;
+            const { token, name, lastname, password, phone } = req.body;
             const email = normalizeEmail(req.body.email);
             if (!token || !email) {
                 return res.status(400).json({ success: false, message: 'Faltan datos para aceptar la invitación.' });
@@ -291,14 +292,29 @@ module.exports = {
             if (!password || password.length < 6) {
                 return res.status(400).json({ success: false, message: 'Tu contraseña debe tener al menos 6 caracteres.' });
             }
+            // La app de cliente da por hecho que `phone` viene lleno (lo usa
+            // en varias pantallas) — antes este flujo lo dejaba en null
+            // porque AcceptInvite.vue nunca lo pedía, y eso es lo que
+            // truena la app para cuentas creadas por enlace de invitación.
+            if (!phone || !phone.trim()) {
+                return res.status(400).json({ success: false, message: 'Tu teléfono es requerido.' });
+            }
+
+            // Foto de perfil — opcional, igual que en el registro normal
+            // (ver registerWithImage en usersController.js, mismo criterio:
+            // upload.array('image', 1) + subir solo si de verdad llegó algo).
+            let imageUrl = null;
+            if (req.files && req.files.length > 0) {
+                imageUrl = await storage(req.files[0], `image_${Date.now()}`);
+            }
 
             const plainPassword = password;
             const newUser = {
                 email,
                 name,
                 lastname: lastname || '',
-                phone: null,
-                image: null,
+                phone: phone.trim(),
+                image: imageUrl,
                 password: plainPassword
             };
 

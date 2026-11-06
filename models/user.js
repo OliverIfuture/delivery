@@ -1529,8 +1529,9 @@ User.findAllTrainersForAudit = () => {
         JOIN users u ON u.id = c.user_id
         LEFT JOIN membership_plans mp ON mp.id = c.membership_plan
         LEFT JOIN client_counts cc ON cc.company_id = c.id
-        WHERE u.email IS NOT NULL AND c.id != 4
-        ORDER BY c.name ASC NULLS LAST, u.name ASC
+        WHERE u.email IS NOT NULL AND c.id != 4 AND c.id != 1 AND c.id != 1321 AND c.id != 1222
+		AND c.id != 992 AND c.id != 859 AND c.id != 760 
+        ORDER BY c.id desc NULLS LAST, u.name ASC
     `;
     return db.manyOrNone(sql);
 };

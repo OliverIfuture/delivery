@@ -209,7 +209,7 @@ productFavoritesRoutes(app);
 reviewRoutes(app, upload);
 googleAuth(app);
 clipRoutes(app);
-inviteRoutes(app);
+inviteRoutes(app, upload);
 trainerModulesRoutes(app, upload);
 myRoutinesRoutes(app);
 photoGalleryRoutes(app, upload);
