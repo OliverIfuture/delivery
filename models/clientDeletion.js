@@ -69,6 +69,15 @@ ClientDeletion.purgeTrainerData = (id_client, email) => {
         await t.none(`DELETE FROM client_diets_v2 WHERE id_client = $1`, [id_client]);
         await t.none(`DELETE FROM client_diet_assignments WHERE id_client = $1`, [id_client]);
         await t.none(`DELETE FROM client_private_notes WHERE id_client = $1`, [id_client]);
+        // calendar_events.id_client -> users(id) sin ON DELETE (ver
+        // models/calendarEvent.js) — sin este DELETE, un cliente con
+        // algún evento agendado nunca llegaba a borrarse: el paso 2
+        // (deleteAccount) truena por la FK, PERO esto de aquí arriba ya
+        // se había confirmado (son dos transacciones separadas), así que
+        // el entrenador veía "Error al eliminar al cliente" mientras ya
+        // había perdido de verdad sus rutinas/dietas/notas/métricas.
+        // Encontrado durante la investigación del bug del calendario.
+        await t.none(`DELETE FROM calendar_events WHERE id_client = $1`, [id_client]);
         if (email) {
             await t.none(`DELETE FROM user_questionnaires WHERE user_email = $1`, [email]);
         }

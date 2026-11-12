@@ -6,6 +6,23 @@
 // id que venga del cliente.
 const CalendarEvent = require('../models/calendarEvent.js');
 
+// Traduce los 2 errores de Postgres que de verdad se ven en uso real (ver
+// investigación del bug "a veces no se guardan los eventos" — se probaron
+// ~100 combinaciones reales contra producción): el mensaje crudo de
+// Postgres no le dice nada al entrenador en el front.
+//   23503 = foreign_key_violation (id_client ya no existe — cliente
+//           borrado mientras el formulario seguía abierto/cacheado).
+//   22001 = string_data_right_truncation (title/location pasan de 255).
+function friendlyCalendarError(error) {
+    if (error.code === '23503') {
+        return 'El cliente que seleccionaste ya no existe (puede que lo hayas eliminado). Quita la selección de cliente e intenta de nuevo.';
+    }
+    if (error.code === '22001') {
+        return 'El título o la ubicación son demasiado largos (máximo 255 caracteres).';
+    }
+    return null;
+}
+
 module.exports = {
 
     async list(req, res) {
@@ -51,10 +68,15 @@ module.exports = {
             return res.status(201).json({ success: true, data: event });
         } catch (error) {
             console.log(`Error en calendarEventsController.create: ${error}`);
-            return res.status(501).json({
+            const friendly = friendlyCalendarError(error);
+            // Si hay mensaje amigable, NO se manda además el error crudo de
+            // Postgres — el front (httpClient.js) concatena message+error
+            // cuando ambos vienen, y eso le mostraría igual el SQL crudo
+            // al entrenador.
+            return res.status(friendly ? 400 : 501).json({
                 success: false,
-                message: 'Error al crear el evento',
-                error: error.message
+                message: friendly || 'Error al crear el evento',
+                error: friendly ? undefined : error.message
             });
         }
     },
@@ -70,10 +92,11 @@ module.exports = {
             return res.status(200).json({ success: true, data: event });
         } catch (error) {
             console.log(`Error en calendarEventsController.update: ${error}`);
-            return res.status(501).json({
+            const friendly = friendlyCalendarError(error);
+            return res.status(friendly ? 400 : 501).json({
                 success: false,
-                message: 'Error al actualizar el evento',
-                error: error.message
+                message: friendly || 'Error al actualizar el evento',
+                error: friendly ? undefined : error.message
             });
         }
     },
